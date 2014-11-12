@@ -16,7 +16,7 @@ To help you identify new and changing moles, the tools enable you to:
 
 For the catalog to be useful, it must enable you to uniquely distinguish every mole from the other new and pre-existing moles. To this end you will be able to assign a name, identifying images and notes for each one.
 
-For the visual history of each mole to be useful, it must enable you to identify significant differences in moles over time. The tools will help you to normalise the rotation and centering of your moles so that they are easier to compare.
+For the visual history of each mole to be useful, it must enable you to identify significant differences in moles over time. The tools will help you to normalise the rotation and centering of your mole images so that they are easier to compare.
 
 [1]: (http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009)
 
