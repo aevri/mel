@@ -10,6 +10,7 @@ The [Mayo Clinic](1) says:
 > - The development of a new pigmented or unusual-looking growth on your skin
 
 To help you identify new and changing moles, the tools enable you to:
+
 1. Maintain a catalog of your moles
 2. Record a visual history of each mole
 
