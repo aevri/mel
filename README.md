@@ -1,7 +1,7 @@
 Mel
 ===
 
-Tools to aid in the personal monitoring of moles on the skin with the goal of early detection of melanoma skin cancer.
+Tools to help identify new and changing moles on the skin with the goal of early detection of melanoma skin cancer.
 
 The [Mayo Clinic](1) says:
 > The first melanoma signs and symptoms often are:
