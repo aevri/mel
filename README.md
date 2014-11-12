@@ -9,6 +9,12 @@ The [Mayo Clinic](1) says:
 > - A change in an existing mole
 > - The development of a new pigmented or unusual-looking growth on your skin
 
+The [UK National Health Service][2] says:
+> Don’t try to diagnose yourself - if you notice any unusual or persistent 
+changes to your skin it could be a sign of skin cancer, so go and see your 
+doctor. It’s probably nothing serious, but if it is skin cancer, finding it early 
+makes it easier to treat.
+
 To help you identify new and changing moles, the tools enable you to:
 
 1. Maintain a catalog of your moles
@@ -18,7 +24,8 @@ For the catalog to be useful, it must enable you to uniquely distinguish every m
 
 For the visual history of each mole to be useful, it must enable you to identify significant differences in moles over time. The tools will help you to normalise the rotation and centering of your mole images so that they are easier to compare.
 
-[1]: (http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009)
+[1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
+[2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
 
 License
 -------
