@@ -39,6 +39,24 @@ Properties to capture:
 - Any textual notes about the mole
 - A short name for the mole
 
+A simplified anatomy for approximately identifying mole locations with commonly used terms:
+
+- Head
+- Neck
+- Trunk
+  - Thorax
+  - Abdomen
+- Arms
+  - Upper arm
+  - Forearm
+  - Hand
+- Buttocks
+- Legs
+  - Thigh
+  - Below knee
+  - Foot
+
+See http://en.wikipedia.org/wiki/Human_body for a more detailed reference.
 
 License
 -------
