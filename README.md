@@ -27,6 +27,19 @@ For the visual history of each mole to be useful, it must enable you to identify
 [1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
 [2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
 
+Catalog design
+--------------
+
+Properties to capture:
+
+- Location on body
+- Any requirement for assistance to capture
+- Dated images to help identify the particular mole
+- Visual history of the mole
+- Any textual notes about the mole
+- A short name for the mole
+
+
 License
 -------
 
