@@ -30,6 +30,12 @@ For the visual history of each mole to be useful, it must enable you to identify
 Catalog design
 --------------
 
+Important features:
+
+- Enables determining if a particular mole is new
+- Enables identifying moles missed in a previous attempt to catalog
+- Easy to explore by browsing files on disk with commonly available tools
+
 Properties to capture:
 
 - Location on body
