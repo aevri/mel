@@ -27,6 +27,16 @@ For the visual history of each mole to be useful, it must enable you to identify
 [1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
 [2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
 
+Useful ideas
+------------
+
+- Grouping moles into 'constellations', like stars, may make them easier to identify
+- Splitting the body into regions for separate consideration will make it easier to manage large numbers of moles
+- Supporting incrementally and partially updating the mole catalog and histories will mean that they can be updated in sessions. This may mean the difference between being able to do 10 minutes every day and having to spend a couple of hours each month for a full update.
+- Simply maintaining a count of moles in a particular region may be a useful minimum effort for mole management
+- Support for voice commands and audible feedback may make difficult to capture regions more managable
+- Being able to filter moles and regions that require assistance to capture will make sessions more productive, as less skipping will be involved
+
 Usage scenarios
 ---------------
 
