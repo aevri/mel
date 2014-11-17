@@ -27,6 +27,19 @@ For the visual history of each mole to be useful, it must enable you to identify
 [1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
 [2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
 
+Usage scenarios
+---------------
+
+1. Create a new catalog
+2. Add moles to the catalog which the user already knows to be new to the catalog
+3. Update the catalog, searching for moles on the skin that may be new to the catalog; without relying on the user's knowledge. Update partially, so that the user doesn't have to cover the whole body in one session.
+4. Archive a mole from the catalog that is known to be excised, record pathology results
+5. Query the catalog, to see if a particular mole is new
+6. Capture a detailed image of a particular mole to it's history, compare with previous images to look for significant changes.
+7. Browse the history of a particular mole, to look for significant changes
+8. Capture new detailed images for the histories of moles, searching for moles on the skin that may have significant changes. Update partially, so that the user doesn't have to cover the whole body in one session.
+9. Browse the detailed histories of moles, looking for significant changes that may have been previously overlooked
+
 Catalog design
 --------------
 
