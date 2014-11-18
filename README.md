@@ -87,6 +87,11 @@ A simplified anatomy for approximately identifying mole locations with commonly 
 
 See http://en.wikipedia.org/wiki/Human_body for a more detailed reference.
 
+Milestones
+----------
+
+"Mel Zero" - no executables, just documentation of how to create and maintain a mole catalog manually using commonly available pre-existing software and hardware.
+
 License
 -------
 
