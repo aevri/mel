@@ -15,5 +15,6 @@ This just details the author's particular setup, many substitutions are possible
 - MacOSX app: Dropbox
 - iPhone app: Skitch
 - iPhone app: Diptic
+- iPhone app: SimpleResize
 - iPhone app: Dropbox
 - Dropbox account linking an empty 'moles' folder on MacBook Air and iPhone
