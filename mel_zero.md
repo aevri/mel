@@ -61,3 +61,13 @@ For each individual mole in a constellation:
 2. Use Skitch on the iPhone to draw an arrow to the mole
 3. Use SimpleResize on the iPhone to reduce the image size to something managable.
 4. Use Dropbox on the iPhone to upload the reduced image to a new folder in the constellation, e.g. `LeftArm/Forearm/WristHorse/Nose`. 
+
+### Adding a single mole
+
+1. Take a "context image" of the mole using the iPhone, this should show some surrounding features clearly. This allows you to quickly identify the general area.
+2. Use Skitch on the iPhone to draw a box around the mole on the context image.
+3. Take a "detail image" of the mole, this should clearly show the mole in high detail.
+4. Use Skitch to draw an arrow to the mole on the detail image.
+5. Use Diptic on the iPhone to arrange the context image and the detail image side-by-side. This new image is the identifying image for the mole.
+6. Use SimpleResize on the iPhone to reduce the image size to something managable.
+7. Use Dropbox on the iPhone to upload the reduced image to a new folder in your catalog, e.g. `LeftArm/Forearm/BigMoleNearElbow`.
