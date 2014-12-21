@@ -52,3 +52,10 @@ To add an identifying image for a constellation of moles to your catalog in Drop
 5. Use Diptic on the iPhone to arrange the context image and the detail image side-by-side. This new image is the identifying image for the constellation.
 6. Use SimpleResize on the iPhone to reduce the image size to something managable.
 7. Use Dropbox on the iPhone to upload the reduced image to a new folder in your catalog, e.g. `LeftArm/Forearm/WristHorse`. 
+
+For each individual mole in a constellation:
+
+1. Take the original 'detail image' from the constellation
+2. Use Skitch on the iPhone to draw an arrow to the mole
+3. Use SimpleResize on the iPhone to reduce the image size to something managable.
+4. Use Dropbox on the iPhone to upload the reduced image to a new folder in the constellation, e.g. `LeftArm/Forearm/WristHorse/Nose`. 
