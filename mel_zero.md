@@ -43,6 +43,8 @@ An example arrangement:
 
 For each mole and constellation, you'll want to make an identifying image for future reference. It's easy to forget which is which later.
 
+### Adding a constellation of moles
+
 To add an identifying image for a constellation of moles to your catalog in Dropbox:
 
 1. Take a "context image" of the constellation using the iPhone, this should show some surrounding features clearly. This allows you to quickly identify the general area.
