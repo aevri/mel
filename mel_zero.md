@@ -18,3 +18,25 @@ This just details the author's particular setup, many substitutions are possible
 - iPhone app: SimpleResize
 - iPhone app: Dropbox
 - Dropbox account linking an empty 'moles' folder on MacBook Air and iPhone
+
+Step 1 - Create catalog
+-----------------------
+
+- Arrange moles by physical region, some basic anatomy is useful here.
+- Where there are a lot of moles near each other it's a good idea to arrange them into 'constellations'. This should make it easier to assign unambiguous names to the individual moles.
+
+An example arrangement:
+- LeftArm
+  - Forearm
+    - WristHorse
+      - Nose
+      - Ear
+      - FrontLeg
+      - BackLeg
+    - InsideArmScorpion
+       - LeftClaw
+       - RightClaw
+       - Head
+       - Stinger
+    - BigMoleNearElbow
+- ...
