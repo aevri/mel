@@ -40,3 +40,15 @@ An example arrangement:
        - Stinger
     - BigMoleNearElbow
 - ...
+
+For each mole and constellation, you'll want to make an identifying image for future reference. It's easy to forget which is which later.
+
+To add an identifying image for a constellation of moles to your catalog in Dropbox:
+
+1. Take a "context image" of the constellation using the iPhone, this should show some surrounding features clearly. This allows you to quickly identify the general area.
+2. Use Skitch on the iPhone to draw a box around constellation on the context image.
+3. Take a "detail image" of the constellation, this should clearly show each mole in the constellation.
+4. Use Skitch to draw lines between the moles in the constellation on the detail image. The lines should make a figure that agrees with the name you have chosen for the constellation.
+5. Use Diptic on the iPhone to arrange the context image and the detail image side-by-side. This new image is the identifying image for the constellation.
+6. Use SimpleResize on the iPhone to reduce the image size to something managable.
+7. Use Dropbox on the iPhone to upload the reduced image to a new folder in your catalog, e.g. `LeftArm/Forearm/WristHorse`. 
