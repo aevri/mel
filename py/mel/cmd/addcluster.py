@@ -54,6 +54,12 @@ def process_args(args):
     context_mole_positions, detail_mole_positions = _user_mark_moles(
         context_image, detail_image, args.moles)
 
+    # TODO: put a box around moles on context image
+    # TODO: connect moles on cluster detail image
+    # TODO: combine context image with cluster detail image to make montage
+
+    # TODO: point to moles on individual detail images
+
     cv2.destroyAllWindows()
     raise NotImplementedError()
 
