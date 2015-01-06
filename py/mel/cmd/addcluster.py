@@ -135,6 +135,9 @@ def _user_mark_moles(window_name, context_image, detail_image, moles):
                 print(detail_mole_positions)
                 is_finished = True
 
+    # stop handling events, or there could be nasty side-effects
+    cv2.setMouseCallback(window_name, _make_null_mouse_callback())
+
     return context_mole_positions, detail_mole_positions
 
 
@@ -147,6 +150,14 @@ def _make_mole_capture_callback(window_name, image, radius, mole_positions):
             cv2.imshow(window_name, image)
 
     return draw_circle
+
+
+def _make_null_mouse_callback():
+
+    def null_callback(_event, _x, _y, _flags, _param):
+        pass
+
+    return null_callback
 
 
 def _box_moles(image, mole_positions, thickness):
