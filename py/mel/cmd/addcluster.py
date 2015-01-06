@@ -61,7 +61,7 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_positions, detail_mole_positions = _user_mark_moles(
-        window_name, context_image, detail_image, args.moles)
+        window_name, context_image, detail_image, len(args.moles))
 
     # Put a box around moles on context image
     _box_moles(context_image, context_mole_positions, thickness=50)
@@ -179,7 +179,7 @@ def _overwrite_image(directory, filename, image):
     cv2.imwrite(path, image)
 
 
-def _user_mark_moles(window_name, context_image, detail_image, moles):
+def _user_mark_moles(window_name, context_image, detail_image, num_moles):
 
     display_image = numpy.copy(context_image)
     cv2.imshow(window_name, display_image)
@@ -209,7 +209,7 @@ def _user_mark_moles(window_name, context_image, detail_image, moles):
         if key != -1:
             raise Exception('User aborted.')
 
-        if len(current_mole_positions) == len(moles):
+        if len(current_mole_positions) == num_moles:
             if not detail_mole_positions:
                 current_mole_positions = detail_mole_positions
                 display_image = numpy.copy(detail_image)
