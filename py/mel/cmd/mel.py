@@ -7,6 +7,7 @@ from __future__ import print_function
 import argparse
 
 import mel.cmd.addcluster
+import mel.cmd.addsingle
 
 
 def main():
@@ -17,6 +18,7 @@ def main():
     subparsers = parser.add_subparsers()
 
     _setup_parser_for_module(subparsers, mel.cmd.addcluster, 'add-cluster')
+    _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
 
     args = parser.parse_args()
     return args.func(args)
