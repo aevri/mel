@@ -84,7 +84,15 @@ def process_args(args):
     print("Press any key to continue.")
     cv2.waitKey()
 
-    # TODO: point to moles on individual detail images
+    # Point to moles on individual detail images
+    for index, mole in enumerate(detail_mole_positions):
+        indicated_image = numpy.copy(detail_image)
+        _indicate_mole(indicated_image, mole)
+        indicated_image = _shrink_to_max_dimension(
+            indicated_image, 1024)
+        cv2.imshow('display', indicated_image)
+        print("Press any key to continue.")
+        cv2.waitKey()
 
     cv2.destroyAllWindows()
     raise NotImplementedError()
@@ -247,3 +255,32 @@ def _shrink_to_max_dimension(image, max_dimension):
         new_width = int(width * scaling_factor)
         new_height = int(height * scaling_factor)
         return cv2.resize(image, (new_width, new_height))
+
+
+def _indicate_mole(image, mole):
+    pos = mole[:2]
+    radius = mole[2]
+
+    _draw_radial_line(
+        image, pos, radius * 4, radius * 6, (-1, 0), radius)
+    _draw_radial_line(
+        image, pos, radius * 4, radius * 6, (1, 0), radius)
+    _draw_radial_line(
+        image, pos, radius * 4, radius * 6, (0, 1), radius)
+    _draw_radial_line(
+        image, pos, radius * 4, radius * 6, (0, -1), radius)
+
+
+def _draw_radial_line(
+        image, origin, inner_radius, outer_radius, direction, thickness):
+    origin = numpy.array(origin)
+    direction = numpy.array(direction)
+    line_start = origin + direction * inner_radius
+    line_end = origin + direction * outer_radius
+
+    blue = (255, 0, 0)
+
+    line_start = tuple(line_start.tolist())
+    line_end = tuple(line_end.tolist())
+
+    cv2.line(image, line_start, line_end, blue, thickness)
