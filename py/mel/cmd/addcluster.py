@@ -96,18 +96,29 @@ def process_args(args):
     # TODO: try to determine the date from the original filename if possible
     #       and use that in ISO 8601 format.
     #
-    os.makedirs(args.destination)
-    cv2.imwrite(
-        os.path.join(args.destination, 'ident.jpg'),
+    _overwrite_image(
+        args.destination,
+        'ident.jpg',
         cluster_monatage_image)
     for index, mole in enumerate(args.moles):
         mole_dir = os.path.join(args.destination, mole)
-        os.makedirs(mole_dir)
-        cv2.imwrite(
-            os.path.join(mole_dir, 'ident.jpg'),
+        _overwrite_image(
+            mole_dir,
+            'ident.jpg',
             mole_images[index])
 
     # TODO: optionally remove the original images
+
+
+def _overwrite_image(directory, filename, image):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    path = os.path.join(directory, filename)
+    if os.path.exists(path):
+        os.remove(path)
+
+    cv2.imwrite(path, image)
 
 
 def _user_mark_moles(window_name, context_image, detail_image, moles):
