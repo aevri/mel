@@ -67,7 +67,12 @@ def process_args(args):
     print("Press any key to continue.")
     cv2.waitKey()
 
-    # TODO: combine context image with cluster detail image to make montage
+    # Combine context image with cluster detail image to make montage
+    cluster_monatage_image = _montage_horizontal(
+        context_image, cluster_detail_image)
+    cv2.imshow('display', cluster_monatage_image)
+    print("Press any key to continue.")
+    cv2.waitKey()
 
     # TODO: point to moles on individual detail images
 
@@ -184,3 +189,35 @@ def _yield_neighbors(node_list):
         else:
             yield (prev_node, node)
         prev_node = node
+
+
+def _montage_horizontal(left_image, right_image):
+    if left_image.shape != right_image.shape:
+        raise ValueError('image shapes must be identical')
+
+    # calculate the bounds of the montage
+    border_size = 50
+    total_border_size = numpy.array([border_size * 2, border_size * 3])
+    image_shape = left_image.shape
+    total_image_size = numpy.array([image_shape[0], image_shape[1] * 2])
+    total_montage_size = total_border_size + total_image_size
+
+    montage_image = _new_image(total_montage_size[0], total_montage_size[1])
+
+    # write the images into the montage image
+    x = border_size
+    _copy_image_into_image(left_image, montage_image, border_size, x)
+    x += border_size
+    x += image_shape[1]
+    _copy_image_into_image(right_image, montage_image, border_size, x)
+
+    return montage_image
+
+
+def _new_image(height, width):
+    return numpy.zeros((height, width, 3), numpy.uint8)
+
+
+def _copy_image_into_image(source, dest, y, x):
+    shape = source.shape
+    dest[y:(y + shape[0]), x:(x + shape[1])] = source
