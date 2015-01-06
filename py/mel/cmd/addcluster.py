@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import cv2
+import datetime
 import numpy
 import os
 
@@ -98,16 +99,73 @@ def process_args(args):
     #
     _overwrite_image(
         args.destination,
-        'ident.jpg',
+        _determine_filename_for_ident(args.context, args.detail),
         cluster_monatage_image)
     for index, mole in enumerate(args.moles):
         mole_dir = os.path.join(args.destination, mole)
         _overwrite_image(
             mole_dir,
-            'ident.jpg',
+            _determine_filename_for_ident(args.detail),
             mole_images[index])
 
     # TODO: optionally remove the original images
+
+
+def _determine_filename_for_ident(*source_filenames):
+    if not source_filenames:
+        raise ValueError(
+            '{} is not a valid list of filenames'.format(
+                source_filenames))
+
+    dates = [_guess_date_from_path(x) for x in source_filenames]
+    valid_dates = [x for x in dates if x is not None]
+    if valid_dates:
+        latest_date = max(valid_dates)
+        return '{}.jpg'.format(latest_date.isoformat())
+    else:
+        return "ident.jpg"
+
+
+def _guess_date_from_path(path):
+    """Return None if no date could be guessed, date otherwise.
+
+    Usage examples:
+
+        >>> _guess_date_from_path('inbox/Photo 05-01-2015 23 25 40.jpg')
+        datetime.date(2015, 1, 5)
+
+        >>> _guess_date_from_path('blah')
+
+    :path: path string to be converted
+    :returns: datetime.date if successful, None otherwise
+
+    """
+    # TODO: try the file date if unable to determine from name
+    filename = os.path.basename(path)
+    name = os.path.splitext(filename)[0]
+    return _guess_date_from_string(name)
+
+
+def _guess_date_from_string(date_str):
+    """Return None if no date could be guessed, date otherwise.
+
+    Usage examples:
+
+        >>> _guess_date_from_string('Photo 05-01-2015 23 25 40')
+        datetime.date(2015, 1, 5)
+
+        >>> _guess_date_from_string('blah')
+
+    :date_str: string to be converted
+    :returns: datetime.date if successful, None otherwise
+
+    """
+    try:
+        dt = datetime.datetime.strptime(date_str, 'Photo %d-%m-%Y %H %M %S')
+        date = datetime.date(dt.year, dt.month, dt.day)
+        return date
+    except ValueError:
+        return None
 
 
 def _overwrite_image(directory, filename, image):
