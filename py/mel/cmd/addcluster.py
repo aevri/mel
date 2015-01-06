@@ -60,7 +60,13 @@ def process_args(args):
     print("Press any key to continue.")
     cv2.waitKey()
 
-    # TODO: connect moles on cluster detail image
+    # Connect moles on cluster detail image
+    cluster_detail_image = numpy.copy(detail_image)
+    _connect_moles(cluster_detail_image, detail_mole_positions)
+    cv2.imshow('display', cluster_detail_image)
+    print("Press any key to continue.")
+    cv2.waitKey()
+
     # TODO: combine context image with cluster detail image to make montage
 
     # TODO: point to moles on individual detail images
@@ -148,3 +154,33 @@ def _box_moles(image, mole_positions, thickness):
 
     blue = (255, 0, 0)
     cv2.rectangle(image, left_top, right_bottom, blue, thickness)
+
+
+def _connect_moles(image, mole_positions):
+    for mole_a, mole_b in _yield_neighbors(mole_positions):
+        thickness = max(mole_a[2], mole_b[2])
+
+        # draw connection
+        a = numpy.array(mole_a[:2])
+        b = numpy.array(mole_b[:2])
+        a_to_b = numpy.linalg.norm(b - a)
+        a_to_b = a_to_b / numpy.linalg.norm(a_to_b)
+        padding = a_to_b * thickness
+        a += padding
+        b -= padding
+        a = tuple(a.tolist())
+        b = tuple(b.tolist())
+        blue = (255, 0, 0)
+        print(a_to_b, a, b, thickness)
+        cv2.line(image, a, b, blue, thickness)
+
+
+def _yield_neighbors(node_list):
+    is_first = True
+    prev_node = None
+    for node in node_list:
+        if is_first:
+            is_first = False
+        else:
+            yield (prev_node, node)
+        prev_node = node
