@@ -38,6 +38,8 @@ def setup_parser(parser):
 def process_args(args):
     context_image = cv2.imread(args.context)
     detail_image = cv2.imread(args.detail)
+
+    # print out the dimensions of the images
     print('{}: {}'.format(args.context, context_image.shape))
     print('{}: {}'.format(args.detail, detail_image.shape))
     raise NotImplementedError()
