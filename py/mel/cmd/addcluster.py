@@ -37,6 +37,10 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    # TODO: extract 'display' to variable
+    # TODO: validate destination path up-front
+    # TODO: validate mole names up-front
+
     context_image = cv2.imread(args.context)
     detail_image = cv2.imread(args.detail)
 
