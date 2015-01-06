@@ -21,6 +21,19 @@ def setup_parser(parser):
         default=None,
         help="Path to the detail image to add.")
 
+    parser.add_argument(
+        'destination',
+        type=str,
+        default=None,
+        help="New path to create and store the constellation to.")
+
+    parser.add_argument(
+        'moles',
+        type=str,
+        default=None,
+        nargs='+',
+        help="Names of the moles to store.")
+
 
 def process_args(args):
     context_image = cv2.imread(args.context)
