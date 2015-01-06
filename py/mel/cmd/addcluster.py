@@ -380,7 +380,7 @@ def _draw_radial_line(
 
 def _user_review_image(window_name, image):
     cv2.imshow(window_name, image)
-    print("Press 'a' abort, any other key to continue.")
+    print("Press 'q' quit, any other key to continue.")
     key = cv2.waitKey()
     if key == ord('q'):
         raise Exception('User aborted.')
