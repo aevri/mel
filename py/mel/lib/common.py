@@ -283,3 +283,9 @@ def user_review_image(window_name, image):
     key = cv2.waitKey()
     if key == ord('q'):
         raise Exception('User aborted.')
+
+
+def rotated90(image, times):
+    for _ in xrange(times % 4):
+        temp_image = cv2.transpose(image)
+        return cv2.flip(temp_image, 1)
