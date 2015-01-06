@@ -52,7 +52,7 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_positions, detail_mole_positions = _user_mark_moles(
-        context_image, detail_image, args.moles)
+        'display', context_image, detail_image, args.moles)
 
     # TODO: put a box around moles on context image
     # TODO: connect moles on cluster detail image
@@ -64,10 +64,10 @@ def process_args(args):
     raise NotImplementedError()
 
 
-def _user_mark_moles(context_image, detail_image, moles):
+def _user_mark_moles(window_name, context_image, detail_image, moles):
 
     display_image = numpy.copy(context_image)
-    cv2.imshow('display', display_image)
+    cv2.imshow(window_name, display_image)
 
     circle_radius = 50
 
@@ -76,9 +76,9 @@ def _user_mark_moles(context_image, detail_image, moles):
     current_mole_positions = context_mole_positions
 
     cv2.setMouseCallback(
-        'display',
+        window_name,
         _make_mole_capture_callback(
-            'display',
+            window_name,
             display_image,
             circle_radius,
             context_mole_positions))
@@ -99,13 +99,13 @@ def _user_mark_moles(context_image, detail_image, moles):
                 current_mole_positions = detail_mole_positions
                 display_image = numpy.copy(detail_image)
                 cv2.setMouseCallback(
-                    'display',
+                    window_name,
                     _make_mole_capture_callback(
-                        'display',
+                        window_name,
                         display_image,
                         circle_radius,
                         detail_mole_positions))
-                cv2.imshow('display', display_image)
+                cv2.imshow(window_name, display_image)
             else:
                 print("context positions:")
                 print(context_mole_positions)
