@@ -121,7 +121,7 @@ def _make_mole_capture_callback(window_name, image, radius, mole_positions):
     def draw_circle(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
             cv2.circle(image, (x, y), radius, (255, 0, 0), -1)
-            mole_positions.append((x, y))
+            mole_positions.append((x, y, radius))
             cv2.imshow(window_name, image)
 
     return draw_circle
