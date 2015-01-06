@@ -74,6 +74,16 @@ def process_args(args):
     print("Press any key to continue.")
     cv2.waitKey()
 
+    # Resample the montage to a managable size
+    old_montage_shape = cluster_monatage_image.shape
+    cluster_monatage_image = _shrink_to_max_dimension(
+        cluster_monatage_image, 1024)
+    print("reduced montage size: {} -> {}".format(
+        old_montage_shape, cluster_monatage_image.shape))
+    cv2.imshow('display', cluster_monatage_image)
+    print("Press any key to continue.")
+    cv2.waitKey()
+
     # TODO: point to moles on individual detail images
 
     cv2.destroyAllWindows()
@@ -221,3 +231,19 @@ def _new_image(height, width):
 def _copy_image_into_image(source, dest, y, x):
     shape = source.shape
     dest[y:(y + shape[0]), x:(x + shape[1])] = source
+
+
+def _shrink_to_max_dimension(image, max_dimension):
+    """May or may not return the original image."""
+
+    shape = image.shape
+    height = shape[0]
+    width = shape[1]
+
+    scaling_factor = max_dimension / max(width, height)
+    if scaling_factor >= 1:
+        return image
+    else:
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+        return cv2.resize(image, (new_width, new_height))
