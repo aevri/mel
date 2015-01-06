@@ -60,33 +60,19 @@ def process_args(args):
 
     # Put a box around moles on context image
     _box_moles(context_image, context_mole_positions, thickness=50)
-    cv2.imshow('display', context_image)
-    print("Press any key to continue.")
-    cv2.waitKey()
 
     # Connect moles on cluster detail image
     cluster_detail_image = numpy.copy(detail_image)
     _connect_moles(cluster_detail_image, detail_mole_positions)
-    cv2.imshow('display', cluster_detail_image)
-    print("Press any key to continue.")
-    cv2.waitKey()
 
     # Combine context image with cluster detail image to make montage
     cluster_monatage_image = _montage_horizontal(
         context_image, cluster_detail_image)
-    cv2.imshow('display', cluster_monatage_image)
-    print("Press any key to continue.")
-    cv2.waitKey()
-
-    # Resample the montage to a managable size
-    old_montage_shape = cluster_monatage_image.shape
     cluster_monatage_image = _shrink_to_max_dimension(
         cluster_monatage_image, 1024)
-    print("reduced montage size: {} -> {}".format(
-        old_montage_shape, cluster_monatage_image.shape))
-    cv2.imshow('display', cluster_monatage_image)
-    print("Press any key to continue.")
-    cv2.waitKey()
+
+    # Let user review montage
+    _user_review_image('display', cluster_monatage_image)
 
     # Point to moles on individual detail images
     for index, mole in enumerate(detail_mole_positions):
@@ -94,9 +80,7 @@ def process_args(args):
         _indicate_mole(indicated_image, mole)
         indicated_image = _shrink_to_max_dimension(
             indicated_image, 1024)
-        cv2.imshow('display', indicated_image)
-        print("Press any key to continue.")
-        cv2.waitKey()
+        _user_review_image('display', indicated_image)
 
     cv2.destroyAllWindows()
     raise NotImplementedError()
@@ -288,3 +272,11 @@ def _draw_radial_line(
     line_end = tuple(line_end.tolist())
 
     cv2.line(image, line_start, line_end, blue, thickness)
+
+
+def _user_review_image(window_name, image):
+    cv2.imshow(window_name, image)
+    print("Press 'a' abort, any other key to continue.")
+    key = cv2.waitKey()
+    if key == ord('q'):
+        raise Exception('User aborted.')
