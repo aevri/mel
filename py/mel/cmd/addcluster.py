@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import cv2
+import numpy
 
 
 def setup_parser(parser):
@@ -42,4 +43,69 @@ def process_args(args):
     # print out the dimensions of the images
     print('{}: {}'.format(args.context, context_image.shape))
     print('{}: {}'.format(args.detail, detail_image.shape))
+
+    display_image = numpy.copy(context_image)
+
+    # display the context image in a reasonably sized window
+    cv2.namedWindow('display', cv2.WINDOW_NORMAL)
+    window_width = 800
+    window_height = 600
+    cv2.resizeWindow('display', window_width, window_height)
+    cv2.imshow('display', display_image)
+
+    circle_radius = 50
+
+    context_mole_positions = []
+    detail_mole_positions = []
+    current_mole_positions = context_mole_positions
+
+    cv2.setMouseCallback(
+        'display',
+        _make_mole_capture_callback(
+            'display',
+            display_image,
+            circle_radius,
+            context_mole_positions))
+
+    # main loop
+    print('Please mark all specified moles, double-click to mark.')
+    print('Press any key to exit.')
+    is_finished = False
+    while not is_finished:
+        key = cv2.waitKey(50)
+
+        if key != -1:
+            is_finished = True
+
+        if len(current_mole_positions) == len(args.moles):
+            if not detail_mole_positions:
+                current_mole_positions = detail_mole_positions
+                display_image = numpy.copy(detail_image)
+                cv2.setMouseCallback(
+                    'display',
+                    _make_mole_capture_callback(
+                        'display',
+                        display_image,
+                        circle_radius,
+                        detail_mole_positions))
+                cv2.imshow('display', display_image)
+            else:
+                print("context positions:")
+                print(context_mole_positions)
+                print("detail positions:")
+                print(detail_mole_positions)
+                is_finished = True
+
+    cv2.destroyAllWindows()
     raise NotImplementedError()
+
+
+def _make_mole_capture_callback(window_name, image, radius, mole_positions):
+
+    def draw_circle(event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            cv2.circle(image, (x, y), radius, (255, 0, 0), -1)
+            mole_positions.append((x, y))
+            cv2.imshow(window_name, image)
+
+    return draw_circle
