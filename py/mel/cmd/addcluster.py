@@ -54,7 +54,12 @@ def process_args(args):
     context_mole_positions, detail_mole_positions = _user_mark_moles(
         'display', context_image, detail_image, args.moles)
 
-    # TODO: put a box around moles on context image
+    # Put a box around moles on context image
+    _box_moles(context_image, context_mole_positions, thickness=50)
+    cv2.imshow('display', context_image)
+    print("Press any key to continue.")
+    cv2.waitKey()
+
     # TODO: connect moles on cluster detail image
     # TODO: combine context image with cluster detail image to make montage
 
@@ -125,3 +130,21 @@ def _make_mole_capture_callback(window_name, image, radius, mole_positions):
             cv2.imshow(window_name, image)
 
     return draw_circle
+
+
+def _box_moles(image, mole_positions, thickness):
+    left = min((m[0] - m[2] for m in mole_positions))
+    top = min((m[1] - m[2] for m in mole_positions))
+    right = max((m[0] + m[2] for m in mole_positions))
+    bottom = max((m[1] + m[2] for m in mole_positions))
+
+    left -= 2 * thickness
+    top -= 2 * thickness
+    right += 2 * thickness
+    bottom += 2 * thickness
+
+    left_top = (left, top)
+    right_bottom = (right, bottom)
+
+    blue = (255, 0, 0)
+    cv2.rectangle(image, left_top, right_bottom, blue, thickness)
