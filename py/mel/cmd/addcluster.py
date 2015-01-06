@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import cv2
 import numpy
+import os
 
 
 def setup_parser(parser):
@@ -75,15 +76,35 @@ def process_args(args):
     _user_review_image(window_name, cluster_monatage_image)
 
     # Point to moles on individual detail images
+    mole_images = []
     for index, mole in enumerate(detail_mole_positions):
         indicated_image = numpy.copy(detail_image)
         _indicate_mole(indicated_image, mole)
         indicated_image = _shrink_to_max_dimension(
             indicated_image, 1024)
         _user_review_image(window_name, indicated_image)
+        mole_images.append(indicated_image)
 
+    # No more interaction, close all windows
     cv2.destroyAllWindows()
-    raise NotImplementedError()
+
+    # Write the images
+    #
+    # TODO: try to determine the date from the original filename if possible
+    #       and use that in ISO 8601 format.
+    #
+    os.makedirs(args.destination)
+    cv2.imwrite(
+        os.path.join(args.destination, 'ident.jpg'),
+        cluster_monatage_image)
+    for index, mole in enumerate(args.moles):
+        mole_dir = os.path.join(args.destination, mole)
+        os.makedirs(mole_dir)
+        cv2.imwrite(
+            os.path.join(mole_dir, 'ident.jpg'),
+            mole_images[index])
+
+    # TODO: optionally remove the original images
 
 
 def _user_mark_moles(window_name, context_image, detail_image, moles):
