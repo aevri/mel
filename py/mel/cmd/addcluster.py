@@ -75,7 +75,7 @@ def process_args(args):
         key = cv2.waitKey(50)
 
         if key != -1:
-            is_finished = True
+            raise Exception('User aborted.')
 
         if len(current_mole_positions) == len(args.moles):
             if not detail_mole_positions:
