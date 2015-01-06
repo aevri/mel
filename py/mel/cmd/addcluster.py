@@ -44,13 +44,23 @@ def process_args(args):
     print('{}: {}'.format(args.context, context_image.shape))
     print('{}: {}'.format(args.detail, detail_image.shape))
 
-    display_image = numpy.copy(context_image)
-
     # display the context image in a reasonably sized window
     cv2.namedWindow('display', cv2.WINDOW_NORMAL)
     window_width = 800
     window_height = 600
     cv2.resizeWindow('display', window_width, window_height)
+
+    # get the user to mark the mole positions
+    context_mole_positions, detail_mole_positions = _user_mark_moles(
+        context_image, detail_image, args.moles)
+
+    cv2.destroyAllWindows()
+    raise NotImplementedError()
+
+
+def _user_mark_moles(context_image, detail_image, moles):
+
+    display_image = numpy.copy(context_image)
     cv2.imshow('display', display_image)
 
     circle_radius = 50
@@ -69,7 +79,8 @@ def process_args(args):
 
     # main loop
     print('Please mark all specified moles, double-click to mark.')
-    print('Press any key to exit.')
+    print('Press any key to abort.')
+
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
@@ -77,7 +88,7 @@ def process_args(args):
         if key != -1:
             raise Exception('User aborted.')
 
-        if len(current_mole_positions) == len(args.moles):
+        if len(current_mole_positions) == len(moles):
             if not detail_mole_positions:
                 current_mole_positions = detail_mole_positions
                 display_image = numpy.copy(detail_image)
@@ -96,8 +107,7 @@ def process_args(args):
                 print(detail_mole_positions)
                 is_finished = True
 
-    cv2.destroyAllWindows()
-    raise NotImplementedError()
+    return context_mole_positions, detail_mole_positions
 
 
 def _make_mole_capture_callback(window_name, image, radius, mole_positions):
