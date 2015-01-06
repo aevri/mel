@@ -44,6 +44,9 @@ def process_args(args):
     context_image = cv2.imread(args.context)
     detail_image = cv2.imread(args.detail)
 
+    montage_size = 1024
+    mole_size = 512
+
     # print out the dimensions of the images
     print('{}: {}'.format(args.context, context_image.shape))
     print('{}: {}'.format(args.detail, detail_image.shape))
@@ -70,7 +73,7 @@ def process_args(args):
     cluster_monatage_image = _montage_horizontal(
         context_image, cluster_detail_image)
     cluster_monatage_image = _shrink_to_max_dimension(
-        cluster_monatage_image, 1024)
+        cluster_monatage_image, montage_size)
 
     # Let user review montage
     _user_review_image(window_name, cluster_monatage_image)
@@ -81,7 +84,7 @@ def process_args(args):
         indicated_image = numpy.copy(detail_image)
         _indicate_mole(indicated_image, mole)
         indicated_image = _shrink_to_max_dimension(
-            indicated_image, 1024)
+            indicated_image, mole_size)
         _user_review_image(window_name, indicated_image)
         mole_images.append(indicated_image)
 
