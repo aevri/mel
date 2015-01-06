@@ -37,7 +37,6 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    # TODO: extract 'display' to variable
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
@@ -49,14 +48,15 @@ def process_args(args):
     print('{}: {}'.format(args.detail, detail_image.shape))
 
     # display the context image in a reasonably sized window
-    cv2.namedWindow('display', cv2.WINDOW_NORMAL)
+    window_name = 'display'
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     window_width = 800
     window_height = 600
-    cv2.resizeWindow('display', window_width, window_height)
+    cv2.resizeWindow(window_name, window_width, window_height)
 
     # get the user to mark the mole positions
     context_mole_positions, detail_mole_positions = _user_mark_moles(
-        'display', context_image, detail_image, args.moles)
+        window_name, context_image, detail_image, args.moles)
 
     # Put a box around moles on context image
     _box_moles(context_image, context_mole_positions, thickness=50)
@@ -72,7 +72,7 @@ def process_args(args):
         cluster_monatage_image, 1024)
 
     # Let user review montage
-    _user_review_image('display', cluster_monatage_image)
+    _user_review_image(window_name, cluster_monatage_image)
 
     # Point to moles on individual detail images
     for index, mole in enumerate(detail_mole_positions):
@@ -80,7 +80,7 @@ def process_args(args):
         _indicate_mole(indicated_image, mole)
         indicated_image = _shrink_to_max_dimension(
             indicated_image, 1024)
-        _user_review_image('display', indicated_image)
+        _user_review_image(window_name, indicated_image)
 
     cv2.destroyAllWindows()
     raise NotImplementedError()
