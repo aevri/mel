@@ -177,7 +177,7 @@ def connect_moles(image, mole_positions):
         # draw connection
         a = numpy.array(mole_a[:2])
         b = numpy.array(mole_b[:2])
-        a_to_b = numpy.linalg.norm(b - a)
+        a_to_b = b - a
         a_to_b = a_to_b / numpy.linalg.norm(a_to_b)
         padding = a_to_b * thickness
         a += padding
