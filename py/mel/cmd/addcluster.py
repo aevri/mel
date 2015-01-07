@@ -44,6 +44,11 @@ def setup_parser(parser):
         default=None,
         help="Rotate images 90 degrees clockwise this number of times.")
 
+    parser.add_argument(
+        '--h-mirror',
+        action="store_true",
+        help="Mirror both images horizontally.")
+
 
 def process_args(args):
     # TODO: validate destination path up-front
@@ -55,6 +60,10 @@ def process_args(args):
     if args.rot90:
         context_image = mel.lib.common.rotated90(context_image, args.rot90)
         detail_image = mel.lib.common.rotated90(detail_image, args.rot90)
+
+    if args.h_mirror:
+        context_image = cv2.flip(context_image, 1)
+        detail_image = cv2.flip(detail_image, 1)
 
     montage_size = 1024
     mole_size = 512
