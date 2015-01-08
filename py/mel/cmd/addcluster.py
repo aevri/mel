@@ -61,6 +61,16 @@ def setup_parser(parser):
         action="store_true",
         help="Mirror both images horizontally.")
 
+    parser.add_argument(
+        '--h-mirror-context',
+        action="store_true",
+        help="Mirror context image horizontally.")
+
+    parser.add_argument(
+        '--h-mirror-detail',
+        action="store_true",
+        help="Mirror detail image horizontally.")
+
 
 def process_args(args):
     # TODO: validate destination path up-front
@@ -83,6 +93,12 @@ def process_args(args):
 
     if args.h_mirror:
         context_image = cv2.flip(context_image, 1)
+        detail_image = cv2.flip(detail_image, 1)
+
+    if args.h_mirror_context:
+        context_image = cv2.flip(context_image, 1)
+
+    if args.h_mirror_detail:
         detail_image = cv2.flip(detail_image, 1)
 
     montage_size = 1024
