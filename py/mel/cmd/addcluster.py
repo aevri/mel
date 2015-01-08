@@ -45,6 +45,18 @@ def setup_parser(parser):
         help="Rotate images 90 degrees clockwise this number of times.")
 
     parser.add_argument(
+        '--rot90-context',
+        type=int,
+        default=None,
+        help="Rotate context image 90 degrees clockwise this number of times.")
+
+    parser.add_argument(
+        '--rot90-detail',
+        type=int,
+        default=None,
+        help="Rotate detail image 90 degrees clockwise this number of times.")
+
+    parser.add_argument(
         '--h-mirror',
         action="store_true",
         help="Mirror both images horizontally.")
@@ -60,6 +72,14 @@ def process_args(args):
     if args.rot90:
         context_image = mel.lib.common.rotated90(context_image, args.rot90)
         detail_image = mel.lib.common.rotated90(detail_image, args.rot90)
+
+    if args.rot90_context:
+        context_image = mel.lib.common.rotated90(
+            context_image, args.rot90_context)
+
+    if args.rot90_detail:
+        context_image = mel.lib.common.rotated90(
+            detail_image, args.rot90_detail)
 
     if args.h_mirror:
         context_image = cv2.flip(context_image, 1)
