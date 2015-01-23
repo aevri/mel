@@ -8,6 +8,7 @@ import argparse
 
 import mel.cmd.addcluster
 import mel.cmd.addsingle
+import mel.cmd.list
 
 
 def main():
@@ -19,6 +20,7 @@ def main():
 
     _setup_parser_for_module(subparsers, mel.cmd.addcluster, 'add-cluster')
     _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
+    _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
 
     args = parser.parse_args()
     return args.func(args)
