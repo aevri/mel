@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import multiprocessing
+
 import cv2
 
 import mel.lib.moleimaging
@@ -19,9 +21,11 @@ def setup_parser(parser):
 
 def process_args(args):
 
-    for path in args.path:
-        print(path)
-        stats = get_stats(path)
+    pool = multiprocessing.Pool()
+
+    filename_stats_iter = pool.imap_unordered(get_stats, args.path)
+    for filename, stats in filename_stats_iter:
+        print(filename)
         if stats:
             print(map(lambda x: int(x), stats))
 
@@ -47,4 +51,4 @@ def get_stats(filename):
         if mole_acquirer.just_locked():
             final_stats = stats
 
-    return final_stats
+    return filename, final_stats
