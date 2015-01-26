@@ -42,8 +42,45 @@ def process_args(args):
         img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
         img = cv2.split(img)[1]
         _, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
-        masked = cv2.bitwise_and(frame, frame, mask=img)
-        highlighted = cv2.addWeighted(frame, 0.75, masked, 0.25, 0.0)
+        ringed = _process_contours(img, frame)
 
-        # show the image with 'non-mole' areas faded
-        cv2.imshow(window_name, highlighted)
+        # show the image with 'non-mole' areas encircled
+        cv2.imshow(window_name, ringed)
+
+
+def _find_mole_contour(contours):
+    mole_contour = None
+    mole_area = None
+    for contour in contours:
+        if contour is not None:
+            area = cv2.contourArea(contour)
+            if mole_area is None or area > mole_area:
+                mole_contour = contour
+                mole_area = area
+
+    return mole_contour
+
+
+def _process_contours(mole_regions, original):
+
+    final = original.copy()
+
+    contours, hierarchy = cv2.findContours(
+        mole_regions.copy(),
+        cv2.cv.CV_RETR_LIST,
+        cv2.cv.CV_CHAIN_APPROX_NONE)
+
+    mole_contour = _find_mole_contour(contours)
+    if mole_contour is not None:
+        if len(mole_contour) > 5:
+
+            ellipse = cv2.fitEllipse(mole_contour)
+
+            yellow = (0, 255, 255)
+            green = (0, 255, 0)
+            red = (0, 0, 255)
+            blue = (255, 0, 0)
+
+            cv2.ellipse(final, ellipse, blue, 5)
+
+    return final
