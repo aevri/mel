@@ -10,6 +10,7 @@ import mel.cmd.addcluster
 import mel.cmd.addsingle
 import mel.cmd.list
 import mel.cmd.microview
+import mel.cmd.microrecord
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
     _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
+    _setup_parser_for_module(subparsers, mel.cmd.microrecord, 'micro-record')
 
     args = parser.parse_args()
     return args.func(args)
