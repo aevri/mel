@@ -12,24 +12,35 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    for mole_dir in _yield_mole_dirs('.'):
-        print(mole_dir)
+    for mole in _yield_mole_dirs('.'):
+        print(mole.catalog_relative_path)
+
+
+class _Mole(object):
+
+    def __init__(self, full_path, catalog_relative_path):
+        super(_Mole, self).__init__()
+        self.full_path = full_path
+        self.catalog_relative_path = catalog_relative_path
 
 
 def _yield_mole_dirs(rootpath):
     for path, dirs, files in os.walk(rootpath):
 
+        catalog_relpath = os.path.relpath(path, rootpath)
 
         # ignore directories with no files
         if not files:
             continue
 
         # ignore dot-directories in the root, like '.git'
-        if os.path.relpath(path, rootpath).startswith('.'):
+        if catalog_relpath.startswith('.'):
             continue
 
         # mole clusters have a picture and all the moles as child dirs, ignore
         if dirs:
             continue
 
-        yield path
+        yield _Mole(
+            os.path.abspath(path),
+            catalog_relpath)
