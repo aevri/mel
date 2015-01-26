@@ -29,7 +29,7 @@ def process_args(args):
     # loop until the user presses a key
     print("Press any key to exit.")
     is_finished = False
-    mole_acquirer = MoleAcquirer()
+    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
@@ -55,74 +55,3 @@ def process_args(args):
         else:
             # show the output from the microscope
             cv2.imshow(window_name, frame)
-
-
-class MoleAcquirer(object):
-
-    def __init__(self):
-        super(MoleAcquirer, self).__init__()
-        self._is_locked = False
-        self._was_locked = False
-        self._last_stats = None
-        self._last_stats_diff = None
-
-    def update(self, stats):
-        self._was_locked = self._is_locked
-        if stats and self._last_stats:
-            stats_diff = map(lambda x, y: x - y, self._last_stats, stats)
-            self._last_stats = map(lambda x, y: _lerp(x, y, 0.1), self._last_stats, stats)
-
-            if self._last_stats_diff:
-                self._last_stats_diff = map(
-                    lambda x, y: _lerp(x, y, 0.1),
-                    self._last_stats_diff,
-                    stats_diff)
-
-                should_lock = all(
-                    map(lambda x: int(x) == 0, self._last_stats_diff))
-
-                should_unlock = any(
-                    map(lambda x: abs(int(x)) > 1, self._last_stats_diff))
-
-                if not self._is_locked and should_lock:
-                    self._is_locked = True
-                    print(
-                        'lock',
-                        map(lambda x: int(x), self._last_stats),
-                        map(lambda x: int(x), self._last_stats_diff)
-                    )
-                elif self._is_locked and should_unlock:
-                    self._is_locked = False
-                    # print(
-                    #     "unlock",
-                    #     map(lambda x: int(x), self._last_stats),
-                    #     map(lambda x: int(x), self._last_stats_diff)
-                    # )
-
-            else:
-                self._last_stats_diff = stats_diff
-                self._is_locked = False
-        elif stats:
-            self._last_stats = stats
-            self._is_locked = False
-        else:
-            self._is_locked = False
-
-    def just_unlocked(self):
-        return self._was_locked and not self._is_locked
-
-    def just_locked(self):
-        return not self._was_locked and self._is_locked
-
-    @property
-    def is_locked(self):
-        return self._is_locked
-
-    @property
-    def last_stats(self):
-        return self._last_stats
-
-
-def _lerp(origin, target, factor_0_to_1):
-    towards = target - origin
-    return origin + (towards * factor_0_to_1)
