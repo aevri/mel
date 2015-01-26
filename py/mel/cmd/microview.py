@@ -39,13 +39,7 @@ def process_args(args):
         if not ret:
             raise Exception("Could not read frame.")
 
-        # highlight areas of high saturation, they are likely moles
-        img = frame.copy()
-        img = cv2.blur(img, (40, 40))
-        img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
-        img = cv2.split(img)[1]
-        _, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
-        ringed, stats = mel.lib.moleimaging.process_contours(img, frame)
+        ringed, stats = mel.lib.moleimaging.find_mole(frame)
 
         mole_acquirer.update(stats)
 

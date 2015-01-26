@@ -11,6 +11,17 @@ import cv2
 import mel.lib.math
 
 
+def find_mole(frame):
+    # look for areas of high saturation, they are likely moles
+    img = frame.copy()
+    img = cv2.blur(img, (40, 40))
+    img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
+    img = cv2.split(img)[1]
+    _, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
+    ringed, stats = mel.lib.moleimaging.process_contours(img, frame)
+    return ringed, stats
+
+
 def process_contours(mole_regions, original):
 
     final = original.copy()
