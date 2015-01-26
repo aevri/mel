@@ -20,20 +20,31 @@ def setup_parser(parser):
 def process_args(args):
 
     for path in args.path:
-
         print(path)
+        stats = get_stats(path)
+        if stats:
+            print(map(lambda x: int(x), stats))
 
-        cap = cv2.VideoCapture(path)
-        if not cap.isOpened():
-            raise Exception("Could not open {}.".format(path))
 
-        is_finished = False
-        mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
-        while not is_finished:
-            ret, frame = cap.read()
-            if not ret:
-                is_finished = True
-                continue
+def get_stats(filename):
 
-            _, stats = mel.lib.moleimaging.find_mole(frame)
-            mole_acquirer.update(stats)
+    final_stats = None
+
+    cap = cv2.VideoCapture(filename)
+    if not cap.isOpened():
+        raise Exception("Could not open {}.".format(filename))
+
+    is_finished = False
+    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
+    while not is_finished:
+        ret, frame = cap.read()
+        if not ret:
+            is_finished = True
+            continue
+
+        _, stats = mel.lib.moleimaging.find_mole(frame)
+        mole_acquirer.update(stats)
+        if mole_acquirer.just_locked():
+            final_stats = stats
+
+    return final_stats
