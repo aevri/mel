@@ -31,6 +31,7 @@ def process_args(args):
     is_finished = False
     last_stats = None
     last_stats_diff = None
+    is_locked = False
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
@@ -56,19 +57,42 @@ def process_args(args):
                 last_stats_diff = map(
                     lambda x, y: _lerp(x, y, 0.1), last_stats_diff, stats_diff)
 
-                print(
-                    map(lambda x: int(x), last_stats),
-                    map(lambda x: int(x), last_stats_diff)
-                )
+                should_lock = all(
+                    map(lambda x: int(x) == 0, last_stats_diff))
+
+                should_unlock = any(
+                    map(lambda x: abs(int(x)) > 1, last_stats_diff))
+
+                if not is_locked and should_lock:
+                    is_locked = True
+                    print(
+                        'lock',
+                        map(lambda x: int(x), last_stats),
+                        map(lambda x: int(x), last_stats_diff)
+                    )
+                elif is_locked and should_unlock:
+                    is_locked = False
+                    # print(
+                    #     "unlock",
+                    #     map(lambda x: int(x), last_stats),
+                    #     map(lambda x: int(x), last_stats_diff)
+                    # )
+
             else:
                 last_stats_diff = stats_diff
-
-
+                is_locked = False
         elif stats:
             last_stats = stats
+            is_locked = False
+        else:
+            is_locked = False
 
-        # show the image with 'non-mole' areas encircled
-        cv2.imshow(window_name, ringed)
+        if is_locked:
+            # show the image with mole encircled
+            cv2.imshow(window_name, ringed)
+        else:
+            # show the output from the microscope
+            cv2.imshow(window_name, frame)
 
 
 def _lerp(origin, target, factor_0_to_1):
