@@ -99,19 +99,8 @@ class MoleAcquirer(object):
 
                 if not self._is_locked and should_lock:
                     self._is_locked = True
-                    print(
-                        'lock',
-                        map(lambda x: int(x), self._last_stats),
-                        map(lambda x: int(x), self._last_stats_diff)
-                    )
                 elif self._is_locked and should_unlock:
                     self._is_locked = False
-                    # print(
-                    #     "unlock",
-                    #     map(lambda x: int(x), self._last_stats),
-                    #     map(lambda x: int(x), self._last_stats_diff)
-                    # )
-
             else:
                 self._last_stats_diff = stats_diff
                 self._is_locked = False
