@@ -26,18 +26,30 @@ def process_args(args):
             for sample in stats:
                 name_stats.append((filename, sample))
 
-    classifier = NamedClassifier()
-    training_samples = name_stats[1:-1]
-    test_samples = name_stats[:1] + name_stats[-1:]
+    # Train on all of the data except one element, then try to predict the name
+    # of that element.
+    #
+    # Loop and do this for each element in the list.
+    #
+    successes = 0
+    for i in xrange(len(name_stats)):
+        classifier = NamedClassifier()
 
-    for name, stats in training_samples:
-        classifier.add_sample(stats, name)
+        training_samples = name_stats[:i] + name_stats[i + 1:]
+        for name, stats in training_samples:
+            classifier.add_sample(stats, name)
 
-    classifier.train()
+        classifier.train()
 
-    for name, stats in test_samples:
+        name = name_stats[i][0]
+        stats = name_stats[i][1]
         predicted_name = classifier.predict(stats)
-        print(name, stats, '->', predicted_name)
+        if predicted_name != name:
+            print('mistake:', name, stats, '->', predicted_name)
+        else:
+            successes += 1
+
+    print('accuracy:', (successes / len(name_stats)) * 100, '%')
 
 
 class NamedClassifier(object):
