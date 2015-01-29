@@ -44,7 +44,11 @@ def process_contours(mole_regions, original):
             blue = (255, 0, 0)
 
             cv2.ellipse(final, ellipse, blue, 5)
-            stats = (math.sqrt(mole_area), ellipse[1][0], ellipse[1][1])
+            sqrt_area = math.sqrt(mole_area)
+            aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
+            ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
+            coverage_percent = (mole_area / ellipse_area) * 100
+            stats = (sqrt_area, aspect_ratio, coverage_percent)
 
     return final, stats
 
