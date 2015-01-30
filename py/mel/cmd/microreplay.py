@@ -6,9 +6,7 @@ from __future__ import print_function
 
 import multiprocessing
 
-import collections
 import cv2
-import json
 
 import mel.lib.moleimaging
 
@@ -25,30 +23,21 @@ def process_args(args):
 
     pool = multiprocessing.Pool()
 
-    name_stats = collections.defaultdict(list)
-    filename_stats_iter = pool.imap_unordered(get_stats, args.path)
-    for filename, stats in filename_stats_iter:
-        name = filename.split('_')[0]
-        print(filename, name)
-        if stats:
-            print(map(lambda x: int(x), stats))
-            name_stats[name].append(stats)
-
-    for name, stats in name_stats.iteritems():
-        with open('{}.json'.format(name), 'w') as f:
-            json.dump(stats, f, indent=4)
+    results_iter = pool.imap_unordered(get_stats, args.path)
+    for filename, images in results_iter:
+        print(filename, images)
 
 
 def get_stats(filename):
-
-    final_stats = None
 
     cap = cv2.VideoCapture(filename)
     if not cap.isOpened():
         raise Exception("Could not open {}.".format(filename))
 
+    count = 0
     is_finished = False
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
+    image_list = []
     while not is_finished:
         ret, frame = cap.read()
         if not ret:
@@ -58,6 +47,9 @@ def get_stats(filename):
         _, stats = mel.lib.moleimaging.find_mole(frame)
         mole_acquirer.update(stats)
         if mole_acquirer.just_locked():
-            final_stats = stats
+            count += 1
+            outname = '{}.{}.jpg'.format(filename, count)
+            cv2.imwrite(outname, frame)
+            image_list.append(outname)
 
-    return filename, final_stats
+    return filename, image_list

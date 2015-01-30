@@ -5,8 +5,9 @@ from __future__ import division
 from __future__ import print_function
 
 import cv2
-import json
 import numpy
+
+import mel.lib.moleimaging
 
 
 def setup_parser(parser):
@@ -14,17 +15,18 @@ def setup_parser(parser):
         'path',
         type=str,
         nargs='+',
-        help="Paths to stats to analyse.")
+        help="Paths to images to analyse.")
 
 
 def process_args(args):
 
     name_stats = []
     for filename in args.path:
-        with open(filename) as f:
-            stats = json.load(f)
-            for sample in stats:
-                name_stats.append((filename, sample))
+        image = cv2.imread(filename)
+        _, stats = mel.lib.moleimaging.find_mole(image)
+        name = filename.split('_')[0]
+        if stats is not None:
+            name_stats.append((name, stats))
 
     # Train on all of the data except one element, then try to predict the name
     # of that element.
