@@ -38,9 +38,6 @@ def process_contours(mole_regions, original):
 
             ellipse = cv2.fitEllipse(mole_contour)
 
-            yellow = (0, 255, 255)
-            green = (0, 255, 0)
-            red = (0, 0, 255)
             blue = (255, 0, 0)
 
             cv2.ellipse(final, ellipse, blue, 5)
