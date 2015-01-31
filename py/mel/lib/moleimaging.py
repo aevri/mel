@@ -22,6 +22,15 @@ def find_mole(frame):
     return ringed, stats
 
 
+def calc_hist(image, channel, mask):
+    hist = cv2.calcHist(
+        [image], [channel], mask, [8], [0, 256])
+    hist = [int(x) for x in hist]
+    hist_sum = sum(hist)
+    hist = [100 * x / hist_sum for x in hist]
+    return hist
+
+
 def process_contours(mole_regions, original):
 
     final = original.copy()
@@ -40,12 +49,20 @@ def process_contours(mole_regions, original):
 
             blue = (255, 0, 0)
 
+            hsv = cv2.cvtColor(original, cv2.cv.CV_BGR2HSV)
+            hist = calc_hist(hsv, 1, mole_regions)
+
             cv2.ellipse(final, ellipse, blue, 5)
             sqrt_area = math.sqrt(mole_area)
             aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
             ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
             coverage_percent = (mole_area / ellipse_area) * 100
-            stats = (sqrt_area, aspect_ratio, coverage_percent)
+            stats = (
+                sqrt_area,
+                aspect_ratio,
+                coverage_percent,
+            )
+            stats += tuple(hist)
 
     return final, stats
 
