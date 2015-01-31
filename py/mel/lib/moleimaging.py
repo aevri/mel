@@ -56,6 +56,7 @@ def process_contours(mole_regions, original):
 
             hsv = cv2.cvtColor(original, cv2.cv.CV_BGR2HSV)
             hist = calc_hist(hsv, 1, mole_regions)
+            hist_surrounding = calc_hist(hsv, 1, None)
 
             cv2.ellipse(final, ellipse, blue, 5)
             sqrt_area = math.sqrt(mole_area)
@@ -68,6 +69,7 @@ def process_contours(mole_regions, original):
                 coverage_percent,
             )
             stats += tuple(hist)
+            stats += tuple(hist_surrounding)
             stats += tuple(hu_moments)
 
     return final, stats
