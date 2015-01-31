@@ -7,6 +7,7 @@ from __future__ import print_function
 import math
 
 import cv2
+import numpy
 
 import mel.lib.math
 
@@ -49,6 +50,10 @@ def process_contours(mole_regions, original):
 
             blue = (255, 0, 0)
 
+            moments = cv2.moments(mole_contour)
+            hu_moments = cv2.HuMoments(moments)
+            hu_moments = [math.log10(abs(float(x))) for x in hu_moments]
+
             hsv = cv2.cvtColor(original, cv2.cv.CV_BGR2HSV)
             hist = calc_hist(hsv, 1, mole_regions)
 
@@ -63,6 +68,7 @@ def process_contours(mole_regions, original):
                 coverage_percent,
             )
             stats += tuple(hist)
+            stats += tuple(hu_moments)
 
     return final, stats
 
