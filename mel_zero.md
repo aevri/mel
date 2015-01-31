@@ -71,3 +71,11 @@ For each individual mole in a constellation:
 5. Use Diptic on the iPhone to arrange the context image and the detail image side-by-side. This new image is the identifying image for the mole.
 6. Use SimpleResize on the iPhone to reduce the image size to something managable.
 7. Use Dropbox on the iPhone to upload the reduced image to a new folder in your catalog, e.g. `LeftArm/Forearm/BigMoleNearElbow`.
+
+### Awkward angles
+
+For taking pictures that would be awkward with the iPhone alone, you could consider finding an assistant or adding some extra elements to the setup:
+
+- A display to AirPlay your phone's display to. An Apple TV will work as an AirPlay receiver out of the box. You can use extra software such as [Reflektor](http://www.airsquirrels.com/reflector/) or [AirServer](http://www.airserver.com/) to turn a Mac, PC or other device into an AirPlay receiver.
+- Headphones with volume control, to take pictures at a distance. Use the '+' volume control to take a picture from the camera app.
+- A versitile tripod, such as the [GorillaPod](http://joby.com/gorillapod).
