@@ -47,7 +47,7 @@ def process_args(args):
         stats = name_stats[i][1]
         predicted_name = classifier.predict(stats)
         if predicted_name != name:
-            print('mistake:', name, stats, '->', predicted_name)
+            print('mistake:', name, '->', predicted_name)
         else:
             successes += 1
 
