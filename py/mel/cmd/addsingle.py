@@ -29,6 +29,12 @@ def setup_parser(parser):
         default=None,
         help="New path to create and store the mole to.")
 
+    parser.add_argument(
+        '--rot90',
+        type=int,
+        default=None,
+        help="Rotate images 90 degrees clockwise this number of times.")
+
 
 def process_args(args):
     # TODO: validate destination path up-front
@@ -36,6 +42,10 @@ def process_args(args):
 
     context_image = cv2.imread(args.context)
     detail_image = cv2.imread(args.detail)
+
+    if args.rot90:
+        context_image = mel.lib.common.rotated90(context_image, args.rot90)
+        detail_image = mel.lib.common.rotated90(detail_image, args.rot90)
 
     # TODO: extract this choice to a common place
     montage_size = 1024
