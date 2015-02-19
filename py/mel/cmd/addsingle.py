@@ -11,17 +11,7 @@ import mel.lib.common
 
 def setup_parser(parser):
 
-    parser.add_argument(
-        'context',
-        type=str,
-        default=None,
-        help="Path to the context image to add.")
-
-    parser.add_argument(
-        'detail',
-        type=str,
-        default=None,
-        help="Path to the detail image to add.")
+    mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
         'destination',
@@ -29,23 +19,13 @@ def setup_parser(parser):
         default=None,
         help="New path to create and store the mole to.")
 
-    parser.add_argument(
-        '--rot90',
-        type=int,
-        default=None,
-        help="Rotate images 90 degrees clockwise this number of times.")
-
 
 def process_args(args):
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
-    context_image = cv2.imread(args.context)
-    detail_image = cv2.imread(args.detail)
-
-    if args.rot90:
-        context_image = mel.lib.common.rotated90(context_image, args.rot90)
-        detail_image = mel.lib.common.rotated90(detail_image, args.rot90)
+    context_image, detail_image = mel.lib.common.process_context_detail_args(
+        args)
 
     # TODO: extract this choice to a common place
     montage_size = 1024

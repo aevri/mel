@@ -289,3 +289,82 @@ def rotated90(image, times):
     for _ in xrange(times % 4):
         temp_image = cv2.transpose(image)
         return cv2.flip(temp_image, 1)
+
+def add_context_detail_arguments(parser):
+
+    parser.add_argument(
+        'context',
+        type=str,
+        default=None,
+        help="Path to the context image to add.")
+
+    parser.add_argument(
+        'detail',
+        type=str,
+        default=None,
+        help="Path to the detail image to add.")
+
+    parser.add_argument(
+        '--rot90',
+        type=int,
+        default=None,
+        help="Rotate images 90 degrees clockwise this number of times.")
+
+    parser.add_argument(
+        '--rot90-context',
+        type=int,
+        default=None,
+        help="Rotate context image 90 degrees clockwise this number of times.")
+
+    parser.add_argument(
+        '--rot90-detail',
+        type=int,
+        default=None,
+        help="Rotate detail image 90 degrees clockwise this number of times.")
+
+    parser.add_argument(
+        '--h-mirror',
+        action="store_true",
+        help="Mirror both images horizontally.")
+
+    parser.add_argument(
+        '--h-mirror-context',
+        action="store_true",
+        help="Mirror context image horizontally.")
+
+    parser.add_argument(
+        '--h-mirror-detail',
+        action="store_true",
+        help="Mirror detail image horizontally.")
+
+
+def process_context_detail_args(args):
+    # TODO: validate destination path up-front
+    # TODO: validate mole names up-front
+
+    context_image = cv2.imread(args.context)
+    detail_image = cv2.imread(args.detail)
+
+    if args.rot90:
+        context_image = rotated90(context_image, args.rot90)
+        detail_image = rotated90(detail_image, args.rot90)
+
+    if args.rot90_context:
+        context_image = rotated90(
+            context_image, args.rot90_context)
+
+    if args.rot90_detail:
+        context_image = rotated90(
+            detail_image, args.rot90_detail)
+
+    if args.h_mirror:
+        context_image = cv2.flip(context_image, 1)
+        detail_image = cv2.flip(detail_image, 1)
+
+    if args.h_mirror_context:
+        context_image = cv2.flip(context_image, 1)
+
+    if args.h_mirror_detail:
+        detail_image = cv2.flip(detail_image, 1)
+
+    return context_image, detail_image
