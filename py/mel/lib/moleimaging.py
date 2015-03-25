@@ -70,7 +70,12 @@ def process_contours(mole_regions, original):
             sqrt_area = math.sqrt(mole_area)
             aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
             ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
-            coverage_percent = (mole_area / ellipse_area) * 100
+
+            if ellipse_area:
+                coverage_percent = (mole_area / ellipse_area) * 100
+            else:
+                coverage_percent = 0
+
             stats = (
                 sqrt_area,
                 aspect_ratio,
