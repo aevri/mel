@@ -32,6 +32,14 @@ def calc_hist(image, channel, mask):
     return hist
 
 
+def log10_zero(x):
+    """Return the log10 of x, map log10(0) -> 0."""
+    if x == 0:
+        return 0
+    else:
+        return math.log10(x)
+
+
 def process_contours(mole_regions, original):
 
     final = original.copy()
@@ -52,7 +60,7 @@ def process_contours(mole_regions, original):
 
             moments = cv2.moments(mole_contour)
             hu_moments = cv2.HuMoments(moments)
-            hu_moments = [math.log10(abs(float(x))) for x in hu_moments]
+            hu_moments = [log10_zero(abs(float(x))) for x in hu_moments]
 
             hsv = cv2.cvtColor(original, cv2.cv.CV_BGR2HSV)
             hist = calc_hist(hsv, 1, mole_regions)
