@@ -67,6 +67,14 @@ def guess_date_from_string(date_str):
         return None
 
 
+def make_now_datetime_string():
+    return make_datetime_string(datetime.datetime.utcnow())
+
+
+def make_datetime_string(datetime_):
+    return datetime_.strftime("%Y%m%dT%H%M%S")
+
+
 def overwrite_image(directory, filename, image):
     if not os.path.exists(directory):
         os.makedirs(directory)
