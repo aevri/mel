@@ -27,6 +27,11 @@ class _Mole(object):
 def _yield_mole_dirs(rootpath):
     for path, dirs, files in os.walk(rootpath):
 
+        this_dirname = os.path.basename(path)
+
+        if this_dirname == '__micro__':
+            continue
+
         catalog_relpath = os.path.relpath(path, rootpath)
 
         # ignore directories with no files
@@ -37,8 +42,11 @@ def _yield_mole_dirs(rootpath):
         if catalog_relpath.startswith('.'):
             continue
 
+        unknown_dirs = set(dirs)
+        unknown_dirs.discard('__micro__')
+
         # mole clusters have a picture and all the moles as child dirs, ignore
-        if dirs:
+        if unknown_dirs:
             continue
 
         yield _Mole(
