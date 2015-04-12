@@ -8,11 +8,14 @@ import os
 
 
 def setup_parser(parser):
-    pass
+    parser.add_argument(
+        '--only-no-micro',
+        action='store_true',
+        help="Only list moles that have no microscope images.")
 
 
 def process_args(args):
-    for mole in _yield_mole_dirs('.'):
+    for mole in _yield_mole_dirs('.', args.only_no_micro):
         print(mole.catalog_relative_path)
 
 
@@ -24,7 +27,7 @@ class _Mole(object):
         self.catalog_relative_path = catalog_relative_path
 
 
-def _yield_mole_dirs(rootpath):
+def _yield_mole_dirs(rootpath, only_no_micro):
     for path, dirs, files in os.walk(rootpath):
 
         this_dirname = os.path.basename(path)
@@ -43,6 +46,10 @@ def _yield_mole_dirs(rootpath):
             continue
 
         unknown_dirs = set(dirs)
+
+        if only_no_micro and '__micro__' in unknown_dirs:
+            continue
+
         unknown_dirs.discard('__micro__')
 
         # mole clusters have a picture and all the moles as child dirs, ignore
