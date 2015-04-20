@@ -83,6 +83,17 @@ def process_args(args):
             print("locked and aligned")
             break
 
+    # wait for confirmation
+    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
+    print("Press 'a' to abort, any other key to save and quit")
+    while True:
+        key = cv2.waitKey(50)
+        if key != -1:
+            if key == ord('a'):
+                raise Exception('User aborted.')
+            break
+
+
     # write the mole image
     filename = mel.lib.common.make_now_datetime_string() + ".jpg"
     dirname = os.path.join(args.PATH, '__micro__')
