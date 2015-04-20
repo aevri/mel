@@ -39,6 +39,27 @@ def get_context_image_name(path):
     return None
 
 
+def get_dirs_to_path(path_in):
+    """Return a list of the intermediate paths between cwd and path
+
+    Raise if path is not below the current working directory (cwd).
+
+    :returns: list of strings, includes cwd and destination path
+    :path: string path
+    """
+    cwd = os.getcwd()
+    path_abs = os.path.abspath(path_in)
+    if cwd != os.path.commonprefix([cwd, path_abs]):
+        raise Exception('{} is not under cwd ({})'.format(path_abs, cwd))
+    path_rel = os.path.relpath(path_abs, cwd)
+    path_list = []
+    while path_rel:
+        path_rel, tail = os.path.split(path_rel)
+        path_list.append(os.path.join(cwd, path_rel, tail))
+    path_list.append(cwd)
+    return path_list
+
+
 def load_context_image(path):
 
     image_name = get_context_image_name(path)
@@ -48,13 +69,24 @@ def load_context_image(path):
     raise Exception("No image in {}".format(path))
 
 
+def load_context_images(path):
+    image_list = []
+    path_list = get_dirs_to_path(path)
+    for path in path_list:
+        name = get_context_image_name(path)
+        if name:
+            image_list.append(cv2.imread(name))
+    return image_list
+
+
 def process_args(args):
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
 
-    context_image = load_context_image(args.PATH)
-    show_image_in_window(context_image, 'context')
+    context_images = load_context_images(args.PATH)
+    for i, image in enumerate(context_images):
+        show_image_in_window(image, 'context{}'.format(i))
 
     # create an 800x600 output window
     window_name = "output"
