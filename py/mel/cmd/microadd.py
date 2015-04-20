@@ -58,9 +58,8 @@ def process_args(args):
 
     # loop until the user presses a key
     print("Press any key to exit.")
-    is_finished = False
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
-    while not is_finished:
+    while True:
         key = cv2.waitKey(50)
         if key != -1:
             raise Exception('User aborted.')
