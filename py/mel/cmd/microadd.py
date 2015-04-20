@@ -28,16 +28,24 @@ def show_image_in_window(image, window_name):
     cv2.imshow(window_name, image)
 
 
-def load_context_image(path):
-
+def get_context_image_name(path):
     # Paths should alpha-sort to recent last, pick the first jpg
     children = reversed(sorted(os.listdir(path)))
     for name in children:
+        # TODO: support more than just '.jpg'
         if name.lower().endswith('.jpg'):
-            return cv2.imread(
-                os.path.join(path, name))
+            return os.path.join(path, name)
 
-    raise Exception("No images in {}".format(path))
+    return None
+
+
+def load_context_image(path):
+
+    image_name = get_context_image_name(path)
+    if image_name:
+        return cv2.imread(image_name)
+
+    raise Exception("No image in {}".format(path))
 
 
 def process_args(args):
