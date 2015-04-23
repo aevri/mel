@@ -96,18 +96,23 @@ def process_args(args):
     window_height = 600
     cv2.resizeWindow(window_name, window_width, window_height)
 
-    frame = capture(cap, window_name)
-
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
     print("Press 'a' to abort, any other key to save and quit")
-    while True:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == ord('a'):
-                raise Exception('User aborted.')
-            break
-
+    is_finished = False
+    while not is_finished:
+        frame = capture(cap, window_name, mole_acquirer)
+        while True:
+            key = cv2.waitKey(50)
+            if key != -1:
+                if key == ord('a'):
+                    raise Exception('User aborted.')
+                elif key == ord('r'):
+                    print("Retry capture")
+                    break
+                else:
+                    is_finished = True
+                    break
 
     # write the mole image
     filename = mel.lib.common.make_now_datetime_string() + ".jpg"
@@ -118,11 +123,10 @@ def process_args(args):
     cv2.imwrite(file_path, frame)
 
 
-def capture(cap, window_name):
+def capture(cap, window_name, mole_acquirer):
 
     # loop until the user presses a key
     print("Press any key to exit.")
-    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
     while True:
         key = cv2.waitKey(50)
         if key != -1:
