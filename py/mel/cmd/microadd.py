@@ -96,6 +96,30 @@ def process_args(args):
     window_height = 600
     cv2.resizeWindow(window_name, window_width, window_height)
 
+    frame = capture(cap, window_name)
+
+    # wait for confirmation
+    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
+    print("Press 'a' to abort, any other key to save and quit")
+    while True:
+        key = cv2.waitKey(50)
+        if key != -1:
+            if key == ord('a'):
+                raise Exception('User aborted.')
+            break
+
+
+    # write the mole image
+    filename = mel.lib.common.make_now_datetime_string() + ".jpg"
+    dirname = os.path.join(args.PATH, '__micro__')
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
+    file_path = os.path.join(dirname, filename)
+    cv2.imwrite(file_path, frame)
+
+
+def capture(cap, window_name):
+
     # loop until the user presses a key
     print("Press any key to exit.")
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
@@ -123,21 +147,4 @@ def process_args(args):
             print("locked and aligned")
             break
 
-    # wait for confirmation
-    mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
-    print("Press 'a' to abort, any other key to save and quit")
-    while True:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == ord('a'):
-                raise Exception('User aborted.')
-            break
-
-
-    # write the mole image
-    filename = mel.lib.common.make_now_datetime_string() + ".jpg"
-    dirname = os.path.join(args.PATH, '__micro__')
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
-    file_path = os.path.join(dirname, filename)
-    cv2.imwrite(file_path, frame)
+    return frame
