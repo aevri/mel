@@ -49,7 +49,9 @@ def process_contours(mole_regions, original):
         cv2.cv.CV_RETR_LIST,
         cv2.cv.CV_CHAIN_APPROX_NONE)
 
-    mole_contour, mole_area = find_mole_contour(contours)
+    mole_contour, mole_area = find_mole_contour(
+        contours, mole_regions.shape[0:2])
+
     if mole_contour is not None:
         if len(mole_contour) > 5:
 
@@ -87,15 +89,35 @@ def process_contours(mole_regions, original):
     return final, stats
 
 
-def find_mole_contour(contours):
+def find_mole_contour(contours, width_height):
+
+    centre = (
+        width_height[0] // 2,
+        width_height[1] // 2,
+    )
+
     mole_contour = None
     mole_area = None
+    mole_distance = None
+
     for contour in contours:
-        if contour is not None:
+        if contour is not None and len(contour) > 5:
             area = cv2.contourArea(contour)
-            if mole_area is None or area > mole_area:
-                mole_contour = contour
-                mole_area = area
+            moments = cv2.moments(contour)
+            if moments['m00'] != 0:
+                cx = int(moments['m10'] / moments['m00'])
+                cy = int(moments['m01'] / moments['m00'])
+                dx = (centre[0] - cx)
+                dy = (centre[1] - cy)
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if mole_area and area > 10 * mole_area:
+                    mole_contour = contour
+                    mole_area = area
+                    mole_distance = distance
+                elif mole_distance is None or distance < mole_distance:
+                    mole_contour = contour
+                    mole_area = area
+                    mole_distance = distance
 
     return mole_contour, mole_area
 
@@ -204,7 +226,7 @@ def annotate_image(original, is_rot_sensitive):
     contours, hierarchy = cv2.findContours(
         img, cv2.cv.CV_RETR_LIST, cv2.cv.CV_CHAIN_APPROX_NONE)
 
-    mole_contour, mole_area = find_mole_contour(contours)
+    mole_contour, mole_area = find_mole_contour(contours, img.shape[0:2])
 
     if mole_contour is not None:
         if len(mole_contour) > 5:
