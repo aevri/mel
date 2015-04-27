@@ -13,9 +13,19 @@ def setup_parser(parser):
         action='store_true',
         help="Only list moles that have no microscope images.")
 
+    assistance = parser.add_mutually_exclusive_group()
+    assistance.add_argument(
+        '--without-assistance',
+        action='store_true',
+        help="Only list moles that don't require assistance to capture.")
+    assistance.add_argument(
+        '--with-assistance',
+        action='store_true',
+        help="Only list moles that require assistance to capture.")
+
 
 def process_args(args):
-    for mole in _yield_mole_dirs('.', args.only_no_micro):
+    for mole in _yield_mole_dirs('.', args):
         print(mole.catalog_relative_path)
 
 
@@ -27,7 +37,7 @@ class _Mole(object):
         self.catalog_relative_path = catalog_relative_path
 
 
-def _yield_mole_dirs(rootpath, only_no_micro):
+def _yield_mole_dirs(rootpath, args):
     for path, dirs, files in os.walk(rootpath):
 
         this_dirname = os.path.basename(path)
@@ -47,7 +57,13 @@ def _yield_mole_dirs(rootpath, only_no_micro):
 
         unknown_dirs = set(dirs)
 
-        if only_no_micro and '__micro__' in unknown_dirs:
+        if args.only_no_micro and '__micro__' in unknown_dirs:
+            continue
+
+        if args.without_assistance and '__need_assistance__' in files:
+            continue
+
+        if args.with_assistance and '__need_assistance__' not in files:
             continue
 
         unknown_dirs.discard('__micro__')
