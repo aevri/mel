@@ -58,7 +58,8 @@ def _yield_mole_dirs(rootpath, args):
         unknown_dirs = set(dirs)
 
         if args.only_no_micro and '__micro__' in unknown_dirs:
-            continue
+            if os.listdir(os.path.join(path, '__micro__')):
+                continue
 
         if args.without_assistance and '__need_assistance__' in files:
             continue
