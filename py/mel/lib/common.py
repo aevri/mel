@@ -295,8 +295,9 @@ def user_review_image(window_name, image):
 
 def rotated90(image, times):
     for _ in xrange(times % 4):
-        temp_image = cv2.transpose(image)
-        return cv2.flip(temp_image, 1)
+        image = cv2.transpose(image)
+        image = cv2.flip(image, 1)
+    return image
 
 def add_context_detail_arguments(parser):
 
