@@ -86,10 +86,10 @@ def process_args(args):
 
     context_images = load_context_images(args.PATH)
     for i, image in enumerate(context_images):
-        show_image_in_window(image, 'context{}'.format(i))
+        show_image_in_window(image, '{} - context{}'.format(args.PATH, i))
 
     # create an 800x600 output window
-    window_name = "output"
+    window_name = args.PATH
     cv2.namedWindow(window_name)
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     window_width = 800
