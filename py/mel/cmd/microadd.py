@@ -79,6 +79,26 @@ def load_context_images(path):
     return image_list
 
 
+def get_first_micro_image_path(path):
+
+    micro_path = os.path.join(path, '__micro__')
+
+    # Paths should alpha-sort to recent last, pick the first jpg
+    children = sorted(os.listdir(micro_path))
+    for name in children:
+        # TODO: support more than just '.jpg'
+        if name.lower().endswith('.jpg'):
+            return os.path.join(micro_path, name)
+
+
+def load_first_micro_image(path):
+    micro_path = get_first_micro_image_path(path)
+    if micro_path is None:
+        return None
+    print(micro_path)
+    return cv2.imread(micro_path)
+
+
 def process_args(args):
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -87,6 +107,10 @@ def process_args(args):
     context_images = load_context_images(args.PATH)
     for i, image in enumerate(context_images):
         show_image_in_window(image, '{} - context{}'.format(args.PATH, i))
+
+    first_micro_image = load_first_micro_image(args.PATH)
+    if first_micro_image is not None:
+        show_image_in_window(first_micro_image, 'First micro image')
 
     # create an 800x600 output window
     window_name = args.PATH
