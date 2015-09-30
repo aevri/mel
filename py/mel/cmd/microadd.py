@@ -150,15 +150,19 @@ def process_args(args):
 def capture(cap, window_name, mole_acquirer):
 
     # loop until the user presses a key
-    print("Press any key to exit.")
+    print("Press 'c' to force capture a frame, any other key to abort.")
     while True:
-        key = cv2.waitKey(50)
-        if key != -1:
-            raise Exception('User aborted.')
-
         ret, frame = cap.read()
         if not ret:
             raise Exception("Could not read frame.")
+
+        key = cv2.waitKey(50)
+        if key != -1:
+            if key == ord('c'):
+                print('Force capturing frame.')
+                break
+            else:
+                raise Exception('User aborted.')
 
         is_rot_sensitive = True
         ringed, stats = mel.lib.moleimaging.find_mole(frame)
