@@ -299,6 +299,7 @@ def rotated90(image, times):
         image = cv2.flip(image, 1)
     return image
 
+
 def add_context_detail_arguments(parser):
 
     parser.add_argument(

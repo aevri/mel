@@ -40,12 +40,13 @@ def get_context_image_name(path):
 
 
 def get_dirs_to_path(path_in):
-    """Return a list of the intermediate paths between cwd and path
+    """Return a list of the intermediate paths between cwd and path.
 
     Raise if path is not below the current working directory (cwd).
 
     :returns: list of strings, includes cwd and destination path
     :path: string path
+
     """
     cwd = os.getcwd()
     path_abs = os.path.abspath(path_in)
