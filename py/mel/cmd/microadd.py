@@ -122,10 +122,12 @@ def process_args(args):
 
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
-    print("Press 'a' to abort, any other key to save and quit")
     is_finished = False
     while not is_finished:
         frame = capture(cap, window_name, mole_acquirer)
+        print(
+            "Press 'a' to abort, 'r' to retry, "
+            "any other key to save and quit.")
         while True:
             key = cv2.waitKey(50)
             if key != -1:
