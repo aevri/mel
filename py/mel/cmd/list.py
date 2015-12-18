@@ -23,18 +23,35 @@ def setup_parser(parser):
         action='store_true',
         help="Only list moles that require assistance to capture.")
 
+    parser.add_argument(
+        '--sort',
+        choices=['lastmicro'])
+
 
 def process_args(args):
-    for mole in _yield_mole_dirs('.', args):
-        print(mole.catalog_relative_path)
+    if not args.sort:
+        for mole in _yield_mole_dirs('.', args):
+            print(mole.catalog_relative_path)
+    else:
+        keyfunc = None
+
+        if args.sort == 'lastmicro':
+            def keyfunc(x):
+                if not x.micro_filenames:
+                    return None
+                return sorted(x.micro_filenames)[-1]
+
+        for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
+            print(mole.catalog_relative_path)
 
 
 class _Mole(object):
 
-    def __init__(self, full_path, catalog_relative_path):
+    def __init__(self, full_path, catalog_relative_path, micro_filenames):
         super(_Mole, self).__init__()
         self.full_path = full_path
         self.catalog_relative_path = catalog_relative_path
+        self.micro_filenames = micro_filenames
 
 
 def _yield_mole_dirs(rootpath, args):
@@ -67,7 +84,10 @@ def _yield_mole_dirs(rootpath, args):
         if args.with_assistance and '__need_assistance__' not in files:
             continue
 
-        unknown_dirs.discard('__micro__')
+        micro_filenames = []
+        if '__micro__' in unknown_dirs:
+            unknown_dirs.discard('__micro__')
+            micro_filenames = os.listdir(os.path.join(path, '__micro__'))
 
         # mole clusters have a picture and all the moles as child dirs, ignore
         if unknown_dirs:
@@ -75,4 +95,5 @@ def _yield_mole_dirs(rootpath, args):
 
         yield _Mole(
             os.path.abspath(path),
-            catalog_relpath)
+            catalog_relpath,
+            micro_filenames)
