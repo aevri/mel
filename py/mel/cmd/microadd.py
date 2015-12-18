@@ -95,8 +95,7 @@ def load_first_micro_image(path):
     micro_path = get_first_micro_image_path(path)
     if micro_path is None:
         return None
-    print(micro_path)
-    return cv2.imread(micro_path)
+    return micro_path, cv2.imread(micro_path)
 
 
 def process_args(args):
@@ -108,9 +107,10 @@ def process_args(args):
     for i, image in enumerate(context_images):
         show_image_in_window(image, '{} - context{}'.format(args.PATH, i))
 
-    first_micro_image = load_first_micro_image(args.PATH)
-    if first_micro_image is not None:
-        show_image_in_window(first_micro_image, 'First micro image')
+    first_micro_image_data = load_first_micro_image(args.PATH)
+    if first_micro_image_data is not None:
+        first_micro_path, first_micro_image = first_micro_image_data
+        show_image_in_window(first_micro_image, first_micro_path)
 
     # create an 800x600 output window
     window_name = args.PATH
