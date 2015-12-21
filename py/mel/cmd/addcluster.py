@@ -9,6 +9,7 @@ import numpy
 import os
 
 import mel.lib.common
+import mel.lib.image
 
 
 def setup_parser(parser):
@@ -65,7 +66,7 @@ def process_args(args):
     mel.lib.common.connect_moles(cluster_detail_image, detail_mole_pos)
 
     # Combine context image with cluster detail image to make montage
-    cluster_monatage_image = mel.lib.common.montage_horizontal(
+    cluster_monatage_image = mel.lib.image.montage_horizontal(
         context_image, cluster_detail_image)
     cluster_monatage_image = mel.lib.common.shrink_to_max_dimension(
         cluster_monatage_image, montage_size)

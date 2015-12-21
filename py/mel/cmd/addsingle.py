@@ -7,6 +7,7 @@ from __future__ import print_function
 import cv2
 
 import mel.lib.common
+import mel.lib.image
 
 
 def setup_parser(parser):
@@ -53,7 +54,7 @@ def process_args(args):
     mel.lib.common.indicate_mole(detail_image, detail_mole_pos[0])
 
     # Combine context image with detail image to make montage
-    monatage_image = mel.lib.common.montage_horizontal(
+    monatage_image = mel.lib.image.montage_horizontal(
         context_image, detail_image)
     monatage_image = mel.lib.common.shrink_to_max_dimension(
         monatage_image, montage_size)
