@@ -9,6 +9,45 @@ import cv2
 import mel.lib.common
 
 
+def calc_letterbox(width, height, fit_width, fit_height):
+    """Return (x, y, width, height) to fit image into.
+
+    Usage example:
+        >>> calc_letterbox(4, 2, 2, 1)
+        (0, 0, 2, 1)
+        >>> calc_letterbox(2, 1, 4, 2)
+        (1, 0, 2, 1)
+
+    """
+    if width < fit_width and height < fit_height:
+        scale = 1
+    else:
+        scale_x = fit_width / width
+        scale_y = fit_height / height
+        scale = min(scale_x, scale_y)
+
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+
+    x = (fit_width - new_width) // 2
+    y = (fit_height - new_height) // 2
+
+    return (x, y, new_width, new_height)
+
+
+def letterbox(image, width, height):
+    x, y, new_width, new_height = calc_letterbox(
+        image.shape[1], image.shape[0], width, height)
+    resized_image = cv2.resize(
+        image,
+        (new_width, new_height))
+    letterboxed = mel.lib.common.new_image(
+        height, width)
+    mel.lib.common.copy_image_into_image(
+        resized_image, letterboxed, y, x)
+    return letterboxed
+
+
 def calc_montage_horizontal(border_size, *frames):
     """Return total[], pos1[], pos2[], ... for a horizontal montage.
 
