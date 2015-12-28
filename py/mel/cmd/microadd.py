@@ -8,7 +8,10 @@ import cv2
 import os
 import numpy
 
+import mel.lib.common
+import mel.lib.image
 import mel.lib.moleimaging
+import mel.lib.ui
 
 
 def setup_parser(parser):
@@ -16,15 +19,16 @@ def setup_parser(parser):
         'PATH',
         type=str,
         help="Path to the mole to add new microscope images to.")
-
-
-def show_image_in_window(image, window_name):
-    cv2.namedWindow(window_name)
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    window_width = 800
-    window_height = 600
-    cv2.resizeWindow(window_name, window_width, window_height)
-    cv2.imshow(window_name, image)
+    parser.add_argument(
+        '--display-width',
+        type=int,
+        default=800,
+        help="Width of the preview display window.")
+    parser.add_argument(
+        '--display-height',
+        type=int,
+        default=600,
+        help="Width of the preview display window.")
 
 
 def get_context_image_name(path):
@@ -103,28 +107,36 @@ def process_args(args):
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
 
-    context_images = load_context_images(args.PATH)
-    for i, image in enumerate(context_images):
-        show_image_in_window(image, '{} - context{}'.format(args.PATH, i))
+    width = args.display_width
+    height = args.display_height
 
     first_micro_image_data = load_first_micro_image(args.PATH)
+
     if first_micro_image_data is not None:
         first_micro_path, first_micro_image = first_micro_image_data
-        show_image_in_window(first_micro_image, first_micro_path)
+        display = mel.lib.ui.MultiImageDisplay(first_micro_path, width, height)
+    else:
+        display = mel.lib.ui.MultiImageDisplay(args.PATH, width, height)
 
-    # create an 800x600 output window
-    window_name = args.PATH
-    cv2.namedWindow(window_name)
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    window_width = 800
-    window_height = 600
-    cv2.resizeWindow(window_name, window_width, window_height)
+    context_images = load_context_images(args.PATH)
+    for image in context_images:
+        display.add_image(image)
+
+    if context_images:
+        display.new_row()
+
+    if first_micro_image_data:
+        display.add_image(first_micro_image)
 
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
     is_finished = False
+    ret, frame = cap.read()
+    if not ret:
+        raise Exception("Could not read frame.")
+    capindex = display.add_image(frame, 'capture')
     while not is_finished:
-        frame = capture(cap, window_name, mole_acquirer)
+        frame = capture(cap, display, capindex, mole_acquirer)
         print(
             "Press 'a' to abort, 'r' to retry, "
             "any other key to save and quit.")
@@ -149,7 +161,7 @@ def process_args(args):
     cv2.imwrite(file_path, frame)
 
 
-def capture(cap, window_name, mole_acquirer):
+def capture(cap, display, capindex, mole_acquirer):
 
     # loop until the user presses a key
     print("Press 'c' to force capture a frame, any other key to abort.")
@@ -175,7 +187,7 @@ def capture(cap, window_name, mole_acquirer):
 
         mole_acquirer.update(stats)
 
-        cv2.imshow(window_name, asys_image)
+        display.update_image(asys_image, capindex)
         if mole_acquirer.is_locked and is_aligned:
             # show the image with mole encircled
             print("locked and aligned")
