@@ -73,6 +73,21 @@ def calc_montage_horizontal(border_size, *frames):
     return tuple(result)
 
 
+def calc_montage_vertical(border_size, *frames):
+    """Return total[], pos1[], pos2[], ... for a vertical montage.
+
+    Usage example:
+        >>> calc_montage_vertical(1, [2,1], [3,2])
+        ([5, 6], [1, 1], [1, 3])
+
+    """
+    geometry = calc_montage_horizontal(
+        border_size,
+        *[list(reversed(f)) for f in frames])
+
+    return tuple([g[1], g[0]] for g in geometry)
+
+
 def arrange_images(total_width, total_height, *images_positions):
     """Return a composited image based on the (image, pos) arguments."""
     result = mel.lib.common.new_image(total_height, total_width)
@@ -86,6 +101,20 @@ def arrange_images(total_width, total_height, *images_positions):
 
 def montage_horizontal(border_size, *image_list):
     geometry = calc_montage_horizontal(
+        border_size,
+        *[list(reversed(i.shape[:2])) for i in image_list])
+
+    size_xy = geometry[0]
+    geometry = geometry[1:]
+
+    return arrange_images(
+        size_xy[0],
+        size_xy[1],
+        *zip(image_list, geometry))
+
+
+def montage_vertical(border_size, *image_list):
+    geometry = calc_montage_vertical(
         border_size,
         *[list(reversed(i.shape[:2])) for i in image_list])
 
