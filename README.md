@@ -3,6 +3,8 @@ Mel
 
 Tools to help identify new and changing moles on the skin with the goal of early detection of melanoma skin cancer.
 
+[![Build Status](https://travis-ci.org/aevri/mel.svg)](https://travis-ci.org/aevri/mel)
+
 The [Mayo Clinic](1) says:
 > The first melanoma signs and symptoms often are:
 >
