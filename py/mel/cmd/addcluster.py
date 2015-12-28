@@ -67,7 +67,7 @@ def process_args(args):
 
     # Combine context image with cluster detail image to make montage
     cluster_monatage_image = mel.lib.image.montage_horizontal(
-        context_image, cluster_detail_image)
+        50, context_image, cluster_detail_image)
     cluster_monatage_image = mel.lib.common.shrink_to_max_dimension(
         cluster_monatage_image, montage_size)
 
