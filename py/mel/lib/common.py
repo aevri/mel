@@ -16,24 +16,24 @@ def determine_filename_for_ident(*source_filenames):
             '{} is not a valid list of filenames'.format(
                 source_filenames))
 
-    dates = [guess_date_from_path(x) for x in source_filenames]
+    dates = [guess_datetime_from_path(x) for x in source_filenames]
     valid_dates = [x for x in dates if x is not None]
     if valid_dates:
         latest_date = max(valid_dates)
-        return '{}.jpg'.format(latest_date.isoformat())
+        return '{}.jpg'.format(latest_date.date().isoformat())
     else:
         return "ident.jpg"
 
 
-def guess_date_from_path(path):
-    """Return None if no date could be guessed, date otherwise.
+def guess_datetime_from_path(path):
+    """Return None if no date could be guessed, datetime otherwise.
 
     Usage examples:
 
-        >>> guess_date_from_path('inbox/Photo 05-01-2015 23 25 40.jpg')
-        datetime.date(2015, 1, 5)
+        >>> guess_datetime_from_path('inbox/Photo 05-01-2015 23 25 40.jpg')
+        datetime.datetime(2015, 1, 5, 23, 25, 40)
 
-        >>> guess_date_from_path('blah')
+        >>> guess_datetime_from_path('blah')
 
     :path: path string to be converted
     :returns: datetime.date if successful, None otherwise
@@ -42,27 +42,26 @@ def guess_date_from_path(path):
     # TODO: try the file date if unable to determine from name
     filename = os.path.basename(path)
     name = os.path.splitext(filename)[0]
-    return guess_date_from_string(name)
+    return guess_datetime_from_string(name)
 
 
-def guess_date_from_string(date_str):
-    """Return None if no date could be guessed, date otherwise.
+def guess_datetime_from_string(datetime_str):
+    """Return None if no datetime could be guessed, datetime otherwise.
 
     Usage examples:
 
-        >>> guess_date_from_string('Photo 05-01-2015 23 25 40')
-        datetime.date(2015, 1, 5)
+        >>> guess_datetime_from_string('Photo 05-01-2015 23 25 40')
+        datetime.datetime(2015, 1, 5, 23, 25, 40)
 
-        >>> guess_date_from_string('blah')
+        >>> guess_datetime_from_string('blah')
 
-    :date_str: string to be converted
-    :returns: datetime.date if successful, None otherwise
+    :datetime_str: string to be converted
+    :returns: datetime.datetime if successful, None otherwise
 
     """
     try:
-        dt = datetime.datetime.strptime(date_str, 'Photo %d-%m-%Y %H %M %S')
-        date = datetime.date(dt.year, dt.month, dt.day)
-        return date
+        return datetime.datetime.strptime(
+            datetime_str, 'Photo %d-%m-%Y %H %M %S')
     except ValueError:
         return None
 
