@@ -9,6 +9,7 @@ import os
 import numpy
 
 import mel.lib.common
+import mel.lib.datetime
 import mel.lib.image
 import mel.lib.moleimaging
 import mel.lib.ui
@@ -153,7 +154,7 @@ def process_args(args):
                     break
 
     # write the mole image
-    filename = mel.lib.common.make_now_datetime_string() + ".jpg"
+    filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
     dirname = os.path.join(args.PATH, '__micro__')
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
