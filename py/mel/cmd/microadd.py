@@ -84,7 +84,7 @@ def load_context_images(path):
     return image_list
 
 
-def get_first_micro_image_path(path):
+def get_comparison_image_path(path):
 
     micro_path = os.path.join(path, '__micro__')
 
@@ -96,8 +96,8 @@ def get_first_micro_image_path(path):
             return os.path.join(micro_path, name)
 
 
-def load_first_micro_image(path):
-    micro_path = get_first_micro_image_path(path)
+def load_comparison_image(path):
+    micro_path = get_comparison_image_path(path)
     if micro_path is None:
         return None
     return micro_path, cv2.imread(micro_path)
@@ -111,11 +111,11 @@ def process_args(args):
     width = args.display_width
     height = args.display_height
 
-    first_micro_image_data = load_first_micro_image(args.PATH)
+    comparison_image_data = load_comparison_image(args.PATH)
 
-    if first_micro_image_data is not None:
-        first_micro_path, first_micro_image = first_micro_image_data
-        display = mel.lib.ui.MultiImageDisplay(first_micro_path, width, height)
+    if comparison_image_data is not None:
+        comparison_path, comparison_image = comparison_image_data
+        display = mel.lib.ui.MultiImageDisplay(comparison_path, width, height)
     else:
         display = mel.lib.ui.MultiImageDisplay(args.PATH, width, height)
 
@@ -126,8 +126,8 @@ def process_args(args):
     if context_images:
         display.new_row()
 
-    if first_micro_image_data:
-        display.add_image(first_micro_image)
+    if comparison_image_data:
+        display.add_image(comparison_image)
 
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
