@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import cv2
+import datetime
 import os
 import numpy
 
@@ -30,6 +31,20 @@ def setup_parser(parser):
         type=int,
         default=600,
         help="Width of the preview display window.")
+    parser.add_argument(
+        '--min-compare-age-days',
+        type=int,
+        default=None,
+        help="Minimum age of the micro image to compare with, if possible.")
+
+    # From NHS 'Moles' page:
+    # http://www.nhs.uk/Conditions/Moles/Pages/Introduction.aspx
+    # > You should check your skin every few months for any new moles that
+    # > develop (particularly after your teenage years, when new moles become
+    # > less common) or any changes to existing moles. A mole can change in
+    # > weeks or months.
+    #
+    # Compare at least 180 days back, if possible.
 
 
 def get_context_image_name(path):
@@ -84,20 +99,46 @@ def load_context_images(path):
     return image_list
 
 
-def get_comparison_image_path(path):
+def pick_comparison_path(path_list, min_compare_age_days):
+    """Return the most appropriate image path to compare with, or None."""
+    path_dt_list = [
+        (x, mel.lib.datetime.guess_datetime_from_path(x))
+        for x in path_list
+    ]
+
+    for path, dt in path_dt_list:
+        if dt is None:
+            raise Exception('Could not determine date', path)
+
+    path_dt_list.sort(key=lambda x: x[1], reverse=True)
+
+    if min_compare_age_days is not None:
+        delta = datetime.timedelta(min_compare_age_days)
+        appropriate_date = datetime.datetime.now() - delta
+
+        for path, dt in path_dt_list:
+            if dt <= appropriate_date:
+                return path
+
+    return path_dt_list[-1][0] if path_dt_list else None
+
+
+def get_comparison_image_path(path, min_compare_age_days):
 
     micro_path = os.path.join(path, '__micro__')
 
-    # Paths should alpha-sort to recent last, pick the first jpg
-    children = sorted(os.listdir(micro_path))
-    for name in children:
-        # TODO: support more than just '.jpg'
-        if name.lower().endswith('.jpg'):
-            return os.path.join(micro_path, name)
+    # List all the 'jpg' files in the micro dir
+    # TODO: support more than just '.jpg'
+    images = [x for x in os.listdir(micro_path) if x.lower().endswith('.jpg')]
+    path = pick_comparison_path(images, min_compare_age_days)
+    if path:
+        return os.path.join(micro_path, path)
+    else:
+        return None
 
 
-def load_comparison_image(path):
-    micro_path = get_comparison_image_path(path)
+def load_comparison_image(path, min_compare_age_days):
+    micro_path = get_comparison_image_path(path, min_compare_age_days)
     if micro_path is None:
         return None
     return micro_path, cv2.imread(micro_path)
@@ -111,7 +152,9 @@ def process_args(args):
     width = args.display_width
     height = args.display_height
 
-    comparison_image_data = load_comparison_image(args.PATH)
+    comparison_image_data = load_comparison_image(
+        args.PATH,
+        args.min_compare_age_days)
 
     if comparison_image_data is not None:
         comparison_path, comparison_image = comparison_image_data
