@@ -16,6 +16,9 @@ def guess_datetime_from_path(path):
         >>> guess_datetime_from_path('inbox/Photo 05-01-2015 23 25 40.jpg')
         datetime.datetime(2015, 1, 5, 23, 25, 40)
 
+        >>> guess_datetime_from_path('20120107T115426.790019.jpg')
+        datetime.datetime(2012, 1, 7, 11, 54, 26)
+
         >>> guess_datetime_from_path('blah')
 
     :path: path string to be converted
@@ -24,7 +27,7 @@ def guess_datetime_from_path(path):
     """
     # TODO: try the file date if unable to determine from name
     filename = os.path.basename(path)
-    name = os.path.splitext(filename)[0]
+    name = filename.split('.', 1)[0]
     return guess_datetime_from_string(name)
 
 
@@ -42,11 +45,16 @@ def guess_datetime_from_string(datetime_str):
     :returns: datetime.datetime if successful, None otherwise
 
     """
-    try:
-        return datetime.datetime.strptime(
-            datetime_str, 'Photo %d-%m-%Y %H %M %S')
-    except ValueError:
-        return None
+    format_list = [
+        'Photo %d-%m-%Y %H %M %S',
+        '%Y%m%dT%H%M%S',
+    ]
+    for fmt in format_list:
+        try:
+            return datetime.datetime.strptime(datetime_str, fmt)
+        except ValueError:
+            pass
+    return None
 
 
 def make_now_datetime_string():
