@@ -58,7 +58,7 @@ def guess_datetime_from_string(datetime_str):
 
 
 def make_now_datetime_string():
-    return make_datetime_string(datetime.utcnow())
+    return make_datetime_string(datetime.datetime.utcnow())
 
 
 def make_datetime_string(datetime_):
