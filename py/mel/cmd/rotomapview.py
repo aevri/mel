@@ -7,8 +7,6 @@ from __future__ import print_function
 import cv2
 import os
 
-import mel.lib.ui
-
 
 def setup_parser(parser):
     parser.add_argument(
@@ -55,7 +53,9 @@ def process_args(args):
 class Display:
 
     def __init__(self, path, width, height, rot90):
-        self._display = mel.lib.ui.MultiImageDisplay(path, width, height)
+        self._name = path
+        self._width = width
+        self._height = height
         self._rot90 = rot90
 
         # list all images
@@ -64,11 +64,14 @@ class Display:
             for x in os.listdir(path)
         ]
 
+        cv2.namedWindow(self._name)
+        cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self._name, self._width, self._height)
+
         self._list_index = 0
         self._num_images = len(self._path_list)
 
-        image = self.load_current_image()
-        self._display_index = self._display.add_image(image)
+        self.show_current()
 
     def load_current_image(self):
         image = cv2.imread(self._path_list[self._list_index])
@@ -78,7 +81,9 @@ class Display:
 
     def show_current(self):
         image = self.load_current_image()
-        self._display.update_image(image, self._display_index)
+        image = mel.lib.image.letterbox(
+            image, self._width, self._height)
+        cv2.imshow(self._name, image)
 
     def show_prev(self):
         new_index = self._list_index + self._num_images - 1
