@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+import math
 import os
 
 import cv2
@@ -48,6 +49,9 @@ def process_args(args):
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 image_x, image_y = display.windowxy_to_imagexy(x, y)
                 display.show_zoomed(image_x, image_y)
+            elif flags & cv2.EVENT_FLAG_SHIFTKEY:
+                image_x, image_y = display.windowxy_to_imagexy(x, y)
+                display.remove_mole(image_x, image_y)
             else:
                 image_x, image_y = display.windowxy_to_imagexy(x, y)
                 display.add_mole(image_x, image_y)
@@ -214,6 +218,29 @@ class Display:
         moles_path = image_path + '.json'
         with open(moles_path, 'w') as moles_file:
             json.dump(self._moles, moles_file)
+        self.show_current()
+
+    def remove_mole(self, x, y):
+        closest_index = None
+        closest_distance = None
+        for i, mole in enumerate(self._moles):
+            dx = x - mole[0]
+            dy = y - mole[1]
+            distance = math.sqrt(dx * dx + dy * dy)
+            if closest_distance is None or distance < closest_distance:
+                closest_index = i
+                closest_distance = distance
+
+        if closest_index is None:
+            return
+
+        del self._moles[closest_index]
+
+        image_path = self._path_list[self._list_index]
+        moles_path = image_path + '.json'
+        with open(moles_path, 'w') as moles_file:
+            json.dump(self._moles, moles_file)
+
         self.show_current()
 
     def set_mouse_callback(self, callback):
