@@ -16,7 +16,7 @@ def setup_parser(parser):
     parser.add_argument(
         'PATH',
         type=str,
-        help="Path to the mole to add new microscope images to.")
+        help="Path to the rotomap image directory.")
     parser.add_argument(
         '--display-width',
         type=int,
