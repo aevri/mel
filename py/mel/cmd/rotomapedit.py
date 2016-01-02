@@ -53,6 +53,7 @@ def process_args(args):
     print("Ctrl-click on a point to zoom in on it.")
     print("Press space to restore original zoom.")
     print("Press any other key to quit.")
+
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
