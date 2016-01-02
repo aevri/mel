@@ -101,18 +101,31 @@ class Display:
 
         self._is_zoomed = False
 
+        self._cached_image = None
+        self._cached_image_index = None
+
         self.show_current()
 
     def load_current_image(self):
+
+        if self._cached_image_index == self._list_index:
+            return self._cached_image
+
         image_path = self._path_list[self._list_index]
         image = cv2.imread(image_path)
+
         moles_path = image_path + '.json'
         self._moles = []
         if os.path.exists(moles_path):
             with open(moles_path) as moles_file:
                 self._moles = json.load(moles_file)
+
         if self._rot90:
             image = mel.lib.common.rotated90(image, self._rot90)
+
+        self._cached_image_index = self._list_index
+        self._cached_image = image
+
         return image
 
     def show_current(self):
