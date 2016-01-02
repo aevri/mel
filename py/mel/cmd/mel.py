@@ -14,7 +14,7 @@ import mel.cmd.microview
 import mel.cmd.microrecord
 import mel.cmd.microreplay
 import mel.cmd.microanalyse
-import mel.cmd.rotomapview
+import mel.cmd.rotomapedit
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microrecord, 'micro-record')
     _setup_parser_for_module(subparsers, mel.cmd.microreplay, 'micro-replay')
     _setup_parser_for_module(subparsers, mel.cmd.microanalyse, 'micro-analyse')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapview, 'rotomap-view')
+    _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
 
     args = parser.parse_args()
     return args.func(args)
