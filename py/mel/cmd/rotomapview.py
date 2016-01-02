@@ -37,7 +37,8 @@ def process_args(args):
     left = 63234
     right = 63235
 
-    print("Press any other key to save and quit.")
+    print("Press left for previous image, right for next image.")
+    print("Press any other key to quit.")
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
