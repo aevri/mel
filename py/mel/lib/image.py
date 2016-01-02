@@ -125,3 +125,44 @@ def montage_vertical(border_size, *image_list):
         size_xy[0],
         size_xy[1],
         *zip(image_list, geometry))
+
+
+def calc_centering_offset(centre_xy, src_size_xy, dst_size_xy):
+    """Return translation (x, y) for centering with the supplied geometry.
+
+    The supplied 'src_size_xy' represent the dimensions of the image to
+    translate, fitting withing the bounds of 'dst_size_xy'.
+
+    It is assumed that the source image will start drawing at (0, 0) in the
+    destination region.
+
+    Usage examples:
+        >>> calc_centering_offset((10, 10), (100, 100), (40, 40))
+        (0, 0)
+
+        >>> calc_centering_offset((40, 40), (100, 100), (40, 40))
+        (20, 20)
+
+        >>> calc_centering_offset((50, 50), (100, 100), (40, 40))
+        (30, 30)
+
+    """
+    result = []
+    for i in (0, 1):
+        result.append(
+            mel.lib.math.clamp(
+                centre_xy[i] - (dst_size_xy[i] // 2),
+                0,
+                src_size_xy[i] - 1))
+    return tuple(result)
+
+
+def translated_and_clipped(image, x, y, dst_width, dst_height):
+    result = mel.lib.common.new_image(dst_height, dst_width)
+    image_shape = image.shape
+    src_width = image_shape[1] - x
+    src_height = image_shape[0] - y
+    width = min(src_width, dst_width)
+    height = min(src_height, dst_height)
+    result[0:height, 0:width] = image[y:y + height, x:x + width]
+    return result
