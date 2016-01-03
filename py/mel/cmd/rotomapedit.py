@@ -80,6 +80,15 @@ def process_args(args):
     display.clear_mouse_callback()
 
 
+def load_image_moles(image_path):
+    moles_path = image_path + '.json'
+    moles = []
+    if os.path.exists(moles_path):
+        with open(moles_path) as moles_file:
+            moles = json.load(moles_file)
+    return moles
+
+
 class Display:
 
     def __init__(self, path, width, height, rot90):
@@ -119,11 +128,7 @@ class Display:
         image_path = self._path_list[self._list_index]
         image = cv2.imread(image_path)
 
-        moles_path = image_path + '.json'
-        self._moles = []
-        if os.path.exists(moles_path):
-            with open(moles_path) as moles_file:
-                self._moles = json.load(moles_file)
+        self._moles = load_image_moles(image_path)
 
         if self._rot90:
             image = mel.lib.common.rotated90(image, self._rot90)
