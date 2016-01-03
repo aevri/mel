@@ -7,6 +7,7 @@ from __future__ import print_function
 import json
 import math
 import os
+import uuid
 
 import cv2
 
@@ -86,7 +87,15 @@ def load_image_moles(image_path):
     if os.path.exists(moles_path):
         with open(moles_path) as moles_file:
             moles = json.load(moles_file)
-    return moles
+
+    converted = []
+    for m in moles:
+        if type(m) is list:
+            ident = uuid.uuid4()
+            m = {'x': m[0], 'y': m[1], 'uuid': str(ident)}
+        converted.append(m)
+
+    return converted
 
 
 def save_image_moles(moles, image_path):
@@ -169,8 +178,8 @@ class Display:
             image, self._width, self._height)
 
         for mole in self._moles:
-            x = int(mole[0] / self._image_scale + self._image_left)
-            y = int(mole[1] / self._image_scale + self._image_top)
+            x = int(mole['x'] / self._image_scale + self._image_left)
+            y = int(mole['y'] / self._image_scale + self._image_top)
             cv2.circle(image, (x, y), 10, (255, 0, 0), -1)
 
         cv2.imshow(self._name, image)
@@ -192,8 +201,8 @@ class Display:
         self._image_height = image.shape[0] + ny
         self._image_scale = 1
         for mole in self._moles:
-            x = mole[0] + self._image_left
-            y = mole[1] + self._image_top
+            x = mole['x'] + self._image_left
+            y = mole['y'] + self._image_top
             if x >= 0 and y >= 0:
                 if x < self._image_width and y < self._image_height:
                     cv2.circle(image, (x, y), 10, (255, 0, 0), -1)
@@ -224,7 +233,11 @@ class Display:
         self.show_current()
 
     def add_mole(self, x, y):
-        self._moles.append((x, y))
+        self._moles.append({
+            'x': x,
+            'y': y,
+            'uuid': uuid.uuid4(),
+        })
         image_path = self._path_list[self._list_index]
         save_image_moles(self._moles, image_path)
         self.show_current()
