@@ -89,6 +89,12 @@ def load_image_moles(image_path):
     return moles
 
 
+def save_image_moles(moles, image_path):
+    moles_path = image_path + '.json'
+    with open(moles_path, 'w') as moles_file:
+        json.dump(moles, moles_file)
+
+
 class Display:
 
     def __init__(self, path, width, height, rot90):
@@ -220,9 +226,7 @@ class Display:
     def add_mole(self, x, y):
         self._moles.append((x, y))
         image_path = self._path_list[self._list_index]
-        moles_path = image_path + '.json'
-        with open(moles_path, 'w') as moles_file:
-            json.dump(self._moles, moles_file)
+        save_image_moles(self._moles, image_path)
         self.show_current()
 
     def remove_mole(self, x, y):
@@ -242,9 +246,7 @@ class Display:
         del self._moles[closest_index]
 
         image_path = self._path_list[self._list_index]
-        moles_path = image_path + '.json'
-        with open(moles_path, 'w') as moles_file:
-            json.dump(self._moles, moles_file)
+        save_image_moles(self._moles, image_path)
 
         self.show_current()
 
