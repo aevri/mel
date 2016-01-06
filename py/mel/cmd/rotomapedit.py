@@ -104,6 +104,13 @@ def save_image_moles(moles, image_path):
         json.dump(moles, moles_file)
 
 
+def draw_mole(image, x, y, mole):
+    r = int(mole['uuid'][0:2], 16)
+    g = int(mole['uuid'][2:4], 16)
+    b = int(mole['uuid'][4:6], 16)
+    cv2.circle(image, (x, y), 10, (r, g, b), -1)
+
+
 class Display:
 
     def __init__(self, path, width, height, rot90):
@@ -180,7 +187,7 @@ class Display:
         for mole in self._moles:
             x = int(mole['x'] / self._image_scale + self._image_left)
             y = int(mole['y'] / self._image_scale + self._image_top)
-            cv2.circle(image, (x, y), 10, (255, 0, 0), -1)
+            draw_mole(image, x, y, mole)
 
         cv2.imshow(self._name, image)
         self._is_zoomed = False
@@ -205,7 +212,7 @@ class Display:
             y = mole['y'] + self._image_top
             if x >= 0 and y >= 0:
                 if x < self._image_width and y < self._image_height:
-                    cv2.circle(image, (x, y), 10, (255, 0, 0), -1)
+                    draw_mole(image, x, y, mole)
         cv2.imshow(self._name, image)
         self._is_zoomed = True
 
