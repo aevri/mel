@@ -253,8 +253,8 @@ class Display:
         closest_index = None
         closest_distance = None
         for i, mole in enumerate(self._moles):
-            dx = x - mole[0]
-            dy = y - mole[1]
+            dx = x - mole['x']
+            dy = y - mole['y']
             distance = math.sqrt(dx * dx + dy * dy)
             if closest_distance is None or distance < closest_distance:
                 closest_index = i
