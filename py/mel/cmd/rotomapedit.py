@@ -243,7 +243,7 @@ class Display:
         self._moles.append({
             'x': x,
             'y': y,
-            'uuid': uuid.uuid4(),
+            'uuid': str(uuid.uuid4()),
         })
         image_path = self._path_list[self._list_index]
         save_image_moles(self._moles, image_path)
