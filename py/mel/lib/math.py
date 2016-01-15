@@ -25,3 +25,19 @@ def clamp(x, x_min, x_max):
 
     """
     return max(min(x, x_max), x_min)
+
+
+def distance_sq_2d(a, b):
+    """Return the squared distance between two points in two dimensions.
+
+    Usage examples:
+        >>> distance_sq_2d((1, 1), (1, 1))
+        0
+
+        >>> distance_sq_2d((0, 0), (0, 2))
+        4
+
+    """
+    x = a[0] - b[0]
+    y = a[1] - b[1]
+    return (x * x) + (y * y)
