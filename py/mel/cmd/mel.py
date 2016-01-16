@@ -15,6 +15,7 @@ import mel.cmd.microrecord
 import mel.cmd.microreplay
 import mel.cmd.microanalyse
 import mel.cmd.rotomapedit
+import mel.cmd.rotomaprelate
 
 
 def main():
@@ -33,6 +34,8 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microreplay, 'micro-replay')
     _setup_parser_for_module(subparsers, mel.cmd.microanalyse, 'micro-analyse')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
+    _setup_parser_for_module(
+        subparsers, mel.cmd.rotomaprelate, 'rotomap-relate')
 
     args = parser.parse_args()
     return args.func(args)
