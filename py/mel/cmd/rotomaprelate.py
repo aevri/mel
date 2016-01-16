@@ -18,13 +18,20 @@ def setup_parser(parser):
         'TO',
         type=str,
         help="Path to the 'to' rotomap json file.")
+    parser.add_argument(
+        '--match-cutoff-distance',
+        type=int,
+        default=None,
+        help="The maximum distance to allow between the predicted location of "
+        "a mole in the 'to' image, and the location of a candidate "
+        "match.")
 
 
 def process_args(args):
     from_moles = load_json(args.FROM)
     to_moles = load_json(args.TO)
 
-    pairs = relate(from_moles, to_moles)
+    pairs = relate(from_moles, to_moles, args.match_cutoff_distance)
     for p in pairs:
         if p[0] and p[1]:
             print(p[0], p[1])
@@ -35,13 +42,16 @@ def load_json(path):
         return json.load(f)
 
 
-def relate(from_moles, to_moles):
+def relate(from_moles, to_moles, cutoff):
     if not from_moles:
         raise ValueError('from_moles is empty')
     if not to_moles:
         raise ValueError('to_moles is empty')
 
-    cutoff_sq = mole_min_sq_distance(to_moles)
+    if cutoff is not None:
+        cutoff_sq = cutoff * cutoff
+    else:
+        cutoff_sq = mole_min_sq_distance(to_moles)
 
     best_theory = None
     best_theory_dist_sq = None
