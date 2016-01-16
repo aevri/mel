@@ -30,6 +30,8 @@ def process_args(args):
     max_digits = 1
     uuid_list = sorted(list(uuid_set))
     prev_uuid = uuid_list[0]
+    prev_digits = max_digits
+    uuid_to_display = {}
     for this_uuid in uuid_list[1:]:
         digits = 1
         for i, j in zip(prev_uuid, this_uuid):
@@ -37,8 +39,24 @@ def process_args(args):
                 digits += 1
             else:
                 break
+
+        unsafe_digits = max(prev_digits, digits)
+        safe_digits = len(prev_uuid) - unsafe_digits
+        display = prev_uuid[:unsafe_digits] + '.' * safe_digits
+        uuid_to_display[prev_uuid] = display
+
         max_digits = max(digits, max_digits)
         prev_uuid = this_uuid
+        prev_digits = digits
+
+    unsafe_digits = max(prev_digits, digits)
+    safe_digits = len(prev_uuid) - unsafe_digits
+    display = prev_uuid[:unsafe_digits] + '.' * safe_digits
+    uuid_to_display[prev_uuid] = display
+
+    for mole_map in mole_map_list:
+        for mole in mole_map:
+            mole['uuid'] = uuid_to_display[mole['uuid']]
 
     for mole_map in mole_map_list:
         grid = map_to_grid(mole_map, max_digits)
