@@ -15,21 +15,45 @@ def setup_parser(parser):
     parser.add_argument(
         'FILE',
         type=argparse.FileType(),
+        nargs='+',
         help="Path to the rotomap json file.")
 
 
 def process_args(args):
-    mole_map = json.load(args.FILE)
-    grid = map_to_grid(mole_map)
+    mole_map_list = [json.load(x) for x in args.FILE]
 
-    for row in grid:
-        for col in row:
-            print(col, end='')
+    uuid_set = set()
+    for mole_map in mole_map_list:
+        for mole in mole_map:
+            uuid_set.add(mole['uuid'])
+
+    max_digits = 1
+    uuid_list = sorted(list(uuid_set))
+    prev_uuid = uuid_list[0]
+    for this_uuid in uuid_list[1:]:
+        digits = 1
+        for i, j in zip(prev_uuid, this_uuid):
+            if i == j:
+                digits += 1
+            else:
+                break
+        max_digits = max(digits, max_digits)
+        prev_uuid = this_uuid
+
+    for mole_map in mole_map_list:
+        grid = map_to_grid(mole_map, max_digits)
+
+        for row in grid:
+            for col in row:
+                if max_digits > 1:
+                    print(col, '', end='')
+                else:
+                    print(col, end='')
+            print()
         print()
-    print()
 
 
-def map_to_grid(mole_map):
+def map_to_grid(mole_map, num_digits):
 
     minx = min([m['x'] for m in mole_map])
     miny = min([m['y'] for m in mole_map])
@@ -49,7 +73,7 @@ def map_to_grid(mole_map):
 
         try:
             grid = make_grid(
-                mole_map, minx, miny, extents_x, extents_y, scale)
+                mole_map, minx, miny, extents_x, extents_y, scale, num_digits)
         except ValueError:
             any_collisions = True
             scale *= 2
@@ -57,14 +81,17 @@ def map_to_grid(mole_map):
     return grid
 
 
-def make_grid(mole_map, left, top, width, height, scale):
+def make_grid(mole_map, left, top, width, height, scale, num_digits):
     grid_width = int(math.ceil(width * scale))
     grid_height = int(math.ceil(height * scale))
     grid = []
+
+    spacer = '.' * num_digits
+
     for j in xrange(grid_height):
         row = []
         for i in xrange(grid_width):
-            row.append('.')
+            row.append(spacer)
         grid.append(row)
 
     for mole in mole_map:
@@ -72,8 +99,8 @@ def make_grid(mole_map, left, top, width, height, scale):
             int((mole['x'] - left) * scale), 0, grid_width - 1)
         y = mel.lib.math.clamp(
             int((mole['y'] - top) * scale), 0, grid_height - 1)
-        if grid[y][x] != '.':
+        if grid[y][x] != spacer:
             raise ValueError('Collision when rendering grid')
-        grid[y][x] = mole['uuid'][0]
+        grid[y][x] = mole['uuid'][0:num_digits]
 
     return grid
