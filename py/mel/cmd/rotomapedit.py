@@ -102,7 +102,15 @@ def load_image_moles(image_path):
 def save_image_moles(moles, image_path):
     moles_path = image_path + '.json'
     with open(moles_path, 'w') as moles_file:
-        json.dump(moles, moles_file)
+        json.dump(
+            moles,
+            moles_file,
+            indent=4,
+            separators=(',', ': '),
+            sort_keys=True)
+
+        # There's no newline after dump(), add one here for happier viewing
+        print(file=moles_file)
 
 
 def draw_mole(image, x, y, mole):
