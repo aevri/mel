@@ -22,10 +22,7 @@ def setup_parser(parser):
 def process_args(args):
     mole_map_list = [json.load(x) for x in args.FILE]
 
-    uuid_set = set()
-    for mole_map in mole_map_list:
-        for mole in mole_map:
-            uuid_set.add(mole['uuid'])
+    uuid_set = mole_uuid_set_from_map_list(mole_map_list)
 
     max_digits = 1
     uuid_list = sorted(list(uuid_set))
@@ -68,6 +65,14 @@ def process_args(args):
                 out = ''.join(row)
             print(out)
         print()
+
+
+def mole_uuid_set_from_map_list(mole_map_list):
+    uuid_set = set()
+    for mole_map in mole_map_list:
+        for mole in mole_map:
+            uuid_set.add(mole['uuid'])
+    return uuid_set
 
 
 def map_to_grid(mole_map, num_digits):
