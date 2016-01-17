@@ -17,6 +17,11 @@ def setup_parser(parser):
         type=argparse.FileType(),
         nargs='+',
         help="Path to the rotomap json file.")
+    parser.add_argument(
+        '--display-width',
+        type=int,
+        default=None,
+        help="Display maps side-by-side, wrapped to this width.")
 
 
 def process_args(args):
@@ -30,16 +35,74 @@ def process_args(args):
         for mole in mole_map:
             mole['uuid'] = uuid_to_display[mole['uuid']]
 
-    for mole_map in mole_map_list:
-        grid = map_to_grid(mole_map, max_digits)
+    grid_list = [map_to_grid(m, max_digits) for m in mole_map_list]
+    if args.display_width is not None:
+        print_grids_wrapped(grid_list, args.display_width, max_digits)
+    else:
+        for grid in grid_list:
+            for row in grid:
+                print(make_grid_row(row, max_digits))
+            print()
 
+
+def make_grid_row(row, max_digits):
+    if max_digits > 1:
+        out = ' '.join(row)
+    else:
+        out = ''.join(row)
+    return out
+
+
+def print_grids_wrapped(grid_list, display_width, max_digits):
+    row_list_list = []
+    for grid in grid_list:
+        row_list = []
         for row in grid:
-            if max_digits > 1:
-                out = ' '.join(row)
+            row_list.append(make_grid_row(row, max_digits))
+        row_list_list.append(row_list)
+
+    row_lists_to_display = []
+    width = 0
+    spacer = '    '
+    for row_list in row_list_list:
+        row_width = len(row_list[0])
+        if row_lists_to_display:
+            new_width = width + row_width + len(spacer)
+        else:
+            new_width = row_width
+
+        if new_width <= display_width:
+            width = new_width
+            row_lists_to_display.append(row_list)
+        else:
+            if not row_lists_to_display:
+                raise Exception(
+                    'Could not fit grid of width {} '
+                    'to display of width {}'.format(
+                        row_width, display_width))
+
+            print_row_lists_in_columns(
+                row_lists_to_display, max_digits, spacer)
+            row_lists_to_display = []
+            width = 0
+            print()
+
+    if row_lists_to_display:
+        print_row_lists_in_columns(
+            row_lists_to_display, max_digits, spacer)
+
+
+def print_row_lists_in_columns(row_lists_to_display, max_digits, spacer):
+    max_rows = max(len(g) for g in row_lists_to_display)
+    for i in xrange(max_rows):
+        row = []
+        for row_list in row_lists_to_display:
+            if i < len(row_list):
+                row.append(row_list[i])
             else:
-                out = ''.join(row)
-            print(out)
-        print()
+                width = len(row_list[0])
+                row.append(' ' * width)
+        print(spacer.join(row))
 
 
 def mole_uuid_set_from_map_list(mole_map_list):
@@ -56,6 +119,7 @@ def calc_uuid_display_params(uuid_set):
     prev_uuid = uuid_list[0]
     prev_digits = max_digits
     uuid_to_display = {}
+    digits = 1
     for this_uuid in uuid_list[1:]:
         digits = 1
         for i, j in zip(prev_uuid, this_uuid):
@@ -83,13 +147,16 @@ def calc_uuid_display_params(uuid_set):
 
 def map_to_grid(mole_map, num_digits):
 
+    if not mole_map:
+        return [['.']]
+
     minx = min([m['x'] for m in mole_map])
     miny = min([m['y'] for m in mole_map])
     maxx = max([m['x'] for m in mole_map])
     maxy = max([m['y'] for m in mole_map])
 
-    extents_x = maxx - minx
-    extents_y = maxy - miny
+    extents_x = max(maxx - minx, 1)
+    extents_y = max(maxy - miny, 1)
 
     scale_x = 1 / extents_x
     scale_y = 1 / extents_y
