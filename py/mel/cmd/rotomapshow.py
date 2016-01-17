@@ -62,12 +62,11 @@ def process_args(args):
         grid = map_to_grid(mole_map, max_digits)
 
         for row in grid:
-            for col in row:
-                if max_digits > 1:
-                    print(col, '', end='')
-                else:
-                    print(col, end='')
-            print()
+            if max_digits > 1:
+                out = ' '.join(row)
+            else:
+                out = ''.join(row)
+            print(out)
         print()
 
 
