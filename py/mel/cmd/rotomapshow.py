@@ -24,6 +24,33 @@ def process_args(args):
 
     uuid_set = mole_uuid_set_from_map_list(mole_map_list)
 
+    max_digits, uuid_to_display = calc_uuid_display_params(uuid_set)
+
+    for mole_map in mole_map_list:
+        for mole in mole_map:
+            mole['uuid'] = uuid_to_display[mole['uuid']]
+
+    for mole_map in mole_map_list:
+        grid = map_to_grid(mole_map, max_digits)
+
+        for row in grid:
+            if max_digits > 1:
+                out = ' '.join(row)
+            else:
+                out = ''.join(row)
+            print(out)
+        print()
+
+
+def mole_uuid_set_from_map_list(mole_map_list):
+    uuid_set = set()
+    for mole_map in mole_map_list:
+        for mole in mole_map:
+            uuid_set.add(mole['uuid'])
+    return uuid_set
+
+
+def calc_uuid_display_params(uuid_set):
     max_digits = 1
     uuid_list = sorted(list(uuid_set))
     prev_uuid = uuid_list[0]
@@ -51,28 +78,7 @@ def process_args(args):
     display = prev_uuid[:unsafe_digits] + '.' * safe_digits
     uuid_to_display[prev_uuid] = display
 
-    for mole_map in mole_map_list:
-        for mole in mole_map:
-            mole['uuid'] = uuid_to_display[mole['uuid']]
-
-    for mole_map in mole_map_list:
-        grid = map_to_grid(mole_map, max_digits)
-
-        for row in grid:
-            if max_digits > 1:
-                out = ' '.join(row)
-            else:
-                out = ''.join(row)
-            print(out)
-        print()
-
-
-def mole_uuid_set_from_map_list(mole_map_list):
-    uuid_set = set()
-    for mole_map in mole_map_list:
-        for mole in mole_map:
-            uuid_set.add(mole['uuid'])
-    return uuid_set
+    return max_digits, uuid_to_display
 
 
 def map_to_grid(mole_map, num_digits):
