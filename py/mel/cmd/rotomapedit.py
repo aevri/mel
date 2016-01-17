@@ -91,8 +91,9 @@ def load_image_moles(image_path):
     converted = []
     for m in moles:
         if type(m) is list:
-            ident = uuid.uuid4()
-            m = {'x': m[0], 'y': m[1], 'uuid': str(ident)}
+            m = {'x': m[0], 'y': m[1]}
+        if 'uuid' not in m:
+            m['uuid'] = uuid.uuid4().hex
         converted.append(m)
 
     return converted
@@ -243,7 +244,7 @@ class Display:
         self._moles.append({
             'x': x,
             'y': y,
-            'uuid': str(uuid.uuid4()),
+            'uuid': uuid.uuid4().hex,
         })
         image_path = self._path_list[self._list_index]
         save_image_moles(self._moles, image_path)
