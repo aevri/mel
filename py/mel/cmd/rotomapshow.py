@@ -82,7 +82,8 @@ def map_to_grid(mole_map, num_digits):
 
     scale_x = 1 / extents_x
     scale_y = 1 / extents_y
-    scale = min(scale_x, scale_y)
+    initial_scale = min(scale_x, scale_y)
+    scale = initial_scale
 
     any_collisions = True
     while any_collisions:
@@ -93,7 +94,7 @@ def map_to_grid(mole_map, num_digits):
                 mole_map, minx, miny, extents_x, extents_y, scale, num_digits)
         except ValueError:
             any_collisions = True
-            scale *= 2
+            scale += initial_scale
 
     return grid
 
