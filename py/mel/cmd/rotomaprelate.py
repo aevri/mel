@@ -55,10 +55,12 @@ def relate(from_moles, to_moles, cutoff):
 
     best_theory = None
     best_theory_dist_sq = None
+    best_theory_offset_dist_sq = None
     for source in from_moles:
         for dest in to_moles:
             to_x = dest['x'] - source['x']
             to_y = dest['y'] - source['y']
+            offset_dist_sq = to_x * to_x + to_y * to_y
             theory, dist_sq = make_offset_theory(
                 from_moles, to_moles, (to_x, to_y), cutoff_sq)
 
@@ -70,10 +72,14 @@ def relate(from_moles, to_moles, cutoff):
             if not new_best and len(theory) == len(best_theory):
                 if dist_sq < best_theory_dist_sq:
                     new_best = True
+                if not new_best and dist_sq == best_theory_dist_sq:
+                    if offset_dist_sq < best_theory_offset_dist_sq:
+                        new_best = True
 
             if new_best:
                 best_theory = theory
                 best_theory_dist_sq = dist_sq
+                best_theory_offset_dist_sq = offset_dist_sq
                 # print('*', len(best_theory), best_theory_dist_sq)
 
     return best_theory
