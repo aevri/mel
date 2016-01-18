@@ -107,17 +107,8 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     for a in from_moles:
         point = mole_to_point(a)
         point = (point[0] + offset[0], point[1] + offset[1])
-        best_index = None
-        best_dist_sq = None
-        for j, b in enumerate(to_moles):
-            dist_sq = mel.lib.math.distance_sq_2d(
-                point,
-                mole_to_point(b))
-            if dist_sq < cutoff_sq:
-                if best_index is None or dist_sq < best_dist_sq:
-                    best_index = j
-                    best_dist_sq = dist_sq
-        if best_index is not None:
+        best_index, best_dist_sq = nearest_mole_index_to_point(point, to_moles)
+        if best_index is not None and best_dist_sq < cutoff_sq:
             theory.append((a['uuid'], to_moles[best_index]['uuid']))
             del to_moles[best_index]
             dist_sq_sum += best_dist_sq
@@ -128,6 +119,19 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
         theory.append((None, b['uuid']))
 
     return theory, dist_sq_sum
+
+
+def nearest_mole_index_to_point(point, mole_list):
+    best_index = None
+    best_dist_sq = None
+    for i, mole in enumerate(mole_list):
+        dist_sq = mel.lib.math.distance_sq_2d(
+            point,
+            mole_to_point(mole))
+        if best_index is None or dist_sq < best_dist_sq:
+            best_index = i
+            best_dist_sq = dist_sq
+    return best_index, best_dist_sq
 
 
 def mole_distance_sq(from_mole, to_mole):
