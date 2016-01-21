@@ -52,6 +52,8 @@ def relate(from_moles, to_moles, cutoff):
         cutoff_sq = cutoff * cutoff
     else:
         cutoff_sq = mole_min_sq_distance(to_moles)
+        if cutoff_sq is None:
+            cutoff_sq = 0
 
     best_theory = None
     best_theory_dist_sq = None
@@ -101,14 +103,20 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
 
     dist_sq_sum = 0
 
-    for a in from_moles:
+    for i, a in enumerate(from_moles):
         point = mole_to_point(a)
         point = (point[0] + offset[0], point[1] + offset[1])
         best_index, best_dist_sq = nearest_mole_index_to_point(point, to_moles)
-        if best_index is not None and best_dist_sq < cutoff_sq:
-            theory.append((a['uuid'], to_moles[best_index]['uuid']))
-            del to_moles[best_index]
-            dist_sq_sum += best_dist_sq
+        if best_index is not None and best_dist_sq <= cutoff_sq:
+            r_point = mole_to_point(to_moles[best_index])
+            r_point = (r_point[0] - offset[0], r_point[1] - offset[1])
+            r_index, _ = nearest_mole_index_to_point(r_point, from_moles)
+            if i == r_index:
+                theory.append((a['uuid'], to_moles[best_index]['uuid']))
+                del to_moles[best_index]
+                dist_sq_sum += best_dist_sq
+            else:
+                theory.append((a['uuid'], None))
         else:
             theory.append((a['uuid'], None))
 
