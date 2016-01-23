@@ -25,6 +25,10 @@ def setup_parser(parser):
         help="The maximum distance to allow between the predicted location of "
         "a mole in the 'to' image, and the location of a candidate "
         "match.")
+    parser.add_argument(
+        '--rewrite-to',
+        action='store_true',
+        help="Rewrite the 'to' file according to the mapping.")
 
 
 def process_args(args):
@@ -35,6 +39,24 @@ def process_args(args):
     for p in pairs:
         if p[0] and p[1]:
             print(p[0], p[1])
+
+    if args.rewrite_to:
+        for p in pairs:
+            if p[0] and p[1]:
+                for mole in to_moles:
+                    if mole['uuid'] == p[1]:
+                        mole['uuid'] = p[0]
+
+        with open(args.TO, 'w') as f:
+            json.dump(
+                to_moles,
+                f,
+                indent=4,
+                separators=(',', ': '),
+                sort_keys=True)
+
+            # There's no newline after dump(), add one here for happier viewing
+            print(file=f)
 
 
 def load_json(path):
