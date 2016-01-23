@@ -269,10 +269,8 @@ class Display:
                 closest_index = i
                 closest_distance = distance
 
-        if closest_index is None:
-            return
-
-        del self._moles[closest_index]
+        if closest_index is not None:
+            del self._moles[closest_index]
 
         image_path = self._path_list[self._list_index]
         save_image_moles(self._moles, image_path)
