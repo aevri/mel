@@ -300,7 +300,7 @@ class Display:
     def current_image_path(self):
         return self._path_list[self._list_index]
 
-    def remove_mole(self, x, y):
+    def _closest_mole_index(self, x, y):
         closest_index = None
         closest_distance = None
         for i, mole in enumerate(self._moles):
@@ -310,6 +310,11 @@ class Display:
             if closest_distance is None or distance < closest_distance:
                 closest_index = i
                 closest_distance = distance
+
+        return closest_index
+
+    def remove_mole(self, x, y):
+        closest_index = self._closest_mole_index(x, y)
 
         if closest_index is not None:
             del self._moles[closest_index]
