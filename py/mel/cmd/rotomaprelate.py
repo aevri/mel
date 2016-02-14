@@ -47,6 +47,9 @@ def process_args(args):
         args.match_cutoff_distance,
         args.offset_cutoff_distance)
 
+    if pairs is None:
+        return
+
     for p in pairs:
         if p[0] and p[1]:
             print(p[0], p[1])
