@@ -71,8 +71,10 @@ def process_args(args):
         if key != -1:
             if key == left:
                 display.show_prev()
+                print(display.current_image_path())
             elif key == right:
                 display.show_next()
+                print(display.current_image_path())
             elif key == ord(' '):
                 display.show_fitted()
             else:
@@ -257,6 +259,9 @@ class Display:
         image_path = self._path_list[self._list_index]
         save_image_moles(self._moles, image_path)
         self.show_current()
+
+    def current_image_path(self):
+        return self._path_list[self._list_index]
 
     def remove_mole(self, x, y):
         closest_index = None
