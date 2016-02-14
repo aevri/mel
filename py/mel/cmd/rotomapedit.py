@@ -45,11 +45,22 @@ def process_args(args):
     left = 63234
     right = 63235
 
+    # This must be a list in order for it to be referenced from the the
+    # closure, in Python 3 we'll use "nonlocal".
+    mole_uuid = [None]
+
     def mouse_callback(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 image_x, image_y = display.windowxy_to_imagexy(x, y)
                 display.show_zoomed(image_x, image_y)
+            elif flags & cv2.EVENT_FLAG_ALTKEY:
+                image_x, image_y = display.windowxy_to_imagexy(x, y)
+                if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                    mole_uuid[0] = display.get_mole_uuid(image_x, image_y)
+                    print(mole_uuid[0])
+                else:
+                    display.set_mole_uuid(image_x, image_y, mole_uuid[0])
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
                 image_x, image_y = display.windowxy_to_imagexy(x, y)
                 display.remove_mole(image_x, image_y)
@@ -315,6 +326,20 @@ class Display:
                 closest_distance = distance
 
         return closest_index
+
+    def set_mole_uuid(self, x, y, mole_uuid):
+        closest_index = self._closest_mole_index(x, y)
+        if closest_index is not None:
+            self._moles[closest_index]['uuid'] = mole_uuid
+        self._save_image_moles()
+        self.show_current()
+
+    def get_mole_uuid(self, x, y):
+        closest_index = self._closest_mole_index(x, y)
+        if closest_index is not None:
+            return self._moles[closest_index]['uuid']
+
+        return None
 
     def remove_mole(self, x, y):
         closest_index = self._closest_mole_index(x, y)
