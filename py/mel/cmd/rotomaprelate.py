@@ -26,6 +26,12 @@ def setup_parser(parser):
         "a mole in the 'to' image, and the location of a candidate "
         "match.")
     parser.add_argument(
+        '--offset-cutoff-distance',
+        type=int,
+        default=None,
+        help="The maximum distance to consider for translation theories "
+        "between maps")
+    parser.add_argument(
         '--rewrite-to',
         action='store_true',
         help="Rewrite the 'to' file according to the mapping.")
@@ -35,7 +41,12 @@ def process_args(args):
     from_moles = load_json(args.FROM)
     to_moles = load_json(args.TO)
 
-    pairs = relate(from_moles, to_moles, args.match_cutoff_distance)
+    pairs = relate(
+        from_moles,
+        to_moles,
+        args.match_cutoff_distance,
+        args.offset_cutoff_distance)
+
     for p in pairs:
         if p[0] and p[1]:
             print(p[0], p[1])
@@ -64,11 +75,15 @@ def load_json(path):
         return json.load(f)
 
 
-def relate(from_moles, to_moles, cutoff):
+def relate(from_moles, to_moles, cutoff, offset_cutoff):
     if not from_moles:
         raise ValueError('from_moles is empty')
     if not to_moles:
         raise ValueError('to_moles is empty')
+
+    offset_cutoff_sq = None
+    if offset_cutoff:
+        offset_cutoff_sq = offset_cutoff ** 2
 
     if cutoff is not None:
         cutoff_sq = cutoff * cutoff
@@ -85,6 +100,11 @@ def relate(from_moles, to_moles, cutoff):
             to_x = dest['x'] - source['x']
             to_y = dest['y'] - source['y']
             offset_dist_sq = to_x * to_x + to_y * to_y
+
+            if offset_cutoff_sq is not None:
+                if offset_dist_sq >= offset_cutoff_sq:
+                    continue
+
             theory, dist_sq = make_offset_theory(
                 from_moles, to_moles, (to_x, to_y), cutoff_sq)
 
