@@ -55,11 +55,12 @@ def process_args(args):
             print(p[0], p[1])
 
     if args.rewrite_to:
-        for p in pairs:
-            if p[0] and p[1]:
-                for mole in to_moles:
+        for mole in to_moles:
+            for p in pairs:
+                if p[0] and p[1]:
                     if mole['uuid'] == p[1]:
                         mole['uuid'] = p[0]
+                        break
 
         with open(args.TO, 'w') as f:
             json.dump(
