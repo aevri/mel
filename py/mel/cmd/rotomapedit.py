@@ -115,11 +115,48 @@ def save_image_moles(moles, image_path):
         print(file=moles_file)
 
 
+def hex3_to_rgb4(hex_string):
+
+    # "12 class paired" from http://colorbrewer2.org/
+    scheme = [
+        (166, 206, 227),
+        (31, 120, 180),
+        (178, 223, 138),
+        (51, 160, 44),
+
+        (251, 154, 153),
+        (227, 26, 28),
+        (253, 191, 111),
+        (255, 127, 0),
+
+        (202, 178, 214),
+        (106, 61, 154),
+        (255, 255, 153),
+        (177, 89, 40),
+    ]
+
+    rgb_list = []
+
+    value = int(hex_string[0:3], 16)
+    for x in xrange(4):
+        index = value % 12
+        value //= 12
+        rgb_list.append(scheme[index])
+
+    return rgb_list
+
+
 def draw_mole(image, x, y, mole):
-    r = int(mole['uuid'][0:2], 16)
-    g = int(mole['uuid'][2:4], 16)
-    b = int(mole['uuid'][4:6], 16)
-    cv2.circle(image, (x, y), 10, (r, g, b), -1)
+    draw_target(image, x, y, mole)
+
+
+def draw_target(image, x, y, mole):
+
+    radius = 16
+    colors = hex3_to_rgb4(mole['uuid'][:3])
+    for index in xrange(3):
+        cv2.circle(image, (x, y), radius, colors[index], -1)
+        radius -= 4
 
 
 class Display:
