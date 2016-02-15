@@ -287,14 +287,17 @@ class Display:
         self._list_index = (self._list_index + 1) % self._num_images
         self.show_current()
 
+    def _save_image_moles(self):
+        image_path = self._path_list[self._list_index]
+        save_image_moles(self._moles, image_path)
+
     def add_mole(self, x, y):
         self._moles.append({
             'x': x,
             'y': y,
             'uuid': uuid.uuid4().hex,
         })
-        image_path = self._path_list[self._list_index]
-        save_image_moles(self._moles, image_path)
+        self._save_image_moles()
         self.show_current()
 
     def current_image_path(self):
@@ -319,9 +322,7 @@ class Display:
         if closest_index is not None:
             del self._moles[closest_index]
 
-        image_path = self._path_list[self._list_index]
-        save_image_moles(self._moles, image_path)
-
+        self._save_image_moles()
         self.show_current()
 
     def set_mouse_callback(self, callback):
