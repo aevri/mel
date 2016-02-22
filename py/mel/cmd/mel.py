@@ -17,6 +17,7 @@ import mel.cmd.microanalyse
 import mel.cmd.rotomapedit
 import mel.cmd.rotomaprelate
 import mel.cmd.rotomapshow
+import mel.cmd.rotomapuuid
 
 
 def main():
@@ -38,6 +39,7 @@ def main():
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaprelate, 'rotomap-relate')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapshow, 'rotomap-show')
+    _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
 
     args = parser.parse_args()
     return args.func(args)
