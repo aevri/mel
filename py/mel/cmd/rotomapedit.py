@@ -74,6 +74,7 @@ def process_args(args):
     print("Click on a point to add a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
     print("Press space to restore original zoom.")
+    print("Press enter to toggle mole markers.")
     print("Press any other key to quit.")
 
     is_finished = False
@@ -88,6 +89,8 @@ def process_args(args):
                 print(display.current_image_path())
             elif key == ord(' '):
                 display.show_fitted()
+            elif key == 13:
+                display.toggle_markers()
             else:
                 is_finished = True
 
@@ -199,6 +202,12 @@ class Display:
         self._cached_image = None
         self._cached_image_index = None
 
+        self._is_showing_markers = True
+
+        self.show_current()
+
+    def toggle_markers(self):
+        self._is_showing_markers = not self._is_showing_markers
         self.show_current()
 
     def load_current_image(self):
@@ -243,10 +252,11 @@ class Display:
         image = mel.lib.image.letterbox(
             image, self._width, self._height)
 
-        for mole in self._moles:
-            x = int(mole['x'] / self._image_scale + self._image_left)
-            y = int(mole['y'] / self._image_scale + self._image_top)
-            draw_mole(image, x, y, mole)
+        if self._is_showing_markers:
+            for mole in self._moles:
+                x = int(mole['x'] / self._image_scale + self._image_left)
+                y = int(mole['y'] / self._image_scale + self._image_top)
+                draw_mole(image, x, y, mole)
 
         cv2.imshow(self._name, image)
         self._is_zoomed = False
@@ -259,19 +269,22 @@ class Display:
             (self._width, self._height))
         image = mel.lib.image.translated_and_clipped(
             image, nx, ny, self._width, self._height)
+
         self._zoom_x = x
         self._zoom_y = y
-        self._image_left = -nx
-        self._image_top = -ny
-        self._image_width = image.shape[1] + nx
-        self._image_height = image.shape[0] + ny
-        self._image_scale = 1
-        for mole in self._moles:
-            x = mole['x'] + self._image_left
-            y = mole['y'] + self._image_top
-            if x >= 0 and y >= 0:
-                if x < self._image_width and y < self._image_height:
-                    draw_mole(image, x, y, mole)
+        if self._is_showing_markers:
+            self._image_left = -nx
+            self._image_top = -ny
+            self._image_width = image.shape[1] + nx
+            self._image_height = image.shape[0] + ny
+            self._image_scale = 1
+            for mole in self._moles:
+                x = mole['x'] + self._image_left
+                y = mole['y'] + self._image_top
+                if x >= 0 and y >= 0:
+                    if x < self._image_width and y < self._image_height:
+                        draw_mole(image, x, y, mole)
+
         cv2.imshow(self._name, image)
         self._is_zoomed = True
 
