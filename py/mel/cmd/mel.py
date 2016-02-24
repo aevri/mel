@@ -10,10 +10,10 @@ import mel.cmd.addcluster
 import mel.cmd.addsingle
 import mel.cmd.list
 import mel.cmd.microadd
-import mel.cmd.microview
+import mel.cmd.microanalyse
 import mel.cmd.microrecord
 import mel.cmd.microreplay
-import mel.cmd.microanalyse
+import mel.cmd.microview
 import mel.cmd.rotomapedit
 import mel.cmd.rotomaprelate
 import mel.cmd.rotomapshow
