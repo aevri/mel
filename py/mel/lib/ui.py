@@ -26,6 +26,10 @@ class MultiImageDisplay():
         cv2.namedWindow(name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(name, self._width, self._height)
 
+    def add_bw_image(self, image, name=None):
+        image = cv2.cvtColor(image, cv2.cv.CV_GRAY2BGR)
+        return self.add_image(image, name)
+
     def add_image(self, image, name=None):
         self._images_names.append((image, name))
         index = len(self._images_names) - 1
