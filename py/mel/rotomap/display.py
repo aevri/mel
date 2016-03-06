@@ -16,6 +16,15 @@ import mel.lib.image
 import mel.lib.math
 
 
+def load_image(path, rot90):
+    image = cv2.imread(path)
+
+    if rot90:
+        image = mel.lib.common.rotated90(image, rot90)
+
+    return image
+
+
 def load_image_moles(image_path):
     moles_path = image_path + '.json'
     moles = []
@@ -135,12 +144,9 @@ class Display:
             return self._cached_image
 
         image_path = self._path_list[self._list_index]
-        image = cv2.imread(image_path)
+        image = load_image(image_path, self._rot90)
 
         self._moles = load_image_moles(image_path)
-
-        if self._rot90:
-            image = mel.lib.common.rotated90(image, self._rot90)
 
         self._cached_image_index = self._list_index
         self._cached_image = image
