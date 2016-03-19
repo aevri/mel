@@ -59,6 +59,7 @@ def process_args(args):
     # This must be a list in order for it to be referenced from the the
     # closure, in Python 3 we'll use "nonlocal".
     mole_uuid = [None]
+    is_move_mode = [False]
 
     def mouse_callback(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -77,16 +78,20 @@ def process_args(args):
                 display.remove_mole(image_x, image_y)
             else:
                 image_x, image_y = display.windowxy_to_imagexy(x, y)
-                display.add_mole(image_x, image_y)
+                if not is_move_mode[0]:
+                    display.add_mole(image_x, image_y)
+                else:
+                    display.move_nearest_mole(image_x, image_y)
 
     display.set_mouse_callback(mouse_callback)
 
     print("Press left for previous image, right for next image.")
-    print("Click on a point to add a mole there and save.")
+    print("Click on a point to add or move a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
     print("Shift-click on a point to delete it.")
     print("Alt-Shift-click on a point to copy it's uuid.")
     print("Alt-click on a point to paste the copied uuid.")
+    print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
     print("Press space to restore original zoom.")
@@ -109,6 +114,8 @@ def process_args(args):
                 display.show_fitted()
             elif key == ord('c'):
                 copied_moles = display.get_moles()
+            elif key == ord('m'):
+                is_move_mode[0] = not is_move_mode[0]
             elif key == ord('a'):
                 guessed_moles = guess_mole_positions(
                     copied_moles,

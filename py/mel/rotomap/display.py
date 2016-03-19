@@ -290,6 +290,16 @@ class Display:
 
         return None
 
+    def move_nearest_mole(self, x, y):
+        closest_index = self._closest_mole_index(x, y)
+
+        if closest_index is not None:
+            self._moles[closest_index]['x'] = x
+            self._moles[closest_index]['y'] = y
+
+        self._save_image_moles()
+        self.show_current()
+
     def remove_mole(self, x, y):
         closest_index = self._closest_mole_index(x, y)
 
