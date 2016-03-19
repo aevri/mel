@@ -324,7 +324,7 @@ def set_molepos_to_nparray(mole, nparray):
     mole['y'] = int(nparray[1])
 
 
-def find_mole_ellipse(original, mole, grid_size):
+def find_mole_ellipse(original, mole, grid_size, add_debug_image):
 
     molepos = molepos_to_nparray(mole)
     topleft = numpy.maximum(molepos - (grid_size, grid_size), (0, 0))
@@ -333,12 +333,20 @@ def find_mole_ellipse(original, mole, grid_size):
         topleft[0]:molepos[0] + grid_size
     ]
     image = original[:]
+    # image = cv2.blur(original, (5, 5))
+    add_debug_image(image)
     image = cv2.cvtColor(image, cv2.cv.CV_BGR2HSV)
+    add_debug_image(image)
     image = cv2.split(image)[1]
+    add_debug_image(image)
     image = cv2.equalizeHist(image)
+    add_debug_image(image)
+    # image = cv2.threshold(image, 48, 255, cv2.cv.CV_THRESH_BINARY)[1]
     image = cv2.threshold(image, 252, 255, cv2.cv.CV_THRESH_BINARY)[1]
+    add_debug_image(image)
     image, stats, ellipse = mel.lib.moleimaging.process_contours(
         image, original)
+    add_debug_image(image)
 
     if ellipse:
         ellipse = (

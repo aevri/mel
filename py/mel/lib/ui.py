@@ -37,6 +37,9 @@ class MultiImageDisplay():
         self.refresh()
         return index
 
+    def row_len(self):
+        return len(self._layout[-1])
+
     def new_row(self):
         assert self._layout[-1]
         self._layout.append([])

@@ -155,7 +155,7 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
                 mel.lib.moleimaging.set_molepos_to_nparray(new_m, pos)
 
             ellipse = mel.lib.moleimaging.find_mole_ellipse(
-                current_image, new_m, 50)
+                current_image, new_m, 50, lambda x: None)
             if ellipse is not None:
                 mel.lib.moleimaging.set_molepos_to_nparray(new_m, ellipse[0])
 
