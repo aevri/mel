@@ -70,9 +70,12 @@ def process_args(args):
     print("Press left for previous image, right for next image.")
     print("Click on a point to add a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
+    print("Press 'c' to copy the moles in the displayed image.")
     print("Press space to restore original zoom.")
     print("Press enter to toggle mole markers.")
     print("Press any other key to quit.")
+
+    copied_moles = None
 
     is_finished = False
     while not is_finished:
@@ -86,6 +89,8 @@ def process_args(args):
                 print(display.current_image_path())
             elif key == ord(' '):
                 display.show_fitted()
+            elif key == ord('c'):
+                copied_moles = display.get_moles()
             elif key == 13:
                 display.toggle_markers()
             else:

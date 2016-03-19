@@ -134,6 +134,9 @@ class Display:
 
         self.show_current()
 
+    def get_moles(self):
+        return self._moles
+
     def toggle_markers(self):
         self._is_showing_markers = not self._is_showing_markers
         self.show_current()
