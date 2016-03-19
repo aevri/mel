@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import copy
+
 import cv2
 
 import mel.lib.common
@@ -71,6 +73,7 @@ def process_args(args):
     print("Click on a point to add a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
     print("Press 'c' to copy the moles in the displayed image.")
+    print("Press 'a' to auto-paste the copied moles in the displayed image.")
     print("Press space to restore original zoom.")
     print("Press enter to toggle mole markers.")
     print("Press any other key to quit.")
@@ -91,9 +94,49 @@ def process_args(args):
                 display.show_fitted()
             elif key == ord('c'):
                 copied_moles = display.get_moles()
+            elif key == ord('a'):
+                guessed_moles = guess_mole_positions(
+                    copied_moles,
+                    display.get_moles(),
+                    display.get_image())
+                display.set_moles(guessed_moles)
             elif key == 13:
                 display.toggle_markers()
             else:
                 is_finished = True
 
     display.clear_mouse_callback()
+
+
+def guess_mole_positions(previous_moles, current_moles, current_image):
+    prev_uuids = set(m['uuid'] for m in previous_moles)
+    curr_uuids = set(m['uuid'] for m in current_moles)
+    matched_uuids = prev_uuids.intersection(curr_uuids)
+
+    new_moles = copy.deepcopy(current_moles)
+
+    offset = None
+    if matched_uuids:
+        prev_dict = {m['uuid']: m for m in previous_moles}
+        curr_dict = {m['uuid']: m for m in current_moles}
+        for m in matched_uuids:
+            prevpos = mel.lib.moleimaging.molepos_to_nparray(prev_dict[m])
+            currpos = mel.lib.moleimaging.molepos_to_nparray(curr_dict[m])
+            offset = currpos - prevpos
+
+    for mole in previous_moles:
+        if mole['uuid'] not in matched_uuids:
+            new_m = copy.deepcopy(mole)
+            if offset is not None:
+                pos = mel.lib.moleimaging.molepos_to_nparray(new_m)
+                pos += offset
+                mel.lib.moleimaging.set_molepos_to_nparray(new_m, pos)
+
+            ellipse = mel.lib.moleimaging.find_mole_ellipse(
+                current_image, new_m, 50)
+            if ellipse is not None:
+                mel.lib.moleimaging.set_molepos_to_nparray(new_m, ellipse[0])
+
+            new_moles.append(new_m)
+
+    return new_moles

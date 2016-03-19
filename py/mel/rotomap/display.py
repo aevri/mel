@@ -137,6 +137,14 @@ class Display:
     def get_moles(self):
         return self._moles
 
+    def set_moles(self, moles):
+        self._moles = moles
+        # self._save_image_moles()
+        self.show_current()
+
+    def get_image(self):
+        return self._cached_image
+
     def toggle_markers(self):
         self._is_showing_markers = not self._is_showing_markers
         self.show_current()

@@ -7,6 +7,7 @@ from __future__ import print_function
 import math
 
 import cv2
+import numpy
 
 import mel.lib.math
 
@@ -18,7 +19,7 @@ def find_mole(frame):
     img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
     img = cv2.split(img)[1]
     _, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
-    ringed, stats = mel.lib.moleimaging.process_contours(img, frame)
+    ringed, stats, _ = mel.lib.moleimaging.process_contours(img, frame)
     return ringed, stats
 
 
@@ -51,6 +52,8 @@ def process_contours(mole_regions, original):
 
     mole_contour, mole_area = find_mole_contour(
         contours, mole_regions.shape[0:2])
+
+    ellipse = None
 
     if mole_contour is not None:
         if len(mole_contour) > 5:
@@ -86,7 +89,7 @@ def process_contours(mole_regions, original):
             stats += tuple(hist_surrounding)
             stats += tuple(hu_moments)
 
-    return final, stats
+    return final, stats, ellipse
 
 
 def find_mole_contour(contours, width_height):
@@ -310,3 +313,38 @@ def annotate_image(original, is_rot_sensitive):
 
     original[:, :] = final[:, :]
     return is_aligned
+
+
+def molepos_to_nparray(mole):
+    return numpy.array((mole['x'], mole['y']))
+
+
+def set_molepos_to_nparray(mole, nparray):
+    mole['x'] = int(nparray[0])
+    mole['y'] = int(nparray[1])
+
+
+def find_mole_ellipse(original, mole, grid_size):
+
+    molepos = molepos_to_nparray(mole)
+    topleft = numpy.maximum(molepos - (grid_size, grid_size), (0, 0))
+    original = original[
+        topleft[1]:molepos[1] + grid_size,
+        topleft[0]:molepos[0] + grid_size
+    ]
+    image = original[:]
+    image = cv2.cvtColor(image, cv2.cv.CV_BGR2HSV)
+    image = cv2.split(image)[1]
+    image = cv2.equalizeHist(image)
+    image = cv2.threshold(image, 252, 255, cv2.cv.CV_THRESH_BINARY)[1]
+    image, stats, ellipse = mel.lib.moleimaging.process_contours(
+        image, original)
+
+    if ellipse:
+        ellipse = (
+            (ellipse[0][0] + topleft[0], ellipse[0][1] + topleft[1]),
+            ellipse[1],
+            ellipse[2],
+        )
+
+    return ellipse
