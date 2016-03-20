@@ -4,9 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
 import os
-import uuid
 
 import cv2
 
@@ -220,60 +218,28 @@ class Display:
         mel.rotomap.moles.save_image_moles(self._moles, image_path)
 
     def add_mole(self, x, y):
-        self._moles.append({
-            'x': x,
-            'y': y,
-            'uuid': uuid.uuid4().hex,
-        })
+        mel.rotomap.moles.add_mole(self._moles, x, y)
         self._save_image_moles()
         self.show_current()
 
     def current_image_path(self):
         return self._path_list[self._list_index]
 
-    def _closest_mole_index(self, x, y):
-        closest_index = None
-        closest_distance = None
-        for i, mole in enumerate(self._moles):
-            dx = x - mole['x']
-            dy = y - mole['y']
-            distance = math.sqrt(dx * dx + dy * dy)
-            if closest_distance is None or distance < closest_distance:
-                closest_index = i
-                closest_distance = distance
-
-        return closest_index
-
     def set_mole_uuid(self, x, y, mole_uuid):
-        closest_index = self._closest_mole_index(x, y)
-        if closest_index is not None:
-            self._moles[closest_index]['uuid'] = mole_uuid
+        mel.rotomap.moles.set_nearest_mole_uuid(self._moles, x, y, mole_uuid)
         self._save_image_moles()
         self.show_current()
 
     def get_mole_uuid(self, x, y):
-        closest_index = self._closest_mole_index(x, y)
-        if closest_index is not None:
-            return self._moles[closest_index]['uuid']
-
-        return None
+        return mel.rotomap.moles.get_nearest_mole_uuid(self._moles, x, y)
 
     def move_nearest_mole(self, x, y):
-        closest_index = self._closest_mole_index(x, y)
-
-        if closest_index is not None:
-            self._moles[closest_index]['x'] = x
-            self._moles[closest_index]['y'] = y
-
+        mel.rotomap.moles.move_nearest_mole(self._moles, x, y)
         self._save_image_moles()
         self.show_current()
 
     def remove_mole(self, x, y):
-        closest_index = self._closest_mole_index(x, y)
-
-        if closest_index is not None:
-            del self._moles[closest_index]
-
+        mel.rotomap.moles.remove_nearest_mole(self._moles, x, y)
         self._save_image_moles()
         self.show_current()
 
