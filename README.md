@@ -1,8 +1,8 @@
 Mel
 ===
 
-Tools to help identify new and changing moles on the skin with the goal of
-early detection of melanoma skin cancer.
+Work-in-progress tools to help identify new and changing moles on the skin with
+the goal of early detection of melanoma skin cancer.
 
 [![Build Status](https://travis-ci.org/aevri/mel.svg)](https://travis-ci.org/aevri/mel)
 
@@ -35,12 +35,12 @@ easier to compare.
 [1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
 [2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
 
-Milestones
-----------
+Things you can use now
+----------------------
 
-"Mel Zero" - no executables, just documentation of how to create and maintain a
-mole catalog manually using commonly available pre-existing software and
-hardware.
+["Mel Zero"](mel_zero.md) - no executables, just documentation of how to create
+and maintain a mole catalog manually using commonly available pre-existing
+software and hardware.
 
 License
 -------
