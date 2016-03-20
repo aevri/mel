@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import json
 import math
 import os
 import uuid
@@ -14,6 +13,7 @@ import cv2
 import mel.lib.common
 import mel.lib.image
 import mel.lib.math
+import mel.rotomap.moles
 
 
 def load_image(path, rot90):
@@ -23,38 +23,6 @@ def load_image(path, rot90):
         image = mel.lib.common.rotated90(image, rot90)
 
     return image
-
-
-def load_image_moles(image_path):
-    moles_path = image_path + '.json'
-    moles = []
-    if os.path.exists(moles_path):
-        with open(moles_path) as moles_file:
-            moles = json.load(moles_file)
-
-    converted = []
-    for m in moles:
-        if type(m) is list:
-            m = {'x': m[0], 'y': m[1]}
-        if 'uuid' not in m:
-            m['uuid'] = uuid.uuid4().hex
-        converted.append(m)
-
-    return converted
-
-
-def save_image_moles(moles, image_path):
-    moles_path = image_path + '.json'
-    with open(moles_path, 'w') as moles_file:
-        json.dump(
-            moles,
-            moles_file,
-            indent=4,
-            separators=(',', ': '),
-            sort_keys=True)
-
-        # There's no newline after dump(), add one here for happier viewing
-        print(file=moles_file)
 
 
 def hex3_to_rgb4(hex_string):
@@ -157,7 +125,7 @@ class Display:
         image_path = self._path_list[self._list_index]
         image = load_image(image_path, self._rot90)
 
-        self._moles = load_image_moles(image_path)
+        self._moles = mel.rotomap.moles.load_image_moles(image_path)
 
         self._cached_image_index = self._list_index
         self._cached_image = image
@@ -249,7 +217,7 @@ class Display:
 
     def _save_image_moles(self):
         image_path = self._path_list[self._list_index]
-        save_image_moles(self._moles, image_path)
+        mel.rotomap.moles.save_image_moles(self._moles, image_path)
 
     def add_mole(self, x, y):
         self._moles.append({
