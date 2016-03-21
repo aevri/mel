@@ -113,21 +113,21 @@ def process_args(args):
         if key != -1:
             if key == left:
                 editor.show_prev()
-                print(editor.current_image_path())
+                print(editor.moledata.current_image_path())
             elif key == right:
                 editor.show_next()
-                print(editor.current_image_path())
+                print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
             elif key == ord('c'):
-                copied_moles = editor.get_moles()
+                copied_moles = editor.moledata.moles
             elif key == ord('m'):
                 is_move_mode[0] = not is_move_mode[0]
             elif key == ord('a'):
                 guessed_moles = guess_mole_positions(
                     copied_moles,
-                    editor.get_moles(),
-                    editor.get_image())
+                    editor.moledata.moles,
+                    editor.moledata.get_image())
                 editor.set_moles(guessed_moles)
             elif key == 13:
                 editor.toggle_markers()

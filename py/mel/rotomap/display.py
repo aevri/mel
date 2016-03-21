@@ -168,37 +168,78 @@ class Editor:
 
     def __init__(self, path_list, width, height, rot90):
         self._display = Display(width, height)
-        self._rot90 = rot90
-
-        self._moles = []
-
-        # list all images
-        self._path_list = path_list
-
-        self._list_index = 0
-        self._num_images = len(self._path_list)
-
-        self._cached_image = None
-        self._cached_image_index = None
-
+        self.moledata = MoleData(path_list, rot90)
         self.show_current()
-
-    def get_moles(self):
-        return self._moles
 
     def set_moles(self, moles):
-        self._moles = moles
-        # self._save_image_moles()
+        self.moledata.moles = moles
         self.show_current()
-
-    def get_image(self):
-        return self._cached_image
 
     def toggle_markers(self):
         self._display.toggle_markers()
         self.show_current()
 
-    def load_current_image(self):
+    def show_current(self):
+        image = self.moledata.get_image()
+        self._display.show_current(image, self.moledata.moles)
+
+    def show_fitted(self):
+        image = self.moledata.get_image()
+        self._display.show_fitted(image, self.moledata.moles)
+
+    def show_zoomed(self, x, y):
+        image = self.moledata.get_image()
+        self._display.show_zoomed(image, self.moledata.moles, x, y)
+
+    def show_prev(self):
+        self.moledata.decrement()
+        self.show_current()
+
+    def show_next(self):
+        self.moledata.increment()
+        self.show_current()
+
+    def add_mole(self, x, y):
+        mel.rotomap.moles.add_mole(self.moledata.moles, x, y)
+        self.moledata.save_moles()
+        self.show_current()
+
+    def set_mole_uuid(self, x, y, mole_uuid):
+        mel.rotomap.moles.set_nearest_mole_uuid(
+            self.moledata.moles, x, y, mole_uuid)
+        self.moledata.save_moles()
+        self.show_current()
+
+    def get_mole_uuid(self, x, y):
+        return mel.rotomap.moles.get_nearest_mole_uuid(
+            self.moledata.moles, x, y)
+
+    def move_nearest_mole(self, x, y):
+        mel.rotomap.moles.move_nearest_mole(self.moledata.moles, x, y)
+        self.moledata.save_moles()
+        self.show_current()
+
+    def remove_mole(self, x, y):
+        mel.rotomap.moles.remove_nearest_mole(self.moledata.moles, x, y)
+        self.moledata.save_moles()
+        self.show_current()
+
+
+class MoleData:
+
+    def __init__(self, path_list, rot90):
+        self._rot90 = rot90
+        self.moles = []
+        self._path_list = path_list
+        self._list_index = 0
+        self._num_images = len(self._path_list)
+        self._cached_image = None
+        self._cached_image_index = None
+
+    def get_image(self):
+        return self._load()
+
+    def _load(self):
 
         if self._cached_image_index == self._list_index:
             return self._cached_image
@@ -206,60 +247,23 @@ class Editor:
         image_path = self._path_list[self._list_index]
         image = load_image(image_path, self._rot90)
 
-        self._moles = mel.rotomap.moles.load_image_moles(image_path)
+        self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
         self._cached_image_index = self._list_index
         self._cached_image = image
 
         return image
 
-    def show_current(self):
-        image = self.load_current_image()
-        self._display.show_current(image, self._moles)
-
-    def show_fitted(self):
-        image = self.load_current_image()
-        self._display.show_fitted(image, self._moles)
-
-    def show_zoomed(self, x, y):
-        image = self.load_current_image()
-        self._display.show_zoomed(image, self._moles, x, y)
-
-    def show_prev(self):
+    def decrement(self):
         new_index = self._list_index + self._num_images - 1
         self._list_index = new_index % self._num_images
-        self.show_current()
 
-    def show_next(self):
+    def increment(self):
         self._list_index = (self._list_index + 1) % self._num_images
-        self.show_current()
 
-    def _save_image_moles(self):
+    def save_moles(self):
         image_path = self._path_list[self._list_index]
-        mel.rotomap.moles.save_image_moles(self._moles, image_path)
-
-    def add_mole(self, x, y):
-        mel.rotomap.moles.add_mole(self._moles, x, y)
-        self._save_image_moles()
-        self.show_current()
+        mel.rotomap.moles.save_image_moles(self.moles, image_path)
 
     def current_image_path(self):
         return self._path_list[self._list_index]
-
-    def set_mole_uuid(self, x, y, mole_uuid):
-        mel.rotomap.moles.set_nearest_mole_uuid(self._moles, x, y, mole_uuid)
-        self._save_image_moles()
-        self.show_current()
-
-    def get_mole_uuid(self, x, y):
-        return mel.rotomap.moles.get_nearest_mole_uuid(self._moles, x, y)
-
-    def move_nearest_mole(self, x, y):
-        mel.rotomap.moles.move_nearest_mole(self._moles, x, y)
-        self._save_image_moles()
-        self.show_current()
-
-    def remove_mole(self, x, y):
-        mel.rotomap.moles.remove_nearest_mole(self._moles, x, y)
-        self._save_image_moles()
-        self.show_current()
