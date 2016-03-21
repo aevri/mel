@@ -68,27 +68,23 @@ def process_args(args):
     mole_uuid = [None]
     is_move_mode = [False]
 
-    def mouse_callback(event, x, y, flags, param):
+    def mouse_callback(event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
-                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
-                editor.show_zoomed(image_x, image_y)
+                editor.show_zoomed(mouse_x, mouse_y)
             elif flags & cv2.EVENT_FLAG_ALTKEY:
-                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    mole_uuid[0] = editor.get_mole_uuid(image_x, image_y)
+                    mole_uuid[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                     print(mole_uuid[0])
                 else:
-                    editor.set_mole_uuid(image_x, image_y, mole_uuid[0])
+                    editor.set_mole_uuid(mouse_x, mouse_y, mole_uuid[0])
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
-                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
-                editor.remove_mole(image_x, image_y)
+                editor.remove_mole(mouse_x, mouse_y)
             else:
-                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 if not is_move_mode[0]:
-                    editor.add_mole(image_x, image_y)
+                    editor.add_mole(mouse_x, mouse_y)
                 else:
-                    editor.move_nearest_mole(image_x, image_y)
+                    editor.move_nearest_mole(mouse_x, mouse_y)
 
     editor.display.set_mouse_callback(mouse_callback)
 

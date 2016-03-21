@@ -187,9 +187,10 @@ class Editor:
         image = self.moledata.get_image()
         self.display.show_fitted(image, self.moledata.moles)
 
-    def show_zoomed(self, x, y):
+    def show_zoomed(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         image = self.moledata.get_image()
-        self.display.show_zoomed(image, self.moledata.moles, x, y)
+        self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
 
     def show_prev(self):
         self.moledata.decrement()
@@ -199,28 +200,35 @@ class Editor:
         self.moledata.increment()
         self.show_current()
 
-    def add_mole(self, x, y):
-        mel.rotomap.moles.add_mole(self.moledata.moles, x, y)
+    def add_mole(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
-    def set_mole_uuid(self, x, y, mole_uuid):
+    def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles, x, y, mole_uuid)
+            self.moledata.moles, image_x, image_y, mole_uuid)
         self.moledata.save_moles()
         self.show_current()
 
-    def get_mole_uuid(self, x, y):
+    def get_mole_uuid(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         return mel.rotomap.moles.get_nearest_mole_uuid(
-            self.moledata.moles, x, y)
+            self.moledata.moles, image_x, image_y)
 
-    def move_nearest_mole(self, x, y):
-        mel.rotomap.moles.move_nearest_mole(self.moledata.moles, x, y)
+    def move_nearest_mole(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        mel.rotomap.moles.move_nearest_mole(
+            self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
-    def remove_mole(self, x, y):
-        mel.rotomap.moles.remove_nearest_mole(self.moledata.moles, x, y)
+    def remove_mole(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        mel.rotomap.moles.remove_nearest_mole(
+            self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
