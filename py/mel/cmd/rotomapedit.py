@@ -71,26 +71,26 @@ def process_args(args):
     def mouse_callback(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
-                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 editor.show_zoomed(image_x, image_y)
             elif flags & cv2.EVENT_FLAG_ALTKEY:
-                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 if flags & cv2.EVENT_FLAG_SHIFTKEY:
                     mole_uuid[0] = editor.get_mole_uuid(image_x, image_y)
                     print(mole_uuid[0])
                 else:
                     editor.set_mole_uuid(image_x, image_y, mole_uuid[0])
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
-                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 editor.remove_mole(image_x, image_y)
             else:
-                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor.display.windowxy_to_imagexy(x, y)
                 if not is_move_mode[0]:
                     editor.add_mole(image_x, image_y)
                 else:
                     editor.move_nearest_mole(image_x, image_y)
 
-    editor._display.set_mouse_callback(mouse_callback)
+    editor.display.set_mouse_callback(mouse_callback)
 
     print("Press left for previous image, right for next image.")
     print("Click on a point to add or move a mole there and save.")
@@ -134,7 +134,7 @@ def process_args(args):
             else:
                 is_finished = True
 
-    editor._display.clear_mouse_callback()
+    editor.display.clear_mouse_callback()
 
 
 def guess_mole_positions(previous_moles, current_moles, current_image):

@@ -167,7 +167,7 @@ class Display:
 class Editor:
 
     def __init__(self, path_list, width, height, rot90):
-        self._display = Display(width, height)
+        self.display = Display(width, height)
         self.moledata = MoleData(path_list, rot90)
         self.show_current()
 
@@ -176,20 +176,20 @@ class Editor:
         self.show_current()
 
     def toggle_markers(self):
-        self._display.toggle_markers()
+        self.display.toggle_markers()
         self.show_current()
 
     def show_current(self):
         image = self.moledata.get_image()
-        self._display.show_current(image, self.moledata.moles)
+        self.display.show_current(image, self.moledata.moles)
 
     def show_fitted(self):
         image = self.moledata.get_image()
-        self._display.show_fitted(image, self.moledata.moles)
+        self.display.show_fitted(image, self.moledata.moles)
 
     def show_zoomed(self, x, y):
         image = self.moledata.get_image()
-        self._display.show_zoomed(image, self.moledata.moles, x, y)
+        self.display.show_zoomed(image, self.moledata.moles, x, y)
 
     def show_prev(self):
         self.moledata.decrement()
