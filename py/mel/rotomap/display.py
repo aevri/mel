@@ -67,10 +67,107 @@ def draw_target(image, x, y, mole):
 
 class Display:
 
-    def __init__(self, path_list, width, height, rot90):
+    def __init__(self, width, height):
         self._name = str(id(self))
         self._width = width
         self._height = height
+
+        cv2.namedWindow(self._name)
+        cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self._name, self._width, self._height)
+
+        self._is_zoomed = False
+        self._is_showing_markers = True
+
+    def toggle_markers(self):
+        self._is_showing_markers = not self._is_showing_markers
+
+    def show_current(self, image, mole_list):
+        if not self._is_zoomed:
+            self.show_fitted(image, mole_list)
+        else:
+            self.show_zoomed(image, mole_list, self._zoom_x, self._zoom_y)
+
+    def show_fitted(self, image, mole_list):
+        self._image_width = image.shape[1]
+        self._image_height = image.shape[0]
+        letterbox = mel.lib.image.calc_letterbox(
+            self._image_width,
+            self._image_height,
+            self._width,
+            self._height)
+
+        self._image_left = letterbox[0]
+        self._image_top = letterbox[1]
+        self._image_scale = image.shape[1] / letterbox[2]
+
+        image = mel.lib.image.letterbox(
+            image, self._width, self._height)
+
+        if self._is_showing_markers:
+            for mole in mole_list:
+                x = int(mole['x'] / self._image_scale + self._image_left)
+                y = int(mole['y'] / self._image_scale + self._image_top)
+                draw_mole(image, x, y, mole)
+
+        cv2.imshow(self._name, image)
+        self._is_zoomed = False
+
+    def show_zoomed(self, image, mole_list, x, y):
+        nx, ny = mel.lib.image.calc_centering_offset(
+            (x, y),
+            (image.shape[1], image.shape[0]),
+            (self._width, self._height))
+        image = mel.lib.image.translated_and_clipped(
+            image, nx, ny, self._width, self._height)
+
+        self._zoom_x = x
+        self._zoom_y = y
+        if self._is_showing_markers:
+            self._image_left = -nx
+            self._image_top = -ny
+            self._image_width = image.shape[1] + nx
+            self._image_height = image.shape[0] + ny
+            self._image_scale = 1
+            for mole in mole_list:
+                x = mole['x'] + self._image_left
+                y = mole['y'] + self._image_top
+                if x >= 0 and y >= 0:
+                    if x < self._image_width and y < self._image_height:
+                        draw_mole(image, x, y, mole)
+
+        cv2.imshow(self._name, image)
+        self._is_zoomed = True
+
+    def set_mouse_callback(self, callback):
+        cv2.setMouseCallback(self._name, callback)
+
+    def clear_mouse_callback(self):
+
+        def null_handler(event, x, y, flags, param):
+            pass
+
+        cv2.setMouseCallback(self._name, null_handler)
+
+    def windowxy_to_imagexy(self, window_x, window_y):
+        image_x = mel.lib.math.clamp(
+            window_x - self._image_left,
+            0,
+            self._image_width)
+        image_y = mel.lib.math.clamp(
+            window_y - self._image_top,
+            0,
+            self._image_height)
+        return (
+            int(image_x * self._image_scale),
+            int(image_y * self._image_scale)
+        )
+
+
+class Editor:
+
+    def __init__(self, path_list, width, height, rot90):
+        self._display = Display(width, height)
         self._rot90 = rot90
 
         self._moles = []
@@ -78,19 +175,11 @@ class Display:
         # list all images
         self._path_list = path_list
 
-        cv2.namedWindow(self._name)
-        cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self._name, self._width, self._height)
-
         self._list_index = 0
         self._num_images = len(self._path_list)
 
-        self._is_zoomed = False
-
         self._cached_image = None
         self._cached_image_index = None
-
-        self._is_showing_markers = True
 
         self.show_current()
 
@@ -106,7 +195,7 @@ class Display:
         return self._cached_image
 
     def toggle_markers(self):
-        self._is_showing_markers = not self._is_showing_markers
+        self._display.toggle_markers()
         self.show_current()
 
     def load_current_image(self):
@@ -125,78 +214,16 @@ class Display:
         return image
 
     def show_current(self):
-        if not self._is_zoomed:
-            self.show_fitted()
-        else:
-            self.show_zoomed(self._zoom_x, self._zoom_y)
+        image = self.load_current_image()
+        self._display.show_current(image, self._moles)
 
     def show_fitted(self):
         image = self.load_current_image()
-
-        self._image_width = image.shape[1]
-        self._image_height = image.shape[0]
-        letterbox = mel.lib.image.calc_letterbox(
-            self._image_width,
-            self._image_height,
-            self._width,
-            self._height)
-
-        self._image_left = letterbox[0]
-        self._image_top = letterbox[1]
-        self._image_scale = image.shape[1] / letterbox[2]
-
-        image = mel.lib.image.letterbox(
-            image, self._width, self._height)
-
-        if self._is_showing_markers:
-            for mole in self._moles:
-                x = int(mole['x'] / self._image_scale + self._image_left)
-                y = int(mole['y'] / self._image_scale + self._image_top)
-                draw_mole(image, x, y, mole)
-
-        cv2.imshow(self._name, image)
-        self._is_zoomed = False
+        self._display.show_fitted(image, self._moles)
 
     def show_zoomed(self, x, y):
         image = self.load_current_image()
-        nx, ny = mel.lib.image.calc_centering_offset(
-            (x, y),
-            (image.shape[1], image.shape[0]),
-            (self._width, self._height))
-        image = mel.lib.image.translated_and_clipped(
-            image, nx, ny, self._width, self._height)
-
-        self._zoom_x = x
-        self._zoom_y = y
-        if self._is_showing_markers:
-            self._image_left = -nx
-            self._image_top = -ny
-            self._image_width = image.shape[1] + nx
-            self._image_height = image.shape[0] + ny
-            self._image_scale = 1
-            for mole in self._moles:
-                x = mole['x'] + self._image_left
-                y = mole['y'] + self._image_top
-                if x >= 0 and y >= 0:
-                    if x < self._image_width and y < self._image_height:
-                        draw_mole(image, x, y, mole)
-
-        cv2.imshow(self._name, image)
-        self._is_zoomed = True
-
-    def windowxy_to_imagexy(self, window_x, window_y):
-        image_x = mel.lib.math.clamp(
-            window_x - self._image_left,
-            0,
-            self._image_width)
-        image_y = mel.lib.math.clamp(
-            window_y - self._image_top,
-            0,
-            self._image_height)
-        return (
-            int(image_x * self._image_scale),
-            int(image_y * self._image_scale)
-        )
+        self._display.show_zoomed(image, self._moles, x, y)
 
     def show_prev(self):
         new_index = self._list_index + self._num_images - 1
@@ -236,13 +263,3 @@ class Display:
         mel.rotomap.moles.remove_nearest_mole(self._moles, x, y)
         self._save_image_moles()
         self.show_current()
-
-    def set_mouse_callback(self, callback):
-        cv2.setMouseCallback(self._name, callback)
-
-    def clear_mouse_callback(self):
-
-        def null_handler(event, x, y, flags, param):
-            pass
-
-        cv2.setMouseCallback(self._name, null_handler)

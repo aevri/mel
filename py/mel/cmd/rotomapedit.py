@@ -57,7 +57,7 @@ def process_args(args):
         raise Exception('"--images" must be specified once only')
     path_list = args.images[0]
 
-    display = mel.rotomap.display.Display(
+    editor = mel.rotomap.display.Editor(
         path_list, display_width, display_height, args.rot90)
 
     left = 63234
@@ -71,26 +71,26 @@ def process_args(args):
     def mouse_callback(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
-                display.show_zoomed(image_x, image_y)
+                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                editor.show_zoomed(image_x, image_y)
             elif flags & cv2.EVENT_FLAG_ALTKEY:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
                 if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    mole_uuid[0] = display.get_mole_uuid(image_x, image_y)
+                    mole_uuid[0] = editor.get_mole_uuid(image_x, image_y)
                     print(mole_uuid[0])
                 else:
-                    display.set_mole_uuid(image_x, image_y, mole_uuid[0])
+                    editor.set_mole_uuid(image_x, image_y, mole_uuid[0])
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
-                display.remove_mole(image_x, image_y)
+                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
+                editor.remove_mole(image_x, image_y)
             else:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
+                image_x, image_y = editor._display.windowxy_to_imagexy(x, y)
                 if not is_move_mode[0]:
-                    display.add_mole(image_x, image_y)
+                    editor.add_mole(image_x, image_y)
                 else:
-                    display.move_nearest_mole(image_x, image_y)
+                    editor.move_nearest_mole(image_x, image_y)
 
-    display.set_mouse_callback(mouse_callback)
+    editor._display.set_mouse_callback(mouse_callback)
 
     print("Press left for previous image, right for next image.")
     print("Click on a point to add or move a mole there and save.")
@@ -112,29 +112,29 @@ def process_args(args):
         key = cv2.waitKey(50)
         if key != -1:
             if key == left:
-                display.show_prev()
-                print(display.current_image_path())
+                editor.show_prev()
+                print(editor.current_image_path())
             elif key == right:
-                display.show_next()
-                print(display.current_image_path())
+                editor.show_next()
+                print(editor.current_image_path())
             elif key == ord(' '):
-                display.show_fitted()
+                editor.show_fitted()
             elif key == ord('c'):
-                copied_moles = display.get_moles()
+                copied_moles = editor.get_moles()
             elif key == ord('m'):
                 is_move_mode[0] = not is_move_mode[0]
             elif key == ord('a'):
                 guessed_moles = guess_mole_positions(
                     copied_moles,
-                    display.get_moles(),
-                    display.get_image())
-                display.set_moles(guessed_moles)
+                    editor.get_moles(),
+                    editor.get_image())
+                editor.set_moles(guessed_moles)
             elif key == 13:
-                display.toggle_markers()
+                editor.toggle_markers()
             else:
                 is_finished = True
 
-    display.clear_mouse_callback()
+    editor._display.clear_mouse_callback()
 
 
 def guess_mole_positions(previous_moles, current_moles, current_image):
