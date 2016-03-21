@@ -18,9 +18,12 @@ import mel.rotomap.display
 
 def setup_parser(parser):
     parser.add_argument(
-        'PATH',
-        type=str,
-        help="Path to the rotomap image directory.")
+        '--images',
+        nargs='+',
+        action='append',
+        required=True,
+        help="A list of paths to images, specify multiple times for multiple "
+             "sets.")
     parser.add_argument(
         '--display-width',
         type=int,
@@ -50,8 +53,12 @@ def process_args(args):
         if display_height is None:
             display_height = tkroot.winfo_screenheight() - 150
 
+    if len(args.images) != 1:
+        raise Exception('"--images" must be specified once only')
+    path_list = args.images[0]
+
     display = mel.rotomap.display.Display(
-        args.PATH, display_width, display_height, args.rot90)
+        path_list, display_width, display_height, args.rot90)
 
     left = 63234
     right = 63235

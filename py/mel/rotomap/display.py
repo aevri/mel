@@ -4,8 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-
 import cv2
 
 import mel.lib.common
@@ -69,8 +67,8 @@ def draw_target(image, x, y, mole):
 
 class Display:
 
-    def __init__(self, path, width, height, rot90):
-        self._name = path
+    def __init__(self, path_list, width, height, rot90):
+        self._name = str(id(self))
         self._width = width
         self._height = height
         self._rot90 = rot90
@@ -78,11 +76,7 @@ class Display:
         self._moles = []
 
         # list all images
-        self._path_list = [
-            os.path.join(path, x)
-            for x in os.listdir(path)
-            if x.endswith('.jpg')
-        ]
+        self._path_list = path_list
 
         cv2.namedWindow(self._name)
         cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
