@@ -9,6 +9,8 @@ import math
 import os
 import uuid
 
+import numpy
+
 
 def load_image_moles(image_path):
     moles_path = image_path + '.json'
@@ -91,3 +93,12 @@ def remove_nearest_mole(moles, x, y):
 
     if nearest_index is not None:
         del moles[nearest_index]
+
+
+def molepos_to_nparray(mole):
+    return numpy.array((mole['x'], mole['y']))
+
+
+def set_molepos_to_nparray(mole, nparray):
+    mole['x'] = int(nparray[0])
+    mole['y'] = int(nparray[1])

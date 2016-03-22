@@ -145,22 +145,22 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
         prev_dict = {m['uuid']: m for m in previous_moles}
         curr_dict = {m['uuid']: m for m in current_moles}
         for m in matched_uuids:
-            prevpos = mel.lib.moleimaging.molepos_to_nparray(prev_dict[m])
-            currpos = mel.lib.moleimaging.molepos_to_nparray(curr_dict[m])
+            prevpos = mel.rotomap.moles.molepos_to_nparray(prev_dict[m])
+            currpos = mel.rotomap.moles.molepos_to_nparray(curr_dict[m])
             offset = currpos - prevpos
 
     for mole in previous_moles:
         if mole['uuid'] not in matched_uuids:
             new_m = copy.deepcopy(mole)
+            pos = mel.rotomap.moles.molepos_to_nparray(new_m)
             if offset is not None:
-                pos = mel.lib.moleimaging.molepos_to_nparray(new_m)
                 pos += offset
-                mel.lib.moleimaging.set_molepos_to_nparray(new_m, pos)
+                mel.rotomap.moles.set_molepos_to_nparray(new_m, pos)
 
             ellipse = mel.lib.moleimaging.find_mole_ellipse(
-                current_image, new_m, 50)
+                current_image, pos, 50)
             if ellipse is not None:
-                mel.lib.moleimaging.set_molepos_to_nparray(new_m, ellipse[0])
+                mel.rotomap.moles.set_molepos_to_nparray(new_m, ellipse[0])
 
             new_moles.append(new_m)
 

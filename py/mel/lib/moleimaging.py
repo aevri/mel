@@ -315,18 +315,8 @@ def annotate_image(original, is_rot_sensitive):
     return is_aligned
 
 
-def molepos_to_nparray(mole):
-    return numpy.array((mole['x'], mole['y']))
+def find_mole_ellipse(original, molepos, grid_size):
 
-
-def set_molepos_to_nparray(mole, nparray):
-    mole['x'] = int(nparray[0])
-    mole['y'] = int(nparray[1])
-
-
-def find_mole_ellipse(original, mole, grid_size):
-
-    molepos = molepos_to_nparray(mole)
     topleft = numpy.maximum(molepos - (grid_size, grid_size), (0, 0))
     original = original[
         topleft[1]:molepos[1] + grid_size,
