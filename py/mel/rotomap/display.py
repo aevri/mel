@@ -166,9 +166,11 @@ class Display:
 
 class Editor:
 
-    def __init__(self, path_list, width, height, rot90):
+    def __init__(self, path_list_list, width, height, rot90):
         self.display = Display(width, height)
-        self.moledata = MoleData(path_list, rot90)
+        self.moledata_list = [MoleData(x, rot90) for x in path_list_list]
+        self.moledata_index = 0
+        self.moledata = self.moledata_list[self.moledata_index]
         self.show_current()
 
     def set_moles(self, moles):
@@ -191,6 +193,18 @@ class Editor:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         image = self.moledata.get_image()
         self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
+
+    def show_prev_map(self):
+        self.moledata_index -= 1
+        self.moledata_index %= len(self.moledata_list)
+        self.moledata = self.moledata_list[self.moledata_index]
+        self.show_current()
+
+    def show_next_map(self):
+        self.moledata_index += 1
+        self.moledata_index %= len(self.moledata_list)
+        self.moledata = self.moledata_list[self.moledata_index]
+        self.show_current()
 
     def show_prev(self):
         self.moledata.decrement()

@@ -53,15 +53,13 @@ def process_args(args):
         if display_height is None:
             display_height = tkroot.winfo_screenheight() - 150
 
-    if len(args.images) != 1:
-        raise Exception('"--images" must be specified once only')
-    path_list = args.images[0]
-
     editor = mel.rotomap.display.Editor(
-        path_list, display_width, display_height, args.rot90)
+        args.images, display_width, display_height, args.rot90)
 
     left = 63234
     right = 63235
+    up = 63232
+    down = 63233
 
     # This must be a list in order for it to be referenced from the the
     # closure, in Python 3 we'll use "nonlocal".
@@ -89,6 +87,7 @@ def process_args(args):
     editor.display.set_mouse_callback(mouse_callback)
 
     print("Press left for previous image, right for next image.")
+    print("Press up for previous map, down for next map.")
     print("Click on a point to add or move a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
     print("Shift-click on a point to delete it.")
@@ -112,6 +111,12 @@ def process_args(args):
                 print(editor.moledata.current_image_path())
             elif key == right:
                 editor.show_next()
+                print(editor.moledata.current_image_path())
+            elif key == up:
+                editor.show_prev_map()
+                print(editor.moledata.current_image_path())
+            elif key == down:
+                editor.show_next_map()
                 print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
