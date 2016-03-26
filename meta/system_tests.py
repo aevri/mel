@@ -38,6 +38,11 @@ def main():
 
 
 def run_tests():
+    run_mel_tests()
+    run_mel_debug_tests()
+
+
+def run_mel_tests():
 
     mel_cmd = './bin/mel'
 
@@ -55,6 +60,21 @@ def run_tests():
         'rotomap-relate',
         'rotomap-show',
         'rotomap-uuid',
+    ]
+
+    for s in subcommands:
+        expect_ok(mel_cmd, s, '-h')
+
+
+def run_mel_debug_tests():
+
+    mel_cmd = './bin/mel-debug'
+
+    expect_returncode(2, mel_cmd)
+    expect_ok(mel_cmd, '-h')
+
+    subcommands = [
+        'triangulate',
     ]
 
     for s in subcommands:

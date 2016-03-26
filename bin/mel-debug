@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+
+import os
+import sys
+
+# Prevent nasty runtime surprises by enforcing version as early as possible.
+#
+# The version check itself will not work prior to Python version 2.0,
+# that's when sys.version_info was introduced.
+#
+if sys.version_info[:2] < (3, 4):
+    sys.stderr.write("You need python 3.4 or better to run this script\n")
+    exit(1)
+
+# append our module dirs to sys.path, which is the list of paths to search
+# for modules this is so we can import our libraries directly
+# N.B. this magic is only really passable up-front in the entrypoint module
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.join(PARENT_DIR, "py"))
+
+import mel.cmddebug.meldebug
+
+if __name__ == "__main__":
+    sys.exit(mel.cmddebug.meldebug.main())
