@@ -34,11 +34,6 @@ def setup_parser(parser):
         type=int,
         default=None,
         help="Width of the preview display window.")
-    parser.add_argument(
-        '--rot90',
-        type=int,
-        default=None,
-        help="Rotate images 90 degrees clockwise this number of times.")
 
 
 def process_args(args):
@@ -54,7 +49,7 @@ def process_args(args):
             display_height = tkroot.winfo_screenheight() - 150
 
     editor = mel.rotomap.display.Editor(
-        args.images, display_width, display_height, args.rot90)
+        args.images, display_width, display_height)
 
     left = 63234
     right = 63235

@@ -12,11 +12,8 @@ import mel.lib.math
 import mel.rotomap.moles
 
 
-def load_image(path, rot90):
+def load_image(path):
     image = cv2.imread(path)
-
-    if rot90:
-        image = mel.lib.common.rotated90(image, rot90)
 
     return image
 
@@ -166,9 +163,9 @@ class Display:
 
 class Editor:
 
-    def __init__(self, path_list_list, width, height, rot90):
+    def __init__(self, path_list_list, width, height):
         self.display = Display(width, height)
-        self.moledata_list = [MoleData(x, rot90) for x in path_list_list]
+        self.moledata_list = [MoleData(x) for x in path_list_list]
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
         self.show_current()
@@ -249,8 +246,7 @@ class Editor:
 
 class MoleData:
 
-    def __init__(self, path_list, rot90):
-        self._rot90 = rot90
+    def __init__(self, path_list):
         self.moles = []
         self._path_list = path_list
         self._list_index = 0
@@ -267,7 +263,7 @@ class MoleData:
             return self._cached_image
 
         image_path = self._path_list[self._list_index]
-        image = load_image(image_path, self._rot90)
+        image = load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
