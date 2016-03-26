@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import Tkinter
+
 import cv2
 
 import mel.lib.common
@@ -66,6 +68,14 @@ class Display:
 
     def __init__(self, width, height):
         self._name = str(id(self))
+
+        if width is None or height is None:
+            tkroot = Tkinter.Tk()
+            if width is None:
+                width = tkroot.winfo_screenwidth() - 50
+            if height is None:
+                height = tkroot.winfo_screenheight() - 150
+
         self._width = width
         self._height = height
 

@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import Tkinter
 import copy
 
 import cv2
@@ -38,18 +37,8 @@ def setup_parser(parser):
 
 def process_args(args):
 
-    display_width = args.display_width
-    display_height = args.display_height
-
-    if display_width is None or display_height is None:
-        tkroot = Tkinter.Tk()
-        if display_width is None:
-            display_width = tkroot.winfo_screenwidth() - 50
-        if display_height is None:
-            display_height = tkroot.winfo_screenheight() - 150
-
     editor = mel.rotomap.display.Editor(
-        args.images, display_width, display_height)
+        args.images, args.display_width, args.display_height)
 
     left = 63234
     right = 63235
