@@ -1,8 +1,5 @@
 """Guess the relationships between moles in a rotomap."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import json
 

@@ -1,8 +1,5 @@
 """Render one or more data files as text."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import json
@@ -94,7 +91,7 @@ def print_grids_wrapped(grid_list, display_width, max_digits):
 
 def print_row_lists_in_columns(row_lists_to_display, max_digits, spacer):
     max_rows = max(len(g) for g in row_lists_to_display)
-    for i in xrange(max_rows):
+    for i in range(max_rows):
         row = []
         for row_list in row_lists_to_display:
             if i < len(row_list):
@@ -184,9 +181,9 @@ def make_grid(mole_map, left, top, width, height, scale, num_digits):
 
     spacer = '.' * num_digits
 
-    for j in xrange(grid_height):
+    for j in range(grid_height):
         row = []
-        for i in xrange(grid_width):
+        for i in range(grid_width):
             row.append(spacer)
         grid.append(row)
 

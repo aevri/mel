@@ -1,8 +1,5 @@
 """Routines for analysing images of moles."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import math
 
@@ -16,9 +13,9 @@ def find_mole(frame):
     # look for areas of high saturation, they are likely moles
     img = frame.copy()
     img = cv2.blur(img, (40, 40))
-    img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img = cv2.split(img)[1]
-    _, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
+    _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
     ringed, stats, _ = mel.lib.moleimaging.process_contours(img, frame)
     return ringed, stats
 
@@ -45,10 +42,10 @@ def process_contours(mole_regions, original):
     final = original.copy()
     stats = None
 
-    contours, hierarchy = cv2.findContours(
+    _, contours, hierarchy = cv2.findContours(
         mole_regions.copy(),
-        cv2.cv.CV_RETR_LIST,
-        cv2.cv.CV_CHAIN_APPROX_NONE)
+        cv2.RETR_LIST,
+        cv2.CHAIN_APPROX_NONE)
 
     mole_contour, mole_area = find_mole_contour(
         contours, mole_regions.shape[0:2])
@@ -66,7 +63,7 @@ def process_contours(mole_regions, original):
             hu_moments = cv2.HuMoments(moments)
             hu_moments = [log10_zero(abs(float(x))) for x in hu_moments]
 
-            hsv = cv2.cvtColor(original, cv2.cv.CV_BGR2HSV)
+            hsv = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
             hist = calc_hist(hsv, 1, mole_regions)
             hist_surrounding = calc_hist(hsv, 1, None)
 
@@ -136,27 +133,27 @@ class MoleAcquirer(object):
     def update(self, stats):
         if stats and self._last_stats:
 
-            stats_diff = map(
+            stats_diff = list(map(
                 lambda x, y: x - y,
                 self._last_stats,
-                stats)
+                stats))
 
-            self._last_stats = map(
+            self._last_stats = list(map(
                 lambda x, y: mel.lib.math.lerp(x, y, 0.1),
                 self._last_stats,
-                stats)
+                stats))
 
             if self._last_stats_diff:
-                self._last_stats_diff = map(
+                self._last_stats_diff = list(map(
                     lambda x, y: mel.lib.math.lerp(x, y, 0.1),
                     self._last_stats_diff,
-                    stats_diff)
+                    stats_diff))
 
                 should_lock = all(
-                    map(lambda x: int(x) == 0, self._last_stats_diff))
+                    [int(x) == 0 for x in self._last_stats_diff])
 
                 should_unlock = any(
-                    map(lambda x: abs(int(x)) > 1, self._last_stats_diff))
+                    [abs(int(x)) > 1 for x in self._last_stats_diff])
 
                 if not self._is_locked and should_lock:
                     self._is_locked = True
@@ -210,12 +207,12 @@ def annotate_image(original, is_rot_sensitive):
     final = original.copy()
     img = original.copy()
     img = cv2.blur(img, (40, 40))
-    img = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img = cv2.split(img)[1]
-    ret, img = cv2.threshold(img, 30, 255, cv2.cv.CV_THRESH_BINARY)
+    ret, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
 
-    contours, hierarchy = cv2.findContours(
-        img, cv2.cv.CV_RETR_LIST, cv2.cv.CV_CHAIN_APPROX_NONE)
+    _, contours, hierarchy = cv2.findContours(
+        img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     mole_contour, mole_area = find_mole_contour(contours, img.shape[0:2])
 
@@ -311,10 +308,10 @@ def find_mole_ellipse(original, molepos, grid_size):
         topleft[0]:molepos[0] + grid_size
     ]
     image = original[:]
-    image = cv2.cvtColor(image, cv2.cv.CV_BGR2HSV)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
-    image = cv2.threshold(image, 252, 255, cv2.cv.CV_THRESH_BINARY)[1]
+    image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
     image, stats, ellipse = mel.lib.moleimaging.process_contours(
         image, original)
 

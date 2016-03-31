@@ -1,8 +1,5 @@
 """A big ball of mud to hold common functionality pending a re-org."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import cv2
 import numpy
@@ -226,7 +223,7 @@ def user_review_image(window_name, image):
 
 
 def rotated90(image, times):
-    for _ in xrange(times % 4):
+    for _ in range(times % 4):
         image = cv2.transpose(image)
         image = cv2.flip(image, 1)
     return image

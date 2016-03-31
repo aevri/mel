@@ -1,8 +1,5 @@
 """Image processing routines."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import cv2
 
@@ -110,7 +107,7 @@ def montage_horizontal(border_size, *image_list):
     return arrange_images(
         size_xy[0],
         size_xy[1],
-        *zip(image_list, geometry))
+        *list(zip(image_list, geometry)))
 
 
 def montage_vertical(border_size, *image_list):
@@ -124,7 +121,7 @@ def montage_vertical(border_size, *image_list):
     return arrange_images(
         size_xy[0],
         size_xy[1],
-        *zip(image_list, geometry))
+        *list(zip(image_list, geometry)))
 
 
 def calc_centering_offset(centre_xy, src_size_xy, dst_size_xy):

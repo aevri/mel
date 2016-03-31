@@ -1,10 +1,7 @@
 """Display a rotomap."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
-import Tkinter
+import tkinter
 
 import cv2
 
@@ -43,7 +40,7 @@ def hex3_to_rgb4(hex_string):
     rgb_list = []
 
     value = int(hex_string[0:3], 16)
-    for x in xrange(4):
+    for x in range(4):
         index = value % 12
         value //= 12
         rgb_list.append(scheme[index])
@@ -59,7 +56,7 @@ def draw_target(image, x, y, mole):
 
     radius = 16
     colors = hex3_to_rgb4(mole['uuid'][:3])
-    for index in xrange(3):
+    for index in range(3):
         cv2.circle(image, (x, y), radius, colors[index], -1)
         radius -= 4
 
@@ -70,7 +67,7 @@ class Display:
         self._name = str(id(self))
 
         if width is None or height is None:
-            tkroot = Tkinter.Tk()
+            tkroot = tkinter.Tk()
             if width is None:
                 width = tkroot.winfo_screenwidth() - 50
             if height is None:

@@ -1,8 +1,5 @@
 """List the uuids of moles that match a prefix, from a list of json files."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import json
