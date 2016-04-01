@@ -25,6 +25,11 @@ def main():
 
     subparsers = parser.add_subparsers()
 
+    # Work around a bug in argparse with subparsers no longer being required:
+    # http://bugs.python.org/issue9253#msg186387
+    subparsers.required = True
+    subparsers.dest = 'command'
+
     _setup_parser_for_module(subparsers, mel.cmd.addcluster, 'add-cluster')
     _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
     _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
