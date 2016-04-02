@@ -9,7 +9,7 @@ cd "$(dirname "$0")"/..
 allscripts=$(find py/ -iname '*.py' |  tr '\n' ' ')
 
 printf '.'
-flake8 $allscripts
+python2 -m flake8 $allscripts
 
 echo OK
 trap - EXIT
