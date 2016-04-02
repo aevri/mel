@@ -47,9 +47,8 @@ def process_args(args):
 
 class _Mole(object):
 
-    def __init__(self, full_path, catalog_relative_path, micro_filenames):
+    def __init__(self, catalog_relative_path, micro_filenames):
         super(_Mole, self).__init__()
-        self.full_path = full_path
         self.catalog_relative_path = catalog_relative_path
         self.micro_filenames = micro_filenames
 
@@ -94,6 +93,5 @@ def _yield_mole_dirs(rootpath, args):
             continue
 
         yield _Mole(
-            os.path.abspath(path),
             catalog_relpath,
             micro_filenames)
