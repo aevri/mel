@@ -10,9 +10,6 @@ import mel.cmd.addcluster
 import mel.cmd.addsingle
 import mel.cmd.list
 import mel.cmd.microadd
-import mel.cmd.microanalyse
-import mel.cmd.microrecord
-import mel.cmd.microreplay
 import mel.cmd.microview
 import mel.cmd.rotomapedit
 import mel.cmd.rotomapmolepicker
@@ -33,9 +30,6 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
     _setup_parser_for_module(subparsers, mel.cmd.microadd, 'micro-add')
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
-    _setup_parser_for_module(subparsers, mel.cmd.microrecord, 'micro-record')
-    _setup_parser_for_module(subparsers, mel.cmd.microreplay, 'micro-replay')
-    _setup_parser_for_module(subparsers, mel.cmd.microanalyse, 'micro-analyse')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapmolepicker, 'rotomap-molepicker')
