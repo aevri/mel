@@ -175,10 +175,6 @@ class MoleAcquirer(object):
     def is_locked(self):
         return self._is_locked
 
-    @property
-    def last_stats(self):
-        return self._last_stats
-
 
 def point_to_int_point(point):
     return (int(point[0]), int(point[1]))
