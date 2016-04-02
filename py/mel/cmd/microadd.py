@@ -80,15 +80,6 @@ def get_dirs_to_path(path_in):
     return path_list
 
 
-def load_context_image(path):
-
-    image_name = get_context_image_name(path)
-    if image_name:
-        return cv2.imread(image_name)
-
-    raise Exception("No image in {}".format(path))
-
-
 def load_context_images(path):
     image_list = []
     path_list = get_dirs_to_path(path)
