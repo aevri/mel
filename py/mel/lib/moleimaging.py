@@ -130,12 +130,10 @@ class MoleAcquirer(object):
     def __init__(self):
         super(MoleAcquirer, self).__init__()
         self._is_locked = False
-        self._was_locked = False
         self._last_stats = None
         self._last_stats_diff = None
 
     def update(self, stats):
-        self._was_locked = self._is_locked
         if stats and self._last_stats:
 
             stats_diff = map(
@@ -172,12 +170,6 @@ class MoleAcquirer(object):
             self._is_locked = False
         else:
             self._is_locked = False
-
-    def just_unlocked(self):
-        return self._was_locked and not self._is_locked
-
-    def just_locked(self):
-        return not self._was_locked and self._is_locked
 
     @property
     def is_locked(self):
