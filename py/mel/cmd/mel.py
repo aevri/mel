@@ -27,6 +27,10 @@ def main():
     subparsers.required = True
     subparsers.dest = 'command'
 
+    # vulture will report these as unused unless we do this
+    subparsers.required
+    subparsers.dest
+
     _setup_parser_for_module(subparsers, mel.cmd.addcluster, 'add-cluster')
     _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
     _setup_parser_for_module(subparsers, mel.cmd.list, 'list')

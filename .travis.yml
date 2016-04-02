@@ -18,6 +18,7 @@ install:
   - pip3 install docformatter
   - pip3 install flake8
   - pip3 install nose
+  - pip3 install vulture
 
 script:
   # Only run non-runtime tests until we can get opencv working under Travis.

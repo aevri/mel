@@ -11,5 +11,8 @@ allscripts=$(find py/ -iname '*.py' |  tr '\n' ' ')
 printf '.'
 python3 -m flake8 $allscripts
 
+printf '.'
+python3 -m vulture bin/mel --exclude '*__t.py' py/
+
 echo OK
 trap - EXIT
