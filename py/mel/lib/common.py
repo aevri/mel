@@ -142,6 +142,7 @@ def connect_moles(image, mole_positions):
         a_to_b = b - a
         a_to_b = a_to_b / numpy.linalg.norm(a_to_b)
         padding = a_to_b * (thickness * 2)
+        padding = padding.astype(int)
         a += padding
         b -= padding
         a = tuple(a.tolist())
