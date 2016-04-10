@@ -15,29 +15,27 @@ import mel.rotomap.display
 
 def setup_parser(parser):
     parser.add_argument(
-        'PATH',
-        type=str,
-        help="Path to the rotomap image directory.")
+        '--images',
+        nargs='+',
+        action='append',
+        required=True,
+        help="A list of paths to images, specify multiple times for multiple "
+             "sets.")
     parser.add_argument(
         '--display-width',
         type=int,
-        default=800,
+        default=None,
         help="Width of the preview display window.")
     parser.add_argument(
         '--display-height',
         type=int,
-        default=600,
-        help="Width of the preview display window.")
-    parser.add_argument(
-        '--rot90',
-        type=int,
         default=None,
-        help="Rotate images 90 degrees clockwise this number of times.")
+        help="Width of the preview display window.")
 
 
 def process_args(args):
-    display = mel.rotomap.display.Display(
-        args.PATH, args.display_width, args.display_height, args.rot90)
+    editor = mel.rotomap.display.Editor(
+        args.images, args.display_width, args.display_height)
 
     left = 63234
     right = 63235
@@ -50,30 +48,28 @@ def process_args(args):
     def mouse_callback(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
-                display.show_zoomed(image_x, image_y)
+                editor.show_zoomed(x, y)
             else:
-                image_x, image_y = display.windowxy_to_imagexy(x, y)
-                mole_uuid[0] = display.get_mole_uuid(image_x, image_y)
+                mole_uuid[0] = editor.get_mole_uuid(x, y)
                 is_finished[0] = True
 
-    display.set_mouse_callback(mouse_callback)
+    editor.display.set_mouse_callback(mouse_callback)
 
     while not is_finished[0]:
         key = cv2.waitKey(50)
         if key != -1:
             if key == left:
-                display.show_prev()
+                editor.show_prev()
             elif key == right:
-                display.show_next()
+                editor.show_next()
             elif key == ord(' '):
-                display.show_fitted()
+                editor.show_fitted()
             elif key == 13:
-                display.toggle_markers()
+                editor.toggle_markers()
             else:
                 is_finished[0] = True
 
-    display.clear_mouse_callback()
+    editor.display.clear_mouse_callback()
 
     if mole_uuid[0] is None:
         return 1
