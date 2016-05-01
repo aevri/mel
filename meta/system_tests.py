@@ -67,8 +67,6 @@ def expect_ok(*args):
 
 def expect_returncode(expected_code, command):
     print('.', end='', flush=True)
-    # print('Running "{}", expect return code {}'.format(
-    #     command, expected_code))
 
     result = subprocess.run(
         command,
