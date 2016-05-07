@@ -4,6 +4,7 @@
 import argparse
 import json
 import math
+import shutil
 
 import mel.lib.math
 
@@ -17,7 +18,7 @@ def setup_parser(parser):
     parser.add_argument(
         '--display-width',
         type=int,
-        default=None,
+        default=shutil.get_terminal_size()[0],
         help="Display maps side-by-side, wrapped to this width.")
 
 
@@ -33,13 +34,7 @@ def process_args(args):
             mole['uuid'] = uuid_to_display[mole['uuid']]
 
     grid_list = [map_to_grid(m, max_digits) for m in mole_map_list]
-    if args.display_width is not None:
-        print_grids_wrapped(grid_list, args.display_width, max_digits)
-    else:
-        for grid in grid_list:
-            for row in grid:
-                print(make_grid_row(row, max_digits))
-            print()
+    print_grids_wrapped(grid_list, args.display_width, max_digits)
 
 
 def make_grid_row(row, max_digits):
