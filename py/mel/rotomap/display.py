@@ -82,9 +82,13 @@ class Display:
 
         self._is_zoomed = False
         self._is_showing_markers = True
+        self._is_faded_markers = True
 
     def toggle_markers(self):
         self._is_showing_markers = not self._is_showing_markers
+
+    def toggle_faded_markers(self):
+        self._is_faded_markers = not self._is_faded_markers
 
     def show_current(self, image, mole_list):
         if not self._is_zoomed:
@@ -109,10 +113,15 @@ class Display:
             image, self._width, self._height)
 
         if self._is_showing_markers:
+            marker_image = image
+            if self._is_faded_markers:
+                marker_image = image.copy()
             for mole in mole_list:
                 x = int(mole['x'] / self._image_scale + self._image_left)
                 y = int(mole['y'] / self._image_scale + self._image_top)
-                draw_mole(image, x, y, mole)
+                draw_mole(marker_image, x, y, mole)
+            if self._is_faded_markers:
+                image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
         cv2.imshow(self._name, image)
         self._is_zoomed = False
@@ -133,12 +142,17 @@ class Display:
             self._image_width = image.shape[1] + nx
             self._image_height = image.shape[0] + ny
             self._image_scale = 1
+            marker_image = image
+            if self._is_faded_markers:
+                marker_image = image.copy()
             for mole in mole_list:
                 x = mole['x'] + self._image_left
                 y = mole['y'] + self._image_top
                 if x >= 0 and y >= 0:
                     if x < self._image_width and y < self._image_height:
-                        draw_mole(image, x, y, mole)
+                        draw_mole(marker_image, x, y, mole)
+            if self._is_faded_markers:
+                image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
         cv2.imshow(self._name, image)
         self._is_zoomed = True
@@ -183,6 +197,10 @@ class Editor:
 
     def toggle_markers(self):
         self.display.toggle_markers()
+        self.show_current()
+
+    def toggle_faded_markers(self):
+        self.display.toggle_faded_markers()
         self.show_current()
 
     def show_current(self):

@@ -111,6 +111,8 @@ def process_args(args):
                     editor.moledata.moles,
                     editor.moledata.get_image())
                 editor.set_moles(guessed_moles)
+            elif key == ord('f'):
+                editor.toggle_faded_markers()
             elif key == 13:
                 editor.toggle_markers()
             else:
