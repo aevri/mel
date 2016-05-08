@@ -23,7 +23,7 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    mole_map_list = [json.load(x) for x in args.FILE]
+    mole_map_list = [load_mole(x) for x in args.FILE]
 
     new_map = diff_maps(mole_map_list[0], mole_map_list[1])
     mole_map_list = [new_map]
@@ -43,6 +43,13 @@ def process_args(args):
 
     mel.rotomap.format.print_grids_wrapped(
         grid_list, args.display_width, max_digits)
+
+
+def load_mole(file_):
+    try:
+        return json.load(file_)
+    except json.decoder.JSONDecodeError:
+        return {}
 
 
 def diff_maps(src, dst):
