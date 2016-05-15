@@ -21,12 +21,12 @@ def setup_parser(parser):
     parser.add_argument(
         '--display-width',
         type=int,
-        default=800,
+        default=None,
         help="Width of the preview display window.")
     parser.add_argument(
         '--display-height',
         type=int,
-        default=600,
+        default=None,
         help="Width of the preview display window.")
     parser.add_argument(
         '--min-compare-age-days',

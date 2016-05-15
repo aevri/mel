@@ -17,13 +17,20 @@ def guess_fullscreen_width_height():
 
 class MultiImageDisplay():
 
-    def __init__(self, name, width, height):
+    def __init__(self, name, width=None, height=None):
         self._name = name
         self._images_names = []
 
         self._border_width = 50
 
         self._layout = [[]]
+
+        if width is None or height is None:
+            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
+            if width is None:
+                width = full_width_height[0]
+            if height is None:
+                height = full_width_height[1]
 
         self._width = width
         self._height = height
