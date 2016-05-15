@@ -35,7 +35,7 @@ def process_args(args):
         if args.sort == 'lastmicro':
             def keyfunc(x):
                 if not x.micro_filenames:
-                    return None
+                    return str()
                 return sorted(x.micro_filenames)[-1]
 
         for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
