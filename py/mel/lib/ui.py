@@ -1,9 +1,18 @@
 """User interface related things."""
 
 
+import tkinter
+
 import cv2
 
 import mel.lib.image
+
+
+def guess_fullscreen_width_height():
+    tkroot = tkinter.Tk()
+    width = tkroot.winfo_screenwidth() - 50
+    height = tkroot.winfo_screenheight() - 150
+    return width, height
 
 
 class MultiImageDisplay():

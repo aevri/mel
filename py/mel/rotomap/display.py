@@ -1,13 +1,12 @@
 """Display a rotomap."""
 
 
-import tkinter
-
 import cv2
 
 import mel.lib.common
 import mel.lib.image
 import mel.lib.math
+import mel.lib.ui
 import mel.rotomap.moles
 
 
@@ -67,11 +66,11 @@ class Display:
         self._name = str(id(self))
 
         if width is None or height is None:
-            tkroot = tkinter.Tk()
+            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
             if width is None:
-                width = tkroot.winfo_screenwidth() - 50
+                width = full_width_height[0]
             if height is None:
-                height = tkroot.winfo_screenheight() - 150
+                height = full_width_height[1]
 
         self._width = width
         self._height = height
