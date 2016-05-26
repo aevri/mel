@@ -12,6 +12,7 @@ import mel.cmd.rotomapedit
 import mel.cmd.rotomapdiff
 import mel.cmd.rotomaplist
 import mel.cmd.rotomapmolepicker
+import mel.cmd.rotomapoverview
 import mel.cmd.rotomaprelate
 import mel.cmd.rotomapshow
 import mel.cmd.rotomapuuid
@@ -44,6 +45,8 @@ def main():
         subparsers, mel.cmd.rotomaplist, 'rotomap-list')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapmolepicker, 'rotomap-molepicker')
+    _setup_parser_for_module(
+        subparsers, mel.cmd.rotomapoverview, 'rotomap-overview')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaprelate, 'rotomap-relate')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapshow, 'rotomap-show')
