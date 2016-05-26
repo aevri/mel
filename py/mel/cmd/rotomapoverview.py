@@ -7,7 +7,8 @@ import re
 def setup_parser(parser):
     parser.add_argument(
         'PATH',
-        nargs='+',
+        nargs='*',
+        default=['.'],
         help="Path to look for rotomaps.")
 
 
