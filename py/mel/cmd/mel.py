@@ -10,6 +10,7 @@ import mel.cmd.microadd
 import mel.cmd.microview
 import mel.cmd.rotomapedit
 import mel.cmd.rotomapdiff
+import mel.cmd.rotomaplist
 import mel.cmd.rotomapmolepicker
 import mel.cmd.rotomaprelate
 import mel.cmd.rotomapshow
@@ -39,6 +40,8 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')
+    _setup_parser_for_module(
+        subparsers, mel.cmd.rotomaplist, 'rotomap-list')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapmolepicker, 'rotomap-molepicker')
     _setup_parser_for_module(
