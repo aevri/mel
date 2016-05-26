@@ -53,7 +53,10 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
 
     args = parser.parse_args()
-    return args.func(args)
+    try:
+        return args.func(args)
+    except BrokenPipeError:
+        return 1
 
 
 def _setup_parser_for_module(subparsers, module, name):
