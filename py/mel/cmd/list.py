@@ -1,6 +1,6 @@
 """List the moles in a mole catalog."""
 
-
+import datetime
 import os
 
 
@@ -24,7 +24,8 @@ def setup_parser(parser):
         '--format',
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
-             "'{relpath}'. Available keys: relpath, lastmicro.")
+             "'{relpath}'. Available keys: relpath, lastmicro, "
+             "lastmicro_age_days.")
 
     parser.add_argument(
         '--sort',
@@ -43,13 +44,23 @@ def process_args(args):
         def keyfunc(x):
             return 0
 
+    now = datetime.datetime.now()
+
     for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
         mole_data = {
             'relpath': mole.catalog_relative_path,
             'lastmicro': '',
+            'lastmicro_age_days': '',
         }
         if mole.micro_filenames:
-            mole_data['lastmicro'] = sorted(mole.micro_filenames)[-1]
+            lastmicro = sorted(mole.micro_filenames)[-1]
+            mole_data['lastmicro'] = lastmicro
+            lastmicrodtstring = lastmicro.split('.', 1)[0]
+            lastmicrodt = datetime.datetime.strptime(
+                lastmicrodtstring, '%Y%m%dT%H%M%S')
+            age = now - lastmicrodt
+            mole_data['lastmicro_age_days'] = age.days
+
         print(args.format.format(**mole_data))
 
 

@@ -57,4 +57,22 @@ bash$ mel list --sort lastmicro | tail -1
 bash$ $EDITOR $(!!)/__changed__
 ```
 
+### Print an overview of the age of the last microscope images
+
+Quickly get an idea of when you last took a microscope image of a mole by
+outputting the moles in columns, sorted by the last capture date.
+
+```
+$ mel list --format '{lastmicro_age_days} {relpath}' | sort -n | column -t | column
+```
+
+Example output:
+```
+0    RightLeg/Upper/KneeTriangle/TinyDark        29   RightLeg/LowerLeg/Shin
+0    RightLeg/Upper/NearTSpecks/InnerHigher      29   RightLeg/Upper/Outside
+26   LeftLeg/UpperLeg/LeftSidePair/Lighter
+26   LeftLeg/UpperLeg/RightSidePair/LongThin
+26   LeftLeg/UpperLeg/RightSidePair/SmallDark
+```
+
 [1]: http://www.nhs.uk/Conditions/Malignant-melanoma/Pages/Symptoms.aspx
