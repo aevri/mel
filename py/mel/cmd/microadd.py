@@ -196,7 +196,10 @@ def process_args(args):
 def capture(cap, display, capindex, mole_acquirer):
 
     # loop until the user presses a key
+    print("Press 'd' to disable rotation sensitivity.")
     print("Press 'c' to force capture a frame, any other key to abort.")
+
+    is_rot_sensitive = True
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -207,10 +210,12 @@ def capture(cap, display, capindex, mole_acquirer):
             if key == ord('c'):
                 print('Force capturing frame.')
                 break
+            if key == ord('d'):
+                print('Disable rotation sensitivity.')
+                is_rot_sensitive = False
             else:
                 raise Exception('User aborted.')
 
-        is_rot_sensitive = True
         ringed, stats = mel.lib.moleimaging.find_mole(frame)
         asys_image = numpy.copy(frame)
         is_aligned = mel.lib.moleimaging.annotate_image(
