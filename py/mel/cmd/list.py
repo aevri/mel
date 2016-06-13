@@ -20,26 +20,37 @@ def setup_parser(parser):
         action='store_true',
         help="Only list moles that require assistance to capture.")
 
+    assistance.add_argument(
+        '--format',
+        default="{relpath}",
+        help="Print the results with the specified format. Defaults to "
+             "'{relpath}'. Available keys: relpath, lastmicro.")
+
     parser.add_argument(
         '--sort',
         choices=['lastmicro'])
 
 
 def process_args(args):
-    if not args.sort:
-        for mole in _yield_mole_dirs('.', args):
-            print(mole.catalog_relative_path)
+    keyfunc = None
+
+    if args.sort == 'lastmicro':
+        def keyfunc(x):
+            if not x.micro_filenames:
+                return str()
+            return sorted(x.micro_filenames)[-1]
     else:
-        keyfunc = None
+        def keyfunc(x):
+            return 0
 
-        if args.sort == 'lastmicro':
-            def keyfunc(x):
-                if not x.micro_filenames:
-                    return str()
-                return sorted(x.micro_filenames)[-1]
-
-        for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
-            print(mole.catalog_relative_path)
+    for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
+        mole_data = {
+            'relpath': mole.catalog_relative_path,
+            'lastmicro': '',
+        }
+        if mole.micro_filenames:
+            mole_data['lastmicro'] = sorted(mole.micro_filenames)[-1]
+        print(args.format.format(**mole_data))
 
 
 class _Mole(object):
