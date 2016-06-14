@@ -7,6 +7,7 @@ import mel.cmd.addcluster
 import mel.cmd.addsingle
 import mel.cmd.list
 import mel.cmd.microadd
+import mel.cmd.microcompare
 import mel.cmd.microview
 import mel.cmd.rotomapedit
 import mel.cmd.rotomapdiff
@@ -38,6 +39,7 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
     _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
     _setup_parser_for_module(subparsers, mel.cmd.microadd, 'micro-add')
+    _setup_parser_for_module(subparsers, mel.cmd.microcompare, 'micro-compare')
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')

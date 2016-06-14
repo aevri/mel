@@ -54,6 +54,7 @@ def run_mel_tests():
         'add-single',
         'list',
         'micro-add',
+        'micro-compare',
         'micro-view',
         'rotomap-diff',
         'rotomap-edit',
