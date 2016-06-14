@@ -26,7 +26,7 @@ def guess_fullscreen_width_height():
 class MultiImageDisplay():
 
     def __init__(self, name, width=None, height=None):
-        self._window = ImageDisplay(name, width, height)
+        self._display = ImageDisplay(name, width, height)
         self._images_names = []
 
         self._border_width = 50
@@ -69,7 +69,7 @@ class MultiImageDisplay():
             montage_image = mel.lib.image.montage_vertical(
                 0, *row_image_list)
 
-        self._window.show_image(montage_image)
+        self._display.show_image(montage_image)
 
 
 class ImageDisplay():
