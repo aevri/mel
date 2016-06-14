@@ -77,7 +77,7 @@ def _yield_mole_dirs(rootpath, args):
 
         this_dirname = os.path.basename(path)
 
-        if this_dirname == '__micro__':
+        if this_dirname.startswith('__'):
             continue
 
         catalog_relpath = os.path.relpath(path, rootpath)
@@ -104,8 +104,10 @@ def _yield_mole_dirs(rootpath, args):
 
         micro_filenames = []
         if '__micro__' in unknown_dirs:
-            unknown_dirs.discard('__micro__')
             micro_filenames = os.listdir(os.path.join(path, '__micro__'))
+
+        discard_dirs = set(x for x in unknown_dirs if x.startswith('__'))
+        unknown_dirs -= discard_dirs
 
         # mole clusters have a picture and all the moles as child dirs, ignore
         if unknown_dirs:
