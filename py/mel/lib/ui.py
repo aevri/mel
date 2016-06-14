@@ -26,26 +26,12 @@ def guess_fullscreen_width_height():
 class MultiImageDisplay():
 
     def __init__(self, name, width=None, height=None):
-        self._name = name
+        self._window = ImageDisplay(name, width, height)
         self._images_names = []
 
         self._border_width = 50
 
         self._layout = [[]]
-
-        if width is None or height is None:
-            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
-            if width is None:
-                width = full_width_height[0]
-            if height is None:
-                height = full_width_height[1]
-
-        self._width = width
-        self._height = height
-
-        cv2.namedWindow(name)
-        cv2.namedWindow(name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(name, self._width, self._height)
 
     def add_image(self, image, name=None):
         self._images_names.append((image, name))
@@ -83,7 +69,43 @@ class MultiImageDisplay():
             montage_image = mel.lib.image.montage_vertical(
                 0, *row_image_list)
 
-        montage_image = mel.lib.image.letterbox(
-            montage_image, self._width, self._height)
+        self._window.show_image(montage_image)
 
-        cv2.imshow(self._name, montage_image)
+
+class ImageDisplay():
+    """Display an image, centered in a new window."""
+
+    def __init__(self, name, width=None, height=None):
+        self.name = name
+
+        if width is None or height is None:
+            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
+            if width is None:
+                width = full_width_height[0]
+            if height is None:
+                height = full_width_height[1]
+
+        self.width = width
+        self.height = height
+        self.image = None
+
+        cv2.namedWindow(name)
+
+        # If we don't do this apparently useless re-creation and resize then
+        # the window appears under the dock in Mac OSX.
+        cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(name, self.width, self.height)
+
+        # This doesn't seem to work, fails with:
+        #   error: (-27) NULL window in function cvSetModeWindow_COCOA
+        #
+        # cv2.setWindowProperty(
+        #     "Name", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+        self.show_image(
+            mel.lib.common.new_image(
+                self.width, self.height))
+
+    def show_image(self, image):
+        self.image = mel.lib.image.letterbox(image, self.width, self.height)
+        cv2.imshow(self.name, self.image)
