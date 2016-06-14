@@ -6,6 +6,7 @@ import cv2
 import mel.lib.common
 import mel.lib.image
 import mel.lib.math
+import mel.lib.ui
 
 import mel.rotomap.display
 
@@ -34,9 +35,6 @@ def process_args(args):
     editor = mel.rotomap.display.Editor(
         args.images, args.display_width, args.display_height)
 
-    left = 63234
-    right = 63235
-
     # This must be a list in order for it to be referenced from the the
     # closure, in Python 3 we'll use "nonlocal".
     mole_uuid = [None]
@@ -55,9 +53,9 @@ def process_args(args):
     while not is_finished[0]:
         key = cv2.waitKey(50)
         if key != -1:
-            if key == left:
+            if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
                 editor.show_prev()
-            elif key == right:
+            elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
                 editor.show_next()
             elif key == ord(' '):
                 editor.show_fitted()

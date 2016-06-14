@@ -8,6 +8,14 @@ import cv2
 import mel.lib.image
 
 
+# Codes as returned by waitkey().
+# There may be some platform dependence, these codes were observed on Mac OSX.
+WAITKEY_LEFT_ARROW = 63234
+WAITKEY_RIGHT_ARROW = 63235
+WAITKEY_UP_ARROW = 63232
+WAITKEY_DOWN_ARROW = 63233
+
+
 def guess_fullscreen_width_height():
     tkroot = tkinter.Tk()
     width = tkroot.winfo_screenwidth() - 50
