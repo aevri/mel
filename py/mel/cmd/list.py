@@ -20,7 +20,7 @@ def setup_parser(parser):
         action='store_true',
         help="Only list moles that require assistance to capture.")
 
-    assistance.add_argument(
+    parser.add_argument(
         '--format',
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
