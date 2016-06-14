@@ -45,18 +45,13 @@ def get_comparison_images(path):
 
 
 def process_args(args):
-    width = args.display_width
-    height = args.display_height
-
-    images = get_comparison_images(args.PATH)
-
-    display = mel.lib.ui.ImageDisplay(args.PATH, width, height)
+    display = mel.lib.ui.ImageDisplay(
+        args.PATH, args.display_width, args.display_height)
 
     index = 0
-
+    images = get_comparison_images(args.PATH)
     if images:
         display.show_image(images[index])
-        pass
 
     print("Press left arrow or right arrow to display another image.")
     print("Press any other key to exit.")
