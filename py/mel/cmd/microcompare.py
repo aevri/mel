@@ -37,9 +37,12 @@ def get_comparison_images(path):
     paths = [os.path.join(micro_path, x) for x in names]
     images = [cv2.imread(x) for x in paths]
 
-    for path, img in zip(paths, images):
+    for i, (path, img) in enumerate(zip(paths, images)):
         if img is None:
             raise ValueError("Failed to load file: {}".format(path))
+        else:
+            images[i] = mel.lib.image.montage_vertical(
+                10, img, mel.lib.image.render_text_as_image(names[i]))[:]
 
     return images
 

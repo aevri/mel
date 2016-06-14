@@ -163,3 +163,30 @@ def translated_and_clipped(image, x, y, dst_width, dst_height):
     height = min(src_height, dst_height)
     result[0:height, 0:width] = image[y:y + height, x:x + width]
     return result
+
+
+def render_text_as_image(
+        text,
+        font_face=None,
+        font_scale=None,
+        thickness=None,
+        color=None):
+
+    if font_face is None:
+        font_face = cv2.FONT_HERSHEY_DUPLEX
+    if font_scale is None:
+        font_scale = 1
+    if thickness is None:
+        thickness = 1
+    if color is None:
+        color = (255, 255, 255)
+
+    (width, height), baseline = cv2.getTextSize(
+        text, font_face, font_scale, thickness)
+
+    baseline += thickness
+
+    image = mel.lib.common.new_image(height + baseline + 100, width)
+    textpos = (0, height)
+    cv2.putText(image, text, textpos, font_face, font_scale, color)
+    return image
