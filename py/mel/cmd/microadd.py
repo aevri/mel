@@ -224,10 +224,11 @@ def capture(cap, display, capindex, mole_acquirer):
 
         mole_acquirer.update(stats)
 
-        display.update_image(asys_image, capindex)
         if mole_acquirer.is_locked and is_aligned:
-            # show the image with mole encircled
+            display.update_image(numpy.copy(frame), capindex)
             print("locked and aligned")
             break
+        else:
+            display.update_image(asys_image, capindex)
 
     return frame
