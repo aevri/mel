@@ -31,15 +31,17 @@ def setup_parser(parser):
 def process_args(args):
     mole_map_list = [load_mole(x) for x in args.FILE]
 
-    new_map = diff_maps(mole_map_list[0], mole_map_list[1])
-
-    uuid_set = {m['uuid'] for m in new_map}
+    uuid_set = {m['uuid'] for m in mole_map_list[0] + mole_map_list[1]}
 
     max_digits, uuid_to_display = mel.rotomap.format.calc_uuid_display_params(
         uuid_set)
 
-    for mole in new_map:
+    max_digits += 1
+
+    for mole in mole_map_list[0] + mole_map_list[1]:
         mole['uuid'] = uuid_to_display[mole['uuid']]
+
+    new_map = diff_maps(mole_map_list[0], mole_map_list[1])
 
     use_color = args.color == 'on'
     if args.color == 'auto' and is_stdout_a_tty():
