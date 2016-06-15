@@ -48,18 +48,12 @@ def get_comparison_images(path):
 
 
 def process_args(args):
-    display = mel.lib.ui.ImageDisplay(
-        args.PATH, args.display_width, args.display_height)
-
-    index = 0
     images = get_comparison_images(args.PATH)
     if not images:
         raise Exception("No microscope images at {}".format(args.PATH))
 
-    display_images = [images[0], images[-1]]
-
-    montage = mel.lib.image.montage_horizontal(10, *display_images)
-    display.show_image(montage)
+    display = ImageCompareDisplay(
+        args.PATH, images, args.display_width, args.display_height)
 
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")
@@ -70,18 +64,44 @@ def process_args(args):
         key = cv2.waitKey(50)
         if key != -1:
             if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                index = (index + 1) % len(images)
-                display_images[0] = images[index]
-                montage = mel.lib.image.montage_horizontal(10, *display_images)
-                display.show_image(montage)
+                display.next_image()
             elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                index = (index + len(images) - 1) % len(images)
-                display_images[0] = images[index]
-                montage = mel.lib.image.montage_horizontal(10, *display_images)
-                display.show_image(montage)
+                display.prev_image()
             elif key == ord(' '):
-                display_images.reverse()
-                montage = mel.lib.image.montage_horizontal(10, *display_images)
-                display.show_image(montage)
+                display.swap_images()
             else:
                 is_finished = True
+
+
+class ImageCompareDisplay():
+    """Display two images in a window, supply controls for comparing a list."""
+
+    def __init__(self, name, image_list, width=None, height=None):
+        if not image_list:
+            raise ValueError(
+                "image_list must be a list with at least one image.")
+
+        self._display = mel.lib.ui.ImageDisplay(name, width, height)
+        self._image_list = image_list
+        self._display_list = [image_list[0], image_list[-1]]
+        self._index = 0
+        self._show_display_list()
+
+    def next_image(self):
+        self._index = (self._index + 1) % len(self._image_list)
+        self._display_list[0] = self._image_list[self._index]
+        self._show_display_list()
+
+    def prev_image(self):
+        num_images = len(self._image_list)
+        self._index = (self._index + num_images - 1) % len(self._image_list)
+        self._display_list[0] = self._image_list[self._index]
+        self._show_display_list()
+
+    def swap_images(self):
+        self._display_list.reverse()
+        self._show_display_list()
+
+    def _show_display_list(self):
+        montage = mel.lib.image.montage_horizontal(10, *self._display_list)
+        self._display.show_image(montage)
