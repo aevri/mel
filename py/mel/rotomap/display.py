@@ -177,14 +177,8 @@ class Display:
         cv2.setMouseCallback(self._name, null_handler)
 
     def windowxy_to_imagexy(self, window_x, window_y):
-        image_x = mel.lib.math.clamp(
-            window_x - self._image_left,
-            0,
-            self._image_width)
-        image_y = mel.lib.math.clamp(
-            window_y - self._image_top,
-            0,
-            self._image_height)
+        image_x = window_x - self._image_left
+        image_y = window_y - self._image_top
         return (
             int(image_x * self._image_scale),
             int(image_y * self._image_scale)
