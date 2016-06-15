@@ -48,10 +48,6 @@ def hex3_to_rgb4(hex_string):
 
 
 def draw_mole(image, x, y, mole):
-    draw_target(image, x, y, mole)
-
-
-def draw_target(image, x, y, mole):
 
     radius = 16
     colors = hex3_to_rgb4(mole['uuid'][:3])
