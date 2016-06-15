@@ -91,11 +91,13 @@ class Display:
 
     def show_current(self, image, mole_list):
         if not self._is_zoomed:
-            image = self._render_fitted_image(
-                image, mole_list)
+            image = self._render_fitted_image(image)
         else:
             image = self._render_zoomed_image(
-                image, mole_list, self._zoom_x, self._zoom_y)
+                image, self._zoom_x, self._zoom_y)
+
+        if self._is_showing_markers:
+            image = self._overlay_mole_markers(image, mole_list)
 
         cv2.imshow(self._name, image)
 
@@ -115,7 +117,7 @@ class Display:
         self._zoom_y = y
         self._is_zoomed = True
 
-    def _render_fitted_image(self, image, mole_list):
+    def _render_fitted_image(self, image):
         letterbox = mel.lib.image.calc_letterbox(
             image.shape[1],
             image.shape[0],
@@ -131,20 +133,9 @@ class Display:
         image = mel.lib.image.letterbox(
             image, self._width, self._height)
 
-        if self._is_showing_markers:
-            marker_image = image
-            if self._is_faded_markers:
-                marker_image = image.copy()
-            for mole in mole_list:
-                x = int(mole['x'] / self._image_scale + self._image_left)
-                y = int(mole['y'] / self._image_scale + self._image_top)
-                draw_mole(marker_image, x, y, mole)
-            if self._is_faded_markers:
-                image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
-
         return image
 
-    def _render_zoomed_image(self, image, mole_list, x, y):
+    def _render_zoomed_image(self, image, x, y):
         nx, ny = mel.lib.image.calc_centering_offset(
             (x, y),
             (image.shape[1], image.shape[0]),
@@ -158,18 +149,20 @@ class Display:
         self._image_top = -ny
         self._image_scale = 1
 
-        if self._is_showing_markers:
-            marker_image = image
-            if self._is_faded_markers:
-                marker_image = image.copy()
-            for mole in mole_list:
-                x = mole['x'] + self._image_left
-                y = mole['y'] + self._image_top
-                if x >= 0 and y >= 0:
-                    if x < self._image_width and y < self._image_height:
-                        draw_mole(marker_image, x, y, mole)
-            if self._is_faded_markers:
-                image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
+        return image
+
+    def _overlay_mole_markers(self, image, mole_list):
+        marker_image = image
+        if self._is_faded_markers:
+            marker_image = image.copy()
+        for mole in mole_list:
+            x = int(mole['x'] / self._image_scale + self._image_left)
+            y = int(mole['y'] / self._image_scale + self._image_top)
+            if x >= 0 and y >= 0:
+                if x < self._image_width and y < self._image_height:
+                    draw_mole(marker_image, x, y, mole)
+        if self._is_faded_markers:
+            image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
         return image
 
