@@ -182,11 +182,28 @@ class Editor:
         self.moledata_list = [MoleData(x) for x in path_list_list]
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
+        self._follow = None
         self.show_current()
 
     def set_moles(self, moles):
         self.moledata.moles = moles
         self.show_current()
+
+    def follow(self, uuid_to_follow):
+        self._follow = uuid_to_follow
+
+        follow_mole = None
+        for m in self.moledata.moles:
+            if m['uuid'] == self._follow:
+                follow_mole = m
+                break
+
+        if follow_mole is not None:
+            image = self.moledata.get_image()
+            self.display.show_zoomed(
+                image, self.moledata.moles, follow_mole['x'], follow_mole['y'])
+        else:
+            self.show_fitted()
 
     def toggle_markers(self):
         self.display.toggle_markers()

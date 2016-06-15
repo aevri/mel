@@ -31,6 +31,11 @@ def setup_parser(parser):
         type=int,
         default=None,
         help="Width of the preview display window.")
+    parser.add_argument(
+        '--follow',
+        type=str,
+        default=None,
+        help="UUID of a mole to follow.")
 
 
 def process_args(args):
@@ -39,6 +44,9 @@ def process_args(args):
         args.images, args.display_width, args.display_height)
 
     mel.lib.ui.bring_python_to_front()
+
+    if args.follow:
+        editor.follow(args.follow)
 
     # This must be a list in order for it to be referenced from the the
     # closure, in Python 3 we'll use "nonlocal".
@@ -87,15 +95,23 @@ def process_args(args):
         if key != -1:
             if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
                 editor.show_prev()
+                if args.follow:
+                    editor.follow(args.follow)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
                 editor.show_next()
+                if args.follow:
+                    editor.follow(args.follow)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_UP_ARROW:
                 editor.show_prev_map()
+                if args.follow:
+                    editor.follow(args.follow)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
                 editor.show_next_map()
+                if args.follow:
+                    editor.follow(args.follow)
                 print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
