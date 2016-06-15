@@ -75,4 +75,29 @@ Example output:
 26   LeftLeg/UpperLeg/RightSidePair/SmallDark
 ```
 
+### Diff the presence and location of moles in a rotomap with git, paged
+
+When making changes to a rotomap, it can be very useful to review the changes
+before committing them, assuming you're using git for version control.
+
+Here is an example of how to review changes, with the output paged thanks to
+'less' and colored.
+
+```
+$ git difftool -x 'echo $MERGED; mel rotomap-diff --color on' -y | less -r
+```
+
+Example output:
+```
+LeftLeg/Lower/20160101T1450/01.jpg.json
+.. +c 6d .. .. .. .. .. 1. ..
++5 .. .. .. .. .. .. .. .. ..
+.. .. .. .. .. 6b .. .. .. ..
+.. .. .. .. .. .. .. .. .. b.
+LeftLeg/Lower/20160101T1450/02.jpg.json
++c 6d .. .. .. .. 1. ..
++5 .. .. .. .. 6b .. ..
+.. .. .. .. .. .. .. b.
+```
+
 [1]: http://www.nhs.uk/Conditions/Malignant-melanoma/Pages/Symptoms.aspx
