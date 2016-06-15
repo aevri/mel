@@ -1,6 +1,9 @@
 """User interface related things."""
 
 
+import logging
+import os
+import subprocess
 import tkinter
 
 import cv2
@@ -14,6 +17,29 @@ WAITKEY_LEFT_ARROW = 63234
 WAITKEY_RIGHT_ARROW = 63235
 WAITKEY_UP_ARROW = 63232
 WAITKEY_DOWN_ARROW = 63233
+
+
+def bring_python_to_front():
+    """Bring Python windows to the front.
+
+    Behavior of this function is undefined if there are multiple Python
+    processes running.
+
+    :returns: None
+
+    """
+    osascript = "/usr/bin/osascript"
+
+    if not os.path.isfile(osascript):
+        # This may be an unsupported platform
+        logging.warning("Could not find 'osascript', unsupported platform?")
+        return
+
+    subprocess.call([
+        osascript,
+        '-e',
+        'tell app "Finder" to set frontmost of process "Python" to true',
+    ])
 
 
 def guess_fullscreen_width_height():

@@ -55,6 +55,8 @@ def process_args(args):
     display = ImageCompareDisplay(
         args.PATH, images, args.display_width, args.display_height)
 
+    mel.lib.ui.bring_python_to_front()
+
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")
     print("Press any other key to exit.")

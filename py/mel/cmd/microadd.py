@@ -150,6 +150,8 @@ def process_args(args):
     else:
         display = mel.lib.ui.MultiImageDisplay(args.PATH, width, height)
 
+    mel.lib.ui.bring_python_to_front()
+
     context_images = load_context_images(args.PATH)
     for image in context_images:
         display.add_image(image)
