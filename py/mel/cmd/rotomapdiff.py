@@ -5,6 +5,7 @@ import argparse
 import copy
 import json
 import shutil
+import sys
 
 import mel.rotomap.format
 
@@ -20,6 +21,11 @@ def setup_parser(parser):
         type=int,
         default=shutil.get_terminal_size()[0],
         help="Display maps side-by-side, wrapped to this width.")
+    parser.add_argument(
+        '--color',
+        choices=['on', 'off', 'auto'],
+        default='auto',
+        help='Control the use of terminal colors. Defaults to "auto".')
 
 
 def process_args(args):
@@ -35,8 +41,20 @@ def process_args(args):
     for mole in new_map:
         mole['uuid'] = uuid_to_display[mole['uuid']]
 
+    use_color = args.color == 'on'
+    if args.color == 'auto' and is_stdout_a_tty():
+        use_color = True
+
     grid = mel.rotomap.format.map_to_grid(new_map, max_digits)
     for row in grid:
+        if use_color:
+            for i, item in enumerate(row):
+                if item.startswith('-'):
+                    row[i] = "\033[31m{0}\033[00m".format(item)
+                elif item.startswith('+'):
+                    row[i] = "\033[32m{0}\033[00m".format(item)
+                elif item.startswith('*'):
+                    row[i] = "\033[34m{0}\033[00m".format(item)
 
         print(' '.join(row))
 
@@ -90,3 +108,7 @@ def diff_maps(src, dst):
                 new.append(m2)
 
     return new
+
+
+def is_stdout_a_tty():
+    return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
