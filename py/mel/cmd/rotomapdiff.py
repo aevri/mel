@@ -26,23 +26,19 @@ def process_args(args):
     mole_map_list = [load_mole(x) for x in args.FILE]
 
     new_map = diff_maps(mole_map_list[0], mole_map_list[1])
-    mole_map_list = [new_map]
 
-    uuid_set = mel.rotomap.format.mole_uuid_set_from_map_list(mole_map_list)
+    uuid_set = {m['uuid'] for m in new_map}
 
     max_digits, uuid_to_display = mel.rotomap.format.calc_uuid_display_params(
         uuid_set)
 
-    for mole_map in mole_map_list:
-        for mole in mole_map:
-            mole['uuid'] = uuid_to_display[mole['uuid']]
+    for mole in new_map:
+        mole['uuid'] = uuid_to_display[mole['uuid']]
 
-    grid_list = [
-        mel.rotomap.format.map_to_grid(m, max_digits) for m in mole_map_list
-    ]
+    grid = mel.rotomap.format.map_to_grid(new_map, max_digits)
+    for row in grid:
 
-    mel.rotomap.format.print_grids_wrapped(
-        grid_list, args.display_width, max_digits)
+        print(' '.join(row))
 
 
 def load_mole(file_):
