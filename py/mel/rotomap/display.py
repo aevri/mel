@@ -116,14 +116,14 @@ class Display:
         self._is_zoomed = True
 
     def _render_fitted_image(self, image, mole_list):
-        self._image_width = image.shape[1]
-        self._image_height = image.shape[0]
         letterbox = mel.lib.image.calc_letterbox(
-            self._image_width,
-            self._image_height,
+            image.shape[1],
+            image.shape[0],
             self._width,
             self._height)
 
+        self._image_width = image.shape[1]
+        self._image_height = image.shape[0]
         self._image_left = letterbox[0]
         self._image_top = letterbox[1]
         self._image_scale = image.shape[1] / letterbox[2]
@@ -152,12 +152,13 @@ class Display:
         image = mel.lib.image.translated_and_clipped(
             image, nx, ny, self._width, self._height)
 
+        self._image_width = image.shape[1] + nx
+        self._image_height = image.shape[0] + ny
+        self._image_left = -nx
+        self._image_top = -ny
+        self._image_scale = 1
+
         if self._is_showing_markers:
-            self._image_left = -nx
-            self._image_top = -ny
-            self._image_width = image.shape[1] + nx
-            self._image_height = image.shape[0] + ny
-            self._image_scale = 1
             marker_image = image
             if self._is_faded_markers:
                 marker_image = image.copy()
