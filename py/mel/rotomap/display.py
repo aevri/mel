@@ -124,8 +124,6 @@ class Display:
             self._width,
             self._height)
 
-        self._image_width = image.shape[1]
-        self._image_height = image.shape[0]
         self._image_left = letterbox[0]
         self._image_top = letterbox[1]
         self._image_scale = image.shape[1] / letterbox[2]
@@ -143,8 +141,6 @@ class Display:
         image = mel.lib.image.translated_and_clipped(
             image, nx, ny, self._width, self._height)
 
-        self._image_width = image.shape[1] + nx
-        self._image_height = image.shape[0] + ny
         self._image_left = -nx
         self._image_top = -ny
         self._image_scale = 1
@@ -158,9 +154,7 @@ class Display:
         for mole in mole_list:
             x = int(mole['x'] / self._image_scale + self._image_left)
             y = int(mole['y'] / self._image_scale + self._image_top)
-            if x >= 0 and y >= 0:
-                if x < self._image_width and y < self._image_height:
-                    draw_mole(marker_image, x, y, mole)
+            draw_mole(marker_image, x, y, mole)
         if self._is_faded_markers:
             image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
