@@ -63,7 +63,7 @@ def load_mole(file_):
     try:
         return json.load(file_)
     except json.decoder.JSONDecodeError:
-        return {}
+        return []
 
 
 def diff_maps(src, dst):
