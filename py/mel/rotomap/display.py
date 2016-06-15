@@ -91,11 +91,31 @@ class Display:
 
     def show_current(self, image, mole_list):
         if not self._is_zoomed:
-            self.show_fitted(image, mole_list)
+            image = self._render_fitted_image(
+                image, mole_list)
         else:
-            self.show_zoomed(image, mole_list, self._zoom_x, self._zoom_y)
+            image = self._render_zoomed_image(
+                image, mole_list, self._zoom_x, self._zoom_y)
+
+        cv2.imshow(self._name, image)
 
     def show_fitted(self, image, mole_list):
+        self.set_fitted()
+        self.show_current(image, mole_list)
+
+    def show_zoomed(self, image, mole_list, x, y):
+        self.set_zoomed(x, y)
+        self.show_current(image, mole_list)
+
+    def set_fitted(self):
+        self._is_zoomed = False
+
+    def set_zoomed(self, x, y):
+        self._zoom_x = x
+        self._zoom_y = y
+        self._is_zoomed = True
+
+    def _render_fitted_image(self, image, mole_list):
         self._image_width = image.shape[1]
         self._image_height = image.shape[0]
         letterbox = mel.lib.image.calc_letterbox(
@@ -122,10 +142,9 @@ class Display:
             if self._is_faded_markers:
                 image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
-        cv2.imshow(self._name, image)
-        self._is_zoomed = False
+        return image
 
-    def show_zoomed(self, image, mole_list, x, y):
+    def _render_zoomed_image(self, image, mole_list, x, y):
         nx, ny = mel.lib.image.calc_centering_offset(
             (x, y),
             (image.shape[1], image.shape[0]),
@@ -133,8 +152,6 @@ class Display:
         image = mel.lib.image.translated_and_clipped(
             image, nx, ny, self._width, self._height)
 
-        self._zoom_x = x
-        self._zoom_y = y
         if self._is_showing_markers:
             self._image_left = -nx
             self._image_top = -ny
@@ -153,8 +170,7 @@ class Display:
             if self._is_faded_markers:
                 image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
-        cv2.imshow(self._name, image)
-        self._is_zoomed = True
+        return image
 
     def set_mouse_callback(self, callback):
         cv2.setMouseCallback(self._name, callback)
