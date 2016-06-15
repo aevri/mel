@@ -124,47 +124,6 @@ def montage_vertical(border_size, *image_list):
         *list(zip(image_list, geometry)))
 
 
-def calc_centering_offset(centre_xy, src_size_xy, dst_size_xy):
-    """Return translation (x, y) for centering with the supplied geometry.
-
-    The supplied 'src_size_xy' represent the dimensions of the image to
-    translate, fitting withing the bounds of 'dst_size_xy'.
-
-    It is assumed that the source image will start drawing at (0, 0) in the
-    destination region.
-
-    Usage examples:
-        >>> calc_centering_offset((10, 10), (100, 100), (40, 40))
-        (0, 0)
-
-        >>> calc_centering_offset((40, 40), (100, 100), (40, 40))
-        (20, 20)
-
-        >>> calc_centering_offset((50, 50), (100, 100), (40, 40))
-        (30, 30)
-
-    """
-    result = []
-    for i in (0, 1):
-        result.append(
-            mel.lib.math.clamp(
-                centre_xy[i] - (dst_size_xy[i] // 2),
-                0,
-                src_size_xy[i] - 1))
-    return tuple(result)
-
-
-def translated_and_clipped(image, x, y, dst_width, dst_height):
-    result = mel.lib.common.new_image(dst_height, dst_width)
-    image_shape = image.shape
-    src_width = image_shape[1] - x
-    src_height = image_shape[0] - y
-    width = min(src_width, dst_width)
-    height = min(src_height, dst_height)
-    result[0:height, 0:width] = image[y:y + height, x:x + width]
-    return result
-
-
 def render_text_as_image(
         text,
         font_face=None,
@@ -190,3 +149,41 @@ def render_text_as_image(
     textpos = (0, height)
     cv2.putText(image, text, textpos, font_face, font_scale, color)
     return image
+
+
+def calc_centering_offset(centre_xy, dst_size_xy):
+    dst_centre = [i // 2 for i in dst_size_xy]
+    offset = [i[1] - i[0] for i in zip(centre_xy, dst_centre)]
+    return offset
+
+
+def centered_at(image, x, y, dst_width, dst_height):
+    image_shape = image.shape
+    src_width = image_shape[1]
+    src_height = image_shape[0]
+    dst_mid_x = dst_width // 2
+    dst_mid_y = dst_height // 2
+
+    # Calculate the dst geometry, unclipped
+    dst_x_start = dst_mid_x - x
+    dst_x_end = dst_x_start + src_width
+    dst_y_start = dst_mid_y - y
+    dst_y_end = dst_y_start + src_height
+
+    # Project the dst clip rect into source space and clip the src rect to it
+    src_x_start = mel.lib.math.clamp(-dst_x_start, 0, src_width)
+    src_x_end = mel.lib.math.clamp(dst_width - dst_x_start, 0, src_width)
+    src_y_start = mel.lib.math.clamp(-dst_y_start, 0, src_height)
+    src_y_end = mel.lib.math.clamp(dst_height - dst_y_start, 0, src_height)
+
+    # Clip the dst rect
+    dst_x_start = mel.lib.math.clamp(dst_x_start, 0, dst_width)
+    dst_x_end = mel.lib.math.clamp(dst_x_end, 0, dst_width)
+    dst_y_start = mel.lib.math.clamp(dst_y_start, 0, dst_height)
+    dst_y_end = mel.lib.math.clamp(dst_y_end, 0, dst_height)
+
+    result = mel.lib.common.new_image(dst_height, dst_width)
+    result[dst_y_start:dst_y_end, dst_x_start:dst_x_end] = image[
+        src_y_start:src_y_end, src_x_start:src_x_end]
+
+    return result

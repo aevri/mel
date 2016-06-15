@@ -134,16 +134,16 @@ class Display:
         return image
 
     def _render_zoomed_image(self, image, x, y):
-        nx, ny = mel.lib.image.calc_centering_offset(
+        left, top = mel.lib.image.calc_centering_offset(
             (x, y),
-            (image.shape[1], image.shape[0]),
             (self._width, self._height))
-        image = mel.lib.image.translated_and_clipped(
-            image, nx, ny, self._width, self._height)
 
-        self._image_left = -nx
-        self._image_top = -ny
+        self._image_left = left
+        self._image_top = top
         self._image_scale = 1
+
+        image = mel.lib.image.centered_at(
+            image, x, y, self._width, self._height)
 
         return image
 
