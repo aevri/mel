@@ -56,6 +56,26 @@ def draw_mole(image, x, y, mole):
         radius -= 4
 
 
+def draw_crosshair(image, x, y):
+    inner_radius = 16
+    outer_radius = 24
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+
+    directions = [(1, 0), (0, -1), (-1, 0), (0, 1)]  # Right, down, left, up
+
+    size_color_list = [(3, white), (2, black)]
+
+    for size, color in size_color_list:
+        for d in directions:
+            cv2.line(
+                image,
+                (x + (inner_radius * d[0]), y + (inner_radius * d[1])),
+                (x + (outer_radius * d[0]), y + (outer_radius * d[1])),
+                color,
+                size)
+
+
 class Display:
 
     def __init__(self, width, height):
@@ -78,9 +98,13 @@ class Display:
         self._is_zoomed = False
         self._is_showing_markers = True
         self._is_faded_markers = True
+        self._highlight_uuid = None
 
     def toggle_markers(self):
         self._is_showing_markers = not self._is_showing_markers
+
+    def set_highlight_uuid(self, highlight_uuid):
+        self._highlight_uuid = highlight_uuid
 
     def toggle_faded_markers(self):
         self._is_faded_markers = not self._is_faded_markers
@@ -92,8 +116,15 @@ class Display:
             image = self._render_zoomed_image(
                 image, self._zoom_x, self._zoom_y)
 
+        highlight_mole = None
+        for m in mole_list:
+            if m['uuid'] == self._highlight_uuid:
+                highlight_mole = m
+                break
+
         if self._is_showing_markers:
-            image = self._overlay_mole_markers(image, mole_list)
+            image = self._overlay_mole_markers(
+                image, mole_list, highlight_mole)
 
         cv2.imshow(self._name, image)
 
@@ -143,13 +174,15 @@ class Display:
 
         return image
 
-    def _overlay_mole_markers(self, image, mole_list):
+    def _overlay_mole_markers(self, image, mole_list, highlight_mole):
         marker_image = image
         if self._is_faded_markers:
             marker_image = image.copy()
         for mole in mole_list:
             x = int(mole['x'] / self._image_scale + self._image_left)
             y = int(mole['y'] / self._image_scale + self._image_top)
+            if mole is highlight_mole:
+                draw_crosshair(marker_image, x, y)
             draw_mole(marker_image, x, y, mole)
         if self._is_faded_markers:
             image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
@@ -191,6 +224,7 @@ class Editor:
 
     def follow(self, uuid_to_follow):
         self._follow = uuid_to_follow
+        self.display.set_highlight_uuid(self._follow)
 
         follow_mole = None
         for m in self.moledata.moles:
