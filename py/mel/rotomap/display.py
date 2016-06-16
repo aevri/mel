@@ -207,6 +207,9 @@ class Display:
             int(image_y * self._image_scale)
         )
 
+    def set_title(self, title):
+        cv2.setWindowTitle(self._name, title)
+
 
 class Editor:
 
@@ -250,6 +253,7 @@ class Editor:
     def show_current(self):
         image = self.moledata.get_image()
         self.display.show_current(image, self.moledata.moles)
+        self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
         image = self.moledata.get_image()
