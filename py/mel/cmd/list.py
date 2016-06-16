@@ -25,7 +25,7 @@ def setup_parser(parser):
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
              "'{relpath}'. Available keys: relpath, lastmicro, "
-             "lastmicro_age_days.")
+             "lastmicro_age_days, id.")
 
     parser.add_argument(
         '--sort',
@@ -51,6 +51,7 @@ def process_args(args):
             'relpath': mole.catalog_relative_path,
             'lastmicro': '',
             'lastmicro_age_days': '',
+            'id': mole.id,
         }
         if mole.micro_filenames:
             lastmicro = sorted(mole.micro_filenames)[-1]
@@ -112,6 +113,11 @@ def _yield_mole_dirs(rootpath, args):
         if unknown_dirs:
             continue
 
-        yield _Mole(
-            catalog_relpath,
-            micro_filenames)
+        mole = _Mole(catalog_relpath, micro_filenames)
+
+        mole.id = None
+        if '__id__' in files:
+            with open(os.path.join(path, '__id__')) as f:
+                mole.id = f.read().strip()
+
+        yield mole
