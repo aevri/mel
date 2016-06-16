@@ -35,6 +35,8 @@ def process_args(args):
     editor = mel.rotomap.display.Editor(
         args.images, args.display_width, args.display_height)
 
+    mel.lib.ui.bring_python_to_front()
+
     # This must be a list in order for it to be referenced from the the
     # closure, in Python 3 we'll use "nonlocal".
     mole_uuid = [None]
