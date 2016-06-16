@@ -64,10 +64,9 @@ def process_args(args):
         print(args.format.format(**mole_data))
 
 
-class _Mole(object):
+class _Mole():
 
     def __init__(self, catalog_relative_path, micro_filenames):
-        super(_Mole, self).__init__()
         self.catalog_relative_path = catalog_relative_path
         self.micro_filenames = micro_filenames
 
