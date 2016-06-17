@@ -33,6 +33,10 @@ def setup_parser(parser):
         '--loop',
         action='store_true',
         help='Do not exit after picking the first mole, loop til user quits.')
+    parser.add_argument(
+        '--copy-to-clipboard',
+        action='store_true',
+        help='Copy ids to the clipboard, as well as printing. Mac OSX only.')
 
 
 def process_args(args):
@@ -76,6 +80,8 @@ def process_args(args):
             return 1
 
         print(mole_uuid[0])
+        if args.copy_to_clipboard:
+            mel.lib.ui.set_clipboard_contents(mole_uuid[0])
 
         if not args.loop:
             return 0

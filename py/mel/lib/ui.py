@@ -42,6 +42,23 @@ def bring_python_to_front():
     ])
 
 
+def set_clipboard_contents(text):
+    """Set the contents of the clipbaord, only works on Mac OSX.
+
+    :returns: None
+
+    """
+    pbcopy = "/usr/bin/pbcopy"
+
+    if not os.path.isfile(pbcopy):
+        raise NotImplemented(
+            '{} was not found, cannot write clipboard'.format(pbcopy))
+
+    p = subprocess.Popen(
+        [pbcopy], stdin=subprocess.PIPE, universal_newlines=True)
+    p.communicate(input=text)
+
+
 def guess_fullscreen_width_height():
     tkroot = tkinter.Tk()
     width = tkroot.winfo_screenwidth() - 50
