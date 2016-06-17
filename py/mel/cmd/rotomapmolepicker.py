@@ -29,6 +29,10 @@ def setup_parser(parser):
         type=int,
         default=None,
         help="Width of the preview display window.")
+    parser.add_argument(
+        '--loop',
+        action='store_true',
+        help='Do not exit after picking the first mole, loop til user quits.')
 
 
 def process_args(args):
@@ -52,23 +56,26 @@ def process_args(args):
 
     editor.display.set_mouse_callback(mouse_callback)
 
-    while not is_finished[0]:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                editor.show_prev()
-            elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                editor.show_next()
-            elif key == ord(' '):
-                editor.show_fitted()
-            elif key == 13:
-                editor.toggle_markers()
-            else:
-                is_finished[0] = True
+    while True:
+        is_finished[0] = False
+        while not is_finished[0]:
+            key = cv2.waitKey(50)
+            if key != -1:
+                if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+                    editor.show_prev()
+                elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+                    editor.show_next()
+                elif key == ord(' '):
+                    editor.show_fitted()
+                elif key == 13:
+                    editor.toggle_markers()
+                else:
+                    return 0
 
-    editor.display.clear_mouse_callback()
+        if mole_uuid[0] is None:
+            return 1
 
-    if mole_uuid[0] is None:
-        return 1
+        print(mole_uuid[0])
 
-    print(mole_uuid[0])
+        if not args.loop:
+            return 0
