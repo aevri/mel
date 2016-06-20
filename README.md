@@ -6,17 +6,16 @@ the goal of early detection of melanoma skin cancer.
 
 [![Build Status](https://travis-ci.org/aevri/mel.svg)](https://travis-ci.org/aevri/mel)
 
-The [Mayo Clinic](1) says:
+The [Mayo Clinic][1] says:
 > The first melanoma signs and symptoms often are:
 >
 > - A change in an existing mole
 > - The development of a new pigmented or unusual-looking growth on your skin
 
 The [UK National Health Service][2] says:
-> Don’t try to diagnose yourself - if you notice any unusual or persistent
-changes to your skin it could be a sign of skin cancer, so go and see your
-doctor. It’s probably nothing serious, but if it is skin cancer, finding it
-early makes it easier to treat.
+> The most common sign of melanoma is the appearance of a new mole or a change
+> in an existing mole. This can happen anywhere on the body, but the back,
+> legs, arms and face are most commonly affected.
 
 To help you identify new and changing moles, the tools enable you to:
 
@@ -32,9 +31,6 @@ identify significant differences in moles over time. The tools will help you to
 normalise the rotation and centering of your mole images so that they are
 easier to compare.
 
-[1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
-[2]: http://www.nhs.uk/be-clear-on-cancer/assets/BeClearOnCancer_skincancer_leaflet.pdf
-
 Things you can use now
 ----------------------
 
@@ -47,3 +43,6 @@ License
 
 Distributed under the Apache License (version 2.0); see the [LICENSE](LICENSE)
 file at the top of the source tree for more information.
+
+[1]: http://www.mayoclinic.org/diseases-conditions/melanoma/basics/symptoms/con-20026009
+[2]: http://www.nhs.uk/Conditions/Malignant-melanoma
