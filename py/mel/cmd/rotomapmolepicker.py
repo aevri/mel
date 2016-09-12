@@ -45,25 +45,25 @@ def process_args(args):
 
     mel.lib.ui.bring_python_to_front()
 
-    # This must be a list in order for it to be referenced from the the
-    # closure, in Python 3 we'll use "nonlocal".
-    mole_uuid = [None]
-    is_finished = [False]
+    mole_uuid = None
+    is_finished = False
 
     def mouse_callback(event, x, y, flags, _param):
         del _param
+        nonlocal mole_uuid
+        nonlocal is_finished
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(x, y)
             else:
-                mole_uuid[0] = editor.get_mole_uuid(x, y)
-                is_finished[0] = True
+                mole_uuid = editor.get_mole_uuid(x, y)
+                is_finished = True
 
     editor.display.set_mouse_callback(mouse_callback)
 
     while True:
-        is_finished[0] = False
-        while not is_finished[0]:
+        is_finished = False
+        while not is_finished:
             key = cv2.waitKey(50)
             if key != -1:
                 if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
@@ -75,14 +75,14 @@ def process_args(args):
                 elif key == 13:
                     editor.toggle_markers()
                 else:
-                    is_finished[0] = True
+                    is_finished = True
 
-        if mole_uuid[0] is None:
+        if mole_uuid is None:
             return 1
 
-        print(mole_uuid[0])
+        print(mole_uuid)
         if args.copy_to_clipboard:
-            mel.lib.ui.set_clipboard_contents(mole_uuid[0])
+            mel.lib.ui.set_clipboard_contents(mole_uuid)
 
         if not args.loop:
             return 0
