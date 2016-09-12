@@ -48,26 +48,26 @@ def process_args(args):
     if args.follow:
         editor.follow(args.follow)
 
-    # This must be a list in order for it to be referenced from the the
-    # closure, in Python 3 we'll use "nonlocal".
-    mole_uuid = [None]
-    is_move_mode = [False]
+    mole_uuid = None
+    is_move_mode = False
 
     def mouse_callback(event, mouse_x, mouse_y, flags, _param):
         del _param
+        nonlocal mole_uuid
+        nonlocal is_move_mode
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(mouse_x, mouse_y)
             elif flags & cv2.EVENT_FLAG_ALTKEY:
                 if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    mole_uuid[0] = editor.get_mole_uuid(mouse_x, mouse_y)
-                    print(mole_uuid[0])
+                    mole_uuid = editor.get_mole_uuid(mouse_x, mouse_y)
+                    print(mole_uuid)
                 else:
-                    editor.set_mole_uuid(mouse_x, mouse_y, mole_uuid[0])
+                    editor.set_mole_uuid(mouse_x, mouse_y, mole_uuid)
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.remove_mole(mouse_x, mouse_y)
             else:
-                if not is_move_mode[0]:
+                if not is_move_mode:
                     editor.add_mole(mouse_x, mouse_y)
                 else:
                     editor.move_nearest_mole(mouse_x, mouse_y)
@@ -119,7 +119,7 @@ def process_args(args):
             elif key == ord('c'):
                 copied_moles = editor.moledata.moles
             elif key == ord('m'):
-                is_move_mode[0] = not is_move_mode[0]
+                is_move_mode = not is_move_mode
             elif key == ord('a'):
                 guessed_moles = guess_mole_positions(
                     copied_moles,
