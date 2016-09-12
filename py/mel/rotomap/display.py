@@ -321,6 +321,20 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
+    def crud_mole(self, mole_uuid, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+
+        i = mel.rotomap.moles.uuid_mole_index(self.moledata.moles, mole_uuid)
+        if i is not None:
+            self.moledata.moles[i]['x'] = image_x
+            self.moledata.moles[i]['y'] = image_y
+        else:
+            mel.rotomap.moles.add_mole(
+                self.moledata.moles, image_x, image_y, mole_uuid)
+
+        self.moledata.save_moles()
+        self.show_current()
+
 
 class MoleData:
 

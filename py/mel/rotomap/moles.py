@@ -35,11 +35,14 @@ def save_image_moles(moles, image_path):
         print(file=moles_file)
 
 
-def add_mole(moles, x, y):
+def add_mole(moles, x, y, mole_uuid=None):
+    if mole_uuid is None:
+        mole_uuid = uuid.uuid4().hex
+
     moles.append({
         'x': x,
         'y': y,
-        'uuid': uuid.uuid4().hex,
+        'uuid': mole_uuid,
     })
 
 
@@ -55,6 +58,14 @@ def nearest_mole_index(moles, x, y):
             nearest_distance = distance
 
     return nearest_index
+
+
+def uuid_mole_index(moles, mole_uuid):
+    """Return the index of the first mole with the specified uuid."""
+    for i, mole in enumerate(moles):
+        if mole['uuid'] == mole_uuid:
+            return i
+    return None
 
 
 def set_nearest_mole_uuid(moles, x, y, mole_uuid):

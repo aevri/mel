@@ -69,10 +69,15 @@ def process_args(args):
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.remove_mole(mouse_x, mouse_y)
             else:
-                if not is_move_mode:
+                if not is_move_mode and follow_uuid is None:
                     editor.add_mole(mouse_x, mouse_y)
                 else:
-                    editor.move_nearest_mole(mouse_x, mouse_y)
+                    if is_move_mode:
+                        editor.move_nearest_mole(mouse_x, mouse_y)
+                    else:
+                        assert follow_uuid is not None
+                        editor.crud_mole(follow_uuid, mouse_x, mouse_y)
+                        editor.follow(follow_uuid)
 
     editor.display.set_mouse_callback(mouse_callback)
 
