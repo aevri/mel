@@ -45,8 +45,10 @@ def process_args(args):
 
     mel.lib.ui.bring_python_to_front()
 
+    follow_uuid = None
     if args.follow:
-        editor.follow(args.follow)
+        follow_uuid = args.follow
+        editor.follow(follow_uuid)
 
     mole_uuid = None
     is_move_mode = False
@@ -81,6 +83,7 @@ def process_args(args):
     print("Shift-click on a point to delete it.")
     print("Alt-Shift-click on a point to copy it's uuid.")
     print("Alt-click on a point to paste the copied uuid.")
+    print("Press 'o' to toggle follow mode.")
     print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
@@ -96,28 +99,35 @@ def process_args(args):
         if key != -1:
             if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
                 editor.show_prev()
-                if args.follow:
-                    editor.follow(args.follow)
+                if follow_uuid is not None:
+                    editor.follow(follow_uuid)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
                 editor.show_next()
-                if args.follow:
-                    editor.follow(args.follow)
+                if follow_uuid is not None:
+                    editor.follow(follow_uuid)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_UP_ARROW:
                 editor.show_prev_map()
-                if args.follow:
-                    editor.follow(args.follow)
+                if follow_uuid is not None:
+                    editor.follow(follow_uuid)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
                 editor.show_next_map()
-                if args.follow:
-                    editor.follow(args.follow)
+                if follow_uuid is not None:
+                    editor.follow(follow_uuid)
                 print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
             elif key == ord('c'):
                 copied_moles = editor.moledata.moles
+            elif key == ord('o'):
+                if follow_uuid is None:
+                    follow_uuid = mole_uuid
+                    is_move_mode = False
+                    print(follow_uuid)
+                else:
+                    follow_uuid = None
             elif key == ord('m'):
                 is_move_mode = not is_move_mode
             elif key == ord('a'):
