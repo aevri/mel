@@ -103,24 +103,28 @@ def process_args(args):
         key = cv2.waitKey(50)
         if key != -1:
             if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+                prev_moles = editor.moledata.moles
                 editor.show_prev()
                 if follow_uuid is not None:
-                    editor.follow(follow_uuid)
+                    update_follow(editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+                prev_moles = editor.moledata.moles
                 editor.show_next()
                 if follow_uuid is not None:
-                    editor.follow(follow_uuid)
+                    update_follow(editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+                prev_moles = editor.moledata.moles
                 editor.show_prev_map()
                 if follow_uuid is not None:
-                    editor.follow(follow_uuid)
+                    update_follow(editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+                prev_moles = editor.moledata.moles
                 editor.show_next_map()
                 if follow_uuid is not None:
-                    editor.follow(follow_uuid)
+                    update_follow(editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
@@ -149,6 +153,29 @@ def process_args(args):
                 is_finished = True
 
     editor.display.clear_mouse_callback()
+
+
+def update_follow(editor, follow_uuid, prev_moles):
+    editor.follow(follow_uuid)
+
+    if mel.rotomap.moles.uuid_mole_index(
+            editor.moledata.moles, follow_uuid) is None:
+
+        guessed_moles = guess_mole_positions(
+            prev_moles,
+            editor.moledata.moles,
+            editor.moledata.get_image())
+
+        follow_index = mel.rotomap.moles.uuid_mole_index(
+            guessed_moles, follow_uuid)
+
+        if follow_index is not None:
+            guess_pos = mel.rotomap.moles.molepos_to_nparray(
+                guessed_moles[follow_index])
+
+            print(guess_pos)
+            editor.show_zoomed_display(
+                guess_pos[0], guess_pos[1])
 
 
 def guess_mole_positions(previous_moles, current_moles, current_image):

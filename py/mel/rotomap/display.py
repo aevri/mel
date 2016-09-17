@@ -269,6 +269,10 @@ class Editor:
         image = self.moledata.get_image()
         self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
 
+    def show_zoomed_display(self, image_x, image_y):
+        image = self.moledata.get_image()
+        self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
+
     def show_prev_map(self):
         self.moledata_index -= 1
         self.moledata_index %= len(self.moledata_list)
