@@ -97,34 +97,43 @@ def process_args(args):
     print("Press any other key to quit.")
 
     copied_moles = None
+    guessed_pos = None
 
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
             if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+                guessed_pos = None
                 prev_moles = editor.moledata.moles
                 editor.show_prev()
                 if follow_uuid is not None:
-                    update_follow(editor, follow_uuid, prev_moles)
+                    guessed_pos = update_follow(
+                        editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+                guessed_pos = None
                 prev_moles = editor.moledata.moles
                 editor.show_next()
                 if follow_uuid is not None:
-                    update_follow(editor, follow_uuid, prev_moles)
+                    guessed_pos = update_follow(
+                        editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+                guessed_pos = None
                 prev_moles = editor.moledata.moles
                 editor.show_prev_map()
                 if follow_uuid is not None:
-                    update_follow(editor, follow_uuid, prev_moles)
+                    guessed_pos = update_follow(
+                        editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+                guessed_pos = None
                 prev_moles = editor.moledata.moles
                 editor.show_next_map()
                 if follow_uuid is not None:
-                    update_follow(editor, follow_uuid, prev_moles)
+                    guessed_pos = update_follow(
+                        editor, follow_uuid, prev_moles)
                 print(editor.moledata.current_image_path())
             elif key == ord(' '):
                 editor.show_fitted()
@@ -137,6 +146,10 @@ def process_args(args):
                     print(follow_uuid)
                 else:
                     follow_uuid = None
+            elif key == ord('p'):
+                if follow_uuid is not None and guessed_pos is not None:
+                    editor.add_mole_display(
+                        guessed_pos[0], guessed_pos[1], follow_uuid)
             elif key == ord('m'):
                 is_move_mode = not is_move_mode
             elif key == ord('a'):
@@ -156,6 +169,7 @@ def process_args(args):
 
 
 def update_follow(editor, follow_uuid, prev_moles):
+    guess_pos = None
     editor.follow(follow_uuid)
 
     if mel.rotomap.moles.uuid_mole_index(
@@ -173,9 +187,13 @@ def update_follow(editor, follow_uuid, prev_moles):
             guess_pos = mel.rotomap.moles.molepos_to_nparray(
                 guessed_moles[follow_index])
 
+            guess_pos = (int(guess_pos[0]), int(guess_pos[1]))
+
             print(guess_pos)
             editor.show_zoomed_display(
                 guess_pos[0], guess_pos[1])
+
+    return guess_pos
 
 
 def guess_mole_positions(previous_moles, current_moles, current_image):

@@ -299,6 +299,12 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
+    def add_mole_display(self, image_x, image_y, mole_uuid=None):
+        mel.rotomap.moles.add_mole(
+            self.moledata.moles, image_x, image_y, mole_uuid)
+        self.moledata.save_moles()
+        self.show_current()
+
     def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
