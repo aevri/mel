@@ -50,7 +50,8 @@ def process_args(args):
     mole_uuid = [None]
     is_finished = [False]
 
-    def mouse_callback(event, x, y, flags, param):
+    def mouse_callback(event, x, y, flags, _param):
+        del _param
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(x, y)

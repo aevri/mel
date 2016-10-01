@@ -37,7 +37,8 @@ def process_args(args):
     editor = mel.rotomap.display.Editor(
         args.images, args.display_width, args.display_height)
 
-    def mouse_callback(event, mouse_x, mouse_y, flags, param):
+    def mouse_callback(event, mouse_x, mouse_y, flags, _param):
+        del _param
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(mouse_x, mouse_y)

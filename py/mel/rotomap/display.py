@@ -194,8 +194,8 @@ class Display:
 
     def clear_mouse_callback(self):
 
-        def null_handler(event, x, y, flags, param):
-            pass
+        def null_handler(_event, _x, _y, _flags, _param):
+            del _event, _x, _y, _flags, _param
 
         cv2.setMouseCallback(self._name, null_handler)
 
