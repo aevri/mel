@@ -19,6 +19,7 @@ install:
   - pip3 install flake8
   - pip3 install nose
   - pip3 install vulture
+  - pip3 install pylint
 
 script:
   # Only run non-runtime tests until we can get opencv working under Travis.

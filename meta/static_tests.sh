@@ -9,6 +9,9 @@ cd "$(dirname "$0")"/..
 allscripts=$(find py/ -iname '*.py' |  tr '\n' ' ')
 
 printf '.'
+python3 -m pylint --errors-only py/mel/
+
+printf '.'
 python3 -m flake8 $allscripts
 
 printf '.'

@@ -1,0 +1,9 @@
+[MAIN]
+
+extension-pkg-whitelist = cv2
+
+[TYPECHECK]
+
+# Pylint won't recognise a lot of members of numpy and will generate spurious
+# errors. Ignore it for now.
+ignored-modules = numpy
