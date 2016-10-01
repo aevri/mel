@@ -75,7 +75,7 @@ def process_args(args):
                 elif key == 13:
                     editor.toggle_markers()
                 else:
-                    return 0
+                    is_finished[0] = True
 
         if mole_uuid[0] is None:
             return 1
