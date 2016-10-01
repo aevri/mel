@@ -193,11 +193,9 @@ class Display:
         cv2.setMouseCallback(self._name, callback)
 
     def clear_mouse_callback(self):
-
-        def null_handler(_event, _x, _y, _flags, _param):
-            del _event, _x, _y, _flags, _param
-
-        cv2.setMouseCallback(self._name, null_handler)
+        cv2.setMouseCallback(
+            self._name,
+            mel.lib.common.make_null_mouse_callback())
 
     def windowxy_to_imagexy(self, window_x, window_y):
         image_x = window_x - self._image_left
