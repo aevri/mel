@@ -95,7 +95,14 @@ class Display:
         cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self._name, self._width, self._height)
 
+        self._zoom_x = None
+        self._zoom_y = None
         self._is_zoomed = False
+
+        self._image_left = None
+        self._image_top = None
+        self._image_scale = None
+
         self._is_showing_markers = True
         self._is_faded_markers = True
         self._highlight_uuid = None
