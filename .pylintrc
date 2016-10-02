@@ -2,6 +2,10 @@
 
 extension-pkg-whitelist = cv2
 
+good-names = _, x, y, f, i, j, u, v, m, m1, m2, a, b, p
+
+disable = missing-docstring
+
 [TYPECHECK]
 
 # Pylint won't recognise a lot of members of numpy and will generate spurious
