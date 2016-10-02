@@ -1,9 +1,9 @@
 """A big ball of mud to hold common functionality pending a re-org."""
 
+import os
 
 import cv2
 import numpy
-import os
 
 import mel.lib.datetime
 

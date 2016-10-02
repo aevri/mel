@@ -1,9 +1,9 @@
 """Capture images from an attached microscope and add to existing moles."""
 
-
-import cv2
 import datetime
 import os
+
+import cv2
 import numpy
 
 import mel.lib.common

@@ -1,9 +1,9 @@
 """A tool for adding a new cluster / constellation from photographs."""
 
+import os
 
 import cv2
 import numpy
-import os
 
 import mel.lib.common
 import mel.lib.image

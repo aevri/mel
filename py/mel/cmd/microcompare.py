@@ -1,7 +1,8 @@
 """Compare existing microscope images of a mole."""
 
-import cv2
 import os
+
+import cv2
 
 import mel.lib.common
 import mel.lib.datetime
