@@ -9,7 +9,7 @@
 # [ A] make_now_datetime_string() returns a string we can convert to datetime
 # -----------------------------------------------------------------------------
 # Tests:
-# [ A] test_A_Breathing
+# [ A] test_a_breathing
 # =============================================================================
 
 
@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_A_Breathing(self):
+    def test_a_breathing(self):
         # [] make_now_datetime_string() returns a string we can convert to
         # datetime
         datetimestring = mel.lib.datetime.make_now_datetime_string()

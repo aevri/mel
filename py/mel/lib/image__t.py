@@ -9,7 +9,7 @@
 # [  ]
 # -----------------------------------------------------------------------------
 # Tests:
-# [ A] test_A_Breathing
+# [ A] test_a_breathing
 # =============================================================================
 
 
@@ -27,10 +27,10 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_A_Breathing(self):
+    def test_a_breathing(self):
         # Exercise the methods to make sure there are no unexpected exceptions
         image1 = mel.lib.common.new_image(200, 100)
         image2 = mel.lib.common.new_image(100, 200)
-        h = mel.lib.image.montage_horizontal(50, image1, image2)
-        hh = mel.lib.image.letterbox(h, 200, 200)
-        mel.lib.image.montage_vertical(50, h, hh)
+        montage = mel.lib.image.montage_horizontal(50, image1, image2)
+        letterbox_montage = mel.lib.image.letterbox(montage, 200, 200)
+        mel.lib.image.montage_vertical(50, montage, letterbox_montage)
