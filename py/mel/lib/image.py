@@ -60,7 +60,7 @@ def calc_montage_horizontal(border_size, *frames):
 
     x = border_size
     pos_list = []
-    for index, f in enumerate(frames):
+    for f in frames:
         y = border_size + (max_height - f[1]) // 2
         pos_list.append([x, y])
         x += f[0] + border_size

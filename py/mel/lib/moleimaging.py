@@ -42,7 +42,7 @@ def process_contours(mole_regions, original):
     final = original.copy()
     stats = None
 
-    _, contours, hierarchy = cv2.findContours(
+    _, contours, _ = cv2.findContours(
         mole_regions.copy(),
         cv2.RETR_LIST,
         cv2.CHAIN_APPROX_NONE)
@@ -209,12 +209,12 @@ def annotate_image(original, is_rot_sensitive):
     img = cv2.blur(img, (40, 40))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img = cv2.split(img)[1]
-    ret, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
+    _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
 
-    _, contours, hierarchy = cv2.findContours(
+    _, contours, _ = cv2.findContours(
         img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
-    mole_contour, mole_area = find_mole_contour(contours, img.shape[0:2])
+    mole_contour, _ = find_mole_contour(contours, img.shape[0:2])
 
     if mole_contour is not None:
         if len(mole_contour) > 5:
@@ -312,7 +312,7 @@ def find_mole_ellipse(original, molepos, grid_size):
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
     image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
-    image, stats, ellipse = mel.lib.moleimaging.process_contours(
+    image, _, ellipse = mel.lib.moleimaging.process_contours(
         image, original)
 
     if ellipse:

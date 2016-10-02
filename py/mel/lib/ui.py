@@ -98,7 +98,7 @@ class MultiImageDisplay():
         for row in self._layout:
             row_image = None
             for index in row:
-                image, name = self._images_names[index]
+                image, _ = self._images_names[index]
                 if row_image is None:
                     row_image = image
                 else:

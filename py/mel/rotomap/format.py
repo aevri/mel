@@ -144,9 +144,9 @@ def make_grid(mole_map, left, top, width, height, scale, num_digits):
 
     spacer = '.' * num_digits
 
-    for j in range(grid_height):
+    for _ in range(grid_height):
         row = []
-        for i in range(grid_width):
+        for _ in range(grid_width):
             row.append(spacer)
         grid.append(row)
 

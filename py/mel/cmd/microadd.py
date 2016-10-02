@@ -218,7 +218,7 @@ def capture(cap, display, capindex, mole_acquirer):
             else:
                 raise Exception('User aborted.')
 
-        ringed, stats = mel.lib.moleimaging.find_mole(frame)
+        _, stats = mel.lib.moleimaging.find_mole(frame)
         asys_image = numpy.copy(frame)
         is_aligned = mel.lib.moleimaging.annotate_image(
             asys_image,

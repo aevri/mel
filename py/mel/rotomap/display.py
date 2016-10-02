@@ -39,7 +39,7 @@ def hex3_to_rgb4(hex_string):
     rgb_list = []
 
     value = int(hex_string[0:3], 16)
-    for x in range(4):
+    for _ in range(4):
         index = value % 12
         value //= 12
         rgb_list.append(scheme[index])
