@@ -19,8 +19,11 @@ def main():
     subparsers.dest = 'command'
 
     # vulture will report these as unused unless we do this
+    #
+    # pylint: disable=pointless-statement
     subparsers.required
     subparsers.dest
+    # pylint: enable=pointless-statement
 
     _setup_parser_for_module(
         subparsers, mel.cmddebug.triangulate, 'triangulate')
