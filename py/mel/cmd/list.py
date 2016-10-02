@@ -68,6 +68,7 @@ class _Mole():
     def __init__(self, catalog_relative_path, micro_filenames):
         self.catalog_relative_path = catalog_relative_path
         self.micro_filenames = micro_filenames
+        self.id_ = None
 
 
 def _yield_mole_dirs(rootpath, args):
@@ -113,7 +114,6 @@ def _yield_mole_dirs(rootpath, args):
 
         mole = _Mole(catalog_relpath, micro_filenames)
 
-        mole.id_ = None
         if '__id__' in files:
             with open(os.path.join(path, '__id__')) as f:
                 mole.id_ = f.read().strip()
