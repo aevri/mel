@@ -33,8 +33,6 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    keyfunc = None
-
     if args.sort == 'lastmicro':
         def keyfunc(x):
             if not x.micro_filenames:
