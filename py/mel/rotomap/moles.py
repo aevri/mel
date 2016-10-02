@@ -146,9 +146,14 @@ def get_best_triangle_for_mapping(triangle_list, point):
     best_triangle = None
     best_result = None
     for triangle in triangle_list:
+        # Ignore "Instance of 'tuple' has no 'astype' member (no-member)" from
+        # pylint.
+        # pylint: disable=no-member
+        #
         # pointPolygonTest() will fail if we don't pass it values exactly like
         # this.
         contour = numpy.array(triangle_to_points(triangle)).astype('float32')
+        # pylint: enable=no-member
         result = cv2.pointPolygonTest(contour, tuple(point), True)
         if best_result is None or result > best_result:
             best_result = result
