@@ -18,16 +18,7 @@ def load_image_moles(image_path):
     if os.path.exists(moles_path):
         with open(moles_path) as moles_file:
             moles = json.load(moles_file)
-
-    converted = []
-    for m in moles:
-        if type(m) is list:
-            m = {'x': m[0], 'y': m[1]}
-        if 'uuid' not in m:
-            m['uuid'] = uuid.uuid4().hex
-        converted.append(m)
-
-    return converted
+    return moles
 
 
 def save_image_moles(moles, image_path):
