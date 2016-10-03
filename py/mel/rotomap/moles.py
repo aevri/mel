@@ -46,6 +46,16 @@ def add_mole(moles, x, y, mole_uuid=None):
     })
 
 
+def sorted_by_distances(mole_list, x, y):
+
+    def sqdist(mole):
+        dist_x = x - mole['x']
+        dist_y = y - mole['y']
+        return (dist_x * dist_x) + (dist_y * dist_y)
+
+    return sorted(mole_list, key=sqdist)
+
+
 def nearest_mole_index(moles, x, y):
     nearest_index = None
     nearest_distance = None
@@ -195,7 +205,9 @@ def get_best_moles_for_mapping(molepoint, mole_list, image_rect):
         moles_for_mapping = get_moles_from_points(
             mole_list, triangle_to_points(best_triangle))
     else:
-        raise Exception("Could not find triangles.")
+        # Two nearest moles to map with is better than none
+        return sorted_by_distances(
+            mole_list, molepoint[0], molepoint[1])[:2]
 
     return moles_for_mapping
 
