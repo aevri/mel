@@ -2,6 +2,7 @@
 
 
 import cv2
+import numpy
 
 import mel.lib.common
 
@@ -187,3 +188,31 @@ def centered_at(image, x, y, dst_width, dst_height):
         src_y_start:src_y_end, src_x_start:src_x_end]
 
     return result
+
+
+def slice_square_or_none(image, lefttop, rightbottom):
+    """Return a slice of the supplied image or None.
+
+    :image: a NumPy array representing an OpenCV image, stored in yx order.
+    :lefttop: a NumPy array of xy co-ordinates, the inclusive top-left.
+    :rightbottom: a NumPy array of xy co-ordinates, the exclusive bottom-right.
+    :returns: a NumPy array representing an OpenCV image, stored in yx order.
+
+    """
+    height_width = image.shape[:2]
+    width_height = (height_width[1], height_width[0])
+
+    clipped_lefttop = numpy.clip(lefttop, (0, 0), width_height)
+    clipped_rightbottom = numpy.clip(rightbottom, (0, 0), width_height)
+
+    if not numpy.allclose(lefttop, clipped_lefttop):
+        return None
+
+    if not numpy.allclose(rightbottom, clipped_rightbottom):
+        return None
+
+    # Note that images are stored in yx order, not xy.
+    return image[
+        lefttop[1]:rightbottom[1],
+        lefttop[0]:rightbottom[0],
+    ]

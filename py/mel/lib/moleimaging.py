@@ -4,7 +4,6 @@
 import math
 
 import cv2
-import numpy
 
 import mel.lib.math
 
@@ -300,13 +299,17 @@ def annotate_image(original, is_rot_sensitive):
     return is_aligned
 
 
-def find_mole_ellipse(original, molepos, grid_size):
+def find_mole_ellipse(original, centre, radius):
 
-    topleft = numpy.maximum(molepos - (grid_size, grid_size), (0, 0))
-    original = original[
-        topleft[1]:molepos[1] + grid_size,
-        topleft[0]:molepos[0] + grid_size
-    ]
+    lefttop = centre - (radius, radius)
+    rightbottom = centre + (radius + 1, radius + 1)
+
+    original = mel.lib.image.slice_square_or_none(
+        original, lefttop, rightbottom)
+
+    if original is None:
+        return None
+
     image = original[:]
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = cv2.split(image)[1]
@@ -317,7 +320,7 @@ def find_mole_ellipse(original, molepos, grid_size):
 
     if ellipse:
         ellipse = (
-            (ellipse[0][0] + topleft[0], ellipse[0][1] + topleft[1]),
+            (ellipse[0][0] + lefttop[0], ellipse[0][1] + lefttop[1]),
             ellipse[1],
             ellipse[2],
         )
