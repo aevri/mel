@@ -4,6 +4,7 @@
 import argparse
 
 import mel.cmddebug.triangulate
+import mel.cmddebug.detectmoles
 
 
 def main():
@@ -27,6 +28,8 @@ def main():
 
     _setup_parser_for_module(
         subparsers, mel.cmddebug.triangulate, 'triangulate')
+    _setup_parser_for_module(
+        subparsers, mel.cmddebug.detectmoles, 'detect-moles')
 
     args = parser.parse_args()
     return args.func(args)
