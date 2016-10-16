@@ -216,3 +216,35 @@ def slice_square_or_none(image, lefttop, rightbottom):
         lefttop[1]:rightbottom[1],
         lefttop[0]:rightbottom[0],
     ]
+
+
+def recentered_at(image, x, y):
+    """Return a new image, centered at new position on a black background.
+
+    Where new content needs to be shifted into the image, it will appear black.
+
+    :image: An OpenCV image.
+    :x: The horizontal co-ordinate to put at the centre of the new image.
+    :y: The vertical co-ordinate to put at the centre of the new image.
+    :returns: A new OpenCV image.
+
+    """
+    height, width = image.shape[0:2]
+    return centered_at(image, x, y, width, height)
+
+
+def rotated(image, degrees):
+    """Return a new image, rotated by specified amount, on a black background.
+
+    Where new content needs to be shifted into the image, it will appear black.
+
+    :image: An OpenCV image.
+    :degrees: The degrees of the rotation about the centre.
+    :returns: A new OpenCV image.
+
+    """
+    height, width = image.shape[0:2]
+
+    rot = cv2.getRotationMatrix2D((width // 2, height // 2), degrees, 1.0)
+
+    return cv2.warpAffine(image, rot, (width, height))

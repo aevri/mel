@@ -202,6 +202,8 @@ def capture(cap, display, capindex, mole_acquirer):
     print("Press 'c' to force capture a frame, any other key to abort.")
 
     is_rot_sensitive = True
+    centre = None
+    rotation = None
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -220,17 +222,22 @@ def capture(cap, display, capindex, mole_acquirer):
 
         _, stats = mel.lib.moleimaging.find_mole(frame)
         asys_image = numpy.copy(frame)
-        is_aligned = mel.lib.moleimaging.annotate_image(
+        is_aligned, centre, rotation = mel.lib.moleimaging.annotate_image(
             asys_image,
             is_rot_sensitive)
 
         mole_acquirer.update(stats)
 
         if mole_acquirer.is_locked and is_aligned:
-            display.update_image(numpy.copy(frame), capindex)
-            print("locked and aligned")
             break
         else:
             display.update_image(asys_image, capindex)
 
-    return frame
+    normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
+    if is_rot_sensitive:
+        normal_image = mel.lib.image.rotated(normal_image, rotation)
+
+    display.update_image(normal_image, capindex)
+    print("locked and aligned")
+
+    return normal_image

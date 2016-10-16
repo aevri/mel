@@ -199,7 +199,8 @@ def draw_horizontal_lines(image, left, top, right, bottom, color, width):
 
 def annotate_image(original, is_rot_sensitive):
     is_aligned = False
-
+    center_xy = None
+    angle_degs = None
     original_width = original.shape[1]
     original_height = original.shape[0]
 
@@ -296,7 +297,7 @@ def annotate_image(original, is_rot_sensitive):
                 is_aligned = True
 
     original[:, :] = final[:, :]
-    return is_aligned
+    return is_aligned, center_xy, angle_degs
 
 
 def find_mole_ellipse(original, centre, radius):
