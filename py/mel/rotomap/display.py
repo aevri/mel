@@ -8,6 +8,7 @@ import mel.lib.image
 import mel.lib.math
 import mel.lib.ui
 import mel.rotomap.moles
+import mel.rotomap.tricolour
 
 
 def load_image(path):
@@ -227,8 +228,10 @@ class Display:
 class Editor:
 
     def __init__(self, path_list_list, width, height):
-        self.display = Display(width, height)
+        self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
+        self.display = Display(width, height, self._uuid_to_tricolour)
         self.moledata_list = [MoleData(x) for x in path_list_list]
+
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
@@ -363,6 +366,7 @@ class MoleData:
         self._num_images = len(self._path_list)
         self._cached_image = None
         self._cached_image_index = None
+        self._load()
 
     def get_image(self):
         return self._load()
