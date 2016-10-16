@@ -17,37 +17,6 @@ def load_image(path):
     return image
 
 
-def hex3_to_rgb4(hex_string):
-
-    # "12 class paired" from http://colorbrewer2.org/
-    scheme = [
-        (166, 206, 227),
-        (31, 120, 180),
-        (178, 223, 138),
-        (51, 160, 44),
-
-        (251, 154, 153),
-        (227, 26, 28),
-        (253, 191, 111),
-        (255, 127, 0),
-
-        (202, 178, 214),
-        (106, 61, 154),
-        (255, 255, 153),
-        (177, 89, 40),
-    ]
-
-    rgb_list = []
-
-    value = int(hex_string[0:3], 16)
-    for _ in range(4):
-        index = value % 12
-        value //= 12
-        rgb_list.append(scheme[index])
-
-    return rgb_list
-
-
 def draw_mole(image, x, y, colors):
 
     radius = 16
@@ -76,10 +45,6 @@ def draw_crosshair(image, x, y):
                 size)
 
 
-def uuid_to_tricolour_first_digits(uuid_):
-    return hex3_to_rgb4(uuid_[:3])
-
-
 class Display:
 
     def __init__(self, width, height, uuid_to_tricolour=None):
@@ -101,7 +66,8 @@ class Display:
 
         self._uuid_to_tricolour = uuid_to_tricolour
         if self._uuid_to_tricolour is None:
-            self._uuid_to_tricolour = uuid_to_tricolour_first_digits
+            self._uuid_to_tricolour = (
+                mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
 
         self._zoom_x = None
         self._zoom_y = None

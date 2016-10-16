@@ -16,6 +16,41 @@ _NINE_CLASS_SET1 = [
 ]
 
 
+def hex3_to_rgb4(hex_string):
+
+    # "12 class paired" from http://colorbrewer2.org/
+    scheme = [
+        (166, 206, 227),
+        (31, 120, 180),
+        (178, 223, 138),
+        (51, 160, 44),
+
+        (251, 154, 153),
+        (227, 26, 28),
+        (253, 191, 111),
+        (255, 127, 0),
+
+        (202, 178, 214),
+        (106, 61, 154),
+        (255, 255, 153),
+        (177, 89, 40),
+    ]
+
+    rgb_list = []
+
+    value = int(hex_string[0:3], 16)
+    for _ in range(4):
+        index = value % 12
+        value //= 12
+        rgb_list.append(scheme[index])
+
+    return rgb_list
+
+
+def uuid_to_tricolour_first_digits(uuid_):
+    return hex3_to_rgb4(uuid_[:3])
+
+
 def _list_rotated_left(list_, n):
     """Return the input 'list_', rotated left by n places.
 
