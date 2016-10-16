@@ -217,8 +217,10 @@ def capture(cap, display, capindex, mole_acquirer):
         if key != -1:
             if key == ord('c'):
                 print('Force capturing frame.')
+                centre = None
+                rotation = None
                 break
-            if key == ord('d'):
+            elif key == ord('d'):
                 print('Disable rotation sensitivity.')
                 is_rot_sensitive = False
             else:
@@ -237,8 +239,10 @@ def capture(cap, display, capindex, mole_acquirer):
         else:
             display.update_image(asys_image, capindex)
 
-    normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
-    if is_rot_sensitive:
+    normal_image = numpy.copy(frame)
+    if centre is not None:
+        normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
+    if is_rot_sensitive and rotation is not None:
         normal_image = mel.lib.image.rotated(normal_image, rotation)
 
     display.update_image(normal_image, capindex)
