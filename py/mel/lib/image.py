@@ -248,3 +248,7 @@ def rotated(image, degrees):
     rot = cv2.getRotationMatrix2D((width // 2, height // 2), degrees, 1.0)
 
     return cv2.warpAffine(image, rot, (width, height))
+
+
+def rotated180(image):
+    return cv2.flip(image, -1)

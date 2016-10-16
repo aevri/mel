@@ -182,6 +182,10 @@ def process_args(args):
                 elif key == ord('r'):
                     print("Retry capture")
                     break
+                elif key == ord('u'):
+                    print("Rotated 180.")
+                    frame = mel.lib.image.rotated180(frame)
+                    display.update_image(frame, capindex)
                 else:
                     is_finished = True
                     break
