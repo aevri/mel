@@ -47,10 +47,9 @@ def hex3_to_rgb4(hex_string):
     return rgb_list
 
 
-def draw_mole(image, x, y, mole):
+def draw_mole(image, x, y, colors):
 
     radius = 16
-    colors = hex3_to_rgb4(mole['uuid'][:3])
     for index in range(3):
         cv2.circle(image, (x, y), radius, colors[index], -1)
         radius -= 4
@@ -76,9 +75,13 @@ def draw_crosshair(image, x, y):
                 size)
 
 
+def uuid_to_tricolour_first_digits(uuid_):
+    return hex3_to_rgb4(uuid_[:3])
+
+
 class Display:
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, uuid_to_tricolour=None):
         self._name = str(id(self))
 
         if width is None or height is None:
@@ -94,6 +97,10 @@ class Display:
         cv2.namedWindow(self._name)
         cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self._name, self._width, self._height)
+
+        self._uuid_to_tricolour = uuid_to_tricolour
+        if self._uuid_to_tricolour is None:
+            self._uuid_to_tricolour = uuid_to_tricolour_first_digits
 
         self._zoom_x = None
         self._zoom_y = None
@@ -190,7 +197,8 @@ class Display:
             y = int(mole['y'] / self._image_scale + self._image_top)
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
-            draw_mole(marker_image, x, y, mole)
+            colours = self._uuid_to_tricolour(mole['uuid'])
+            draw_mole(marker_image, x, y, colours)
         if self._is_faded_markers:
             image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
