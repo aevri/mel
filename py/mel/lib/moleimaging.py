@@ -138,13 +138,13 @@ class MoleAcquirer(object):
                 stats))
 
             self._last_stats = list(map(
-                lambda x, y: mel.lib.math.lerp(x, y, 0.1),
+                lambda x, y: mel.lib.math.lerp(x, y, 0.2),
                 self._last_stats,
                 stats))
 
             if self._last_stats_diff:
                 self._last_stats_diff = list(map(
-                    lambda x, y: mel.lib.math.lerp(x, y, 0.1),
+                    lambda x, y: mel.lib.math.lerp(x, y, 0.2),
                     self._last_stats_diff,
                     stats_diff))
 
@@ -240,7 +240,7 @@ def annotate_image(original, is_rot_sensitive):
             color = yellow
             thickness = 10
             if is_rot_sensitive:
-                if (angle_degs <= 10 or angle_degs >= 170):
+                if (angle_degs <= 20 or angle_degs >= 160):
                     is_rotation_aligned = True
                     color = green
                     thickness = 2
@@ -256,8 +256,8 @@ def annotate_image(original, is_rot_sensitive):
 
             cv2.ellipse(final, ellipse, color, thickness)
 
-            bounds_half_width = original_width // 20
-            bounds_half_height = original_height // 20
+            bounds_half_width = original_width // 10
+            bounds_half_height = original_height // 10
             bounds_center_x = original_width // 2
             bounds_center_y = original_height // 2
             bounds_left = bounds_center_x - bounds_half_width
