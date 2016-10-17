@@ -1,9 +1,6 @@
 """Shatter rotomap images into many small fragments, for training networks."""
 
 
-import json
-import os
-
 import cv2
 
 import mel.rotomap.moles
