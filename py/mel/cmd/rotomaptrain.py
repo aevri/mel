@@ -30,9 +30,29 @@ def max_pool_2x2(x):
         x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
+def load_image(path):
+    # https://gist.github.com/eerwitt/518b0c9564e500b4b50f
+    # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/image/imagenet/classify_image.py#L141
+    # image_reader = tf.WholeFileReader()
+    # _, image_data = image_reader.read(path)
+    image_data = tf.gfile.FastGFile(path, 'rb').read()
+    return tf.image.decode_jpeg(image_data)
+
+
 def process_args(args):
-    from tensorflow.examples.tutorials.mnist import input_data
-    mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+    images = []
+    labels = []
+    # https://github.com/tensorflow/tensorflow/blob/fcab4308002412e38c1a6d5c6145119f04540d45/tensorflow/contrib/learn/python/learn/datasets/mnist.py
+    for i, path in enumerate(args.PATH):
+        print(path)
+        # image = tf.gfile.FastGFile(path, 'rb').read()
+        image = load_image(path)
+        print(image)
+        images.append(image)
+        labels.append(i)
+
+    # from tensorflow.examples.tutorials.mnist import input_data
+    # mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
     x = tf.placeholder(tf.float32, shape=[None, 784])
     y_ = tf.placeholder(tf.float32, shape=[None, 10])
@@ -74,18 +94,16 @@ def process_args(args):
     sess.run(tf.initialize_all_variables())
     # pylint: disable=no-member
     for i in range(200):
-        batch = mnist.train.next_batch(50)
+        # batch = mnist.train.next_batch(50)
+        batch = [images, labels]
         if i % 100 == 0:
             train_accuracy = accuracy.eval(feed_dict={
                 x: batch[0], y_: batch[1], keep_prob: 1.0})
             print("step %d, training accuracy %g" % (i, train_accuracy))
-        train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+        train_step.run(
+            feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     # Test
     print("test accuracy %g" % accuracy.eval(feed_dict={
         x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
     # pylint: enable=no-member
-
-    for i, path in enumerate(args.PATH):
-        print(path)
-        # image = tf.gfile.FastGFile(path, 'rb').read()

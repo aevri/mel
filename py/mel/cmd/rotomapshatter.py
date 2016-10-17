@@ -22,10 +22,10 @@ def process_args(args):
 
 
 def shatter(prefix, image, moles):
-    final_segment_width = 24
+    final_segment_width = 28
     final_segment_height = final_segment_width
 
-    segment_width = 72
+    segment_width = final_segment_width * 3
     segment_height = segment_width
 
     height, width = image.shape[:2]
