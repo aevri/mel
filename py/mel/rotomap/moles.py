@@ -18,6 +18,11 @@ def load_image_moles(image_path):
     if os.path.exists(moles_path):
         with open(moles_path) as moles_file:
             moles = json.load(moles_file)
+
+    for m in moles:
+        if 'is_uuid_canonical' not in m:
+            m['is_uuid_canonical'] = True
+
     return moles
 
 
