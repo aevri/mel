@@ -25,6 +25,17 @@ def draw_mole(image, x, y, colors):
         radius -= 4
 
 
+def draw_none_mole(image, x, y):
+    colors = [(0, 0, 0), (255, 255, 255)]
+    radius = 16
+    thickness = 4
+    for index in range(2):
+        top_left = (x - radius, y - radius)
+        bottom_right = (x + radius, y + radius)
+        cv2.rectangle(image, top_left, bottom_right, colors[index], thickness)
+        radius -= thickness
+
+
 def draw_crosshair(image, x, y):
     inner_radius = 16
     outer_radius = 24
@@ -98,10 +109,11 @@ class Display:
                 image, self._zoom_x, self._zoom_y)
 
         highlight_mole = None
-        for m in mole_list:
-            if m['uuid'] == self._highlight_uuid:
-                highlight_mole = m
-                break
+        if self._highlight_uuid is not None:
+            for m in mole_list:
+                if m['uuid'] == self._highlight_uuid:
+                    highlight_mole = m
+                    break
 
         if self._is_showing_markers:
             image = self._overlay_mole_markers(
@@ -164,8 +176,12 @@ class Display:
             y = int(mole['y'] / self._image_scale + self._image_top)
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
-            colours = self._uuid_to_tricolour(mole['uuid'])
-            draw_mole(marker_image, x, y, colours)
+            uuid_ = mole['uuid']
+            if uuid_ is not None:
+                colours = self._uuid_to_tricolour(uuid_)
+                draw_mole(marker_image, x, y, colours)
+            else:
+                draw_none_mole(marker_image, x, y)
         if self._is_faded_markers:
             image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
 
