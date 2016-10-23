@@ -1,5 +1,7 @@
 """Math-related things."""
 
+import math
+
 
 def lerp(origin, target, factor_0_to_1):
     towards = target - origin
@@ -37,3 +39,17 @@ def distance_sq_2d(a, b):
     x = a[0] - b[0]
     y = a[1] - b[1]
     return (x * x) + (y * y)
+
+
+def distance_2d(a, b):
+    """Return the distance between two points in two dimensions.
+
+    Usage examples:
+        >>> distance_2d((1, 1), (1, 1))
+        0.0
+
+        >>> distance_2d((0, 0), (0, 2))
+        2.0
+
+    """
+    return math.sqrt(distance_sq_2d(a, b))
