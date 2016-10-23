@@ -92,6 +92,7 @@ def process_args(args):
     print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
+    print("Press 'i' to auto-identify copied moles in the displayed image.")
     print("Press space to restore original zoom.")
     print("Press enter to toggle mole markers.")
     print("Press any other key to quit.")
@@ -152,6 +153,11 @@ def process_args(args):
                     editor.moledata.moles,
                     editor.moledata.get_image())
                 editor.set_moles(guessed_moles)
+            elif key == ord('i'):
+                editor.set_moles(next_mole_identity_guess(
+                    copied_moles,
+                    editor.moledata.moles,
+                    editor.moledata.get_image()))
             elif key == ord('f'):
                 editor.toggle_faded_markers()
             elif key == 13:
@@ -228,5 +234,64 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
                 mel.rotomap.moles.set_molepos_to_nparray(new_m, ellipse[0])
 
             new_moles.append(new_m)
+
+    return new_moles
+
+
+def next_mole_identity_guess(previous_moles, current_moles, current_image):
+    guessed_and_current = guess_mole_positions(
+        previous_moles,
+        current_moles,
+        current_image)
+
+    # Determine which moles positions were guessed
+    curr_uuids = {m['uuid'] for m in current_moles}
+    guessed_prev_curr_uuids = {m['uuid'] for m in guessed_and_current}
+    guessed_uuids = guessed_prev_curr_uuids - curr_uuids
+
+    # Determine guessed candidates
+    uuid_to_guessed = {
+        m['uuid']: m
+        for m in guessed_and_current
+    }
+    guessed_candidates = []
+    for i in guessed_uuids:
+        guessed_candidates.append(uuid_to_guessed[i])
+
+    # Determine candidates in current_moles for mapping
+    prev_uuids = set(m['uuid'] for m in previous_moles)
+    matched_uuids = prev_uuids.intersection(curr_uuids)
+    current_candidates = [
+        m for m in current_moles
+        if not m['is_uuid_canonical'] and
+        m['uuid'] not in matched_uuids
+    ]
+
+    # Pick the nearest guessed candidate for each current candidate
+    sq_distances = []
+    for i in current_candidates:
+        for j in guessed_candidates:
+            d = mel.rotomap.moles.mole_sq_distance(i, j)
+            sq_distances.append((d, i['uuid'], j['uuid']))
+    sq_distances.sort()
+
+    new_moles = copy.deepcopy(current_moles)
+    if sq_distances:
+        best = sq_distances[0]
+        current_uuid = best[1]
+        guessed_uuid = best[2]
+        new_index = mel.rotomap.moles.uuid_mole_index(
+            new_moles, current_uuid)
+        new_mole = new_moles[new_index]
+        new_x = new_mole['x']
+        new_y = new_mole['y']
+
+        guessed_mole_index = mel.rotomap.moles.uuid_mole_index(
+            guessed_and_current, guessed_uuid)
+        guessed_mole = guessed_and_current[guessed_mole_index]
+
+        new_moles[new_index] = guessed_mole
+        new_moles[new_index]['x'] = new_x
+        new_moles[new_index]['y'] = new_y
 
     return new_moles

@@ -54,6 +54,13 @@ def add_mole(moles, x, y, mole_uuid=None):
     })
 
 
+def mole_sq_distance(mole1, mole2):
+    return mel.lib.math.distance_2d(
+        (mole1['x'], mole1['y']),
+        (mole2['x'], mole2['y']),
+    )
+
+
 def sorted_by_distances(mole_list, x, y):
 
     def sqdist(mole):
