@@ -17,11 +17,11 @@ def load_image(path):
     return image
 
 
-def draw_mole(image, x, y, colors):
+def draw_mole(image, x, y, colours):
 
     radius = 16
     for index in range(3):
-        cv2.circle(image, (x, y), radius, colors[index], -1)
+        cv2.circle(image, (x, y), radius, colours[index], -1)
         radius -= 4
 
 
