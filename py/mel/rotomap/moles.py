@@ -41,13 +41,16 @@ def save_image_moles(moles, image_path):
 
 
 def add_mole(moles, x, y, mole_uuid=None):
+    is_uuid_canonical = True
     if mole_uuid is None:
         mole_uuid = uuid.uuid4().hex
+        is_uuid_canonical = False
 
     moles.append({
         'x': x,
         'y': y,
         'uuid': mole_uuid,
+        'is_uuid_canonical': is_uuid_canonical,
     })
 
 
@@ -87,6 +90,7 @@ def set_nearest_mole_uuid(moles, x, y, mole_uuid):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         moles[nearest_index]['uuid'] = mole_uuid
+        moles[nearest_index]['is_uuid_canonical'] = True
 
 
 def get_nearest_mole_uuid(moles, x, y):
