@@ -209,6 +209,23 @@ def get_best_moles_for_mapping(molepoint, mole_list, image_rect):
     triangle_list = get_mole_triangles(mole_list, image_rect)
     best_triangle = get_best_triangle_for_mapping(triangle_list, molepoint)
 
+    # Discard triangles that are not very equilateral, they seem to give bad
+    # mappings.
+    if best_triangle is not None:
+        points = triangle_to_points(best_triangle)
+        distances = [
+            mel.lib.math.distance_2d(points[i - 1], points[i])
+            for i in range(3)
+        ]
+        max_ = max(*distances)
+        if max_ == 0:
+            best_triangle = None
+        else:
+            norm_distances = [x / max_ for x in distances]
+            for x in norm_distances:
+                if x <= 0.5:
+                    best_triangle = None
+
     moles_for_mapping = None
     if best_triangle is not None:
         moles_for_mapping = get_moles_from_points(
