@@ -18,6 +18,8 @@ WAITKEY_RIGHT_ARROW = 63235
 WAITKEY_UP_ARROW = 63232
 WAITKEY_DOWN_ARROW = 63233
 
+WAITKEY_BACKSPACE = 127
+
 
 def bring_python_to_front():
     """Bring Python windows to the front.
