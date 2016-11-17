@@ -9,8 +9,8 @@ import mel.cmd.list
 import mel.cmd.microadd
 import mel.cmd.microcompare
 import mel.cmd.microview
-import mel.cmd.rotomapedit
 import mel.cmd.rotomapdiff
+import mel.cmd.rotomapedit
 import mel.cmd.rotomaplist
 import mel.cmd.rotomapmolepicker
 import mel.cmd.rotomapoverview
