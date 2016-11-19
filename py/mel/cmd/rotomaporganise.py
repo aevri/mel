@@ -13,7 +13,7 @@ def setup_parser(parser):
     parser.add_argument(
         'IMAGES',
         nargs='+',
-        help="A list of paths to images sets.")
+        help="A list of paths to images sets or images.")
     parser.add_argument(
         '--display-width',
         type=int,
@@ -30,7 +30,7 @@ def process_args(args):
 
     display = OrganiserDisplay(
         "rotomap-organise",
-        args.IMAGES,
+        _expand_dirs_to_images(args.IMAGES),
         args.display_width,
         args.display_height)
 
@@ -114,3 +114,24 @@ class OrganiserDisplay():
                     self._display.height,
                     self._display.width))
             self._display.set_title(self._original_title)
+
+
+def _expand_dirs_to_images(path_list):
+    image_paths = []
+    for path in path_list:
+        if os.path.isdir(path):
+            image_paths.extend(list(_yield_only_jpegs_from_dir(path)))
+        else:
+            image_paths.append(path)
+    return image_paths
+
+
+def _yield_only_jpegs_from_dir(path):
+    for filename in os.listdir(path):
+        if _is_jpeg_name(filename):
+            yield os.path.join(path, filename)
+
+
+def _is_jpeg_name(filename):
+    lower_ext = os.path.splitext(filename)[1].lower()
+    return lower_ext in ('.jpg', '.jpeg')
