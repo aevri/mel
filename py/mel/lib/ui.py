@@ -154,3 +154,6 @@ class ImageDisplay():
     def show_image(self, image):
         self.image = mel.lib.image.letterbox(image, self.width, self.height)
         cv2.imshow(self.name, self.image)
+
+    def set_title(self, title):
+        cv2.setWindowTitle(self.name, title)

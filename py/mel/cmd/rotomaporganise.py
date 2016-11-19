@@ -66,6 +66,7 @@ class OrganiserDisplay():
             raise ValueError(
                 "image_list must be a list with at least one image.")
 
+        self._original_title = name
         self._display = mel.lib.ui.ImageDisplay(name, width, height)
         self._image_list = image_list
         self._index = 0
@@ -102,11 +103,14 @@ class OrganiserDisplay():
 
     def _show(self):
         if self._image_list:
+            path = self._image_list[self._index]
             self._display.show_image(
                 cv2.imread(
-                    self._image_list[self._index]))
+                    path))
+            self._display.set_title(path)
         else:
             self._display.show_image(
                 mel.lib.common.new_image(
                     self._display.height,
                     self._display.width))
+            self._display.set_title(self._original_title)
