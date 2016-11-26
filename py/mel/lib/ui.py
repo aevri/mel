@@ -193,12 +193,14 @@ class LeftRightDisplay():
                            1) % len(self._image_list)
         self._show()
 
+    def _get_image(self, path):
+        return cv2.imread(path)
+
     def _show(self):
         if self._image_list:
             path = self._image_list[self._index]
             self._display.show_image(
-                cv2.imread(
-                    path))
+                self._get_image(path))
             self._display.set_title(path)
         else:
             self._display.show_image(
