@@ -6,6 +6,7 @@ import shutil
 import cv2
 
 import mel.lib.common
+import mel.lib.fs
 import mel.lib.ui
 
 
@@ -30,7 +31,7 @@ def process_args(args):
 
     display = OrganiserDisplay(
         "rotomap-organise",
-        _expand_dirs_to_images(args.IMAGES),
+        mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES),
         args.display_width,
         args.display_height)
 
@@ -77,24 +78,3 @@ class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
             del self._image_list[:self._index + 1]
             self._index = -1
             self.next_image()
-
-
-def _expand_dirs_to_images(path_list):
-    image_paths = []
-    for path in path_list:
-        if os.path.isdir(path):
-            image_paths.extend(list(_yield_only_jpegs_from_dir(path)))
-        else:
-            image_paths.append(path)
-    return image_paths
-
-
-def _yield_only_jpegs_from_dir(path):
-    for filename in os.listdir(path):
-        if _is_jpeg_name(filename):
-            yield os.path.join(path, filename)
-
-
-def _is_jpeg_name(filename):
-    lower_ext = os.path.splitext(filename)[1].lower()
-    return lower_ext in ('.jpg', '.jpeg')
