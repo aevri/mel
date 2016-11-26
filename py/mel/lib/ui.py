@@ -132,7 +132,7 @@ class ImageDisplay():
         self.name = name
 
         if width is None or height is None:
-            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
+            full_width_height = guess_fullscreen_width_height()
             if width is None:
                 width = full_width_height[0]
             if height is None:
