@@ -26,3 +26,22 @@ A simple list to capture outstanding tasks, roughly in priority order.
   factor into position estimation.
 - Consider LK tracker for copying moles from one image to another without
   pre-marked moles in the destination.
+
+- Re-arrange commands to something like this:
+    - mel micro  / mel m
+        - mel m add
+        - mel m addcluster
+        - mel m addsingle
+        - mel m compare
+        - mel m list
+        - mel m view
+    - mel rotomap  / mel r
+        - mel r diff
+        - mel r edit
+        - mel r list
+        - mel r molepicker
+        - mel r organise
+        - mel r overview
+        - mel r relate
+        - mel r show
+        - mel r uuid
