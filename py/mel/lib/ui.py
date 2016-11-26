@@ -140,6 +140,8 @@ class ImageDisplay():
 
         self.width = width
         self.height = height
+        self.original_width = None
+        self.original_height = None
         self.image = None
 
         cv2.namedWindow(name)
@@ -160,8 +162,21 @@ class ImageDisplay():
                 self.width, self.height))
 
     def show_image(self, image):
+        self.original_height, self.original_width = image.shape[:2]
         self.image = mel.lib.image.letterbox(image, self.width, self.height)
         cv2.imshow(self.name, self.image)
+
+    def image_to_screen(self, x, y):
+        return mel.lib.image.calc_original_to_letterboxed(
+            x, y,
+            self.width, self.height,
+            self.original_width, self.original_height)
+
+    def screen_to_image(self, x, y):
+        return mel.lib.image.calc_letterboxed_to_original(
+            x, y,
+            self.width, self.height,
+            self.original_width, self.original_height)
 
     def set_title(self, title):
         cv2.setWindowTitle(self.name, title)
