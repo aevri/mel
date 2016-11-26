@@ -58,31 +58,8 @@ def process_args(args):
                 is_finished = True
 
 
-class OrganiserDisplay():
+class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
     """Display images in a window, supply controls for organising."""
-
-    def __init__(self, name, image_list, width=None, height=None):
-        if not image_list:
-            raise ValueError(
-                "image_list must be a list with at least one image.")
-
-        self._original_title = name
-        self._display = mel.lib.ui.ImageDisplay(name, width, height)
-        self._image_list = image_list
-        self._index = 0
-        self._show()
-
-    def next_image(self):
-        if self._image_list:
-            self._index = (self._index + 1) % len(self._image_list)
-        self._show()
-
-    def prev_image(self):
-        if self._image_list:
-            num_images = len(self._image_list)
-            self._index = (self._index + num_images -
-                           1) % len(self._image_list)
-        self._show()
 
     def delete_image(self):
         if self._image_list:
@@ -100,20 +77,6 @@ class OrganiserDisplay():
             del self._image_list[:self._index + 1]
             self._index = -1
             self.next_image()
-
-    def _show(self):
-        if self._image_list:
-            path = self._image_list[self._index]
-            self._display.show_image(
-                cv2.imread(
-                    path))
-            self._display.set_title(path)
-        else:
-            self._display.show_image(
-                mel.lib.common.new_image(
-                    self._display.height,
-                    self._display.width))
-            self._display.set_title(self._original_title)
 
 
 def _expand_dirs_to_images(path_list):
