@@ -176,7 +176,7 @@ class LeftRightDisplay():
                 "image_list must be a list with at least one image.")
 
         self._original_title = name
-        self._display = ImageDisplay(name, width, height)
+        self.display = ImageDisplay(name, width, height)
         self._image_list = image_list
         self._index = 0
         self._show()
@@ -199,12 +199,12 @@ class LeftRightDisplay():
     def _show(self):
         if self._image_list:
             path = self._image_list[self._index]
-            self._display.show_image(
+            self.display.show_image(
                 self._get_image(path))
-            self._display.set_title(path)
+            self.display.set_title(path)
         else:
-            self._display.show_image(
+            self.display.show_image(
                 mel.lib.common.new_image(
-                    self._display.height,
-                    self._display.width))
-            self._display.set_title(self._original_title)
+                    self.display.height,
+                    self.display.width))
+            self.display.set_title(self._original_title)
