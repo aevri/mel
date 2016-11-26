@@ -179,24 +179,24 @@ class LeftRightDisplay():
         self.display = ImageDisplay(name, width, height)
         self._image_list = image_list
         self._index = 0
-        self._show()
+        self.show()
 
     def next_image(self):
         if self._image_list:
             self._index = (self._index + 1) % len(self._image_list)
-        self._show()
+        self.show()
 
     def prev_image(self):
         if self._image_list:
             num_images = len(self._image_list)
             self._index = (self._index + num_images -
                            1) % len(self._image_list)
-        self._show()
+        self.show()
 
     def _get_image(self, path):
         return cv2.imread(path)
 
-    def _show(self):
+    def show(self):
         if self._image_list:
             path = self._image_list[self._index]
             self.display.show_image(
