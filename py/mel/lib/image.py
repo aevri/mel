@@ -33,6 +33,60 @@ def calc_letterbox(width, height, fit_width, fit_height):
     return (x, y, new_width, new_height)
 
 
+def calc_letterboxed_to_original(
+        x, y, fit_width, fit_height, original_width, original_height):
+    """Return (x, y) for original image, from letterboxed co-ordinates.
+
+    Usage examples:
+        >>> calc_letterboxed_to_original(2, 0, 6, 2, 2, 2)
+        (0, 0)
+        >>> calc_letterboxed_to_original(3, 0, 6, 2, 2, 2)
+        (1, 0)
+
+    """
+
+    x_offset, y_offset, new_width, new_height = calc_letterbox(
+        original_width, original_height, fit_width, fit_height)
+
+    scaled_x = x - x_offset
+    scaled_y = y - y_offset
+
+    x_scale = original_width / new_width
+    y_scale = original_height / new_height
+
+    original_x = int(scaled_x * x_scale)
+    original_y = int(scaled_y * y_scale)
+
+    return original_x, original_y
+
+
+def calc_original_to_letterboxed(
+        x, y, fit_width, fit_height, original_width, original_height):
+    """Return (x, y) for original image, from letterboxed co-ordinates.
+
+    Usage examples:
+        >>> calc_original_to_letterboxed(0, 0, 6, 2, 2, 2)
+        (2, 0)
+        >>> calc_original_to_letterboxed(1, 0, 6, 2, 2, 2)
+        (3, 0)
+
+    """
+
+    x_offset, y_offset, new_width, new_height = calc_letterbox(
+        original_width, original_height, fit_width, fit_height)
+
+    x_scale = new_width / original_width
+    y_scale = new_height / original_height
+
+    scaled_x = int(x * x_scale)
+    scaled_y = int(y * y_scale)
+
+    new_x = scaled_x + x_offset
+    new_y = scaled_y + y_offset
+
+    return new_x, new_y
+
+
 def letterbox(image, width, height):
     x, y, new_width, new_height = calc_letterbox(
         image.shape[1], image.shape[0], width, height)
