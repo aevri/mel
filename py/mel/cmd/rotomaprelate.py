@@ -29,10 +29,6 @@ def setup_parser(parser):
         default=None,
         help="The maximum distance to consider for translation theories "
         "between maps")
-    parser.add_argument(
-        '--rewrite-to',
-        action='store_true',
-        help="Rewrite the 'to' file according to the mapping.")
 
 
 def process_args(args):
@@ -66,24 +62,23 @@ def process_files(from_path, to_path, args):
         if p[0] and p[1]:
             print(p[0], p[1])
 
-    if args.rewrite_to:
-        for mole in to_moles:
-            for p in pairs:
-                if p[0] and p[1]:
-                    if mole['uuid'] == p[1]:
-                        mole['uuid'] = p[0]
-                        break
+    for mole in to_moles:
+        for p in pairs:
+            if p[0] and p[1]:
+                if mole['uuid'] == p[1]:
+                    mole['uuid'] = p[0]
+                    break
 
-        with open(to_path, 'w') as f:
-            json.dump(
-                to_moles,
-                f,
-                indent=4,
-                separators=(',', ': '),
-                sort_keys=True)
+    with open(to_path, 'w') as f:
+        json.dump(
+            to_moles,
+            f,
+            indent=4,
+            separators=(',', ': '),
+            sort_keys=True)
 
-            # There's no newline after dump(), add one here for happier viewing
-            print(file=f)
+        # There's no newline after dump(), add one here for happier viewing
+        print(file=f)
 
 
 def load_json(path):
