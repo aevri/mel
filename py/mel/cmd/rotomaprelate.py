@@ -10,11 +10,12 @@ def setup_parser(parser):
     parser.add_argument(
         'FROM',
         type=str,
-        help="Path to the 'from' rotomap json file.")
+        help="Path of the 'from' rotomap json file.")
     parser.add_argument(
         'TO',
         type=str,
-        help="Path to the 'to' rotomap json file.")
+        nargs='+',
+        help="Paths of the 'to' rotomap json files.")
     parser.add_argument(
         '--match-cutoff-distance',
         type=int,
@@ -35,8 +36,22 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    from_moles = load_json(args.FROM)
-    to_moles = load_json(args.TO)
+
+    files = [args.FROM]
+    files.extend(args.TO)
+
+    for from_path, to_path in pairwise(files):
+        process_files(from_path, to_path, args)
+
+
+def pairwise(iterable):
+    return zip(iterable, iterable[1:])
+
+
+def process_files(from_path, to_path, args):
+
+    from_moles = load_json(from_path)
+    to_moles = load_json(to_path)
 
     pairs = relate(
         from_moles,
@@ -59,7 +74,7 @@ def process_args(args):
                         mole['uuid'] = p[0]
                         break
 
-        with open(args.TO, 'w') as f:
+        with open(to_path, 'w') as f:
             json.dump(
                 to_moles,
                 f,
