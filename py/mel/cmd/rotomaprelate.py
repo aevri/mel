@@ -29,22 +29,30 @@ def setup_parser(parser):
         default=None,
         help="The maximum distance to consider for translation theories "
         "between maps")
+    parser.add_argument(
+        '--loop',
+        action='store_true',
+        help="Apply the relation as if the files specify a complete loop.")
 
 
 def process_args(args):
+    process_files(args.FROM, args.TO, args)
+    if args.loop:
+        process_files(args.FROM, reversed(args.TO), args)
 
-    files = [args.FROM]
-    files.extend(args.TO)
 
+def process_files(from_path, to_path_list, args):
+    files = [from_path]
+    files.extend(to_path_list)
     for from_path, to_path in pairwise(files):
-        process_files(from_path, to_path, args)
+        process_pair(from_path, to_path, args)
 
 
 def pairwise(iterable):
     return zip(iterable, iterable[1:])
 
 
-def process_files(from_path, to_path, args):
+def process_pair(from_path, to_path, args):
 
     from_moles = load_json(from_path)
     to_moles = load_json(to_path)
