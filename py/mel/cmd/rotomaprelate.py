@@ -58,10 +58,6 @@ def process_files(from_path, to_path, args):
     if pairs is None:
         return
 
-    for p in pairs:
-        if p[0] and p[1]:
-            print(p[0], p[1])
-
     for mole in to_moles:
         for p in pairs:
             if p[0] and p[1]:
