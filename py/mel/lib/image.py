@@ -182,29 +182,28 @@ def calc_centered_at_slices(
         result[dst_yx] = image[src_yx]
 
     """
-    dst_mid_x = dst_width // 2
-    dst_mid_y = dst_height // 2
+    src_width_height = numpy.array((src_width, src_height))
+    src_xy = numpy.array((x, y))
+    dst_width_height = numpy.array((dst_width, dst_height))
+
+    dst_mid = dst_width_height // 2
 
     # Calculate the dst geometry, unclipped
-    dst_x_start = dst_mid_x - x
-    dst_y_start = dst_mid_y - y
-    dst_x_end = dst_x_start + src_width
-    dst_y_end = dst_y_start + src_height
+    dst_start = dst_mid - src_xy
+    dst_end = dst_start + src_width_height
 
     # Project the dst clip rect into source space and clip the src rect to it
-    src_x_start = mel.lib.math.clamp(-dst_x_start, 0, src_width)
-    src_y_start = mel.lib.math.clamp(-dst_y_start, 0, src_height)
-    src_x_end = mel.lib.math.clamp(dst_width - dst_x_start, 0, src_width)
-    src_y_end = mel.lib.math.clamp(dst_height - dst_y_start, 0, src_height)
+    src_start = numpy.clip(-dst_start, 0, src_width_height)
+    src_end = numpy.clip(dst_width_height - dst_start, 0, src_width_height)
 
     # Clip the dst rect
-    dst_x_start = mel.lib.math.clamp(dst_x_start, 0, dst_width)
-    dst_y_start = mel.lib.math.clamp(dst_y_start, 0, dst_height)
-    dst_x_end = mel.lib.math.clamp(dst_x_end, 0, dst_width)
-    dst_y_end = mel.lib.math.clamp(dst_y_end, 0, dst_height)
+    numpy.clip(dst_start, 0, dst_width_height, dst_start)
+    numpy.clip(dst_end, 0, dst_width_height, dst_end)
 
-    dst_slices = (slice(dst_y_start, dst_y_end), slice(dst_x_start, dst_x_end))
-    src_slices = (slice(src_y_start, src_y_end), slice(src_x_start, src_x_end))
+    dst_slices = (
+        slice(dst_start[1], dst_end[1]), slice(dst_start[0], dst_end[0]))
+    src_slices = (
+        slice(src_start[1], src_end[1]), slice(src_start[0], src_end[0]))
 
     return dst_slices, src_slices
 
