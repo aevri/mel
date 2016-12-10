@@ -159,29 +159,26 @@ def calc_centering_offset(centre_xy, dst_size_xy):
 
 
 def centered_at(image, x, y, dst_width, dst_height):
-    image_shape = image.shape
-    src_width = image_shape[1]
-    src_height = image_shape[0]
 
-    src_width_height = numpy.array((src_width, src_height))
-    src_xy = numpy.array((x, y))
-    dst_width_height = numpy.array((dst_width, dst_height))
+    src_shape = image.shape[:2]
+    src_pos = numpy.array((y, x))
+    dst_shape = numpy.array((dst_height, dst_width))
 
     dst_slices, src_slices = calc_centered_at_slices(
-        src_width_height, src_xy, dst_width_height)
+        src_shape, src_pos, dst_shape)
 
-    result = mel.lib.common.new_image(dst_height, dst_width)
+    result = mel.lib.common.new_image(*dst_shape)
     result[dst_slices] = image[src_slices]
 
     return result
 
 
-def calc_centered_at_slices(src_width_height, src_xy, dst_width_height):
-    """Return (dst_slices, src_slices) slices for centering at src_xy.
+def calc_centered_at_slices(src_shape, src_pos, dst_shape):
+    """Return (dst_slices, src_slices) slices for centering at src_pos.
 
-    :src_width_height: A numpy.array of width and height
-    :src_xy: A numpy.array of target x and y in src space for the centre
-    :dst_width_height: A numpy.array of target x and y for the centre
+    :src_shape: A numpy.array of src's dimensions
+    :src_pos: A numpy.array of the co-ordinates in source space to centre at
+    :dst_shape: A numpy.array of dst's dimensions
     :returns: A tuple of slices for centering
 
     For example, the slices can be used like this to write the source at the
@@ -190,24 +187,24 @@ def calc_centered_at_slices(src_width_height, src_xy, dst_width_height):
         result[dst_slices] = image[src_slices]
 
     """
-    dst_mid = dst_width_height // 2
+    dst_mid = dst_shape // 2
 
     # Calculate the dst geometry, unclipped
-    dst_start = dst_mid - src_xy
-    dst_end = dst_start + src_width_height
+    dst_start = dst_mid - src_pos
+    dst_end = dst_start + src_shape
 
     # Project the dst clip rect into source space and clip the src rect to it
-    src_start = numpy.clip(-dst_start, 0, src_width_height)
-    src_end = numpy.clip(dst_width_height - dst_start, 0, src_width_height)
+    src_start = numpy.clip(-dst_start, 0, src_shape)
+    src_end = numpy.clip(dst_shape - dst_start, 0, src_shape)
 
     # Clip the dst rect
-    numpy.clip(dst_start, 0, dst_width_height, dst_start)
-    numpy.clip(dst_end, 0, dst_width_height, dst_end)
+    numpy.clip(dst_start, 0, dst_shape, dst_start)
+    numpy.clip(dst_end, 0, dst_shape, dst_end)
 
     dst_slices = (
-        slice(dst_start[1], dst_end[1]), slice(dst_start[0], dst_end[0]))
+        slice(dst_start[0], dst_end[0]), slice(dst_start[1], dst_end[1]))
     src_slices = (
-        slice(src_start[1], src_end[1]), slice(src_start[0], src_end[0]))
+        slice(src_start[0], src_end[0]), slice(src_start[1], src_end[1]))
 
     return dst_slices, src_slices
 
