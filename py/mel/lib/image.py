@@ -187,20 +187,20 @@ def calc_centered_at_slices(
 
     # Calculate the dst geometry, unclipped
     dst_x_start = dst_mid_x - x
-    dst_x_end = dst_x_start + src_width
     dst_y_start = dst_mid_y - y
+    dst_x_end = dst_x_start + src_width
     dst_y_end = dst_y_start + src_height
 
     # Project the dst clip rect into source space and clip the src rect to it
     src_x_start = mel.lib.math.clamp(-dst_x_start, 0, src_width)
-    src_x_end = mel.lib.math.clamp(dst_width - dst_x_start, 0, src_width)
     src_y_start = mel.lib.math.clamp(-dst_y_start, 0, src_height)
+    src_x_end = mel.lib.math.clamp(dst_width - dst_x_start, 0, src_width)
     src_y_end = mel.lib.math.clamp(dst_height - dst_y_start, 0, src_height)
 
     # Clip the dst rect
     dst_x_start = mel.lib.math.clamp(dst_x_start, 0, dst_width)
-    dst_x_end = mel.lib.math.clamp(dst_x_end, 0, dst_width)
     dst_y_start = mel.lib.math.clamp(dst_y_start, 0, dst_height)
+    dst_x_end = mel.lib.math.clamp(dst_x_end, 0, dst_width)
     dst_y_end = mel.lib.math.clamp(dst_y_end, 0, dst_height)
 
     dst_slices = (slice(dst_y_start, dst_y_end), slice(dst_x_start, dst_x_end))
