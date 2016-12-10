@@ -163,8 +163,12 @@ def centered_at(image, x, y, dst_width, dst_height):
     src_width = image_shape[1]
     src_height = image_shape[0]
 
+    src_width_height = numpy.array((src_width, src_height))
+    src_xy = numpy.array((x, y))
+    dst_width_height = numpy.array((dst_width, dst_height))
+
     dst_slices, src_slices = calc_centered_at_slices(
-        src_width, src_height, x, y, dst_width, dst_height)
+        src_width_height, src_xy, dst_width_height)
 
     result = mel.lib.common.new_image(dst_height, dst_width)
     result[dst_slices] = image[src_slices]
@@ -172,20 +176,20 @@ def centered_at(image, x, y, dst_width, dst_height):
     return result
 
 
-def calc_centered_at_slices(
-        src_width, src_height, x, y, dst_width, dst_height):
-    """Return (dst_yx, src_yx) slices for centering at (x, y) in the 'dst'.
+def calc_centered_at_slices(src_width_height, src_xy, dst_width_height):
+    """Return (dst_slices, src_slices) slices for centering at src_xy.
+
+    :src_width_height: A numpy.array of width and height
+    :src_xy: A numpy.array of target x and y in src space for the centre
+    :dst_width_height: A numpy.array of target x and y for the centre
+    :returns: A tuple of slices for centering
 
     For example, the slices can be used like this to write the source at the
     required location:
 
-        result[dst_yx] = image[src_yx]
+        result[dst_slices] = image[src_slices]
 
     """
-    src_width_height = numpy.array((src_width, src_height))
-    src_xy = numpy.array((x, y))
-    dst_width_height = numpy.array((dst_width, dst_height))
-
     dst_mid = dst_width_height // 2
 
     # Calculate the dst geometry, unclipped
