@@ -12,6 +12,13 @@ import numpy
 import mel.lib.math
 
 
+def raise_if_invalid_mole(mole):
+    if int(mole['x']) != mole['x']:
+        raise TypeError('{}: "x" is non-integer'.format(mole))
+    if int(mole['y']) != mole['y']:
+        raise TypeError('{}: "y" is non-integer'.format(mole))
+
+
 def load_image_moles(image_path):
     moles_path = image_path + '.json'
     moles = []
@@ -22,6 +29,9 @@ def load_image_moles(image_path):
     for m in moles:
         if 'is_uuid_canonical' not in m:
             m['is_uuid_canonical'] = True
+
+    for m in moles:
+        raise_if_invalid_mole(m)
 
     return moles
 
