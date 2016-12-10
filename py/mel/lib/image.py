@@ -201,10 +201,8 @@ def calc_centered_at_slices(src_shape, src_pos, dst_shape):
     numpy.clip(dst_start, 0, dst_shape, dst_start)
     numpy.clip(dst_end, 0, dst_shape, dst_end)
 
-    dst_slices = (
-        slice(dst_start[0], dst_end[0]), slice(dst_start[1], dst_end[1]))
-    src_slices = (
-        slice(src_start[0], src_end[0]), slice(src_start[1], src_end[1]))
+    dst_slices = tuple(map(slice, dst_start, dst_end))
+    src_slices = tuple(map(slice, src_start, src_end))
 
     return dst_slices, src_slices
 
