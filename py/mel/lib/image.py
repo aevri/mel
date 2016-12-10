@@ -273,40 +273,6 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     )
 
 
-def calc_centered_at_slices2(src_width_height, dst_xy, dst_width_height):
-    """Return (dst_yx, src_yx) slices for centering at pos_xy.
-
-    :src_width_height: A numpy.array of width and height
-    :pos_xy: A numpy.array of target x and y for the centre
-    :dst_width_height: A numpy.array of target x and y for the centre
-    :returns: A tuple of slices for centering
-
-    For example, the slices can be used like this to write the source at the
-    required location:
-
-        result[dst_yx] = image[src_yx]
-
-    """
-    dst_mid = dst_width_height // 2
-
-    # Calculate the dst geometry, unclipped
-    dst_start = dst_mid - dst_xy
-    dst_end = dst_start + src_width_height
-
-    # Project the dst clip rect into source space and clip the src rect to it
-    src_start_unclipped = -dst_start
-    src_x_start = mel.lib.math.clamp(-dst_x_start, 0, src_width)
-    src_y_start = mel.lib.math.clamp(-dst_y_start, 0, src_height)
-    src_x_end = mel.lib.math.clamp(dst_width - dst_x_start, 0, src_width)
-    src_y_end = mel.lib.math.clamp(dst_height - dst_y_start, 0, src_height)
-
-    # Clip the dst rect
-    dst_x_start = mel.lib.math.clamp(dst_x_start, 0, dst_width)
-    dst_y_start = mel.lib.math.clamp(dst_y_start, 0, dst_height)
-    dst_x_end = mel.lib.math.clamp(dst_x_end, 0, dst_width)
-    dst_y_end = mel.lib.math.clamp(dst_y_end, 0, dst_height)
-
-
 def slice_square_or_none(image, lefttop, rightbottom):
     """Return a slice of the supplied image or None.
 
