@@ -2,6 +2,8 @@
 
 import math
 
+import numpy
+
 
 def lerp(origin, target, factor_0_to_1):
     towards = target - origin
@@ -53,3 +55,11 @@ def distance_2d(a, b):
 
     """
     return math.sqrt(distance_sq_2d(a, b))
+
+
+def raise_if_not_int_vector2(v):
+    if not isinstance(v, numpy.ndarray):
+        raise ValueError('{}:{}:{} is not a numpy array'.format(
+            v, repr(v), type(v)))
+    if not numpy.issubdtype(v.dtype.type, numpy.integer):
+        raise ValueError('{}:{} is not an int vector2'.format(v, v.dtype))

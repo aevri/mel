@@ -127,7 +127,9 @@ def remove_nearest_mole(moles, x, y):
 
 
 def molepos_to_nparray(mole):
-    return numpy.array((mole['x'], mole['y']))
+    pos = numpy.array((mole['x'], mole['y']))
+    mel.lib.math.raise_if_not_int_vector2(pos)
+    return pos
 
 
 def set_molepos_to_nparray(mole, nparray):
@@ -249,6 +251,8 @@ def get_best_moles_for_mapping(molepoint, mole_list, image_rect):
 
 
 def mapped_pos(molepos, from_moles, to_moles):
+    mel.lib.math.raise_if_not_int_vector2(molepos)
+
     if not from_moles:
         return molepos
 
