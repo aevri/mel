@@ -162,6 +162,26 @@ def centered_at(image, x, y, dst_width, dst_height):
     image_shape = image.shape
     src_width = image_shape[1]
     src_height = image_shape[0]
+
+    dst_slices, src_slices = calc_centered_at_slices(
+        src_width, src_height, x, y, dst_width, dst_height)
+
+    result = mel.lib.common.new_image(dst_height, dst_width)
+    result[dst_slices] = image[src_slices]
+
+    return result
+
+
+def calc_centered_at_slices(
+        src_width, src_height, x, y, dst_width, dst_height):
+    """Return (dst_yx, src_yx) slices for centering at (x, y) in the 'dst'.
+
+    For example, the slices can be used like this to write the source at the
+    required location:
+
+        result[dst_yx] = image[src_yx]
+
+    """
     dst_mid_x = dst_width // 2
     dst_mid_y = dst_height // 2
 
@@ -183,11 +203,10 @@ def centered_at(image, x, y, dst_width, dst_height):
     dst_y_start = mel.lib.math.clamp(dst_y_start, 0, dst_height)
     dst_y_end = mel.lib.math.clamp(dst_y_end, 0, dst_height)
 
-    result = mel.lib.common.new_image(dst_height, dst_width)
-    result[dst_y_start:dst_y_end, dst_x_start:dst_x_end] = image[
-        src_y_start:src_y_end, src_x_start:src_x_end]
+    dst_slices = (slice(dst_y_start, dst_y_end), slice(dst_x_start, dst_x_end))
+    src_slices = (slice(src_y_start, src_y_end), slice(src_x_start, src_x_end))
 
-    return result
+    return dst_slices, src_slices
 
 
 def slice_square_or_none(image, lefttop, rightbottom):
