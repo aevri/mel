@@ -158,14 +158,10 @@ def calc_centering_offset(centre_xy, dst_size_xy):
     return offset
 
 
-def centered_at(image, x, y, dst_width, dst_height):
-
-    src_rect = numpy.flipud(image.shape[:2])
-    src_pos = numpy.array((x, y))
-    dst_rect = numpy.array((dst_width, dst_height))
+def centered_at(image, src_pos, dst_rect):
 
     dst_selection, src_selection = calc_centered_at_selections(
-        src_rect, src_pos, dst_rect)
+        get_image_rect(image), src_pos, dst_rect)
 
     result = mel.lib.common.new_image(*numpy.flipud(dst_rect))
     result[dst_selection] = image[src_selection]
@@ -262,8 +258,20 @@ def recentered_at(image, x, y):
     :returns: A new OpenCV image.
 
     """
-    height, width = image.shape[0:2]
-    return centered_at(image, x, y, width, height)
+    return centered_at(
+        image,
+        numpy.array((x, y)),
+        get_image_rect(image))
+
+
+def get_image_rect(image):
+    """Return the (width, height) of the supplied 'image'.
+
+    :image: A numpy.ndarray representing an image.
+    :returns: A numpy.ndarray representing (width, height) of the image.
+
+    """
+    return numpy.flipud(image.shape[:2])
 
 
 def rotated(image, degrees):

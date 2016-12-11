@@ -2,6 +2,7 @@
 
 
 import cv2
+import numpy
 
 import mel.lib.common
 import mel.lib.image
@@ -162,7 +163,9 @@ class Display:
         self._image_scale = 1
 
         image = mel.lib.image.centered_at(
-            image, x, y, self._width, self._height)
+            image,
+            numpy.array((x, y)),
+            numpy.array((self._width, self._height)))
 
         return image
 
