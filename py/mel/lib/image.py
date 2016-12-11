@@ -201,12 +201,26 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect):
     numpy.clip(dst_start, 0, dst_rect, dst_start)
     numpy.clip(dst_end, 0, dst_rect, dst_end)
 
-    dst_selection = tuple(
-        map(slice, numpy.flipud(dst_start), numpy.flipud(dst_end)))
-    src_selection = tuple(
-        map(slice, numpy.flipud(src_start), numpy.flipud(src_end)))
+    dst_selection = positions_to_selection(dst_start, dst_end)
+    src_selection = positions_to_selection(src_start, src_end)
 
     return dst_selection, src_selection
+
+
+def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
+    """Return a selection object for an image as specified by positions.
+
+    Note that the bottom right point will not be included in the selection.
+
+    :top_left_inclusive: a numpy.array of (top, left) co-ordinates
+    :bottom_right_exclusive: a numpy.array of (bottom, right) co-ordinates
+    :returns: A tuple (rows, columns) slices as a selection object
+
+    """
+    return (
+        slice(top_left_inclusive[1], bottom_right_exclusive[1]),
+        slice(top_left_inclusive[0], bottom_right_exclusive[0])
+    )
 
 
 def slice_square_or_none(image, lefttop, rightbottom):
