@@ -74,28 +74,20 @@ class Display:
         cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self._name, *self._rect)
 
-        self._uuid_to_tricolour = uuid_to_tricolour
-        if self._uuid_to_tricolour is None:
-            self._uuid_to_tricolour = (
-                mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
-
         self._transform = None
+        self._overlay = MoleMarkerOverlay(uuid_to_tricolour)
 
         self._zoom_pos = None
         self._is_zoomed = False
 
-        self._is_showing_markers = True
-        self._is_faded_markers = True
-        self._highlight_uuid = None
-
     def toggle_markers(self):
-        self._is_showing_markers = not self._is_showing_markers
+        self._overlay.toggle_markers()
 
     def set_highlight_uuid(self, highlight_uuid):
-        self._highlight_uuid = highlight_uuid
+        self._overlay.set_highlight_uuid(highlight_uuid)
 
     def toggle_faded_markers(self):
-        self._is_faded_markers = not self._is_faded_markers
+        self._overlay.toggle_faded_markers()
 
     def show_current(self, image, mole_list):
 
@@ -107,17 +99,7 @@ class Display:
                 image, self._zoom_pos, self._rect)
 
         image = self._transform.render()
-
-        highlight_mole = None
-        if self._highlight_uuid is not None:
-            for m in mole_list:
-                if m['uuid'] == self._highlight_uuid:
-                    highlight_mole = m
-                    break
-
-        if self._is_showing_markers:
-            image = self._overlay_mole_markers(
-                image, mole_list, highlight_mole)
+        image = self._overlay.render(image, self._transform, mole_list)
 
         cv2.imshow(self._name, image)
 
@@ -136,25 +118,6 @@ class Display:
         self._zoom_pos = numpy.array((x, y))
         self._is_zoomed = True
 
-    def _overlay_mole_markers(self, image, mole_list, highlight_mole):
-        marker_image = image
-        if self._is_faded_markers:
-            marker_image = image.copy()
-        for mole in mole_list:
-            x, y = self._transform.imagexy_to_transformedxy(
-                mole['x'], mole['y'])
-            if mole is highlight_mole:
-                draw_crosshair(marker_image, x, y)
-            colours = self._uuid_to_tricolour(mole['uuid'])
-            if mole['is_uuid_canonical']:
-                draw_mole(marker_image, x, y, colours)
-            else:
-                draw_non_canonical_mole(marker_image, x, y, colours)
-        if self._is_faded_markers:
-            image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
-
-        return image
-
     def set_mouse_callback(self, callback):
         cv2.setMouseCallback(self._name, callback)
 
@@ -168,6 +131,58 @@ class Display:
 
     def set_title(self, title):
         cv2.setWindowTitle(self._name, title)
+
+
+class MoleMarkerOverlay():
+
+    def __init__(self, uuid_to_tricolour):
+        self._is_showing_markers = True
+        self._is_faded_markers = True
+        self._highlight_uuid = None
+
+        self._uuid_to_tricolour = uuid_to_tricolour
+        if self._uuid_to_tricolour is None:
+            self._uuid_to_tricolour = (
+                mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
+
+    def toggle_markers(self):
+        self._is_showing_markers = not self._is_showing_markers
+
+    def set_highlight_uuid(self, highlight_uuid):
+        self._highlight_uuid = highlight_uuid
+
+    def toggle_faded_markers(self):
+        self._is_faded_markers = not self._is_faded_markers
+
+    def render(self, image, transform, mole_list):
+
+        if not self._is_showing_markers:
+            return image
+
+        highlight_mole = None
+        if self._highlight_uuid is not None:
+            for m in mole_list:
+                if m['uuid'] == self._highlight_uuid:
+                    highlight_mole = m
+                    break
+
+        marker_image = image
+        if self._is_faded_markers:
+            marker_image = image.copy()
+        for mole in mole_list:
+            x, y = transform.imagexy_to_transformedxy(
+                mole['x'], mole['y'])
+            if mole is highlight_mole:
+                draw_crosshair(marker_image, x, y)
+            colours = self._uuid_to_tricolour(mole['uuid'])
+            if mole['is_uuid_canonical']:
+                draw_mole(marker_image, x, y, colours)
+            else:
+                draw_non_canonical_mole(marker_image, x, y, colours)
+        if self._is_faded_markers:
+            image = cv2.addWeighted(image, 0.75, marker_image, 0.25, 0.0)
+
+        return image
 
 
 class ZoomedImageTransform():
