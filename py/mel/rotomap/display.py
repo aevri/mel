@@ -81,8 +81,7 @@ class Display:
 
         self._transform = None
 
-        self._zoom_x = None
-        self._zoom_y = None
+        self._zoom_pos = None
         self._is_zoomed = False
 
         self._is_showing_markers = True
@@ -105,9 +104,7 @@ class Display:
                 image, self._rect)
         else:
             self._transform = ZoomedImageTransform(
-                image,
-                numpy.array((self._zoom_x, self._zoom_y)),
-                self._rect)
+                image, self._zoom_pos, self._rect)
 
         image = self._transform.render()
 
@@ -136,8 +133,7 @@ class Display:
         self._is_zoomed = False
 
     def set_zoomed(self, x, y):
-        self._zoom_x = x
-        self._zoom_y = y
+        self._zoom_pos = numpy.array((x, y))
         self._is_zoomed = True
 
     def _overlay_mole_markers(self, image, mole_list, highlight_mole):
