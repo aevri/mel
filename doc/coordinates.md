@@ -12,6 +12,16 @@ Images are loaded with the pixels in (blue, green, red) order.
 The mel project uses OpenCV's conventions, which are documented here for
 reference as it can be a surprise initially.
 
+Terminology
+-----------
+
+- `shape` is expected to mean as returned from `image.shape`, i.e.
+  `(height, width, channels)`.
+- `pos` or `position` is expected to mean `(x, y)`.
+- `rect` or `rectangle` is expected to mean `(width, height)`.
+- `selection` when related to images is expected to mean
+  `(row_slice, column_slice)` or `(row_slice, column_slice, channel_slice)`.
+
 Examples
 --------
 

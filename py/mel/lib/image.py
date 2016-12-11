@@ -160,26 +160,26 @@ def calc_centering_offset(centre_xy, dst_size_xy):
 
 def centered_at(image, x, y, dst_width, dst_height):
 
-    src_shape = image.shape[:2]
-    src_pos = numpy.array((y, x))
-    dst_shape = numpy.array((dst_height, dst_width))
+    src_rect = numpy.flipud(image.shape[:2])
+    src_pos = numpy.array((x, y))
+    dst_rect = numpy.array((dst_width, dst_height))
 
-    dst_slices, src_slices = calc_centered_at_slices(
-        src_shape, src_pos, dst_shape)
+    dst_selection, src_selection = calc_centered_at_selections(
+        src_rect, src_pos, dst_rect)
 
-    result = mel.lib.common.new_image(*dst_shape)
-    result[dst_slices] = image[src_slices]
+    result = mel.lib.common.new_image(*numpy.flipud(dst_rect))
+    result[dst_selection] = image[src_selection]
 
     return result
 
 
-def calc_centered_at_slices(src_shape, src_pos, dst_shape):
-    """Return (dst_slices, src_slices) slices for centering at src_pos.
+def calc_centered_at_selections(src_rect, src_pos, dst_rect):
+    """Return (dst, src) selections for centering at src_pos.
 
-    :src_shape: A numpy.array of src's dimensions
-    :src_pos: A numpy.array of the co-ordinates in source space to centre at
-    :dst_shape: A numpy.array of dst's dimensions
-    :returns: A tuple of slices for centering
+    :src_rect: A numpy.array of src's (width, height)
+    :src_pos: A numpy.array of the (x, y) in source space to centre at
+    :dst_rect: A numpy.array of dst's (width, height)
+    :returns: A tuple (dst, src) of selections for centering
 
     For example, the slices can be used like this to write the source at the
     required location:
@@ -187,24 +187,26 @@ def calc_centered_at_slices(src_shape, src_pos, dst_shape):
         result[dst_slices] = image[src_slices]
 
     """
-    dst_mid = dst_shape // 2
+    dst_mid = dst_rect // 2
 
     # Calculate the dst geometry, unclipped
     dst_start = dst_mid - src_pos
-    dst_end = dst_start + src_shape
+    dst_end = dst_start + src_rect
 
     # Project the dst clip rect into source space and clip the src rect to it
-    src_start = numpy.clip(-dst_start, 0, src_shape)
-    src_end = numpy.clip(dst_shape - dst_start, 0, src_shape)
+    src_start = numpy.clip(-dst_start, 0, src_rect)
+    src_end = numpy.clip(dst_rect - dst_start, 0, src_rect)
 
     # Clip the dst rect
-    numpy.clip(dst_start, 0, dst_shape, dst_start)
-    numpy.clip(dst_end, 0, dst_shape, dst_end)
+    numpy.clip(dst_start, 0, dst_rect, dst_start)
+    numpy.clip(dst_end, 0, dst_rect, dst_end)
 
-    dst_slices = tuple(map(slice, dst_start, dst_end))
-    src_slices = tuple(map(slice, src_start, src_end))
+    dst_selection = tuple(
+        map(slice, numpy.flipud(dst_start), numpy.flipud(dst_end)))
+    src_selection = tuple(
+        map(slice, numpy.flipud(src_start), numpy.flipud(src_end)))
 
-    return dst_slices, src_slices
+    return dst_selection, src_selection
 
 
 def slice_square_or_none(image, lefttop, rightbottom):
