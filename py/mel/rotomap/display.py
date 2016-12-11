@@ -106,7 +106,9 @@ class Display:
                 image, self._width, self._height)
         else:
             self._transform = ZoomedImageTransform(
-                image, self._zoom_x, self._zoom_y, self._width, self._height)
+                image,
+                numpy.array((self._zoom_x, self._zoom_y)),
+                numpy.array((self._width, self._height)))
 
         image = self._transform.render()
 
@@ -175,18 +177,10 @@ class Display:
 
 class ZoomedImageTransform():
 
-    def __init__(self, image, x, y, width, height):
-        self._width = width
-        self._height = height
-
-        left, top = mel.lib.image.calc_centering_offset(
-            (x, y),
-            (self._width, self._height))
-
-        self._x = x
-        self._y = y
-        self._image_left = left
-        self._image_top = top
+    def __init__(self, image, pos, rect):
+        self._pos = pos
+        self._rect = rect
+        self._offset = mel.lib.image.calc_centering_offset(pos, rect)
 
         self._image = image
 
@@ -194,20 +188,14 @@ class ZoomedImageTransform():
 
         return mel.lib.image.centered_at(
             self._image,
-            numpy.array((self._x, self._y)),
-            numpy.array((self._width, self._height)))
+            self._pos,
+            self._rect)
 
     def imagexy_to_transformedxy(self, x, y):
-        return (
-            x + self._image_left,
-            y + self._image_top
-        )
+        return numpy.array((x, y)) + self._offset
 
     def transformedxy_to_imagexy(self, x, y):
-        return (
-            x - self._image_left,
-            y - self._image_top
-        )
+        return numpy.array((x, y)) - self._offset
 
 
 class FittedImageTransform():
