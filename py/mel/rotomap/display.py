@@ -80,13 +80,11 @@ class Display:
             self._uuid_to_tricolour = (
                 mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
 
+        self._transform = None
+
         self._zoom_x = None
         self._zoom_y = None
         self._is_zoomed = False
-
-        self._image_left = None
-        self._image_top = None
-        self._image_scale = None
 
         self._is_showing_markers = True
         self._is_faded_markers = True
@@ -102,11 +100,15 @@ class Display:
         self._is_faded_markers = not self._is_faded_markers
 
     def show_current(self, image, mole_list):
+
         if not self._is_zoomed:
-            image = self._render_fitted_image(image)
+            self._transform = FittedImageTransform(
+                image, self._width, self._height)
         else:
-            image = self._render_zoomed_image(
-                image, self._zoom_x, self._zoom_y)
+            self._transform = ZoomedImageTransform(
+                image, self._zoom_x, self._zoom_y, self._width, self._height)
+
+        image = self._transform.render()
 
         highlight_mole = None
         if self._highlight_uuid is not None:
@@ -137,45 +139,13 @@ class Display:
         self._zoom_y = y
         self._is_zoomed = True
 
-    def _render_fitted_image(self, image):
-        letterbox = mel.lib.image.calc_letterbox(
-            image.shape[1],
-            image.shape[0],
-            self._width,
-            self._height)
-
-        self._image_left = letterbox[0]
-        self._image_top = letterbox[1]
-        self._image_scale = image.shape[1] / letterbox[2]
-
-        image = mel.lib.image.letterbox(
-            image, self._width, self._height)
-
-        return image
-
-    def _render_zoomed_image(self, image, x, y):
-        left, top = mel.lib.image.calc_centering_offset(
-            (x, y),
-            (self._width, self._height))
-
-        self._image_left = left
-        self._image_top = top
-        self._image_scale = 1
-
-        image = mel.lib.image.centered_at(
-            image,
-            numpy.array((x, y)),
-            numpy.array((self._width, self._height)))
-
-        return image
-
     def _overlay_mole_markers(self, image, mole_list, highlight_mole):
         marker_image = image
         if self._is_faded_markers:
             marker_image = image.copy()
         for mole in mole_list:
-            x = int(mole['x'] / self._image_scale + self._image_left)
-            y = int(mole['y'] / self._image_scale + self._image_top)
+            x, y = self._transform.imagexy_to_transformedxy(
+                mole['x'], mole['y'])
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
             colours = self._uuid_to_tricolour(mole['uuid'])
@@ -197,15 +167,85 @@ class Display:
             mel.lib.common.make_null_mouse_callback())
 
     def windowxy_to_imagexy(self, window_x, window_y):
-        image_x = window_x - self._image_left
-        image_y = window_y - self._image_top
+        return self._transform.transformedxy_to_imagexy(window_x, window_y)
+
+    def set_title(self, title):
+        cv2.setWindowTitle(self._name, title)
+
+
+class ZoomedImageTransform():
+
+    def __init__(self, image, x, y, width, height):
+        self._width = width
+        self._height = height
+
+        left, top = mel.lib.image.calc_centering_offset(
+            (x, y),
+            (self._width, self._height))
+
+        self._x = x
+        self._y = y
+        self._image_left = left
+        self._image_top = top
+
+        self._image = image
+
+    def render(self):
+
+        return mel.lib.image.centered_at(
+            self._image,
+            numpy.array((self._x, self._y)),
+            numpy.array((self._width, self._height)))
+
+    def imagexy_to_transformedxy(self, x, y):
+        return (
+            x + self._image_left,
+            y + self._image_top
+        )
+
+    def transformedxy_to_imagexy(self, x, y):
+        return (
+            x - self._image_left,
+            y - self._image_top
+        )
+
+
+class FittedImageTransform():
+
+    def __init__(self, image, width, height):
+        self._width = width
+        self._height = height
+
+        letterbox = mel.lib.image.calc_letterbox(
+            image.shape[1],
+            image.shape[0],
+            self._width,
+            self._height)
+
+        self._image_left = letterbox[0]
+        self._image_top = letterbox[1]
+        self._image_scale = image.shape[1] / letterbox[2]
+
+        self._image = image
+
+    def render(self):
+
+        return mel.lib.image.letterbox(
+            self._image, self._width, self._height)
+
+    def imagexy_to_transformedxy(self, x, y):
+        return (
+            int(x / self._image_scale + self._image_left),
+            int(y / self._image_scale + self._image_top)
+        )
+
+    def transformedxy_to_imagexy(self, x, y):
+        image_x = x - self._image_left
+        image_y = y - self._image_top
         return (
             int(image_x * self._image_scale),
             int(image_y * self._image_scale)
         )
-
-    def set_title(self, title):
-        cv2.setWindowTitle(self._name, title)
 
 
 class Editor:
