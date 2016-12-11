@@ -68,12 +68,11 @@ class Display:
             if height is None:
                 height = full_width_height[1]
 
-        self._width = width
-        self._height = height
+        self._rect = numpy.array((width, height))
 
         cv2.namedWindow(self._name)
         cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self._name, self._width, self._height)
+        cv2.resizeWindow(self._name, *self._rect)
 
         self._uuid_to_tricolour = uuid_to_tricolour
         if self._uuid_to_tricolour is None:
@@ -103,12 +102,12 @@ class Display:
 
         if not self._is_zoomed:
             self._transform = FittedImageTransform(
-                image, numpy.array((self._width, self._height)))
+                image, self._rect)
         else:
             self._transform = ZoomedImageTransform(
                 image,
                 numpy.array((self._zoom_x, self._zoom_y)),
-                numpy.array((self._width, self._height)))
+                self._rect)
 
         image = self._transform.render()
 
