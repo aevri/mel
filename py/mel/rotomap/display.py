@@ -200,10 +200,7 @@ class FittedImageTransform():
         image_rect = mel.lib.image.get_image_rect(image)
 
         letterbox = mel.lib.image.calc_letterbox(
-            image_rect[0],
-            image_rect[1],
-            self._fit_rect[0],
-            self._fit_rect[1])
+            *image_rect, *self._fit_rect)
 
         self._offset = numpy.array(letterbox[:2])
         self._scale = image.shape[1] / letterbox[2]
@@ -211,9 +208,8 @@ class FittedImageTransform():
         self._image = image
 
     def render(self):
-
         return mel.lib.image.letterbox(
-            self._image, self._fit_rect[0], self._fit_rect[1])
+            self._image, *self._fit_rect)
 
     def imagexy_to_transformedxy(self, x, y):
         return (numpy.array((x, y)) / self._scale + self._offset).astype(int)
