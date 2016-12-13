@@ -58,7 +58,7 @@ def draw_crosshair(image, x, y):
 
 class Display:
 
-    def __init__(self, width, height, uuid_to_tricolour=None):
+    def __init__(self, width, height):
         self._name = str(id(self))
 
         if width is None or height is None:
@@ -75,21 +75,11 @@ class Display:
         cv2.resizeWindow(self._name, *self._rect)
 
         self._transform = None
-        self._overlay = MoleMarkerOverlay(uuid_to_tricolour)
 
         self._zoom_pos = None
         self._is_zoomed = False
 
-    def toggle_markers(self):
-        self._overlay.toggle_markers()
-
-    def set_highlight_uuid(self, highlight_uuid):
-        self._overlay.set_highlight_uuid(highlight_uuid)
-
-    def toggle_faded_markers(self):
-        self._overlay.toggle_faded_markers()
-
-    def show_current(self, image, mole_list):
+    def show_current(self, image, overlay):
 
         if not self._is_zoomed:
             self._transform = FittedImageTransform(
@@ -99,17 +89,9 @@ class Display:
                 image, self._zoom_pos, self._rect)
 
         image = self._transform.render()
-        image = self._overlay.render(image, self._transform, mole_list)
+        image = overlay.render(image, self._transform)
 
         cv2.imshow(self._name, image)
-
-    def show_fitted(self, image, mole_list):
-        self.set_fitted()
-        self.show_current(image, mole_list)
-
-    def show_zoomed(self, image, mole_list, x, y):
-        self.set_zoomed(x, y)
-        self.show_current(image, mole_list)
 
     def set_fitted(self):
         self._is_zoomed = False
@@ -145,6 +127,8 @@ class MoleMarkerOverlay():
             self._uuid_to_tricolour = (
                 mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
 
+        self.moles = None
+
     def toggle_markers(self):
         self._is_showing_markers = not self._is_showing_markers
 
@@ -154,14 +138,14 @@ class MoleMarkerOverlay():
     def toggle_faded_markers(self):
         self._is_faded_markers = not self._is_faded_markers
 
-    def render(self, image, transform, mole_list):
+    def render(self, image, transform):
 
         if not self._is_showing_markers:
             return image
 
         highlight_mole = None
         if self._highlight_uuid is not None:
-            for m in mole_list:
+            for m in self.moles:
                 if m['uuid'] == self._highlight_uuid:
                     highlight_mole = m
                     break
@@ -169,7 +153,7 @@ class MoleMarkerOverlay():
         marker_image = image
         if self._is_faded_markers:
             marker_image = image.copy()
-        for mole in mole_list:
+        for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(
                 mole['x'], mole['y'])
             if mole is highlight_mole:
@@ -237,12 +221,13 @@ class Editor:
 
     def __init__(self, path_list_list, width, height):
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
-        self.display = Display(width, height, self._uuid_to_tricolour)
+        self.display = Display(width, height)
         self.moledata_list = [MoleData(x) for x in path_list_list]
 
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
+        self._overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.show_current()
 
     def set_moles(self, moles):
@@ -251,7 +236,7 @@ class Editor:
 
     def follow(self, uuid_to_follow):
         self._follow = uuid_to_follow
-        self.display.set_highlight_uuid(self._follow)
+        self._overlay.set_highlight_uuid(self._follow)
 
         follow_mole = None
         for m in self.moledata.moles:
@@ -260,37 +245,36 @@ class Editor:
                 break
 
         if follow_mole is not None:
-            image = self.moledata.get_image()
-            self.display.show_zoomed(
-                image, self.moledata.moles, follow_mole['x'], follow_mole['y'])
+            self.show_zoomed_display(follow_mole['x'], follow_mole['y'])
         else:
             self.show_fitted()
 
     def toggle_markers(self):
-        self.display.toggle_markers()
+        self._overlay.toggle_markers()
         self.show_current()
 
     def toggle_faded_markers(self):
-        self.display.toggle_faded_markers()
+        self._overlay.toggle_faded_markers()
         self.show_current()
 
     def show_current(self):
         image = self.moledata.get_image()
-        self.display.show_current(image, self.moledata.moles)
+        self._overlay.moles = self.moledata.moles
+        self.display.show_current(image, self._overlay)
         self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
-        image = self.moledata.get_image()
-        self.display.show_fitted(image, self.moledata.moles)
+        self.display.set_fitted()
+        self.show_current()
 
     def show_zoomed(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
-        image = self.moledata.get_image()
-        self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
+        self.display.set_zoomed(image_x, image_y)
+        self.show_current()
 
     def show_zoomed_display(self, image_x, image_y):
-        image = self.moledata.get_image()
-        self.display.show_zoomed(image, self.moledata.moles, image_x, image_y)
+        self.display.set_zoomed(image_x, image_y)
+        self.show_current()
 
     def show_prev_map(self):
         self.moledata_index -= 1
