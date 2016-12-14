@@ -227,7 +227,7 @@ class Editor:
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
-        self._overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
+        self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.show_current()
 
     def set_moles(self, moles):
@@ -236,7 +236,7 @@ class Editor:
 
     def follow(self, uuid_to_follow):
         self._follow = uuid_to_follow
-        self._overlay.set_highlight_uuid(self._follow)
+        self._mole_overlay.set_highlight_uuid(self._follow)
 
         follow_mole = None
         for m in self.moledata.moles:
@@ -250,17 +250,17 @@ class Editor:
             self.show_fitted()
 
     def toggle_markers(self):
-        self._overlay.toggle_markers()
+        self._mole_overlay.toggle_markers()
         self.show_current()
 
     def toggle_faded_markers(self):
-        self._overlay.toggle_faded_markers()
+        self._mole_overlay.toggle_faded_markers()
         self.show_current()
 
     def show_current(self):
         image = self.moledata.get_image()
-        self._overlay.moles = self.moledata.moles
-        self.display.show_current(image, self._overlay)
+        self._mole_overlay.moles = self.moledata.moles
+        self.display.show_current(image, self._mole_overlay)
         self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
