@@ -89,7 +89,7 @@ class Display:
                 image, self._zoom_pos, self._rect)
 
         image = self._transform.render()
-        image = overlay.render(image, self._transform)
+        image = overlay(image, self._transform)
 
         cv2.imshow(self._name, image)
 
@@ -138,7 +138,7 @@ class MoleMarkerOverlay():
     def toggle_faded_markers(self):
         self._is_faded_markers = not self._is_faded_markers
 
-    def render(self, image, transform):
+    def __call__(self, image, transform):
 
         if not self._is_showing_markers:
             return image
