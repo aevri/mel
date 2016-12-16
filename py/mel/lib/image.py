@@ -146,7 +146,7 @@ def render_text_as_image(
 
     baseline += thickness
 
-    image = mel.lib.common.new_image(height + baseline + 100, width)
+    image = mel.lib.common.new_image(height + baseline, width)
     textpos = (0, height)
     cv2.putText(image, text, textpos, font_face, font_scale, color)
     return image
