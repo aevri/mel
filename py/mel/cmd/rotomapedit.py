@@ -136,16 +136,33 @@ def process_args(args):
             elif key == ord('c'):
                 copied_moles = editor.moledata.moles
             elif key == ord('o'):
-                if follow_uuid is None:
+                if follow_uuid is None and mole_uuid:
                     follow_uuid = mole_uuid
                     is_move_mode = False
+                    if is_paste_mode:
+                        editor.set_status('follow paste mode')
+                    else:
+                        editor.set_status('follow mode')
                     print(follow_uuid)
                 else:
+                    editor.set_status('')
                     follow_uuid = None
+                editor.show_current()
             elif key == ord('p'):
                 is_paste_mode = not is_paste_mode
+                if follow_uuid:
+                    if is_paste_mode:
+                        editor.set_status('follow paste mode')
+                    else:
+                        editor.set_status('follow mode')
+                    editor.show_current()
             elif key == ord('m'):
                 is_move_mode = not is_move_mode
+                if is_move_mode:
+                    editor.set_status('move mode')
+                else:
+                    editor.set_status('')
+                editor.show_current()
             elif key == ord('a'):
                 guessed_moles = guess_mole_positions(
                     copied_moles,

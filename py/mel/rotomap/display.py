@@ -115,6 +115,36 @@ class Display:
         cv2.setWindowTitle(self._name, title)
 
 
+def make_composite_overlay(*overlays):
+    """Return an overlay, which will composite the supplied overlays in turn.
+
+    :*overlays: The overlay callables to composite.
+    :returns: A function which will composite *overlays and return the image.
+
+    """
+    def do_overlay(image, transform):
+        for o in overlays:
+            image = o(image, transform)
+        return image
+
+    return do_overlay
+
+
+class StatusOverlay():
+
+    def __init__(self):
+        self.text = ""
+
+    def __call__(self, image, transform):
+
+        if self.text:
+            text_image = mel.lib.image.render_text_as_image(self.text)
+            mel.lib.common.copy_image_into_image(
+                text_image, image, 0, 0)
+
+        return image
+
+
 class MoleMarkerOverlay():
 
     def __init__(self, uuid_to_tricolour):
@@ -228,7 +258,11 @@ class Editor:
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
+        self._status_overlay = StatusOverlay()
         self.show_current()
+
+    def set_status(self, text):
+        self._status_overlay.text = text
 
     def set_moles(self, moles):
         self.moledata.moles = moles
@@ -260,7 +294,11 @@ class Editor:
     def show_current(self):
         image = self.moledata.get_image()
         self._mole_overlay.moles = self.moledata.moles
-        self.display.show_current(image, self._mole_overlay)
+        self.display.show_current(
+            image,
+            make_composite_overlay(
+                self._mole_overlay,
+                self._status_overlay))
         self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
