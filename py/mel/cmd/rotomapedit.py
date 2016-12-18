@@ -38,6 +38,117 @@ def setup_parser(parser):
         help="UUID of a mole to follow.")
 
 
+class Controller():
+
+    def __init__(self, editor, follow):
+        self.follow_uuid = None
+        if follow:
+            self.follow_uuid = follow
+            editor.follow(self.follow_uuid)
+
+        self.mole_uuid = None
+        self.is_move_mode = False
+
+        self.copied_moles = None
+        self.is_paste_mode = False
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
+        del _param
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if flags & cv2.EVENT_FLAG_CTRLKEY:
+                editor.show_zoomed(mouse_x, mouse_y)
+            elif flags & cv2.EVENT_FLAG_ALTKEY:
+                if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                    self.mole_uuid = editor.get_mole_uuid(mouse_x, mouse_y)
+                    print(self.mole_uuid)
+                else:
+                    editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid)
+            elif flags & cv2.EVENT_FLAG_SHIFTKEY:
+                editor.remove_mole(mouse_x, mouse_y)
+            else:
+                if not self.is_move_mode and self.follow_uuid is None:
+                    editor.add_mole(mouse_x, mouse_y)
+                else:
+                    if self.is_move_mode:
+                        editor.move_nearest_mole(mouse_x, mouse_y)
+                    else:
+                        assert self.follow_uuid is not None
+                        editor.crud_mole(self.follow_uuid, mouse_x, mouse_y)
+                        editor.follow(self.follow_uuid)
+
+    def on_key(self, editor, key):
+        if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+            prev_moles = editor.moledata.moles
+            editor.show_prev()
+            if self.follow_uuid is not None:
+                update_follow(
+                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+            prev_moles = editor.moledata.moles
+            editor.show_next()
+            if self.follow_uuid is not None:
+                update_follow(
+                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+            prev_moles = editor.moledata.moles
+            editor.show_prev_map()
+            if self.follow_uuid is not None:
+                update_follow(
+                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+            prev_moles = editor.moledata.moles
+            editor.show_next_map()
+            if self.follow_uuid is not None:
+                update_follow(
+                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
+            print(editor.moledata.current_image_path())
+        elif key == ord(' '):
+            editor.show_fitted()
+        elif key == ord('c'):
+            self.copied_moles = editor.moledata.moles
+        elif key == ord('o'):
+            if self.follow_uuid is None and self.mole_uuid:
+                self.follow_uuid = self.mole_uuid
+                self.is_move_mode = False
+                if self.is_paste_mode:
+                    editor.set_status('follow paste mode')
+                else:
+                    editor.set_status('follow mode')
+                print(self.follow_uuid)
+            else:
+                editor.set_status('')
+                self.follow_uuid = None
+            editor.show_current()
+        elif key == ord('p'):
+            self.is_paste_mode = not self.is_paste_mode
+            if self.follow_uuid:
+                if self.is_paste_mode:
+                    editor.set_status('follow paste mode')
+                else:
+                    editor.set_status('follow mode')
+                editor.show_current()
+        elif key == ord('m'):
+            self.is_move_mode = not self.is_move_mode
+            if self.is_move_mode:
+                editor.set_status('move mode')
+            else:
+                editor.set_status('')
+            editor.show_current()
+        elif key == ord('a'):
+            guessed_moles = guess_mole_positions(
+                self.copied_moles,
+                editor.moledata.moles,
+                editor.moledata.get_image())
+            editor.set_moles(guessed_moles)
+        elif key == ord('f'):
+            editor.toggle_faded_markers()
+        elif key == 13:
+            editor.toggle_markers()
+
+
 def process_args(args):
 
     editor = mel.rotomap.display.Editor(
@@ -45,41 +156,13 @@ def process_args(args):
 
     mel.lib.ui.bring_python_to_front()
 
-    follow_uuid = None
-    if args.follow:
-        follow_uuid = args.follow
-        editor.follow(follow_uuid)
+    controller = Controller(editor, args.follow)
 
-    mole_uuid = None
-    is_move_mode = False
+    def mouse_callback(*args):
+        controller.on_mouse_event(editor, *args)
 
-    def mouse_callback(event, mouse_x, mouse_y, flags, _param):
-        del _param
-        nonlocal mole_uuid
-        nonlocal is_move_mode
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if flags & cv2.EVENT_FLAG_CTRLKEY:
-                editor.show_zoomed(mouse_x, mouse_y)
-            elif flags & cv2.EVENT_FLAG_ALTKEY:
-                if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    mole_uuid = editor.get_mole_uuid(mouse_x, mouse_y)
-                    print(mole_uuid)
-                else:
-                    editor.set_mole_uuid(mouse_x, mouse_y, mole_uuid)
-            elif flags & cv2.EVENT_FLAG_SHIFTKEY:
-                editor.remove_mole(mouse_x, mouse_y)
-            else:
-                if not is_move_mode and follow_uuid is None:
-                    editor.add_mole(mouse_x, mouse_y)
-                else:
-                    if is_move_mode:
-                        editor.move_nearest_mole(mouse_x, mouse_y)
-                    else:
-                        assert follow_uuid is not None
-                        editor.crud_mole(follow_uuid, mouse_x, mouse_y)
-                        editor.follow(follow_uuid)
-
-    editor.display.set_mouse_callback(mouse_callback)
+    editor.display.set_mouse_callback(
+        mouse_callback)
 
     print("Press left for previous image, right for next image.")
     print("Press up for previous map, down for next map.")
@@ -94,87 +177,16 @@ def process_args(args):
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
     print("Press space to restore original zoom.")
     print("Press enter to toggle mole markers.")
-    print("Press any other key to quit.")
-
-    copied_moles = None
-    is_paste_mode = False
+    print("Press 'q' to quit.")
 
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
-            if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                prev_moles = editor.moledata.moles
-                editor.show_prev()
-                if follow_uuid is not None:
-                    update_follow(
-                        editor, follow_uuid, prev_moles, is_paste_mode)
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                prev_moles = editor.moledata.moles
-                editor.show_next()
-                if follow_uuid is not None:
-                    update_follow(
-                        editor, follow_uuid, prev_moles, is_paste_mode)
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_UP_ARROW:
-                prev_moles = editor.moledata.moles
-                editor.show_prev_map()
-                if follow_uuid is not None:
-                    update_follow(
-                        editor, follow_uuid, prev_moles, is_paste_mode)
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
-                prev_moles = editor.moledata.moles
-                editor.show_next_map()
-                if follow_uuid is not None:
-                    update_follow(
-                        editor, follow_uuid, prev_moles, is_paste_mode)
-                print(editor.moledata.current_image_path())
-            elif key == ord(' '):
-                editor.show_fitted()
-            elif key == ord('c'):
-                copied_moles = editor.moledata.moles
-            elif key == ord('o'):
-                if follow_uuid is None and mole_uuid:
-                    follow_uuid = mole_uuid
-                    is_move_mode = False
-                    if is_paste_mode:
-                        editor.set_status('follow paste mode')
-                    else:
-                        editor.set_status('follow mode')
-                    print(follow_uuid)
-                else:
-                    editor.set_status('')
-                    follow_uuid = None
-                editor.show_current()
-            elif key == ord('p'):
-                is_paste_mode = not is_paste_mode
-                if follow_uuid:
-                    if is_paste_mode:
-                        editor.set_status('follow paste mode')
-                    else:
-                        editor.set_status('follow mode')
-                    editor.show_current()
-            elif key == ord('m'):
-                is_move_mode = not is_move_mode
-                if is_move_mode:
-                    editor.set_status('move mode')
-                else:
-                    editor.set_status('')
-                editor.show_current()
-            elif key == ord('a'):
-                guessed_moles = guess_mole_positions(
-                    copied_moles,
-                    editor.moledata.moles,
-                    editor.moledata.get_image())
-                editor.set_moles(guessed_moles)
-            elif key == ord('f'):
-                editor.toggle_faded_markers()
-            elif key == 13:
-                editor.toggle_markers()
-            else:
+            if key == ord('q'):
                 is_finished = True
+            else:
+                controller.on_key(editor, key)
 
     editor.display.clear_mouse_callback()
 
