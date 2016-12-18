@@ -36,6 +36,12 @@ def load_image_moles(image_path):
     return moles
 
 
+def normalise_moles(moles):
+    for m in moles:
+        m['x'] = int(m['x'])
+        m['y'] = int(m['y'])
+
+
 def save_image_moles(moles, image_path):
     moles_path = image_path + '.json'
     with open(moles_path, 'w') as moles_file:

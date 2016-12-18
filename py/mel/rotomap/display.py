@@ -425,6 +425,7 @@ class MoleData:
 
     def save_moles(self):
         image_path = self._path_list[self._list_index]
+        mel.rotomap.moles.normalise_moles(self.moles)
         mel.rotomap.moles.save_image_moles(self.moles, image_path)
 
     def current_image_path(self):
