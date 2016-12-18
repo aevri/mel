@@ -49,22 +49,69 @@ class MoveController():
             editor.move_nearest_mole(mouse_x, mouse_y)
             return True
 
+    def on_key(self, editor, key):
+        pass
+
+
+class FollowController():
+
+    def __init__(self, editor, follow, mole_uuid_list):
+        self.mole_uuid_list = mole_uuid_list
+        if follow:
+            self.mole_uuid_list[0] = follow
+            editor.follow(self.mole_uuid_list[0])
+
+        self.is_paste_mode = False
+        self.update_status()
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
+        del _param
+        if event == cv2.EVENT_LBUTTONDOWN:
+            editor.crud_mole(self.mole_uuid_list[0], mouse_x, mouse_y)
+            editor.follow(self.mole_uuid_list[0])
+
+    def pre_key(self, editor, key):
+        self._prev_moles = editor.moledata.moles
+
+    def on_key(self, editor, key):
+        arrows = [
+            mel.lib.ui.WAITKEY_LEFT_ARROW,
+            mel.lib.ui.WAITKEY_RIGHT_ARROW,
+            mel.lib.ui.WAITKEY_UP_ARROW,
+            mel.lib.ui.WAITKEY_DOWN_ARROW,
+        ]
+        if key in arrows:
+            update_follow(
+                editor,
+                self.mole_uuid_list[0],
+                self._prev_moles,
+                self.is_paste_mode)
+            return True
+        elif key == ord('p'):
+            self.is_paste_mode = not self.is_paste_mode
+            self.update_status()
+            editor.set_status(self.status)
+            editor.show_current()
+            return True
+
+    def update_status(self):
+        if self.is_paste_mode:
+            self.status = 'follow paste mode'
+        else:
+            self.status = 'follow mode'
+
 
 class Controller():
 
     def __init__(self, editor, follow):
-        self.follow_uuid = None
-        if follow:
-            self.follow_uuid = follow
-            editor.follow(self.follow_uuid)
+        self.mole_uuid_list = [None]
 
+        self.follow_controller = FollowController(
+            editor, follow, self.mole_uuid_list)
         self.move_controller = MoveController()
         self.sub_controller = None
 
-        self.mole_uuid = None
-
         self.copied_moles = None
-        self.is_paste_mode = False
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -72,10 +119,12 @@ class Controller():
                 editor.show_zoomed(mouse_x, mouse_y)
             elif flags & cv2.EVENT_FLAG_ALTKEY:
                 if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    self.mole_uuid = editor.get_mole_uuid(mouse_x, mouse_y)
-                    print(self.mole_uuid)
+                    self.mole_uuid_list[0] = editor.get_mole_uuid(
+                        mouse_x, mouse_y)
+                    print(self.mole_uuid_list[0])
                 else:
-                    editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid)
+                    editor.set_mole_uuid(
+                        mouse_x, mouse_y, self.mole_uuid_list[0])
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.remove_mole(mouse_x, mouse_y)
             else:
@@ -83,80 +132,48 @@ class Controller():
                     if self.sub_controller.on_mouse_event(
                             editor, event, mouse_x, mouse_y, flags, _param):
                         return
-
-                if self.follow_uuid is None:
-                    editor.add_mole(mouse_x, mouse_y)
-                else:
-                    editor.crud_mole(self.follow_uuid, mouse_x, mouse_y)
-                    editor.follow(self.follow_uuid)
+                editor.add_mole(mouse_x, mouse_y)
 
     def on_key(self, editor, key):
+        if self.sub_controller:
+            try:
+                self.sub_controller.pre_key(editor, key)
+            except AttributeError:
+                pass
+
         if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-            prev_moles = editor.moledata.moles
             editor.show_prev()
-            if self.follow_uuid is not None:
-                update_follow(
-                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
             print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-            prev_moles = editor.moledata.moles
             editor.show_next()
-            if self.follow_uuid is not None:
-                update_follow(
-                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
             print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_UP_ARROW:
-            prev_moles = editor.moledata.moles
             editor.show_prev_map()
-            if self.follow_uuid is not None:
-                update_follow(
-                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
             print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
-            prev_moles = editor.moledata.moles
             editor.show_next_map()
-            if self.follow_uuid is not None:
-                update_follow(
-                    editor, self.follow_uuid, prev_moles, self.is_paste_mode)
             print(editor.moledata.current_image_path())
         elif key == ord(' '):
             editor.show_fitted()
         elif key == ord('c'):
             self.copied_moles = editor.moledata.moles
         elif key == ord('o'):
-            if self.follow_uuid is None and self.mole_uuid:
-                self.follow_uuid = self.mole_uuid
-                self.sub_controller = None
-                if self.is_paste_mode:
-                    editor.set_status('follow paste mode')
-                else:
-                    editor.set_status('follow mode')
-                print(self.follow_uuid)
+            is_follow = self.sub_controller is self.follow_controller
+            if not is_follow and self.mole_uuid_list[0]:
+                self.sub_controller = self.follow_controller
+                editor.set_status(self.sub_controller.status)
+                print(self.mole_uuid_list[0])
             else:
+                self.sub_controller = None
                 editor.set_status('')
-                self.follow_uuid = None
             editor.show_current()
-        elif key == ord('p'):
-            self.is_paste_mode = not self.is_paste_mode
-            if self.follow_uuid:
-                if self.is_paste_mode:
-                    editor.set_status('follow paste mode')
-                else:
-                    editor.set_status('follow mode')
-                editor.show_current()
         elif key == ord('m'):
             if not self.sub_controller == self.move_controller:
                 self.sub_controller = self.move_controller
                 editor.set_status(self.sub_controller.status)
             else:
                 self.sub_controller = None
-                if self.follow_uuid:
-                    if self.is_paste_mode:
-                        editor.set_status('follow paste mode')
-                    else:
-                        editor.set_status('follow mode')
-                else:
-                    editor.set_status('')
+                editor.set_status('')
             editor.show_current()
         elif key == ord('a'):
             guessed_moles = guess_mole_positions(
@@ -168,6 +185,12 @@ class Controller():
             editor.toggle_faded_markers()
         elif key == 13:
             editor.toggle_markers()
+
+        if self.sub_controller:
+            try:
+                self.sub_controller.on_key(editor, key)
+            except AttributeError:
+                pass
 
 
 def process_args(args):
