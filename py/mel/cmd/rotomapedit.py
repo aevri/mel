@@ -38,6 +38,18 @@ def setup_parser(parser):
         help="UUID of a mole to follow.")
 
 
+class MoveController():
+
+    def __init__(self):
+        self.status = 'Move mode'
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
+        del _param
+        if event == cv2.EVENT_LBUTTONDOWN:
+            editor.move_nearest_mole(mouse_x, mouse_y)
+            return True
+
+
 class Controller():
 
     def __init__(self, editor, follow):
@@ -46,14 +58,15 @@ class Controller():
             self.follow_uuid = follow
             editor.follow(self.follow_uuid)
 
+        self.move_controller = MoveController()
+        self.sub_controller = None
+
         self.mole_uuid = None
-        self.is_move_mode = False
 
         self.copied_moles = None
         self.is_paste_mode = False
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
-        del _param
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(mouse_x, mouse_y)
@@ -66,15 +79,16 @@ class Controller():
             elif flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.remove_mole(mouse_x, mouse_y)
             else:
-                if not self.is_move_mode and self.follow_uuid is None:
+                if self.sub_controller:
+                    if self.sub_controller.on_mouse_event(
+                            editor, event, mouse_x, mouse_y, flags, _param):
+                        return
+
+                if self.follow_uuid is None:
                     editor.add_mole(mouse_x, mouse_y)
                 else:
-                    if self.is_move_mode:
-                        editor.move_nearest_mole(mouse_x, mouse_y)
-                    else:
-                        assert self.follow_uuid is not None
-                        editor.crud_mole(self.follow_uuid, mouse_x, mouse_y)
-                        editor.follow(self.follow_uuid)
+                    editor.crud_mole(self.follow_uuid, mouse_x, mouse_y)
+                    editor.follow(self.follow_uuid)
 
     def on_key(self, editor, key):
         if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
@@ -112,7 +126,7 @@ class Controller():
         elif key == ord('o'):
             if self.follow_uuid is None and self.mole_uuid:
                 self.follow_uuid = self.mole_uuid
-                self.is_move_mode = False
+                self.sub_controller = None
                 if self.is_paste_mode:
                     editor.set_status('follow paste mode')
                 else:
@@ -131,10 +145,11 @@ class Controller():
                     editor.set_status('follow mode')
                 editor.show_current()
         elif key == ord('m'):
-            self.is_move_mode = not self.is_move_mode
-            if self.is_move_mode:
-                editor.set_status('move mode')
+            if not self.sub_controller == self.move_controller:
+                self.sub_controller = self.move_controller
+                editor.set_status(self.sub_controller.status)
             else:
+                self.sub_controller = None
                 if self.follow_uuid:
                     if self.is_paste_mode:
                         editor.set_status('follow paste mode')
