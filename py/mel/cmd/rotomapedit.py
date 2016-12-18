@@ -135,7 +135,13 @@ class Controller():
             if self.is_move_mode:
                 editor.set_status('move mode')
             else:
-                editor.set_status('')
+                if self.follow_uuid:
+                    if self.is_paste_mode:
+                        editor.set_status('follow paste mode')
+                    else:
+                        editor.set_status('follow mode')
+                else:
+                    editor.set_status('')
             editor.show_current()
         elif key == ord('a'):
             guessed_moles = guess_mole_positions(
