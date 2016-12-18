@@ -137,16 +137,12 @@ class Controller():
 
         if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
             editor.show_prev()
-            print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
             editor.show_next()
-            print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_UP_ARROW:
             editor.show_prev_map()
-            print(editor.moledata.current_image_path())
         elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
             editor.show_next_map()
-            print(editor.moledata.current_image_path())
         elif key == ord(' '):
             editor.show_fitted()
         elif key == ord('c'):
@@ -179,6 +175,9 @@ class Controller():
             editor.toggle_faded_markers()
         elif key == 13:
             editor.toggle_markers()
+
+        if key in mel.lib.ui.WAITKEY_ARROWS:
+            print(editor.moledata.current_image_path())
 
         if self.sub_controller:
             try:
