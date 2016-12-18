@@ -74,13 +74,7 @@ class FollowController():
         self._prev_moles = editor.moledata.moles
 
     def on_key(self, editor, key):
-        arrows = [
-            mel.lib.ui.WAITKEY_LEFT_ARROW,
-            mel.lib.ui.WAITKEY_RIGHT_ARROW,
-            mel.lib.ui.WAITKEY_UP_ARROW,
-            mel.lib.ui.WAITKEY_DOWN_ARROW,
-        ]
-        if key in arrows:
+        if key in mel.lib.ui.WAITKEY_ARROWS:
             update_follow(
                 editor,
                 self.mole_uuid_list[0],
