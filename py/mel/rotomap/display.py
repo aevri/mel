@@ -421,30 +421,28 @@ class MoleData:
 
     def __init__(self, path_list):
         self.moles = []
+        self.image = None
         self._path_list = path_list
         self._list_index = 0
         self._num_images = len(self._path_list)
-        self._cached_image = None
-        self._cached_image_index = None
-        self._load()
+        self._loaded_index = None
+        self._ensure_loaded()
 
     def get_image(self):
-        return self._load()
+        self._ensure_loaded()
+        return self.image
 
-    def _load(self):
+    def _ensure_loaded(self):
 
-        if self._cached_image_index == self._list_index:
-            return self._cached_image
+        if self._loaded_index == self._list_index:
+            return
 
         image_path = self._path_list[self._list_index]
-        image = load_image(image_path)
+        self.image = load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
-        self._cached_image_index = self._list_index
-        self._cached_image = image
-
-        return image
+        self._loaded_index = self._list_index
 
     def decrement(self):
         new_index = self._list_index + self._num_images - 1
