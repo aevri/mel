@@ -174,7 +174,11 @@ class MaskEditController():
         pass
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        pass
+        if event == cv2.EVENT_MOUSEMOVE:
+            if flags & cv2.EVENT_FLAG_LBUTTON:
+                editor.set_mask(mouse_x, mouse_y)
+        elif event == cv2.EVENT_LBUTTONDOWN:
+            editor.set_mask(mouse_x, mouse_y)
 
     def pre_key(self, editor, key):
         pass

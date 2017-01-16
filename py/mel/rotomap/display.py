@@ -315,6 +315,13 @@ class Editor:
         self._mole_overlay.toggle_faded_markers()
         self.show_current()
 
+    def set_mask(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        value = 255
+        radius = 100
+        cv2.circle(self.moledata.mask, (image_x, image_y), radius, value, -1)
+        self.show_current()
+
     def show_current(self):
         image = self.moledata.get_image()
         if self._mode is EditorMode.debug_automole:
