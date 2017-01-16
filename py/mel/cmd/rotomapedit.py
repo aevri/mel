@@ -95,7 +95,7 @@ class FollowController():
             self.status = 'follow mode'
 
 
-class Controller():
+class EditController():
 
     def __init__(self, editor, follow):
         self.mole_uuid_list = [None]
@@ -107,45 +107,32 @@ class Controller():
 
         self.copied_moles = None
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if flags & cv2.EVENT_FLAG_CTRLKEY:
-                editor.show_zoomed(mouse_x, mouse_y)
-            elif flags & cv2.EVENT_FLAG_ALTKEY:
-                if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                    self.mole_uuid_list[0] = editor.get_mole_uuid(
-                        mouse_x, mouse_y)
-                    print(self.mole_uuid_list[0])
-                else:
-                    editor.set_mole_uuid(
-                        mouse_x, mouse_y, self.mole_uuid_list[0])
-            elif flags & cv2.EVENT_FLAG_SHIFTKEY:
-                editor.remove_mole(mouse_x, mouse_y)
+    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
+        if flags & cv2.EVENT_FLAG_ALTKEY:
+            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
+                print(self.mole_uuid_list[0])
             else:
-                if self.sub_controller:
-                    if self.sub_controller.on_mouse_event(
-                            editor, event, mouse_x, mouse_y, flags, _param):
-                        return
-                editor.add_mole(mouse_x, mouse_y)
+                editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
+        elif flags & cv2.EVENT_FLAG_SHIFTKEY:
+            editor.remove_mole(mouse_x, mouse_y)
+        else:
+            if self.sub_controller:
+                event = cv2.EVENT_LBUTTONDOWN
+                if self.sub_controller.on_mouse_event(
+                        editor, event, mouse_x, mouse_y, flags, None):
+                    return
+            editor.add_mole(mouse_x, mouse_y)
 
-    def on_key(self, editor, key):
+    def pre_key(self, editor, key):
         if self.sub_controller:
             try:
                 self.sub_controller.pre_key(editor, key)
             except AttributeError:
                 pass
 
-        if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-            editor.show_prev()
-        elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-            editor.show_next()
-        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
-            editor.show_prev_map()
-        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
-            editor.show_next_map()
-        elif key == ord(' '):
-            editor.show_fitted()
-        elif key == ord('c'):
+    def on_key(self, editor, key):
+        if key == ord('c'):
             self.copied_moles = editor.moledata.moles
         elif key == ord('o'):
             is_follow = self.sub_controller is self.follow_controller
@@ -176,14 +163,44 @@ class Controller():
         elif key == 13:
             editor.toggle_markers()
 
-        if key in mel.lib.ui.WAITKEY_ARROWS:
-            print(editor.moledata.current_image_path())
-
         if self.sub_controller:
             try:
                 self.sub_controller.on_key(editor, key)
             except AttributeError:
                 pass
+
+
+class Controller():
+
+    def __init__(self, editor, follow):
+        self.edit_controller = EditController(editor, follow)
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if flags & cv2.EVENT_FLAG_CTRLKEY:
+                editor.show_zoomed(mouse_x, mouse_y)
+            else:
+                self.edit_controller.on_lbutton_down(
+                    editor, mouse_x, mouse_y, flags)
+
+    def on_key(self, editor, key):
+        self.edit_controller.pre_key(editor, key)
+
+        if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+            editor.show_prev()
+        elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+            editor.show_next()
+        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+            editor.show_prev_map()
+        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+            editor.show_next_map()
+        elif key == ord(' '):
+            editor.show_fitted()
+
+        if key in mel.lib.ui.WAITKEY_ARROWS:
+            print(editor.moledata.current_image_path())
+
+        self.edit_controller.on_key(editor, key)
 
 
 def process_args(args):
