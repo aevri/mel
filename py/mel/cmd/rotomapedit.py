@@ -102,6 +102,10 @@ class MoleEditController():
 
         self.copied_moles = None
 
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.on_lbutton_down(editor, mouse_x, mouse_y, flags)
+
     def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
         if flags & cv2.EVENT_FLAG_ALTKEY:
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
@@ -169,7 +173,7 @@ class MaskEditController():
     def __init__(self):
         pass
 
-    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         pass
 
     def pre_key(self, editor, key):
@@ -184,7 +188,7 @@ class AutomoleDebugController():
     def __init__(self):
         pass
 
-    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         pass
 
     def pre_key(self, editor, key):
@@ -202,13 +206,14 @@ class Controller():
         self.automoledebug_controller = AutomoleDebugController()
         self.current_controller = self.moleedit_controller
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(mouse_x, mouse_y)
-            else:
-                self.current_controller.on_lbutton_down(
-                    editor, mouse_x, mouse_y, flags)
+                return
+
+        self.current_controller.on_mouse_event(
+            editor, event, mouse_x, mouse_y, flags, param)
 
     def on_key(self, editor, key):
         self.current_controller.pre_key(editor, key)
