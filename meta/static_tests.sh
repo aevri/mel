@@ -15,7 +15,7 @@ printf '.'
 python3 -m flake8 $allscripts
 
 printf '.'
-python3 -m vulture bin/mel --exclude '*__t.py' py/
+python3 -m vulture bin/mel --exclude '*__t.py,py/mel/rotomap/detectmoles.py' py/
 
 echo OK
 trap - EXIT

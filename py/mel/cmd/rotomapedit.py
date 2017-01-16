@@ -164,21 +164,38 @@ class EditController():
                 pass
 
 
+class AutomoleDebugController():
+
+    def __init__(self):
+        pass
+
+    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
+        pass
+
+    def pre_key(self, editor, key):
+        pass
+
+    def on_key(self, editor, key):
+        pass
+
+
 class Controller():
 
     def __init__(self, editor, follow):
         self.edit_controller = EditController(editor, follow)
+        self.automoledebug_controller = AutomoleDebugController()
+        self.current_controller = self.edit_controller
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
                 editor.show_zoomed(mouse_x, mouse_y)
             else:
-                self.edit_controller.on_lbutton_down(
+                self.current_controller.on_lbutton_down(
                     editor, mouse_x, mouse_y, flags)
 
     def on_key(self, editor, key):
-        self.edit_controller.pre_key(editor, key)
+        self.current_controller.pre_key(editor, key)
 
         if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
             editor.show_prev()
@@ -190,11 +207,19 @@ class Controller():
             editor.show_next_map()
         elif key == ord(' '):
             editor.show_fitted()
+        elif key == ord('0'):
+            # Switch to automole debug mode
+            self.current_controller = self.automoledebug_controller
+            editor.set_automoledebug_mode()
+        elif key == ord('1'):
+            # Switch to edit mode
+            self.current_controller = self.edit_controller
+            editor.set_editmole_mode()
 
         if key in mel.lib.ui.WAITKEY_ARROWS:
             print(editor.moledata.current_image_path())
 
-        self.edit_controller.on_key(editor, key)
+        self.current_controller.on_key(editor, key)
 
 
 def process_args(args):
@@ -212,10 +237,17 @@ def process_args(args):
     editor.display.set_mouse_callback(
         mouse_callback)
 
+    print("Press 'q' to quit.")
     print("Press left for previous image, right for next image.")
     print("Press up for previous map, down for next map.")
-    print("Click on a point to add or move a mole there and save.")
     print("Ctrl-click on a point to zoom in on it.")
+    print("Press space to restore original zoom.")
+    print()
+    print("Press '1' for mole edit mode (the starting mode)")
+    print("Press '0' for auto-mole debug mode")
+    print()
+    print("In 'mole edit' mode:")
+    print("Click on a point to add or move a mole there and save.")
     print("Shift-click on a point to delete it.")
     print("Alt-Shift-click on a point to copy it's uuid.")
     print("Alt-click on a point to paste the copied uuid.")
@@ -223,9 +255,7 @@ def process_args(args):
     print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
-    print("Press space to restore original zoom.")
     print("Press enter to toggle mole markers.")
-    print("Press 'q' to quit.")
 
     is_finished = False
     while not is_finished:

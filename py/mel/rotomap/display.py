@@ -8,6 +8,7 @@ import mel.lib.common
 import mel.lib.image
 import mel.lib.math
 import mel.lib.ui
+import mel.rotomap.detectmoles
 import mel.rotomap.moles
 import mel.rotomap.tricolour
 
@@ -89,7 +90,8 @@ class Display:
                 image, self._zoom_pos, self._rect)
 
         image = self._transform.render()
-        image = overlay(image, self._transform)
+        if overlay is not None:
+            image = overlay(image, self._transform)
 
         cv2.imshow(self._name, image)
 
@@ -254,11 +256,21 @@ class Editor:
         self.display = Display(width, height)
         self.moledata_list = [MoleData(x) for x in path_list_list]
 
+        self._is_automoledebug_mode = False
+
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self._status_overlay = StatusOverlay()
+        self.show_current()
+
+    def set_automoledebug_mode(self):
+        self._is_automoledebug_mode = True
+        self.show_current()
+
+    def set_editmole_mode(self):
+        self._is_automoledebug_mode = False
         self.show_current()
 
     def set_status(self, text):
@@ -293,13 +305,18 @@ class Editor:
 
     def show_current(self):
         image = self.moledata.get_image()
-        self._mole_overlay.moles = self.moledata.moles
-        self.display.show_current(
-            image,
-            make_composite_overlay(
-                self._mole_overlay,
-                self._status_overlay))
-        self.display.set_title(self.moledata.current_image_path())
+        if self._is_automoledebug_mode:
+            image = image[:]
+            image = mel.rotomap.detectmoles.draw_experimental(image)
+            self.display.show_current(image, None)
+        else:
+            self._mole_overlay.moles = self.moledata.moles
+            self.display.show_current(
+                image,
+                make_composite_overlay(
+                    self._mole_overlay,
+                    self._status_overlay))
+            self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
         self.display.set_fitted()
