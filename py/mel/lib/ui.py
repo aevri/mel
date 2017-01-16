@@ -223,3 +223,11 @@ class LeftRightDisplay():
                     self.display.height,
                     self.display.width))
             self.display.set_title(self._original_title)
+
+    def set_mouse_callback(self, callback):
+        cv2.setMouseCallback(self.display.name, callback)
+
+    def clear_mouse_callback(self):
+        cv2.setMouseCallback(
+            self.display.name,
+            mel.lib.common.make_null_mouse_callback())
