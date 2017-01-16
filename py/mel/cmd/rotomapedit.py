@@ -90,7 +90,7 @@ class FollowController():
             self.status = 'follow mode'
 
 
-class EditController():
+class MoleEditController():
 
     def __init__(self, editor, follow):
         self.mole_uuid_list = [None]
@@ -182,9 +182,9 @@ class AutomoleDebugController():
 class Controller():
 
     def __init__(self, editor, follow):
-        self.edit_controller = EditController(editor, follow)
+        self.moleedit_controller = MoleEditController(editor, follow)
         self.automoledebug_controller = AutomoleDebugController()
-        self.current_controller = self.edit_controller
+        self.current_controller = self.moleedit_controller
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -213,7 +213,7 @@ class Controller():
             editor.set_automoledebug_mode()
         elif key == ord('1'):
             # Switch to edit mode
-            self.current_controller = self.edit_controller
+            self.current_controller = self.moleedit_controller
             editor.set_editmole_mode()
 
         if key in mel.lib.ui.WAITKEY_ARROWS:
