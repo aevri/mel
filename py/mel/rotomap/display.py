@@ -320,6 +320,7 @@ class Editor:
         value = 255 if enable else 0
         radius = 100
         cv2.circle(self.moledata.mask, (image_x, image_y), radius, value, -1)
+        self.moledata.save_mask()
         self.show_current()
 
     def show_current(self):
@@ -436,6 +437,7 @@ class MoleData:
         self.moles = []
         self.image = None
         self.mask = None
+        self._mask_path = None
         self._path_list = path_list
         self._list_index = 0
         self._num_images = len(self._path_list)
@@ -456,10 +458,10 @@ class MoleData:
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
-        mask_path = image_path + '.mask.png'
+        self._mask_path = image_path + '.mask.png'
         height, width = self.image.shape[:2]
-        if os.path.isfile(mask_path):
-            self.mask = cv2.imread(mask_path, -1)
+        if os.path.isfile(self._mask_path):
+            self.mask = cv2.imread(self._mask_path, -1)
         else:
             self.mask = numpy.zeros((height, width, 1), numpy.uint8)
 
@@ -471,6 +473,9 @@ class MoleData:
 
     def increment(self):
         self._list_index = (self._list_index + 1) % self._num_images
+
+    def save_mask(self):
+        cv2.imwrite(self._mask_path, self.mask)
 
     def save_moles(self):
         image_path = self._path_list[self._list_index]
