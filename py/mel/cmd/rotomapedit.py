@@ -43,11 +43,9 @@ class MoveController():
     def __init__(self):
         self.status = 'Move mode'
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
-        del _param
-        if event == cv2.EVENT_LBUTTONDOWN:
-            editor.move_nearest_mole(mouse_x, mouse_y)
-            return True
+    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
+        editor.move_nearest_mole(mouse_x, mouse_y)
+        return True
 
     def on_key(self, editor, key):
         pass
@@ -64,12 +62,10 @@ class FollowController():
         self.is_paste_mode = False
         self.update_status()
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, _param):
-        del _param
-        if event == cv2.EVENT_LBUTTONDOWN:
-            editor.crud_mole(self.mole_uuid_list[0], mouse_x, mouse_y)
-            editor.follow(self.mole_uuid_list[0])
-            return True
+    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
+        editor.crud_mole(self.mole_uuid_list[0], mouse_x, mouse_y)
+        editor.follow(self.mole_uuid_list[0])
+        return True
 
     def pre_key(self, editor, key):
         self._prev_moles = editor.moledata.moles
@@ -117,9 +113,8 @@ class EditController():
             editor.remove_mole(mouse_x, mouse_y)
         else:
             if self.sub_controller:
-                event = cv2.EVENT_LBUTTONDOWN
-                if self.sub_controller.on_mouse_event(
-                        editor, event, mouse_x, mouse_y, flags, None):
+                if self.sub_controller.on_lbutton_down_noflags(
+                        editor, mouse_x, mouse_y):
                     return
             editor.add_mole(mouse_x, mouse_y)
 
