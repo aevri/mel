@@ -174,11 +174,12 @@ class MaskEditController():
         pass
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        enable = not(flags & cv2.EVENT_FLAG_SHIFTKEY)
         if event == cv2.EVENT_MOUSEMOVE:
             if flags & cv2.EVENT_FLAG_LBUTTON:
-                editor.set_mask(mouse_x, mouse_y)
+                editor.set_mask(mouse_x, mouse_y, enable)
         elif event == cv2.EVENT_LBUTTONDOWN:
-            editor.set_mask(mouse_x, mouse_y)
+            editor.set_mask(mouse_x, mouse_y, enable)
 
     def pre_key(self, editor, key):
         pass
@@ -286,6 +287,10 @@ def process_args(args):
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
     print("Press enter to toggle mole markers.")
+    print()
+    print("In 'mask edit' mode:")
+    print("Click on a point to draw masking there.")
+    print("Shift-click on a point to remove masking there.")
 
     is_finished = False
     while not is_finished:
