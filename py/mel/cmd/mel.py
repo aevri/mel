@@ -11,6 +11,7 @@ import mel.cmd.microcompare
 import mel.cmd.microview
 import mel.cmd.rotomapdiff
 import mel.cmd.rotomapedit
+import mel.cmd.rotomapeditmask
 import mel.cmd.rotomaplist
 import mel.cmd.rotomapmolepicker
 import mel.cmd.rotomaporganise
@@ -46,6 +47,10 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microcompare, 'micro-compare')
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
+    _setup_parser_for_module(
+        subparsers,
+        mel.cmd.rotomapeditmask,
+        'rotomap-editmask')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaplist, 'rotomap-list')
