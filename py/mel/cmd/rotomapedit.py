@@ -69,6 +69,7 @@ class FollowController():
         if event == cv2.EVENT_LBUTTONDOWN:
             editor.crud_mole(self.mole_uuid_list[0], mouse_x, mouse_y)
             editor.follow(self.mole_uuid_list[0])
+            return True
 
     def pre_key(self, editor, key):
         self._prev_moles = editor.moledata.moles
