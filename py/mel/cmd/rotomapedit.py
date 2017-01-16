@@ -81,13 +81,11 @@ class FollowController():
                 self.mole_uuid_list[0],
                 self._prev_moles,
                 self.is_paste_mode)
-            return True
         elif key == ord('p'):
             self.is_paste_mode = not self.is_paste_mode
             self.update_status()
             editor.set_status(self.status)
             editor.show_current()
-            return True
 
     def update_status(self):
         if self.is_paste_mode:
