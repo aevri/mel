@@ -326,7 +326,8 @@ class Editor:
         image = self.moledata.get_image()
         if self._mode is EditorMode.debug_automole:
             image = image[:]
-            image = mel.rotomap.detectmoles.draw_experimental(image)
+            image = mel.rotomap.detectmoles.draw_experimental(
+                image, self.moledata.mask)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             image = image // 2

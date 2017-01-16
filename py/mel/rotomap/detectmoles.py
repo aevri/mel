@@ -4,11 +4,11 @@ import cv2
 import numpy
 
 
-def draw_experimental(image):
+def draw_experimental(image, mask):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = image[:, :, 1]
 
-    image = cv2.bitwise_and(image, image)
+    image = cv2.bitwise_and(image, image, mask=mask)
     image = cv2.bitwise_not(image, image)
 
     # Note that the static analysis tool 'vulture' doesn't seem to be happy
