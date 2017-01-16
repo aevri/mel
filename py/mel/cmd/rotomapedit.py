@@ -164,6 +164,21 @@ class MoleEditController():
                 pass
 
 
+class MaskEditController():
+
+    def __init__(self):
+        pass
+
+    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
+        pass
+
+    def pre_key(self, editor, key):
+        pass
+
+    def on_key(self, editor, key):
+        pass
+
+
 class AutomoleDebugController():
 
     def __init__(self):
@@ -183,6 +198,7 @@ class Controller():
 
     def __init__(self, editor, follow):
         self.moleedit_controller = MoleEditController(editor, follow)
+        self.maskedit_controller = MaskEditController()
         self.automoledebug_controller = AutomoleDebugController()
         self.current_controller = self.moleedit_controller
 
@@ -212,9 +228,13 @@ class Controller():
             self.current_controller = self.automoledebug_controller
             editor.set_automoledebug_mode()
         elif key == ord('1'):
-            # Switch to edit mode
+            # Switch to mole edit mode
             self.current_controller = self.moleedit_controller
             editor.set_editmole_mode()
+        elif key == ord('2'):
+            # Switch to mask edit mode
+            self.current_controller = self.maskedit_controller
+            editor.set_editmask_mode()
 
         if key in mel.lib.ui.WAITKEY_ARROWS:
             print(editor.moledata.current_image_path())
@@ -244,6 +264,7 @@ def process_args(args):
     print("Press space to restore original zoom.")
     print()
     print("Press '1' for mole edit mode (the starting mode).")
+    print("Press '2' for mask edit mode.")
     print("Press '0' for auto-mole debug mode.")
     print()
     print("In 'mole edit' mode:")

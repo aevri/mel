@@ -1,5 +1,6 @@
 """Display a rotomap."""
 
+import enum
 
 import cv2
 import numpy
@@ -249,6 +250,12 @@ class FittedImageTransform():
         return ((numpy.array((x, y)) - self._offset) * self._scale).astype(int)
 
 
+class EditorMode(enum.Enum):
+    edit_mole = 1
+    edit_mask = 2
+    debug_automole = 0
+
+
 class Editor:
 
     def __init__(self, path_list_list, width, height):
@@ -256,7 +263,7 @@ class Editor:
         self.display = Display(width, height)
         self.moledata_list = [MoleData(x) for x in path_list_list]
 
-        self._is_automoledebug_mode = False
+        self._mode = EditorMode.edit_mole
 
         self.moledata_index = 0
         self.moledata = self.moledata_list[self.moledata_index]
@@ -266,11 +273,15 @@ class Editor:
         self.show_current()
 
     def set_automoledebug_mode(self):
-        self._is_automoledebug_mode = True
+        self._mode = EditorMode.debug_automole
         self.show_current()
 
     def set_editmole_mode(self):
-        self._is_automoledebug_mode = False
+        self._mode = EditorMode.edit_mole
+        self.show_current()
+
+    def set_editmask_mode(self):
+        self._mode = EditorMode.edit_mask
         self.show_current()
 
     def set_status(self, text):
@@ -305,9 +316,11 @@ class Editor:
 
     def show_current(self):
         image = self.moledata.get_image()
-        if self._is_automoledebug_mode:
+        if self._mode is EditorMode.debug_automole:
             image = image[:]
             image = mel.rotomap.detectmoles.draw_experimental(image)
+            self.display.show_current(image, None)
+        elif self._mode is EditorMode.edit_mask:
             self.display.show_current(image, None)
         else:
             self._mole_overlay.moles = self.moledata.moles
