@@ -11,6 +11,7 @@ import mel.lib.math
 import mel.lib.ui
 
 import mel.rotomap.display
+import mel.rotomap.mask
 
 
 def setup_parser(parser):
@@ -185,7 +186,13 @@ class MaskEditController():
         pass
 
     def on_key(self, editor, key):
-        pass
+        if key == ord('a'):
+            image = editor.moledata.image
+            mask = editor.moledata.mask
+            hist = mel.rotomap.mask.histogram_from_image_mask(image, mask)
+            editor.moledata.mask = mel.rotomap.mask.guess_mask(image, hist)
+            editor.moledata.save_mask()
+            editor.show_current()
 
 
 class AutomoleDebugController():
@@ -291,6 +298,7 @@ def process_args(args):
     print("In 'mask edit' mode:")
     print("Click on a point to draw masking there.")
     print("Shift-click on a point to remove masking there.")
+    print("Press 'a' to auto-mask based on the current mask.")
 
     is_finished = False
     while not is_finished:
