@@ -1,6 +1,7 @@
 """Display a rotomap."""
 
 import enum
+import os
 
 import cv2
 import numpy
@@ -321,7 +322,11 @@ class Editor:
             image = mel.rotomap.detectmoles.draw_experimental(image)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
-            self.display.show_current(image, None)
+            image = image // 2
+            mask = self.moledata.mask
+            masked_image = cv2.bitwise_and(image, image, mask=mask)
+            composite_image = cv2.add(masked_image, image)
+            self.display.show_current(composite_image, None)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(
@@ -422,6 +427,7 @@ class MoleData:
     def __init__(self, path_list):
         self.moles = []
         self.image = None
+        self.mask = None
         self._path_list = path_list
         self._list_index = 0
         self._num_images = len(self._path_list)
@@ -441,6 +447,13 @@ class MoleData:
         self.image = load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
+
+        mask_path = image_path + '.mask.png'
+        height, width = self.image.shape[:2]
+        if os.path.isfile(mask_path):
+            self.mask = cv2.imread(mask_path, -1)
+        else:
+            self.mask = numpy.zeros((height, width, 1), numpy.uint8)
 
         self._loaded_index = self._list_index
 
