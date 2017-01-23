@@ -1,5 +1,7 @@
 """Relate rotomaps to eachother."""
 
+import collections
+
 import cv2
 import numpy
 
@@ -42,6 +44,7 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
 
 
 def draw_debug(image, to_moles, from_moles):
+    return draw_neighbourhoods2(image, to_moles, from_moles)
 
     if from_moles is None:
         from_moles = []
@@ -87,6 +90,105 @@ def overlay_theory(image, theory, from_dict, to_dict):
 
 def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
+
+
+def overlay_unknown(image, from_only, to_only, from_dict, to_dict):
+    colour_unknown_from = (255, 0, 255)
+    colour_unknown_to = (255, 255, 0)
+    for u in from_only:
+        draw_mole(image, from_dict[u], colour_unknown_from)
+    for u in to_only:
+        draw_mole(image, to_dict[u], colour_unknown_to)
+
+
+def draw_neighbourhoods2(image, to_moles, from_moles):
+
+    if from_moles is None:
+        from_moles = []
+
+    from_dict = mole_list_to_uuid_dict(from_moles)
+    to_dict = mole_list_to_uuid_dict(to_moles)
+    from_set = set(from_dict.keys())
+    to_set = set(to_dict.keys())
+
+    from_only = from_set - to_set
+    to_only = to_set - from_set
+    in_both = from_set & to_set
+
+    theory = []
+    theory.extend((u, u) for u in in_both)
+
+    advance_theory_by_neighbours(
+        theory, from_only, to_only, from_dict, to_dict)
+
+    image = numpy.zeros(image.shape)
+    overlay_theory(image, theory, from_dict, to_dict)
+    overlay_unknown(image, from_only, to_only, from_dict, to_dict)
+    return image
+
+
+def advance_theory_by_neighbours(
+        theory, from_only, to_only, from_dict, to_dict):
+
+    from_mn, from_nm = calc_neighbours(from_dict.values())
+    to_mn, to_nm = calc_neighbours(to_dict.values())
+
+    apply_theory_to_neighbours(theory, from_mn, to_mn)
+
+    import pprint
+    pprint.pprint(from_mn)
+    pprint.pprint(from_nm)
+    pprint.pprint(to_mn)
+    pprint.pprint(to_nm)
+
+    assertion = next_best_neighbour_assertion(
+        from_mn, from_nm, to_mn, to_nm, from_only, to_only)
+
+    if assertion is not None:
+        theory.append(assertion)
+
+
+def calc_neighbours(moles):
+    mole_to_neighbours = {}
+    neighbour_to_moles = collections.defaultdict(list)
+
+    if len(moles) <= 1:
+        return mole_to_neighbours, neighbour_to_moles
+
+    for m in moles:
+        x = m['x']
+        y = m['y']
+
+        nearest = mel.rotomap.moles.sorted_by_distances(moles, x, y)
+        dist2 = mel.rotomap.moles.dist_xy(nearest[1], x, y) * 2
+        neighbours = {
+            n['uuid'] for n in nearest[1:]
+            if mel.rotomap.moles.dist_xy(n, x, y) < dist2
+        }
+        mole_to_neighbours[m['uuid']] = {'unknown': neighbours, 'status': None}
+        for n_uuid in neighbours:
+            neighbour_to_moles[n_uuid].append(m['uuid'])
+
+    return mole_to_neighbours, neighbour_to_moles
+
+
+def apply_theory_to_neighbours(theory, from_mn, to_mn):
+    for from_, to in theory:
+        assert (from_ is not None) or (to is not None)
+        if to is None:
+            raise NotImplementedError
+        elif from_ is None:
+            raise NotImplementedError
+        else:
+            from_mn[from_]['to'] = to
+            from_mn[from_]['status'] = 'mapped'
+            to_mn[to]['from'] = from_
+            to_mn[to]['status'] = 'mapped'
+
+
+def next_best_neighbour_assertion(
+        from_mn, from_nm, to_mn, to_nm, from_only, to_only):
+    pass
 
 
 def draw_neighbourhoods(image, moles):
