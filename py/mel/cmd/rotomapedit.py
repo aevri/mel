@@ -216,12 +216,29 @@ class AutomoleDebugController():
         pass
 
 
+class AutoRelateDebugController():
+
+    def __init__(self):
+        pass
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        pass
+
+    def pre_key(self, editor, key):
+        if key in mel.lib.ui.WAITKEY_ARROWS:
+            editor.set_from_moles(copy.deepcopy(editor.moledata.moles))
+
+    def on_key(self, editor, key):
+        pass
+
+
 class Controller():
 
     def __init__(self, editor, follow):
         self.moleedit_controller = MoleEditController(editor, follow)
         self.maskedit_controller = MaskEditController()
         self.automoledebug_controller = AutomoleDebugController()
+        self.autorelatedebug_controller = AutoRelateDebugController()
         self.current_controller = self.moleedit_controller
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
@@ -250,6 +267,10 @@ class Controller():
             # Switch to automole debug mode
             self.current_controller = self.automoledebug_controller
             editor.set_automoledebug_mode()
+        elif key == ord('9'):
+            # Switch to autorelate debug mode
+            self.current_controller = self.autorelatedebug_controller
+            editor.set_autorelatedebug_mode()
         elif key == ord('1'):
             # Switch to mole edit mode
             self.current_controller = self.moleedit_controller
@@ -289,6 +310,7 @@ def process_args(args):
     print("Press '1' for mole edit mode (the starting mode).")
     print("Press '2' for mask edit mode.")
     print("Press '0' for auto-mole debug mode.")
+    print("Press '9' for auto-relate debug mode.")
     print()
     print("In 'mole edit' mode:")
     print("Click on a point to add or move a mole there and save.")
