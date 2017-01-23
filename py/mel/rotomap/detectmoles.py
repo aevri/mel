@@ -5,7 +5,19 @@ import numpy
 
 
 def draw_experimental(image, mask):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    keypoints, image = calc_keypoints(image, mask)
+    image = cv2.drawKeypoints(
+        image,
+        keypoints,
+        numpy.array([]),
+        (0, 0, 255),
+        cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+    return image
+
+
+def calc_keypoints(original_image, mask):
+    image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
     image = image[:, :, 1]
 
     image = cv2.bitwise_and(image, image, mask=mask)
@@ -28,11 +40,5 @@ def draw_experimental(image, mask):
 
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(image)
-    image = cv2.drawKeypoints(
-        image,
-        keypoints,
-        numpy.array([]),
-        (0, 0, 255),
-        cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-    return image
+    return keypoints, image
