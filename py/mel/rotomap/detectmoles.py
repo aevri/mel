@@ -3,6 +3,8 @@
 import cv2
 import numpy
 
+import mel.rotomap.moles
+
 
 def draw_debug(image, mask):
     keypoints, image = _keypoints(image, mask)
@@ -14,6 +16,15 @@ def draw_debug(image, mask):
         cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     return image
+
+
+def moles(image, mask):
+    moles_ = []
+    for point in keypoints(image, mask):
+        xy = point.pt
+        mel.rotomap.moles.add_mole(moles_, int(xy[0]), int(xy[1]))
+        moles_[-1]['radius'] = point.size // 2
+    return moles_
 
 
 def keypoints(image, mask):

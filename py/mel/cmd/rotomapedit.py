@@ -157,6 +157,12 @@ class MoleEditController():
                 editor.moledata.moles,
                 editor.moledata.get_image())
             editor.set_moles(guessed_moles)
+        elif key == ord('r'):
+            guessed_moles = mel.rotomap.detectmoles.moles(
+                editor.moledata.get_image(),
+                editor.moledata.mask)
+            editor.set_moles(guessed_moles)
+            editor.moledata.save_moles()
         elif key == ord('f'):
             editor.toggle_faded_markers()
         elif key == 13:
@@ -293,6 +299,7 @@ def process_args(args):
     print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
+    print("Press 'r' to auto-mark moles visible in the current mask.")
     print("Press enter to toggle mole markers.")
     print()
     print("In 'mask edit' mode:")
