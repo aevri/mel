@@ -4,8 +4,8 @@ import cv2
 import numpy
 
 
-def draw_experimental(image, mask):
-    keypoints, image = calc_keypoints(image, mask)
+def draw_debug(image, mask):
+    keypoints, image = _keypoints(image, mask)
     image = cv2.drawKeypoints(
         image,
         keypoints,
@@ -16,7 +16,11 @@ def draw_experimental(image, mask):
     return image
 
 
-def calc_keypoints(original_image, mask):
+def keypoints(image, mask):
+    return _keypoints(image, mask)[0]
+
+
+def _keypoints(original_image, mask):
     image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
     image = image[:, :, 1]
 
