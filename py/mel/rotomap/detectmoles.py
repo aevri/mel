@@ -38,6 +38,9 @@ def calc_keypoints(original_image, mask):
     params.maxArea = 1500
     params.minArea = 50
 
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.25
+
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(image)
 
