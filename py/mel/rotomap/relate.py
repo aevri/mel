@@ -1,6 +1,7 @@
 """Relate rotomaps to eachother."""
 
 import collections
+import math
 
 import cv2
 import numpy
@@ -142,7 +143,7 @@ def advance_theory_by_neighbours(
     pprint.pprint(to_nm)
 
     assertion = next_best_neighbour_assertion(
-        from_mn, from_nm, to_mn, to_nm, from_only, to_only)
+        from_mn, from_nm, to_mn, to_nm, from_dict, to_dict)
 
     if assertion is not None:
         theory.append(assertion)
@@ -165,7 +166,7 @@ def calc_neighbours(moles):
             n['uuid'] for n in nearest[1:]
             if mel.rotomap.moles.dist_xy(n, x, y) < dist2
         }
-        mole_to_neighbours[m['uuid']] = {'unknown': neighbours, 'status': None}
+        mole_to_neighbours[m['uuid']] = {'locals': neighbours, 'status': None}
         for n_uuid in neighbours:
             neighbour_to_moles[n_uuid].append(m['uuid'])
 
@@ -187,8 +188,47 @@ def apply_theory_to_neighbours(theory, from_mn, to_mn):
 
 
 def next_best_neighbour_assertion(
-        from_mn, from_nm, to_mn, to_nm, from_only, to_only):
-    pass
+        from_mn, from_nm, to_mn, to_nm, from_dict, to_dict):
+
+    assertions = []
+
+    # Generate likely assertions about neighbours of mapped 'to' moles, look
+    # for matches.
+
+    for to_uuid, to_data in to_mn.items():
+        if to_data['status'] == 'mapped':
+            to_mole = to_dict[to_uuid]
+            from_uuid = to_data['from']
+            from_data = from_mn[from_uuid]
+            from_mole = from_dict[from_uuid]
+
+            to_angle_list = []
+            for u in to_data['locals']:
+                to_angle_list.append(
+                    (angle_between_moles(to_mole, to_dict[u]),
+                    u))
+
+            from_angle_list = []
+            for v in from_data['locals']:
+                from_angle_list.append(
+                    (angle_between_moles(from_mole, from_dict[v]),
+                    v))
+
+            # Try to match to a neighbour in the corresponding 'from' mole.
+            # Check angle.
+
+            print(from_angle_list)
+            print(to_angle_list)
+
+    # raise NotImplementedError
+
+
+def angle_between_moles(start, end):
+    start_xy = mel.rotomap.moles.molepos_to_nparray(start)
+    end_xy = mel.rotomap.moles.molepos_to_nparray(end)
+    vec = end_xy - start_xy
+    angle_rads = math.atan2(vec[1], vec[0])
+    return angle_rads * 180 / math.pi
 
 
 def draw_neighbourhoods(image, moles):
