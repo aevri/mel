@@ -89,6 +89,39 @@ def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
 
 
+def draw_neighbourhoods(image, moles):
+    image = numpy.zeros(image.shape)
+    for m in moles:
+        x = m['x']
+        y = m['y']
+
+        # TODO: fix non-zero neighbours assumption
+
+        neighbours = mel.rotomap.moles.sorted_by_distances(moles, x, y)
+        dist = mel.rotomap.moles.dist_xy(neighbours[1], x, y)
+        neighbours = [
+            n for n in neighbours
+            if mel.rotomap.moles.dist_xy(n, x, y) < dist * 2
+        ]
+
+        clut = mel.rotomap.tricolour._NINE_CLASS_SET1
+
+        colour = (255, 255, 255)
+        if len(neighbours) - 1 < len(clut):
+            colour = clut[len(neighbours) - 1]
+
+        draw_mole(image, m, colour)
+
+        # Point at neighbours
+        for n in neighbours:
+            nx = n['x']
+            ny = n['y']
+            cv2.arrowedLine(
+                image, (x, y), (nx, ny), colour, 2, cv2.LINE_AA)
+
+    return image
+
+
 def best_offset_theory(from_moles, to_moles, cutoff, offset_cutoff):
     if not from_moles:
         raise ValueError('from_moles is empty')

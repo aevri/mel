@@ -229,7 +229,13 @@ class AutoRelateDebugController():
             editor.set_from_moles(copy.deepcopy(editor.moledata.moles))
 
     def on_key(self, editor, key):
-        pass
+        modes = mel.rotomap.display.AutorelateDebugMode
+        if key == ord('n'):
+            editor.set_autorelatedebug_mode(
+                modes.show_neighbourhoods)
+        elif key == ord('m'):
+            editor.set_autorelatedebug_mode(
+                modes.no_guessing)
 
 
 class Controller():
@@ -328,6 +334,10 @@ def process_args(args):
     print("Click on a point to draw masking there.")
     print("Shift-click on a point to remove masking there.")
     print("Press 'a' to auto-mask based on the current mask.")
+    print()
+    print("In 'auto-relate debug' mode:")
+    print("Press 'n' to show neighbourhoods.")
+    print("Press 'm' to show mapping with no guessing.")
 
     is_finished = False
     while not is_finished:

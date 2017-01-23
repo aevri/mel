@@ -64,14 +64,22 @@ def add_mole(moles, x, y, mole_uuid=None):
     })
 
 
+def dist_xy(mole, x, y):
+    return math.sqrt(sqdist_xy(mole, x, y))
+
+
+def sqdist_xy(mole, x, y):
+    dist_x = x - mole['x']
+    dist_y = y - mole['y']
+    return (dist_x * dist_x) + (dist_y * dist_y)
+
+
 def sorted_by_distances(mole_list, x, y):
 
-    def sqdist(mole):
-        dist_x = x - mole['x']
-        dist_y = y - mole['y']
-        return (dist_x * dist_x) + (dist_y * dist_y)
+    def mole_sqdist(mole):
+        return sqdist_xy(mole, x, y)
 
-    return sorted(mole_list, key=sqdist)
+    return sorted(mole_list, key=mole_sqdist)
 
 
 def nearest_mole_index(moles, x, y):

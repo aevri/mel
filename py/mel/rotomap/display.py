@@ -259,6 +259,11 @@ class EditorMode(enum.Enum):
     debug_autorelate = 9
 
 
+class AutorelateDebugMode(enum.Enum):
+    no_guessing = 0
+    show_neighbourhoods = 1
+
+
 class Editor:
 
     def __init__(self, path_list_list, width, height):
@@ -276,13 +281,16 @@ class Editor:
         self.show_current()
 
         self._from_moles = None
+        self._autorelatedebugmode = AutorelateDebugMode.no_guessing
 
     def set_automoledebug_mode(self):
         self._mode = EditorMode.debug_automole
         self.show_current()
 
-    def set_autorelatedebug_mode(self):
+    def set_autorelatedebug_mode(self, mode=None):
         self._mode = EditorMode.debug_autorelate
+        if mode is not None:
+            self._autorelatedebugmode = mode
         self.show_current()
 
     def set_editmole_mode(self):
@@ -343,8 +351,12 @@ class Editor:
             self.display.show_current(image, None)
         elif self._mode is EditorMode.debug_autorelate:
             image = numpy.copy(image)
-            image = mel.rotomap.relate.draw_debug(
-                image, self.moledata.moles, self._from_moles)
+            if self._autorelatedebugmode is AutorelateDebugMode.no_guessing:
+                image = mel.rotomap.relate.draw_debug(
+                    image, self.moledata.moles, self._from_moles)
+            else:
+                image = mel.rotomap.relate.draw_neighbourhoods(
+                    image, self.moledata.moles)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             image = image // 2
