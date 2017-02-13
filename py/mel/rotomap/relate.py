@@ -60,6 +60,9 @@ def draw_debug(image, to_moles, from_moles):
     theory.extend((None, u) for u in to_only)
     theory.extend((u, u) for u in in_both)
 
+    if from_moles and to_moles:
+        theory = best_offset_theory(from_moles, to_moles, None, None)
+
     image = numpy.zeros(image.shape)
     overlay_theory(image, theory, from_dict, to_dict)
     return image
