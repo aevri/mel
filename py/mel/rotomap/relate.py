@@ -45,7 +45,7 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
 
 
 def draw_debug(image, to_moles, from_moles):
-    return draw_neighbourhoods2(image, to_moles, from_moles)
+    # return draw_neighbourhoods2(image, to_moles, from_moles)
 
     if from_moles is None:
         from_moles = []
@@ -63,6 +63,9 @@ def draw_debug(image, to_moles, from_moles):
     theory.extend((u, None) for u in from_only)
     theory.extend((None, u) for u in to_only)
     theory.extend((u, u) for u in in_both)
+
+    if from_moles and to_moles:
+        theory = best_offset_theory(from_moles, to_moles, None, None)
 
     image = numpy.zeros(image.shape)
     overlay_theory(image, theory, from_dict, to_dict)
