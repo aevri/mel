@@ -2,6 +2,7 @@
 
 
 import copy
+import uuid
 
 import cv2
 
@@ -107,6 +108,8 @@ class MoleEditController():
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.on_lbutton_down(editor, mouse_x, mouse_y, flags)
+        if event == cv2.EVENT_RBUTTONDOWN:
+            self.on_rbutton_down(editor, mouse_x, mouse_y, flags)
 
     def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
         if flags & cv2.EVENT_FLAG_ALTKEY:
@@ -123,6 +126,14 @@ class MoleEditController():
                         editor, mouse_x, mouse_y):
                     return
             editor.add_mole(mouse_x, mouse_y)
+
+    def on_rbutton_down(self, editor, mouse_x, mouse_y, flags):
+        if flags & cv2.EVENT_FLAG_SHIFTKEY:
+            editor.set_mole_uuid(
+                mouse_x,
+                mouse_y,
+                uuid.uuid4().hex,
+                is_canonical=False)
 
     def pre_key(self, editor, key):
         if key in mel.lib.ui.WAITKEY_ARROWS:
@@ -333,6 +344,7 @@ def process_args(args):
     print("In 'mole edit' mode:")
     print("Click on a point to add or move a mole there and save.")
     print("Shift-click on a point to delete it.")
+    print("Shift-right-click on a point to randomize the uuid.")
     print("Alt-Shift-click on a point to copy it's uuid.")
     print("Alt-click on a point to paste the copied uuid.")
     print("Press 'o' to toggle follow mode.")
