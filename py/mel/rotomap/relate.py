@@ -61,7 +61,7 @@ def draw_debug(image, to_moles, from_moles):
     theory.extend((u, u) for u in in_both)
 
     if from_moles and to_moles:
-        theory = best_offset_theory(from_moles, to_moles, None, None)
+        theory = best_offset_theory(from_moles, to_moles)
 
     image = numpy.zeros(image.shape)
     overlay_theory(image, theory, from_dict, to_dict)
@@ -92,7 +92,7 @@ def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
 
 
-def best_offset_theory(from_moles, to_moles, cutoff, offset_cutoff):
+def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
     if not from_moles:
         raise ValueError('from_moles is empty')
     if not to_moles:
