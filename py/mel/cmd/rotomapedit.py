@@ -128,7 +128,14 @@ class MoleEditController():
             editor.add_mole(mouse_x, mouse_y)
 
     def on_rbutton_down(self, editor, mouse_x, mouse_y, flags):
-        if flags & cv2.EVENT_FLAG_SHIFTKEY:
+        if flags & cv2.EVENT_FLAG_ALTKEY:
+            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                pass
+            else:
+                editor.remap_uuid(
+                    editor.get_mole_uuid(mouse_x, mouse_y),
+                    self.mole_uuid_list[0])
+        elif flags & cv2.EVENT_FLAG_SHIFTKEY:
             editor.set_mole_uuid(
                 mouse_x,
                 mouse_y,
@@ -347,6 +354,7 @@ def process_args(args):
     print("Shift-right-click on a point to randomize the uuid.")
     print("Alt-Shift-click on a point to copy it's uuid.")
     print("Alt-click on a point to paste the copied uuid.")
+    print("Alt-right-click on a point to replace the uuid in the whole map.")
     print("Press 'o' to toggle follow mode.")
     print("Press 'm' to toggle move mode.")
     print("Press 'c' to copy the moles in the displayed image.")

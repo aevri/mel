@@ -446,6 +446,10 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
+    def remap_uuid(self, from_uuid, to_uuid):
+        self.moledata.remap_uuid(from_uuid, to_uuid)
+        self.show_current()
+
 
 class MoleData:
 
@@ -482,6 +486,17 @@ class MoleData:
             self.mask = numpy.zeros((height, width, 1), numpy.uint8)
 
         self._loaded_index = self._list_index
+
+    def remap_uuid(self, from_uuid, to_uuid):
+        for image_path in self._path_list:
+            moles = mel.rotomap.moles.load_image_moles(image_path)
+            for m in moles:
+                if m['uuid'] == from_uuid:
+                    m['uuid'] = to_uuid
+            mel.rotomap.moles.save_image_moles(moles, image_path)
+
+        image_path = self._path_list[self._list_index]
+        self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
     def decrement(self):
         new_index = self._list_index + self._num_images - 1
