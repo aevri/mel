@@ -102,6 +102,7 @@ class MoleEditController():
         self.sub_controller = None
 
         self.copied_moles = None
+        self.previous_moles = None
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -124,6 +125,9 @@ class MoleEditController():
             editor.add_mole(mouse_x, mouse_y)
 
     def pre_key(self, editor, key):
+        if key in mel.lib.ui.WAITKEY_ARROWS:
+            self.previous_moles = copy.deepcopy(editor.moledata.moles)
+
         if self.sub_controller:
             try:
                 self.sub_controller.pre_key(editor, key)
@@ -163,6 +167,20 @@ class MoleEditController():
                 editor.moledata.mask)
             editor.set_moles(guessed_moles)
             editor.moledata.save_moles()
+        elif key == ord('t'):
+            theory = mel.rotomap.relate.best_offset_theory(
+                self.previous_moles,
+                editor.moledata.moles)
+            if theory:
+                guessed_moles = copy.deepcopy(editor.moledata.moles)
+                for mole in guessed_moles:
+                    for p in theory:
+                        if p[0] and p[1]:
+                            if mole['uuid'] == p[1]:
+                                mole['uuid'] = p[0]
+                                break
+                editor.set_moles(guessed_moles)
+                editor.moledata.save_moles()
         elif key == ord('f'):
             editor.toggle_faded_markers()
         elif key == 13:
@@ -322,6 +340,7 @@ def process_args(args):
     print("Press 'c' to copy the moles in the displayed image.")
     print("Press 'a' to auto-paste the copied moles in the displayed image.")
     print("Press 'r' to auto-mark moles visible in the current mask.")
+    print("Press 't' to auto-relate moles from the previously viewed image.")
     print("Press enter to toggle mole markers.")
     print()
     print("In 'mask edit' mode:")
