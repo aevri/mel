@@ -4,6 +4,12 @@ import cv2
 import numpy
 
 
+def load(mole_image_path):
+    return cv2.imread(
+        mole_image_path + '.mask.png',
+        cv2.IMREAD_UNCHANGED)
+
+
 def histogram_from_image_mask(image, mask):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     skin_hist = _calc_hist(hsv, mask)
