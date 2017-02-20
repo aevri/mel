@@ -109,6 +109,12 @@ def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
         if cutoff_sq is None:
             cutoff_sq = 0
 
+    return best_baseless_offset_theory(
+        from_moles, to_moles, cutoff_sq, offset_cutoff_sq)
+
+
+def best_baseless_offset_theory(
+        from_moles, to_moles, cutoff_sq, offset_cutoff_sq):
     best_theory = None
     best_theory_dist_sq = None
     best_theory_offset_dist_sq = None
