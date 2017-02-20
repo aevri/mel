@@ -48,8 +48,8 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapautomask, 'rotomap-automask')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')
+    _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaplist, 'rotomap-list')
     _setup_parser_for_module(
