@@ -481,7 +481,7 @@ class MoleData:
         self._mask_path = image_path + '.mask.png'
         height, width = self.image.shape[:2]
         if os.path.isfile(self._mask_path):
-            self.mask = cv2.imread(self._mask_path, -1)
+            self.mask = cv2.imread(self._mask_path, cv2.IMREAD_UNCHANGED)
         else:
             self.mask = numpy.zeros((height, width, 1), numpy.uint8)
 
