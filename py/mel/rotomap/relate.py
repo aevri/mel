@@ -104,13 +104,36 @@ def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
 
     if cutoff is not None:
         cutoff_sq = cutoff * cutoff
-    else:
-        cutoff_sq = mole_min_sq_distance(to_moles)
-        if cutoff_sq is None:
-            cutoff_sq = 0
 
-    return best_baseless_offset_theory(
-        from_moles, to_moles, cutoff_sq, offset_cutoff_sq)
+    from_dict = mole_list_to_uuid_dict(from_moles)
+    to_dict = mole_list_to_uuid_dict(to_moles)
+    from_set = set(from_dict.keys())
+    to_set = set(to_dict.keys())
+
+    in_both = from_set & to_set
+
+    if in_both:
+        theory = []
+        theory.extend((u, u) for u in in_both)
+        offset = average_offset([(from_dict[m], to_dict[m]) for m in in_both])
+        new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
+        new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
+
+        if cutoff is None:
+            cutoff = 2 * max_offset_error_dist(
+                offset, [(from_dict[m], to_dict[m]) for m in in_both])
+            cutoff_sq = cutoff * cutoff
+
+        off_theory, _ = make_offset_theory(
+            new_from_moles, new_to_moles, offset, cutoff_sq)
+        return theory + off_theory
+    else:
+        if cutoff is None:
+            cutoff_sq = mole_min_sq_distance(to_moles)
+            if cutoff_sq is None:
+                cutoff_sq = 0
+        return best_baseless_offset_theory(
+            from_moles, to_moles, cutoff_sq, offset_cutoff_sq)
 
 
 def best_baseless_offset_theory(
@@ -202,6 +225,29 @@ def nearest_mole_index_to_point(point, mole_list):
             best_index = i
             best_dist_sq = dist_sq
     return best_index, best_dist_sq
+
+
+def average_offset(mole_pairs):
+    offset_sum = numpy.array((0, 0))
+    for from_mole, to_mole in mole_pairs:
+        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
+        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
+        offset_sum += to_pos - from_pos
+    return numpy.floor_divide(
+        offset_sum, len(mole_pairs))
+
+
+def max_offset_error_dist(offset, mole_pairs):
+    max_dist = 0
+    for from_mole, to_mole in mole_pairs:
+        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
+        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
+        expected_pos = from_pos + offset
+        offset_error = expected_pos - to_pos
+        offset_error_dist = numpy.linalg.norm(offset_error)
+        max_dist = max(max_dist, offset_error_dist)
+
+    return max_dist
 
 
 def mole_distance_sq(from_mole, to_mole):
