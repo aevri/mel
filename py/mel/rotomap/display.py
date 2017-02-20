@@ -493,6 +493,7 @@ class MoleData:
             for m in moles:
                 if m['uuid'] == from_uuid:
                     m['uuid'] = to_uuid
+                    m['is_uuid_canonical'] = True
             mel.rotomap.moles.save_image_moles(moles, image_path)
 
         image_path = self._path_list[self._list_index]
