@@ -186,18 +186,20 @@ def mole_min_sq_distance(moles):
 
 def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     to_moles = list(to_moles_in)
+    offset = numpy.array(offset)
 
     theory = []
 
     dist_sq_sum = 0
 
     for i, a in enumerate(from_moles):
-        point = mole_to_point(a)
-        point = (point[0] + offset[0], point[1] + offset[1])
+        point = mel.rotomap.moles.molepos_to_nparray(a)
+        point += offset
         best_index, best_dist_sq = nearest_mole_index_to_point(point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
-            r_point = mole_to_point(to_moles[best_index])
-            r_point = (r_point[0] - offset[0], r_point[1] - offset[1])
+            r_point = mel.rotomap.moles.molepos_to_nparray(
+                to_moles[best_index])
+            r_point -= offset
             r_index, _ = nearest_mole_index_to_point(r_point, from_moles)
             if i == r_index:
                 theory.append((a['uuid'], to_moles[best_index]['uuid']))
