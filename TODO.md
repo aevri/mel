@@ -45,3 +45,21 @@ A simple list to capture outstanding tasks, roughly in priority order.
         - mel r relate
         - mel r show
         - mel r uuid
+
+- rotomap: Try guessing relations between moles by using multiple cues, i.e.
+  'x and y position within bounds of all moles (0..1)', 'radius within bounds
+  of all moles (0..1)', etc. For each mole, try mapping to each other mole.
+  Look for moles which have only one likely mapping. e.g. the distance of the
+  mapping is less than half the distance of the mapping to any other mole, in
+  either direction.
+
+- rotomap: Support 'offset field' from identical moles for better offeset
+  theories. This means triangulating the currently mapped moles, and
+  inter/extra-polating the appropriate offset.
+- rotomap: Also create an 'offset-error field', which would be generated from
+  averaging the offset error at each triangle's centroid. Again triangulating
+  the resulting centroids and inter/extra-polating to create a field.
+
+- rotomap: Color certain mappings differently in the relate debug mode.
+
+- mel rotomap-automark
