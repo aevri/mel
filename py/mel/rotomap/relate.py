@@ -3,9 +3,13 @@
 import cv2
 import numpy
 
+import mel.lib.debugrenderer
 import mel.lib.math
 import mel.rotomap.moles
 import mel.rotomap.tricolour
+
+
+_DEBUG_RENDERER = mel.lib.debugrenderer.GlobalContext()
 
 
 def draw_canonical_mole(image, x, y, colour):
@@ -42,6 +46,7 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
 
 
 def draw_debug(image, to_moles, from_moles):
+    image = numpy.zeros(image.shape)
 
     if from_moles is None:
         from_moles = []
@@ -61,9 +66,9 @@ def draw_debug(image, to_moles, from_moles):
     theory.extend((u, u) for u in in_both)
 
     if from_moles and to_moles:
-        theory = best_offset_theory(from_moles, to_moles)
+        with _DEBUG_RENDERER.image_context(image):
+            theory = best_offset_theory(from_moles, to_moles)
 
-    image = numpy.zeros(image.shape)
     overlay_theory(image, theory, from_dict, to_dict)
     return image
 
@@ -161,8 +166,12 @@ def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets):
                 theory.append((uuid_, to_uuid))
                 del to_uuid_points[to_uuid]
             else:
+                _DEBUG_RENDERER.arrow(to_point, to_point + inv_offset)
+                _DEBUG_RENDERER.circle(to_point + inv_offset, inv_error)
                 theory.append((uuid_, None))
         else:
+            _DEBUG_RENDERER.arrow(point, point + offset)
+            _DEBUG_RENDERER.circle(point + offset, error)
             theory.append((uuid_, None))
 
     for uuid_ in to_uuid_points:
