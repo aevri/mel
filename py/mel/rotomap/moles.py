@@ -132,6 +132,13 @@ def molepos_to_nparray(mole):
     return pos
 
 
+def to_uuid_points(moles):
+    uuid_points = {}
+    for m in moles:
+        uuid_points[m['uuid']] = molepos_to_nparray(m)
+    return uuid_points
+
+
 def set_molepos_to_nparray(mole, nparray):
     mole['x'] = int(nparray[0])
     mole['y'] = int(nparray[1])

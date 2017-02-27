@@ -119,18 +119,17 @@ def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
     if in_both:
         theory = []
         theory.extend((u, u) for u in in_both)
-        offset = average_offset([(from_dict[m], to_dict[m]) for m in in_both])
+        point_offsets = to_point_offsets(
+            [(from_dict[m], to_dict[m]) for m in in_both])
         new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
         new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
+        from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
+        to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
-        if cutoff is None:
-            cutoff = 2 * max_offset_error_dist(
-                offset, [(from_dict[m], to_dict[m]) for m in in_both])
-            cutoff_sq = cutoff * cutoff
+        theory += make_offset_field_theory(
+            from_uuid_points, to_uuid_points, point_offsets)
 
-        off_theory, _ = make_offset_theory(
-            new_from_moles, new_to_moles, offset, cutoff_sq)
-        return theory + off_theory
+        return theory
     else:
         if cutoff is None:
             cutoff_sq = mole_min_sq_distance(to_moles)
@@ -138,6 +137,91 @@ def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
                 cutoff_sq = 0
         return best_baseless_offset_theory(
             from_moles, to_moles, cutoff_sq, offset_cutoff_sq)
+
+
+def to_point_offsets(mole_pairs):
+    point_offsets = []
+    for from_mole, to_mole in mole_pairs:
+        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
+        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
+        point_offsets.append((from_pos, to_pos - from_pos))
+    return point_offsets
+
+
+def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets):
+    to_uuid_points = dict(to_uuid_points)
+    inv_point_offsets = invert_point_offsets(point_offsets)
+    theory = []
+    for uuid_, point in from_uuid_points.items():
+        if not to_uuid_points:
+            theory.append((uuid_, None))
+            continue
+
+        offset, error = pick_value_from_field(point, point_offsets)
+        to_uuid, distance = nearest_uuid_point(point + offset, to_uuid_points)
+        if distance < error * 2:
+
+            # Make sure that the closest match for the 'to' mole is also the
+            # 'from' mole.
+            to_point = to_uuid_points[to_uuid]
+            inv_offset, inv_error = pick_value_from_field(
+                to_point, inv_point_offsets)
+            from_uuid, from_distance = nearest_uuid_point(
+                to_point + inv_offset, from_uuid_points)
+
+            if from_uuid == uuid_:
+                theory.append((uuid_, to_uuid))
+                del to_uuid_points[to_uuid]
+            else:
+                theory.append((uuid_, None))
+        else:
+            theory.append((uuid_, None))
+
+    for uuid_ in to_uuid_points:
+        theory.append((None, uuid_))
+
+    return theory
+
+
+def invert_point_offsets(point_offsets):
+    return [
+        (point + offset, -offset)
+        for point, offset in point_offsets
+    ]
+
+
+def nearest_uuid_point(point, uuid_points):
+    nearest_sqdist = None
+    nearest_uuid = None
+    for uuid_, q in uuid_points.items():
+        offset = q - point
+        sqdist = numpy.dot(offset, offset)
+        if nearest_sqdist is None or sqdist < nearest_sqdist:
+            nearest_sqdist = sqdist
+            nearest_uuid = uuid_
+    return nearest_uuid, numpy.sqrt(nearest_sqdist)
+
+
+def pick_value_from_field(point, point_values):
+    weights = []
+    for q, v in point_values:
+        offset = q - point
+        sq_distance = numpy.dot(offset, offset)
+        weights.append(1.0 / (sq_distance + 1))
+
+    weights = numpy.array(weights)
+    sum_ = numpy.sum(weights)
+    weights /= sum_
+
+    values = numpy.array([x[1] for x in point_values])
+    picked_value = numpy.dot(values.T, weights)
+
+    value_errors = numpy.array(
+        [numpy.linalg.norm(picked_value - v) for v in values])
+
+    picked_error = numpy.dot(value_errors.T, weights)
+
+    return picked_value, picked_error
 
 
 def best_baseless_offset_theory(
@@ -231,29 +315,6 @@ def nearest_mole_index_to_point(point, mole_list):
             best_index = i
             best_dist_sq = dist_sq
     return best_index, best_dist_sq
-
-
-def average_offset(mole_pairs):
-    offset_sum = numpy.array((0, 0))
-    for from_mole, to_mole in mole_pairs:
-        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
-        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
-        offset_sum += to_pos - from_pos
-    return numpy.floor_divide(
-        offset_sum, len(mole_pairs))
-
-
-def max_offset_error_dist(offset, mole_pairs):
-    max_dist = 0
-    for from_mole, to_mole in mole_pairs:
-        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
-        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
-        expected_pos = from_pos + offset
-        offset_error = expected_pos - to_pos
-        offset_error_dist = numpy.linalg.norm(offset_error)
-        max_dist = max(max_dist, offset_error_dist)
-
-    return max_dist
 
 
 def mole_distance_sq(from_mole, to_mole):

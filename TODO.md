@@ -56,13 +56,6 @@ A simple list to capture outstanding tasks, roughly in priority order.
   mapping is less than half the distance of the mapping to any other mole, in
   either direction.
 
-- rotomap: Support 'offset field' from identical moles for better offeset
-  theories. This means triangulating the currently mapped moles, and
-  inter/extra-polating the appropriate offset.
-- rotomap: Also create an 'offset-error field', which would be generated from
-  averaging the offset error at each triangle's centroid. Again triangulating
-  the resulting centroids and inter/extra-polating to create a field.
-
 - rotomap-edit: fix numbering in window title in relate-debug
 - rotomap-edit: provide for identifying and highlighting probable mistakes when
   relating
