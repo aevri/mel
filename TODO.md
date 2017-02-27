@@ -60,6 +60,4 @@ A simple list to capture outstanding tasks, roughly in priority order.
   averaging the offset error at each triangle's centroid. Again triangulating
   the resulting centroids and inter/extra-polating to create a field.
 
-- rotomap: Color certain mappings differently in the relate debug mode.
-
 - mel rotomap-automark

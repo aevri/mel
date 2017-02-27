@@ -72,6 +72,7 @@ def overlay_theory(image, theory, from_dict, to_dict):
     colour_removed = (0, 0, 255)
     colour_added = (0, 255, 0)
     colour_mapped = (255, 0, 0)
+    colour_known = (255, 255, 0)
     for from_, to in theory:
         assert (from_ is not None) or (to is not None)
         if to is None:
@@ -79,11 +80,14 @@ def overlay_theory(image, theory, from_dict, to_dict):
         elif from_ is None:
             draw_mole(image, to_dict[to], colour_added)
         else:
+            colour = colour_mapped
+            if from_ == to:
+                colour = colour_known
             draw_from_to_mole(
                 image,
                 from_dict[from_],
                 to_dict[to],
-                colour_mapped)
+                colour)
 
     return image
 
