@@ -200,23 +200,19 @@ def nearest_uuid_point(point, uuid_points):
 
 
 def pick_value_from_field(point, point_values):
-    weights = []
-    for q, v in point_values:
-        offset = q - point
-        sq_distance = numpy.dot(offset, offset)
-        weights.append(1.0 / (sq_distance + 1))
+    offsets = numpy.array([q - point for q, v in point_values])
+    sq_distances = numpy.sum(offsets * offsets, axis=1)
 
-    weights = numpy.array(weights)
-    sum_ = numpy.sum(weights)
-    weights /= sum_
+    sqweights = 1.0 / (sq_distances + 1)
+    sqweights /= numpy.sum(sqweights)
 
     values = numpy.array([x[1] for x in point_values])
-    picked_value = numpy.dot(values.T, weights)
+    picked_value = numpy.dot(values.T, sqweights)
 
     value_errors = numpy.array(
         [numpy.linalg.norm(picked_value - v) for v in values])
 
-    picked_error = numpy.dot(value_errors.T, weights)
+    picked_error = numpy.dot(value_errors.T, sqweights)
 
     return picked_value, picked_error
 
