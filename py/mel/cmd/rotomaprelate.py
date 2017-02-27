@@ -18,51 +18,35 @@ def setup_parser(parser):
         nargs='+',
         help="Paths of the 'to' rotomap json files.")
     parser.add_argument(
-        '--match-cutoff-distance',
-        type=int,
-        default=None,
-        help="The maximum distance to allow between the predicted location of "
-        "a mole in the 'to' image, and the location of a candidate "
-        "match.")
-    parser.add_argument(
-        '--offset-cutoff-distance',
-        type=int,
-        default=None,
-        help="The maximum distance to consider for translation theories "
-        "between maps")
-    parser.add_argument(
         '--loop',
         action='store_true',
         help="Apply the relation as if the files specify a complete loop.")
 
 
 def process_args(args):
-    process_files(args.FROM, args.TO, args)
+    process_files(args.FROM, args.TO)
     if args.loop:
-        process_files(args.FROM, reversed(args.TO), args)
+        process_files(args.FROM, reversed(args.TO))
 
 
-def process_files(from_path, to_path_list, args):
+def process_files(from_path, to_path_list):
     files = [from_path]
     files.extend(to_path_list)
     for from_path, to_path in pairwise(files):
-        process_pair(from_path, to_path, args)
+        process_pair(from_path, to_path)
 
 
 def pairwise(iterable):
     return zip(iterable, iterable[1:])
 
 
-def process_pair(from_path, to_path, args):
+def process_pair(from_path, to_path):
 
     from_moles = load_json(from_path)
     to_moles = load_json(to_path)
 
     pairs = mel.rotomap.relate.best_offset_theory(
-        from_moles,
-        to_moles,
-        args.match_cutoff_distance,
-        args.offset_cutoff_distance)
+        from_moles, to_moles)
 
     if pairs is None:
         return

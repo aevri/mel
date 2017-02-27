@@ -96,18 +96,11 @@ def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
 
 
-def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
+def best_offset_theory(from_moles, to_moles):
     if not from_moles:
         raise ValueError('from_moles is empty')
     if not to_moles:
         raise ValueError('to_moles is empty')
-
-    offset_cutoff_sq = None
-    if offset_cutoff:
-        offset_cutoff_sq = offset_cutoff ** 2
-
-    if cutoff is not None:
-        cutoff_sq = cutoff * cutoff
 
     from_dict = mole_list_to_uuid_dict(from_moles)
     to_dict = mole_list_to_uuid_dict(to_moles)
@@ -131,12 +124,7 @@ def best_offset_theory(from_moles, to_moles, cutoff=None, offset_cutoff=None):
 
         return theory
     else:
-        if cutoff is None:
-            cutoff_sq = mole_min_sq_distance(to_moles)
-            if cutoff_sq is None:
-                cutoff_sq = 0
-        return best_baseless_offset_theory(
-            from_moles, to_moles, cutoff_sq, offset_cutoff_sq)
+        return best_baseless_offset_theory(from_moles, to_moles)
 
 
 def to_point_offsets(mole_pairs):
@@ -224,8 +212,12 @@ def pick_value_from_field(point, point_values):
     return picked_value, picked_error
 
 
-def best_baseless_offset_theory(
-        from_moles, to_moles, cutoff_sq, offset_cutoff_sq):
+def best_baseless_offset_theory(from_moles, to_moles):
+
+    cutoff_sq = mole_min_sq_distance(to_moles)
+    if cutoff_sq is None:
+        cutoff_sq = 0
+
     best_theory = None
     best_theory_dist_sq = None
     best_theory_offset_dist_sq = None
@@ -234,10 +226,6 @@ def best_baseless_offset_theory(
             to_x = dest['x'] - source['x']
             to_y = dest['y'] - source['y']
             offset_dist_sq = to_x * to_x + to_y * to_y
-
-            if offset_cutoff_sq is not None:
-                if offset_dist_sq >= offset_cutoff_sq:
-                    continue
 
             theory, dist_sq = make_offset_theory(
                 from_moles, to_moles, (to_x, to_y), cutoff_sq)
