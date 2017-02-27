@@ -63,4 +63,8 @@ A simple list to capture outstanding tasks, roughly in priority order.
   averaging the offset error at each triangle's centroid. Again triangulating
   the resulting centroids and inter/extra-polating to create a field.
 
+- rotomap-edit: fix numbering in window title in relate-debug
+- rotomap-edit: provide for identifying and highlighting probable mistakes when
+  relating
+
 - mel rotomap-automark
