@@ -200,6 +200,29 @@ def nearest_uuid_point(point, uuid_points):
 
 
 def pick_value_from_field(point, point_values):
+    """Return (value, error) sampled from supplied array of (point, value).
+
+    Given a number of points in space, which have values associated with them -
+    'point_values'; return a best guess for what the value might be at the
+    supplied 'point'.
+
+    Note that values are expected to be numpy.array's.
+
+    Usage example:
+
+        Sample based on only a single point, expect the supplied value with
+        certainty.
+
+        >>> pick_value_from_field(
+        ...     numpy.array([0, 0]),
+        ...     [(numpy.array([0, 0]), (1,))])
+        (array([ 1.]), 0.0)
+
+    :point: a numpy.array representing a 2d point to take a sample from.
+    :point_values: an array of (point, value) to sample at supplied 'point'.
+    :returns: a tuple, (sampled_value, estimated_error).
+
+    """
     offsets = numpy.array([q - point for q, v in point_values])
     sq_distances = numpy.sum(offsets * offsets, axis=1)
 
