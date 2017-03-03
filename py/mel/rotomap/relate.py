@@ -232,9 +232,7 @@ def pick_value_from_field(point, point_values):
     values = numpy.array([x[1] for x in point_values])
     picked_value = numpy.dot(values.T, sqweights)
 
-    value_errors = numpy.array(
-        [numpy.linalg.norm(picked_value - v) for v in values])
-
+    value_errors = numpy.linalg.norm(values - picked_value, axis=1)
     picked_error = numpy.dot(value_errors.T, sqweights)
 
     return picked_value, picked_error
