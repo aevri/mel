@@ -81,8 +81,9 @@ def run_mel_debug_tests():
     expect_ok(mel_cmd, '-h')
 
     subcommands = [
-        'triangulate',
         'bench-relate',
+        'render-valuefield',
+        'triangulate',
     ]
 
     for s in subcommands:
