@@ -11,6 +11,42 @@ import mel.rotomap.tricolour
 
 _DEBUG_RENDERER = mel.lib.debugrenderer.GlobalContext()
 
+# After experimentation with 'mel-debug bench-relate --reset-uuids 1', it turns
+# out that pick_value_from_field() is performing much worse than what came
+# before. It turns out that this is due to the error bounds it calculates.
+#
+# Instead of calculating the error bounds to use, simply pick a number that
+# works for a reasonable number of images and use that instead. The performance
+# is dramatically better.
+#
+# I'm guessing this magic number is only likely to work for my particular set
+# of rotomaps, where the image sizes are the same and the distance from the
+# camera is similar.
+#
+# In later work, we'll want to find a way of automatically determining the best
+# error value to use.
+#
+# Before pick_value_from_field(), the results for --reset-uuids 1 were:
+#     155 Flawed
+#     177 Flawless
+#
+# The results for --reset-all-uuids show that improvements can be made:
+#     88 Flawed
+#     244 Flawless
+#
+# After pick_value_from_field() the results got much worse:
+#     303 Flawed
+#     29 Flawless
+#
+# After _MAGIC_FIELD_ERROR they yielded the best results yet:
+#     12 Flawed
+#     320 Flawless
+#
+# Similar results were observed for '--reset-uuids 5', where having more
+# unknowns could mean that a large radius is less successful.
+#
+_MAGIC_FIELD_ERROR = 300
+
 
 def draw_canonical_mole(image, x, y, colour):
     radius = 16
@@ -152,7 +188,7 @@ def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets):
 
         offset, error = pick_value_from_field(point, point_offsets)
         to_uuid, distance = nearest_uuid_point(point + offset, to_uuid_points)
-        if distance < error * 2:
+        if distance < _MAGIC_FIELD_ERROR:
 
             # Make sure that the closest match for the 'to' mole is also the
             # 'from' mole.
