@@ -3,6 +3,7 @@
 
 import argparse
 
+import mel.cmddebug.benchrelate
 import mel.cmddebug.triangulate
 
 
@@ -25,6 +26,8 @@ def main():
     subparsers.dest
     # pylint: enable=pointless-statement
 
+    _setup_parser_for_module(
+        subparsers, mel.cmddebug.benchrelate, 'bench-relate')
     _setup_parser_for_module(
         subparsers, mel.cmddebug.triangulate, 'triangulate')
 

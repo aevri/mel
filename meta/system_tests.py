@@ -80,6 +80,7 @@ def run_mel_debug_tests():
 
     subcommands = [
         'triangulate',
+        'bench-relate',
     ]
 
     for s in subcommands:

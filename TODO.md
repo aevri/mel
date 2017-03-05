@@ -63,9 +63,3 @@ A simple list to capture outstanding tasks, roughly in priority order.
 - rotomap: Color certain mappings differently in the relate debug mode.
 
 - mel rotomap-automark
-
-$ mel-debug bench-relate --images . --remove 1
-False positive: (01.jpg, 38adb893) -> (02.jpg, ff939a0)
-False negative: (02.jpg, cc30a0d9) -> (03.jpg, None)
-True positive: (03.jpg, 00a3add) -> (04.jpg, ff939a0)
-True negative: (04.jpg, aa99300) -> (05.jpg, None)
