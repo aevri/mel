@@ -259,6 +259,14 @@ def pick_value_from_field(point, point_values):
     :returns: a tuple, (sampled_value, estimated_error).
 
     """
+
+    # Note that the idea of passing in 'points' and 'values' as separate
+    # variables, already as numpy.arrays has been tried. This was in order to
+    # avoid the array -> numpy.array listcomp conversions happening inside a
+    # loop. It turns out that there is no noticable difference in speed, and it
+    # slightly complicated all the existing client code. May as well leave
+    # as-is.
+
     offsets = numpy.array([q - point for q, v in point_values])
     sq_distances = numpy.sum(offsets * offsets, axis=1)
 
