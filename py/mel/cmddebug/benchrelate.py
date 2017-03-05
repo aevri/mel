@@ -1,5 +1,8 @@
 """Benchmark the accuracy of rotomap.relate across a rotomap."""
 
+import copy
+import itertools
+import uuid
 
 import mel.lib.math
 import mel.rotomap.moles
@@ -20,26 +23,32 @@ def setup_parser(parser):
         '--loop',
         action='store_true',
         help="Apply the relation as if the files specify a complete loop.")
+    parser.add_argument(
+        '--reset-uuids',
+        type=int,
+        default=0,
+        help="Reset this number of uuids in the destination. Iterate over all "
+             "combinations.")
 
 
 def process_args(args):
-    process_files(args.FROM, args.TO)
+    process_files(args.FROM, args.TO, args)
     if args.loop:
-        process_files(args.FROM, reversed(args.TO))
+        process_files(args.FROM, reversed(args.TO), args)
 
 
-def process_files(from_path, to_path_list):
+def process_files(from_path, to_path_list, args):
     files = [from_path]
     files.extend(to_path_list)
     for from_path, to_path in pairwise(files):
-        process_pair(from_path, to_path)
+        process_combinations(from_path, to_path, args)
 
 
 def pairwise(iterable):
     return zip(iterable, iterable[1:])
 
 
-def process_pair(from_path, to_path):
+def process_combinations(from_path, to_path, args):
 
     from_moles = mel.rotomap.moles.load_image_moles(from_path)
     to_moles = mel.rotomap.moles.load_image_moles(to_path)
@@ -48,6 +57,40 @@ def process_pair(from_path, to_path):
         return
 
     expected_theory = make_default_map_theory(from_moles, to_moles)
+
+    for params in yield_reset_combinations(
+            from_moles, to_moles, expected_theory, args.reset_uuids):
+        process_pair(from_path, to_path, *params)
+
+
+def yield_reset_combinations(from_moles, to_moles, expected_theory, num_reset):
+
+    if num_reset == 0:
+        yield from_moles, to_moles, expected_theory
+        return
+
+    to_uuids = set(x['uuid'] for x in to_moles)
+    num_reset = min(len(to_uuids), num_reset)
+
+    for uuids in itertools.combinations(to_uuids, num_reset):
+        new_to_moles = copy.deepcopy(to_moles)
+        new_theory = copy.deepcopy(expected_theory)
+        for u in uuids:
+            new_u = uuid.uuid4().hex
+            for mole in new_to_moles:
+                if mole['uuid'] == u:
+                    mole['uuid'] = new_u
+
+            def remapped_theory(x, y):
+                return (x, y) if y != u else (x, new_u)
+
+            new_theory = [
+                remapped_theory(x, y) for x, y in new_theory
+            ]
+        yield from_moles, new_to_moles, new_theory
+
+
+def process_pair(from_path, to_path, from_moles, to_moles, expected_theory):
 
     offset_theory = mel.rotomap.relate.best_offset_theory(
         from_moles, to_moles)
