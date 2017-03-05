@@ -58,9 +58,20 @@ def process_combinations(from_path, to_path, args):
 
     expected_theory = make_default_map_theory(from_moles, to_moles)
 
+    num_flaws = 0
+    num_facts = 0
+
     for params in yield_reset_combinations(
             from_moles, to_moles, expected_theory, args.reset_uuids):
-        process_pair(from_path, to_path, *params)
+        flaws, facts = process_pair(from_path, to_path, *params)
+        num_flaws += len(flaws)
+        num_facts += len(facts)
+
+    if num_flaws:
+        print('Flawed mapping: ({} -> {}); {} flaws, {} facts.'.format(
+            from_path, to_path, num_flaws, num_facts))
+    else:
+        print('Flawless mapping: ({} -> {})'.format(from_path, to_path))
 
 
 def yield_reset_combinations(from_moles, to_moles, expected_theory, num_reset):
@@ -98,10 +109,15 @@ def process_pair(from_path, to_path, from_moles, to_moles, expected_theory):
     expected_theory_set = set(expected_theory)
     offset_theory_set = set(offset_theory)
 
-    for from_uuid, to_uuid in expected_theory_set ^ offset_theory_set:
+    flaws = expected_theory_set.symmetric_difference(offset_theory_set)
+    facts = expected_theory_set.intersection(offset_theory_set)
+
+    for from_uuid, to_uuid in flaws:
         print('False', format_mapping(from_path, to_path, from_uuid, to_uuid))
-    for from_uuid, to_uuid in expected_theory_set & offset_theory_set:
+    for from_uuid, to_uuid in facts:
         print('True', format_mapping(from_path, to_path, from_uuid, to_uuid))
+
+    return flaws, facts
 
 
 def format_mapping(from_path, to_path, from_uuid, to_uuid):
