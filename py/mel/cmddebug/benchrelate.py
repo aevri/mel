@@ -23,12 +23,17 @@ def setup_parser(parser):
         '--loop',
         action='store_true',
         help="Apply the relation as if the files specify a complete loop.")
-    parser.add_argument(
+    reset_group = parser.add_mutually_exclusive_group()
+    reset_group.add_argument(
         '--reset-uuids',
         type=int,
-        default=0,
+        default=None,
         help="Reset this number of uuids in the destination. Iterate over all "
              "combinations.")
+    reset_group.add_argument(
+        '--reset-all-uuids',
+        action='store_true',
+        help="Reset all uuids in the destination.")
 
 
 def process_args(args):
@@ -61,8 +66,12 @@ def process_combinations(from_path, to_path, args):
     num_flaws = 0
     num_facts = 0
 
+    reset_uuids = args.reset_uuids
+    if args.reset_all_uuids:
+        reset_uuids = len(to_moles)
+
     for params in yield_reset_combinations(
-            from_moles, to_moles, expected_theory, args.reset_uuids):
+            from_moles, to_moles, expected_theory, reset_uuids):
         flaws, facts = process_pair(from_path, to_path, *params)
         num_flaws += len(flaws)
         num_facts += len(facts)
