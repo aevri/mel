@@ -188,6 +188,12 @@ def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets):
 
         offset, error = pick_value_from_field(point, point_offsets)
         to_uuid, distance = nearest_uuid_point(point + offset, to_uuid_points)
+
+        # Note that an attempt to lerp between _MAGIC_FIELD_ERROR and 'error'
+        # based on len(point_offsets) has been tried. If the lerp saturates at
+        # len(point_offsets)==25, then it seems to perform better in one image
+        # out of hundreds. Otherwise _MAGIC_FIELD_ERROR is still best.
+
         if distance < _MAGIC_FIELD_ERROR:
 
             # Make sure that the closest match for the 'to' mole is also the
