@@ -23,6 +23,7 @@ def setup_parser(parser):
         '--loop',
         action='store_true',
         help="Apply the relation as if the files specify a complete loop.")
+
     reset_group = parser.add_mutually_exclusive_group()
     reset_group.add_argument(
         '--reset-uuids',
@@ -34,6 +35,11 @@ def setup_parser(parser):
         '--reset-all-uuids',
         action='store_true',
         help="Reset all uuids in the destination.")
+
+    parser.add_argument(
+        '--iterate-relate',
+        action='store_true',
+        help="Repeatedly relate the images, until no more changes are seen.")
 
 
 def process_args(args):
@@ -72,7 +78,8 @@ def process_combinations(from_path, to_path, args):
 
     for params in yield_reset_combinations(
             from_moles, to_moles, expected_theory, reset_uuids):
-        flaws, facts = process_pair(from_path, to_path, *params)
+        flaws, facts = process_pair(
+            from_path, to_path, *params, args.iterate_relate)
         num_flaws += len(flaws)
         num_facts += len(facts)
 
@@ -110,10 +117,11 @@ def yield_reset_combinations(from_moles, to_moles, expected_theory, num_reset):
         yield from_moles, new_to_moles, new_theory
 
 
-def process_pair(from_path, to_path, from_moles, to_moles, expected_theory):
+def process_pair(
+        from_path, to_path, from_moles, to_moles, expected_theory, iterate):
 
-    offset_theory = mel.rotomap.relate.best_offset_theory(
-        from_moles, to_moles)
+    offset_theory = mel.rotomap.relate.best_theory(
+        from_moles, to_moles, iterate)
 
     expected_theory_set = set(expected_theory)
     offset_theory_set = set(offset_theory)

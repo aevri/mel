@@ -1,5 +1,7 @@
 """Relate rotomaps to eachother."""
 
+import copy
+
 import cv2
 import numpy
 
@@ -135,6 +137,49 @@ def overlay_theory(image, theory, from_dict, to_dict):
 
 def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
+
+
+def apply_theory(theory, to_moles):
+    theory_to_original = {}
+    for mole in to_moles:
+        for from_, to in theory:
+            if from_ is not None and mole['uuid'] == to:
+                mole['uuid'] = from_
+                if from_ != to:
+                    theory_to_original[from_] = to
+    return theory_to_original
+
+
+def reverse_theory(theory, theory_to_original):
+    new_theory = []
+    for from_, to in theory:
+        if to in theory_to_original:
+            new_theory.append((from_, theory_to_original[to]))
+        else:
+            new_theory.append((from_, to))
+    return new_theory
+
+
+def best_theory(from_moles, to_moles, iterate):
+
+    if not iterate:
+        return best_offset_theory(from_moles, to_moles)
+
+    to_moles = copy.deepcopy(to_moles)
+
+    theory = None
+    done = False
+    theory_to_original = {}
+    while not done:
+        new_theory = reverse_theory(
+            best_offset_theory(from_moles, to_moles),
+            theory_to_original)
+        done = new_theory == theory
+        theory = new_theory
+        if not done:
+            theory_to_original.update(apply_theory(theory, to_moles))
+
+    return theory
 
 
 def best_offset_theory(from_moles, to_moles):
