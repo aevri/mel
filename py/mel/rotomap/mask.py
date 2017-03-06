@@ -1,13 +1,25 @@
 """Manage image masks."""
 
+import os
+
 import cv2
 import numpy
 
 
+def path(mole_image_path):
+    return mole_image_path + '.mask.png'
+
+
 def load(mole_image_path):
     return cv2.imread(
-        mole_image_path + '.mask.png',
+        path(mole_image_path),
         cv2.IMREAD_UNCHANGED)
+
+
+def load_or_none(mole_image_path):
+    if os.path.isfile(path(mole_image_path)):
+        return load(mole_image_path)
+    return None
 
 
 def histogram_from_image_mask(image, mask):

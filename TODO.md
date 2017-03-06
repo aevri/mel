@@ -24,8 +24,6 @@ A simple list to capture outstanding tasks, roughly in priority order.
   'dark', 'small', 'large', 'circular', 'elliptical'.
 - Consider automatically detecting skin regions and estimating curvature, to
   factor into position estimation.
-- Consider LK tracker for copying moles from one image to another without
-  pre-marked moles in the destination.
 - Consider the neighbours of moles as part of their identity, to help relate
   moles from one map to another. In particular comparing in terms of a polar
   co-ordinate system.

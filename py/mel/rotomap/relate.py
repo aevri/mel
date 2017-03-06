@@ -83,8 +83,8 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
         cv2.LINE_AA)
 
 
-def draw_debug(image, to_moles, from_moles):
-    image = numpy.zeros(image.shape)
+def draw_debug(to_image, to_mask, to_moles, from_image, from_mask, from_moles):
+    image = numpy.zeros(to_image.shape)
 
     if from_moles is None:
         from_moles = []
@@ -108,6 +108,19 @@ def draw_debug(image, to_moles, from_moles):
             theory = best_offset_theory(from_moles, to_moles)
 
     overlay_theory(image, theory, from_dict, to_dict)
+
+    if from_image is not None and from_mask is not None:
+        point_offsets = lk_point_offsets(
+            from_image, to_image, from_mask, to_mask)
+        for point, offset in point_offsets:
+            cv2.arrowedLine(
+                image,
+                tuple(point),
+                tuple(point + offset),
+                (0, 255, 255),
+                2,
+                cv2.LINE_AA)
+
     return image
 
 
@@ -160,19 +173,28 @@ def reverse_theory(theory, theory_to_original):
     return new_theory
 
 
-def best_theory(from_moles, to_moles, iterate):
+def best_theory(
+        from_image,
+        to_image,
+        from_mask,
+        to_mask,
+        from_moles,
+        to_moles,
+        iterate):
 
     if not iterate:
         return best_offset_theory(from_moles, to_moles)
 
     to_moles = copy.deepcopy(to_moles)
 
+    point_offsets = lk_point_offsets(from_image, to_image, from_mask, to_mask)
+
     theory = None
     done = False
     theory_to_original = {}
     while not done:
         new_theory = reverse_theory(
-            best_offset_theory(from_moles, to_moles),
+            best_offset_theory(from_moles, to_moles, point_offsets),
             theory_to_original)
         done = new_theory == theory
         theory = new_theory
@@ -182,7 +204,35 @@ def best_theory(from_moles, to_moles, iterate):
     return theory
 
 
-def best_offset_theory(from_moles, to_moles):
+def lk_point_offsets(from_image, to_image, from_mask, to_mask):
+    from_gray = cv2.cvtColor(from_image, cv2.COLOR_BGR2GRAY)
+    to_gray = cv2.cvtColor(to_image, cv2.COLOR_BGR2GRAY)
+
+    from_points = cv2.goodFeaturesToTrack(
+        from_gray,
+        maxCorners=0,
+        qualityLevel=0.5,
+        minDistance=10,
+        mask=from_mask)
+
+    to_points, status, _ = cv2.calcOpticalFlowPyrLK(
+        from_gray, to_gray, from_points, None)
+
+    from_points = from_points.astype(int)
+    to_points = to_points.astype(int)
+    stat_point_offsets = zip(status, from_points, to_points - from_points)
+    point_offsets = [
+        (numpy.squeeze(p), numpy.squeeze(o)) for s, p, o in stat_point_offsets
+        if s[0]
+    ]
+
+    return point_offsets
+
+
+def best_offset_theory(from_moles, to_moles, point_offsets=None):
+    if point_offsets is None:
+        point_offsets = []
+
     if not from_moles:
         raise ValueError('from_moles is empty')
     if not to_moles:
@@ -198,8 +248,8 @@ def best_offset_theory(from_moles, to_moles):
     if in_both:
         theory = []
         theory.extend((u, u) for u in in_both)
-        point_offsets = to_point_offsets(
-            [(from_dict[m], to_dict[m]) for m in in_both])
+        point_offsets.extend(to_point_offsets(
+            [(from_dict[m], to_dict[m]) for m in in_both]))
         new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
         new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
         from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)

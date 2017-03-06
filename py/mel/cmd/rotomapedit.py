@@ -262,7 +262,10 @@ class AutoRelateDebugController():
 
     def pre_key(self, editor, key):
         if key in mel.lib.ui.WAITKEY_ARROWS:
-            editor.set_from_moles(copy.deepcopy(editor.moledata.moles))
+            editor.set_from_things(
+                (editor.moledata.get_image(),
+                 editor.moledata.mask,
+                 copy.deepcopy(editor.moledata.moles)))
 
     def on_key(self, editor, key):
         pass

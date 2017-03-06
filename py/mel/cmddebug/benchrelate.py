@@ -4,7 +4,10 @@ import copy
 import itertools
 import uuid
 
+import cv2
+
 import mel.lib.math
+import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
 
@@ -64,6 +67,11 @@ def process_combinations(from_path, to_path, args):
     from_moles = mel.rotomap.moles.load_image_moles(from_path)
     to_moles = mel.rotomap.moles.load_image_moles(to_path)
 
+    from_image = cv2.imread(from_path)
+    to_image = cv2.imread(to_path)
+    from_mask = mel.rotomap.mask.load_or_none(from_path)
+    to_mask = mel.rotomap.mask.load_or_none(to_path)
+
     if not from_moles or not to_moles:
         return
 
@@ -79,7 +87,11 @@ def process_combinations(from_path, to_path, args):
     for params in yield_reset_combinations(
             from_moles, to_moles, expected_theory, reset_uuids):
         flaws, facts = process_pair(
-            from_path, to_path, *params, args.iterate_relate)
+            from_path, to_path,
+            from_image, to_image,
+            from_mask, to_mask,
+            *params,
+            args.iterate_relate)
         num_flaws += len(flaws)
         num_facts += len(facts)
 
@@ -118,13 +130,21 @@ def yield_reset_combinations(from_moles, to_moles, expected_theory, num_reset):
 
 
 def process_pair(
-        from_path, to_path, from_moles, to_moles, expected_theory, iterate):
+        from_path, to_path,
+        from_image, to_image,
+        from_mask, to_mask,
+        from_moles, to_moles,
+        expected_theory,
+        iterate):
 
-    offset_theory = mel.rotomap.relate.best_theory(
-        from_moles, to_moles, iterate)
+    theory = mel.rotomap.relate.best_theory(
+        from_image, to_image,
+        from_mask, to_mask,
+        from_moles, to_moles,
+        iterate)
 
     expected_theory_set = set(expected_theory)
-    offset_theory_set = set(offset_theory)
+    offset_theory_set = set(theory)
 
     flaws = offset_theory_set.difference(expected_theory_set)
     facts = expected_theory_set.intersection(offset_theory_set)
