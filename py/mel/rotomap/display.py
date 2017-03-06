@@ -1,7 +1,6 @@
 """Display a rotomap."""
 
 import enum
-import os
 
 import cv2
 import numpy
@@ -275,7 +274,7 @@ class Editor:
         self._status_overlay = StatusOverlay()
         self.show_current()
 
-        self._from_things = (None, None, None)
+        self._from_moles = None
 
     def set_automoledebug_mode(self):
         self._mode = EditorMode.debug_automole
@@ -323,8 +322,8 @@ class Editor:
         self._mole_overlay.toggle_faded_markers()
         self.show_current()
 
-    def set_from_things(self, things):
-        self._from_things = things
+    def set_from_moles(self, moles):
+        self._from_moles = moles
 
     def set_mask(self, mouse_x, mouse_y, enable):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
@@ -344,8 +343,7 @@ class Editor:
         elif self._mode is EditorMode.debug_autorelate:
             image = numpy.copy(image)
             image = mel.rotomap.relate.draw_debug(
-                image, self.moledata.mask, self.moledata.moles,
-                *self._from_things)
+                image, self.moledata.moles, self._from_moles)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             image = image // 2
