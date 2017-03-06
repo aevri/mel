@@ -479,11 +479,10 @@ class MoleData:
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
-        self._mask_path = image_path + '.mask.png'
         height, width = self.image.shape[:2]
-        if os.path.isfile(self._mask_path):
-            self.mask = cv2.imread(self._mask_path, cv2.IMREAD_UNCHANGED)
-        else:
+        self._mask_path = mel.rotomap.mask.path(image_path)
+        self.mask = mel.rotomap.mask.load_or_none(image_path)
+        if self.mask is None:
             self.mask = numpy.zeros((height, width, 1), numpy.uint8)
 
         self._loaded_index = self._list_index
