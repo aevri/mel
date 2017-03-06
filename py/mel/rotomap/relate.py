@@ -268,6 +268,11 @@ def pick_value_from_field(point, point_values):
     values = numpy.array([x[1] for x in point_values])
     picked_value = numpy.dot(values.T, sqweights)
 
+    # Note that inverse-distance instead of inverse-square-distance for
+    # calculating error has been tried. This did not improve results as
+    # measured by 'mel-debug bench-relate'. Also tried inverse-log10-distance,
+    # and 'equal weights'.
+
     value_errors = numpy.linalg.norm(values - picked_value, axis=1)
     picked_error = numpy.dot(value_errors.T, sqweights)
 
