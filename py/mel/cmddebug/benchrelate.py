@@ -72,8 +72,10 @@ def process_combinations(from_path, to_path, args):
     num_flaws = 0
     num_facts = 0
 
-    reset_uuids = args.reset_uuids
-    if args.reset_all_uuids:
+    reset_uuids = 0
+    if args.reset_uuids is not None:
+        reset_uuids = args.reset_uuids
+    elif args.reset_all_uuids:
         reset_uuids = len(to_moles)
 
     for params in yield_reset_combinations(
