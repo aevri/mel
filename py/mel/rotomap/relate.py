@@ -188,6 +188,13 @@ def best_offset_theory(from_moles, to_moles):
     if not to_moles:
         raise ValueError('to_moles is empty')
 
+    theory = best_offset_field_theory(from_moles, to_moles)
+    if theory is None:
+        theory = best_baseless_offset_theory(from_moles, to_moles)
+    return theory
+
+
+def best_offset_field_theory(from_moles, to_moles):
     from_dict = mole_list_to_uuid_dict(from_moles)
     to_dict = mole_list_to_uuid_dict(to_moles)
     from_set = set(from_dict.keys())
@@ -195,22 +202,22 @@ def best_offset_theory(from_moles, to_moles):
 
     in_both = from_set & to_set
 
-    if in_both:
-        theory = []
-        theory.extend((u, u) for u in in_both)
-        point_offsets = to_point_offsets(
-            [(from_dict[m], to_dict[m]) for m in in_both])
-        new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
-        new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
-        from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
-        to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
+    if not in_both:
+        return None
 
-        theory += make_offset_field_theory(
-            from_uuid_points, to_uuid_points, point_offsets)
+    theory = []
+    theory.extend((u, u) for u in in_both)
+    point_offsets = to_point_offsets(
+        [(from_dict[m], to_dict[m]) for m in in_both])
+    new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
+    new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
+    from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
+    to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
-        return theory
-    else:
-        return best_baseless_offset_theory(from_moles, to_moles)
+    theory += make_offset_field_theory(
+        from_uuid_points, to_uuid_points, point_offsets)
+
+    return theory
 
 
 def to_point_offsets(mole_pairs):
