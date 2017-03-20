@@ -232,6 +232,29 @@ def offset_theory_points(from_moles, to_moles):
     return from_uuid_points, to_uuid_points, point_offsets
 
 
+def guess_mole_pos(from_uuid, from_moles, to_moles):
+    """Return a numpy.array position guessing the location of uuid_, or None.
+
+    :from_uuid: string uuid of the mole to guess the position of in to_moles.
+    :from_moles: a list of mole dicts to map from.
+    :to_moles: a list of mole dicts to map to.
+    :returns: a numpy.array of the guessed position, or None if no guess.
+
+    """
+    from_uuid_points, to_uuid_points, point_offsets = offset_theory_points(
+        from_moles, to_moles)
+
+    if not point_offsets:
+        return None
+
+    if from_uuid not in from_uuid_points:
+        return None
+
+    point = from_uuid_points[from_uuid]
+    offset, error = pick_value_from_field(point, point_offsets)
+    return (point + offset).astype(int)
+
+
 def to_point_offsets(mole_pairs):
     point_offsets = []
     for from_mole, to_mole in mole_pairs:

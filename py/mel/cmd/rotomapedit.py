@@ -387,20 +387,12 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
     if mel.rotomap.moles.uuid_mole_index(
             editor.moledata.moles, follow_uuid) is None:
 
-        guessed_moles = guess_mole_positions(
+        guess_pos = mel.rotomap.relate.guess_mole_pos(
+            follow_uuid,
             prev_moles,
-            editor.moledata.moles,
-            editor.moledata.get_image())
+            editor.moledata.moles)
 
-        follow_index = mel.rotomap.moles.uuid_mole_index(
-            guessed_moles, follow_uuid)
-
-        if follow_index is not None:
-            guess_pos = mel.rotomap.moles.molepos_to_nparray(
-                guessed_moles[follow_index])
-
-            guess_pos = (int(guess_pos[0]), int(guess_pos[1]))
-
+        if guess_pos is not None:
             print(guess_pos)
             editor.show_zoomed_display(
                 guess_pos[0], guess_pos[1])
