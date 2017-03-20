@@ -195,15 +195,30 @@ def best_offset_theory(from_moles, to_moles):
 
 
 def best_offset_field_theory(from_moles, to_moles):
+    from_uuid_points, to_uuid_points, point_offsets = offset_theory_points(
+        from_moles, to_moles)
+
+    if not point_offsets:
+        return None
+
+    return make_offset_field_theory(
+        from_uuid_points, to_uuid_points, point_offsets)
+
+
+def offset_theory_points(from_moles, to_moles):
+    """Return (from_uuid_points, to_uuid_points, point_offsets) from input.
+
+    :from_moles: a list of mole dicts to map from
+    :to_moles: a list of mole dicts to map to
+    :returns: (from_uuid_points, to_uuid_points, point_offsets)
+
+    """
     from_dict = mole_list_to_uuid_dict(from_moles)
     to_dict = mole_list_to_uuid_dict(to_moles)
     from_set = set(from_dict.keys())
     to_set = set(to_dict.keys())
 
     in_both = from_set & to_set
-
-    if not in_both:
-        return None
 
     theory = []
     theory.extend((u, u) for u in in_both)
@@ -214,10 +229,7 @@ def best_offset_field_theory(from_moles, to_moles):
     from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
     to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
-    theory += make_offset_field_theory(
-        from_uuid_points, to_uuid_points, point_offsets)
-
-    return theory
+    return from_uuid_points, to_uuid_points, point_offsets
 
 
 def to_point_offsets(mole_pairs):
