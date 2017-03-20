@@ -314,6 +314,18 @@ class Editor:
         else:
             self.show_fitted()
 
+    def skip_to_mole(self, uuid_to_skip_to):
+        original_index = self.moledata.index()
+        done = False
+        while not done:
+            for m in self.moledata.moles:
+                if m['uuid'] == uuid_to_skip_to:
+                    return
+            self.moledata.increment()
+            self.moledata.get_image()
+            if self.moledata.index() == original_index:
+                return
+
     def toggle_markers(self):
         self._mole_overlay.toggle_markers()
         self.show_current()
@@ -503,6 +515,9 @@ class MoleData:
 
     def increment(self):
         self._list_index = (self._list_index + 1) % self._num_images
+
+    def index(self):
+        return self._list_index
 
     def save_mask(self):
         cv2.imwrite(self._mask_path, self.mask)

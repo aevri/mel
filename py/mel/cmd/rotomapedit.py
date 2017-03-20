@@ -59,6 +59,7 @@ class FollowController():
         self.mole_uuid_list = mole_uuid_list
         if follow:
             self.mole_uuid_list[0] = follow
+            editor.skip_to_mole(self.mole_uuid_list[0])
             editor.follow(self.mole_uuid_list[0])
 
         self.is_paste_mode = False
