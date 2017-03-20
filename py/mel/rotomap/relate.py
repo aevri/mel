@@ -209,8 +209,8 @@ def best_offset_field_theory(from_moles, to_moles):
     theory.extend((u, u) for u in in_both)
     point_offsets = to_point_offsets(
         [(from_dict[m], to_dict[m]) for m in in_both])
-    new_from_moles = [from_dict[m] for m in from_set if m not in in_both]
-    new_to_moles = [to_dict[m] for m in to_set if m not in in_both]
+    new_from_moles = [from_dict[m] for m in from_set - in_both]
+    new_to_moles = [to_dict[m] for m in to_set - in_both]
     from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
     to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
