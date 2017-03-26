@@ -422,7 +422,7 @@ def mole_min_sq_distance(moles):
         for j, b in enumerate(moles):
             if j == i:
                 continue
-            dist = mole_distance_sq(a, b)
+            dist = _mole_distance_sq(a, b)
             if min_dist is None or dist < min_dist:
                 min_dist = dist
     return min_dist
@@ -439,12 +439,13 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     for i, a in enumerate(from_moles):
         point = mel.rotomap.moles.molepos_to_nparray(a)
         point += offset
-        best_index, best_dist_sq = nearest_mole_index_to_point(point, to_moles)
+        best_index, best_dist_sq = _nearest_mole_index_to_point(
+            point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
             r_point = mel.rotomap.moles.molepos_to_nparray(
                 to_moles[best_index])
             r_point -= offset
-            r_index, _ = nearest_mole_index_to_point(r_point, from_moles)
+            r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)
             if i == r_index:
                 theory.append((a['uuid'], to_moles[best_index]['uuid']))
                 del to_moles[best_index]
@@ -460,24 +461,24 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     return theory, dist_sq_sum
 
 
-def nearest_mole_index_to_point(point, mole_list):
+def _nearest_mole_index_to_point(point, mole_list):
     best_index = None
     best_dist_sq = None
     for i, mole in enumerate(mole_list):
         dist_sq = mel.lib.math.distance_sq_2d(
             point,
-            mole_to_point(mole))
+            _mole_to_point(mole))
         if best_index is None or dist_sq < best_dist_sq:
             best_index = i
             best_dist_sq = dist_sq
     return best_index, best_dist_sq
 
 
-def mole_distance_sq(from_mole, to_mole):
+def _mole_distance_sq(from_mole, to_mole):
     return mel.lib.math.distance_sq_2d(
-        mole_to_point(from_mole),
-        mole_to_point(to_mole))
+        _mole_to_point(from_mole),
+        _mole_to_point(to_mole))
 
 
-def mole_to_point(mole):
+def _mole_to_point(mole):
     return (mole['x'], mole['y'])
