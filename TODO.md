@@ -58,4 +58,5 @@ A simple list to capture outstanding tasks, roughly in priority order.
 - rotomap-edit: provide for identifying and highlighting probable mistakes when
   relating
 
-- mel rotomap-automark
+- mel rotomap-edit: mark-specific workflow, remove need to toggle moles on/off
+- mel rotomap-automark: reduce false +ves on borders of mask
