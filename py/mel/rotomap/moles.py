@@ -126,7 +126,7 @@ def remove_nearest_mole(moles, x, y):
         del moles[nearest_index]
 
 
-def molepos_to_nparray(mole):
+def mole_to_point(mole):
     pos = numpy.array((mole['x'], mole['y']))
     mel.lib.math.raise_if_not_int_vector2(pos)
     return pos
@@ -135,7 +135,7 @@ def molepos_to_nparray(mole):
 def to_uuid_points(moles):
     uuid_points = {}
     for m in moles:
-        uuid_points[m['uuid']] = molepos_to_nparray(m)
+        uuid_points[m['uuid']] = mole_to_point(m)
     return uuid_points
 
 
@@ -206,7 +206,7 @@ def get_moles_from_points(mole_list, point_list):
     output_moles = []
     for point in point_list:
         for mole in mole_list:
-            molepoint = mel.rotomap.moles.molepos_to_nparray(mole)
+            molepoint = mel.rotomap.moles.mole_to_point(mole)
             if numpy.allclose(point, molepoint):
                 output_moles.append(mole)
 
@@ -264,8 +264,8 @@ def mapped_pos(molepos, from_moles, to_moles):
         return molepos
 
     to_dict = {m['uuid']: m for m in to_moles}
-    from_pos_list = [molepos_to_nparray(m) for m in from_moles]
-    to_pos_list = [molepos_to_nparray(to_dict[m['uuid']]) for m in from_moles]
+    from_pos_list = [mole_to_point(m) for m in from_moles]
+    to_pos_list = [mole_to_point(to_dict[m['uuid']]) for m in from_moles]
 
     num_pairs = len(from_pos_list)
 

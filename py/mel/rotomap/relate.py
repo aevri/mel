@@ -76,8 +76,8 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
     draw_mole(image, to_mole, colour)
     cv2.arrowedLine(
         image,
-        tuple(mel.rotomap.moles.molepos_to_nparray(from_mole)),
-        tuple(mel.rotomap.moles.molepos_to_nparray(to_mole)),
+        tuple(mel.rotomap.moles.mole_to_point(from_mole)),
+        tuple(mel.rotomap.moles.mole_to_point(to_mole)),
         (255, 255, 255),
         2,
         cv2.LINE_AA)
@@ -258,8 +258,8 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
 def to_point_offsets(mole_pairs):
     point_offsets = []
     for from_mole, to_mole in mole_pairs:
-        from_pos = mel.rotomap.moles.molepos_to_nparray(from_mole)
-        to_pos = mel.rotomap.moles.molepos_to_nparray(to_mole)
+        from_pos = mel.rotomap.moles.mole_to_point(from_mole)
+        to_pos = mel.rotomap.moles.mole_to_point(to_mole)
         point_offsets.append((from_pos, to_pos - from_pos))
     return point_offsets
 
@@ -437,12 +437,12 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     dist_sq_sum = 0
 
     for i, a in enumerate(from_moles):
-        point = mel.rotomap.moles.molepos_to_nparray(a)
+        point = mel.rotomap.moles.mole_to_point(a)
         point += offset
         best_index, best_dist_sq = _nearest_mole_index_to_point(
             point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
-            r_point = mel.rotomap.moles.molepos_to_nparray(
+            r_point = mel.rotomap.moles.mole_to_point(
                 to_moles[best_index])
             r_point -= offset
             r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)

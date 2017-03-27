@@ -421,7 +421,7 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
     for mole in previous_moles:
         if mole['uuid'] not in matched_uuids:
             new_m = copy.deepcopy(mole)
-            pos = mel.rotomap.moles.molepos_to_nparray(new_m)
+            pos = mel.rotomap.moles.mole_to_point(new_m)
 
             # XXX: assume that current_image and prev_image have the same
             #      dimensions
