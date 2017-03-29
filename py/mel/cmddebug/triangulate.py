@@ -54,29 +54,23 @@ def process_args(args):
     print("Press enter to toggle mole markers.")
     print("Press any other key to quit.")
 
-    is_finished = False
-
-    while not is_finished:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                editor.show_prev()
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                editor.show_next()
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_UP_ARROW:
-                editor.show_prev_map()
-                print(editor.moledata.current_image_path())
-            elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
-                editor.show_next_map()
-                print(editor.moledata.current_image_path())
-            elif key == ord(' '):
-                editor.show_fitted()
-            elif key == 13:
-                editor.toggle_markers()
-            else:
-                is_finished = True
+    for key in mel.lib.ui.yield_keys_until_quitkey():
+        if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+            editor.show_prev()
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+            editor.show_next()
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+            editor.show_prev_map()
+            print(editor.moledata.current_image_path())
+        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+            editor.show_next_map()
+            print(editor.moledata.current_image_path())
+        elif key == ord(' '):
+            editor.show_fitted()
+        elif key == 13:
+            editor.toggle_markers()
 
     editor.display.clear_mouse_callback()
 

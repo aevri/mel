@@ -14,10 +14,10 @@ import mel.lib.image
 
 # Codes as returned by waitkey().
 # There may be some platform dependence, these codes were observed on Mac OSX.
-WAITKEY_LEFT_ARROW = 63234
-WAITKEY_RIGHT_ARROW = 63235
-WAITKEY_UP_ARROW = 63232
-WAITKEY_DOWN_ARROW = 63233
+WAITKEY_LEFT_ARROW = 2
+WAITKEY_RIGHT_ARROW = 3
+WAITKEY_UP_ARROW = 0
+WAITKEY_DOWN_ARROW = 1
 
 WAITKEY_BACKSPACE = 127
 
@@ -27,6 +27,18 @@ WAITKEY_ARROWS = [
     WAITKEY_UP_ARROW,
     WAITKEY_DOWN_ARROW,
 ]
+
+
+def yield_keys_until_quitkey(delay=50, quit_key='q', quit_func=None):
+    while True:
+        key = cv2.waitKey(delay) % 256
+        if key != 255:
+            if key == ord(quit_key):
+                return
+            else:
+                yield key
+        if quit_func is not None and quit_func():
+            return
 
 
 def bring_python_to_front():

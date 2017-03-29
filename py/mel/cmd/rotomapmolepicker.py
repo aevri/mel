@@ -59,23 +59,21 @@ def process_args(args):
                 mole_uuid = editor.get_mole_uuid(x, y)
                 is_finished = True
 
+    def quit_func():
+        return is_finished
+
     editor.display.set_mouse_callback(mouse_callback)
 
     while True:
-        is_finished = False
-        while not is_finished:
-            key = cv2.waitKey(50)
-            if key != -1:
-                if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                    editor.show_prev()
-                elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                    editor.show_next()
-                elif key == ord(' '):
-                    editor.show_fitted()
-                elif key == 13:
-                    editor.toggle_markers()
-                else:
-                    is_finished = True
+        for key in mel.lib.ui.yield_keys_until_quitkey(quit_func=quit_func):
+            if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+                editor.show_prev()
+            elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+                editor.show_next()
+            elif key == ord(' '):
+                editor.show_fitted()
+            elif key == 13:
+                editor.toggle_markers()
 
         if mole_uuid is None:
             return 1

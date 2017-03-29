@@ -369,14 +369,8 @@ def process_args(args):
     print("Shift-click on a point to remove masking there.")
     print("Press 'a' to auto-mask based on the current mask.")
 
-    is_finished = False
-    while not is_finished:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == ord('q'):
-                is_finished = True
-            else:
-                controller.on_key(editor, key)
+    for key in mel.lib.ui.yield_keys_until_quitkey():
+        controller.on_key(editor, key)
 
     editor.display.clear_mouse_callback()
 

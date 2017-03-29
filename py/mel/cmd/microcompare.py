@@ -62,18 +62,13 @@ def process_args(args):
     print("Press space to swap left slot and right slot.")
     print("Press any other key to exit.")
 
-    is_finished = False
-    while not is_finished:
-        key = cv2.waitKey(50)
-        if key != -1:
-            if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-                display.next_image()
-            elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-                display.prev_image()
-            elif key == ord(' '):
-                display.swap_images()
-            else:
-                is_finished = True
+    for key in mel.lib.ui.yield_keys_until_quitkey():
+        if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+            display.next_image()
+        elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+            display.prev_image()
+        elif key == ord(' '):
+            display.swap_images()
 
 
 class ImageCompareDisplay():
