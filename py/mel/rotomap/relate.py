@@ -467,7 +467,7 @@ def _nearest_mole_index_to_point(point, mole_list):
     for i, mole in enumerate(mole_list):
         dist_sq = mel.lib.math.distance_sq_2d(
             point,
-            _mole_to_point(mole))
+            mel.rotomap.moles.mole_to_point(mole))
         if best_index is None or dist_sq < best_dist_sq:
             best_index = i
             best_dist_sq = dist_sq
@@ -476,9 +476,5 @@ def _nearest_mole_index_to_point(point, mole_list):
 
 def _mole_distance_sq(from_mole, to_mole):
     return mel.lib.math.distance_sq_2d(
-        _mole_to_point(from_mole),
-        _mole_to_point(to_mole))
-
-
-def _mole_to_point(mole):
-    return (mole['x'], mole['y'])
+        mel.rotomap.moles.mole_to_point(from_mole),
+        mel.rotomap.moles.mole_to_point(to_mole))
