@@ -128,7 +128,7 @@ def process_pair(
     expected_theory_set = set(expected_theory)
     offset_theory_set = set(offset_theory)
 
-    flaws = offset_theory_set.difference(expected_theory_set)
+    flaws = offset_theory_set.symmetric_difference(expected_theory_set)
     facts = expected_theory_set.intersection(offset_theory_set)
 
     for from_uuid, to_uuid in flaws:
