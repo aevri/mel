@@ -405,7 +405,9 @@ class Editor:
         self.show_current()
 
     def show_current(self):
+        self.display.set_title(self.moledata.current_image_path())
         image = self.moledata.get_image()
+
         if self._mode is EditorMode.debug_automole:
             image = image[:]
             image = mel.rotomap.detectmoles.draw_debug(
@@ -434,7 +436,6 @@ class Editor:
                 make_composite_overlay(
                     self._mole_overlay,
                     self._status_overlay))
-            self.display.set_title(self.moledata.current_image_path())
 
     def show_fitted(self):
         self.display.set_fitted()
