@@ -203,6 +203,21 @@ class MoleMarkerOverlay():
         return image
 
 
+class MarkedMoleOverlay():
+    """An overlay to make marked moles obvious, for checking mark positions."""
+
+    def __init__(self):
+        self.moles = None
+
+    def __call__(self, image, transform):
+
+        for mole in self.moles:
+            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            draw_mole(image, x, y, [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
+
+        return image
+
+
 class ZoomedImageTransform():
 
     def __init__(self, image, pos, rect):
@@ -254,6 +269,7 @@ class FittedImageTransform():
 class EditorMode(enum.Enum):
     edit_mole = 1
     edit_mask = 2
+    mole_mark = 3
     debug_automole = 0
     debug_autorelate = 9
 
@@ -271,6 +287,7 @@ class Editor:
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
+        self._marked_mole_overlay = MarkedMoleOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
 
@@ -290,6 +307,10 @@ class Editor:
 
     def set_editmask_mode(self):
         self._mode = EditorMode.edit_mask
+        self.show_current()
+
+    def set_molemark_mode(self):
+        self._mode = EditorMode.mole_mark
         self.show_current()
 
     def set_status(self, text):
@@ -363,6 +384,11 @@ class Editor:
             masked_image = cv2.bitwise_and(image, image, mask=mask)
             composite_image = cv2.add(masked_image, image)
             self.display.show_current(composite_image, None)
+        elif self._mode is EditorMode.mole_mark:
+            self._marked_mole_overlay.moles = self.moledata.moles
+            self.display.show_current(
+                image,
+                self._marked_mole_overlay)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(

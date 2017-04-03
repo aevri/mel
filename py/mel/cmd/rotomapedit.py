@@ -238,6 +238,25 @@ class MaskEditController():
             editor.show_current()
 
 
+class MoleMarkController():
+
+    def __init__(self):
+        pass
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                editor.remove_mole(mouse_x, mouse_y)
+            else:
+                editor.add_mole(mouse_x, mouse_y)
+
+    def pre_key(self, editor, key):
+        pass
+
+    def on_key(self, editor, key):
+        pass
+
+
 class AutomoleDebugController():
 
     def __init__(self):
@@ -274,6 +293,7 @@ class Controller():
     def __init__(self, editor, follow):
         self.moleedit_controller = MoleEditController(editor, follow)
         self.maskedit_controller = MaskEditController()
+        self.molemark_controller = MoleMarkController()
         self.automoledebug_controller = AutomoleDebugController()
         self.autorelatedebug_controller = AutoRelateDebugController()
         self.current_controller = self.moleedit_controller
@@ -316,6 +336,10 @@ class Controller():
             # Switch to mask edit mode
             self.current_controller = self.maskedit_controller
             editor.set_editmask_mode()
+        elif key == ord('3'):
+            # Switch to mole marking mode
+            self.current_controller = self.molemark_controller
+            editor.set_molemark_mode()
 
         if key in mel.lib.ui.WAITKEY_ARROWS:
             print(editor.moledata.current_image_path())
@@ -346,6 +370,7 @@ def process_args(args):
     print()
     print("Press '1' for mole edit mode (the starting mode).")
     print("Press '2' for mask edit mode.")
+    print("Press '3' for mole marking mode.")
     print("Press '0' for auto-mole debug mode.")
     print("Press '9' for auto-relate debug mode.")
     print()
@@ -368,6 +393,10 @@ def process_args(args):
     print("Click on a point to draw masking there.")
     print("Shift-click on a point to remove masking there.")
     print("Press 'a' to auto-mask based on the current mask.")
+    print()
+    print("In 'mole marking' mode:")
+    print("Click on a point to add or move a mole there and save.")
+    print("Shift-click on a point to delete it.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         controller.on_key(editor, key)
