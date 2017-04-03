@@ -195,18 +195,18 @@ def best_offset_theory(from_moles, to_moles):
 
 
 def best_offset_field_theory(from_moles, to_moles):
-    from_uuid_points, to_uuid_points, point_offsets = offset_theory_points(
+    from_points, to_points, point_offsets, theory = offset_theory_points(
         from_moles, to_moles)
 
     if not point_offsets:
         return None
 
     return make_offset_field_theory(
-        from_uuid_points, to_uuid_points, point_offsets)
+        from_points, to_points, point_offsets, theory)
 
 
 def offset_theory_points(from_moles, to_moles):
-    """Return (from_uuid_points, to_uuid_points, point_offsets) from input.
+    """Return (from_points, to_points, point_offsets, theory) from input.
 
     :from_moles: a list of mole dicts to map from
     :to_moles: a list of mole dicts to map to
@@ -229,7 +229,7 @@ def offset_theory_points(from_moles, to_moles):
     from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
     to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
-    return from_uuid_points, to_uuid_points, point_offsets
+    return from_uuid_points, to_uuid_points, point_offsets, theory
 
 
 def guess_mole_pos(from_uuid, from_moles, to_moles):
@@ -241,16 +241,16 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
     :returns: a numpy.array of the guessed position, or None if no guess.
 
     """
-    from_uuid_points, to_uuid_points, point_offsets = offset_theory_points(
+    from_points, to_points, point_offsets, _ = offset_theory_points(
         from_moles, to_moles)
 
     if not point_offsets:
         return None
 
-    if from_uuid not in from_uuid_points:
+    if from_uuid not in from_points:
         return None
 
-    point = from_uuid_points[from_uuid]
+    point = from_points[from_uuid]
     offset, error = pick_value_from_field(point, point_offsets)
     return (point + offset).astype(int)
 
@@ -264,10 +264,11 @@ def to_point_offsets(mole_pairs):
     return point_offsets
 
 
-def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets):
+def make_offset_field_theory(
+        from_uuid_points, to_uuid_points, point_offsets, theory):
+
     to_uuid_points = dict(to_uuid_points)
     inv_point_offsets = invert_point_offsets(point_offsets)
-    theory = []
     for uuid_, point in from_uuid_points.items():
         if not to_uuid_points:
             theory.append((uuid_, None))
