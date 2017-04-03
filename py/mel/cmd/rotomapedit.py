@@ -13,6 +13,7 @@ import mel.lib.ui
 
 import mel.rotomap.display
 import mel.rotomap.mask
+import mel.rotomap.relate
 
 
 def setup_parser(parser):
@@ -260,6 +261,76 @@ class MoleMarkController():
             editor.show_current()
 
 
+class ImageRelateController():
+
+    def __init__(self):
+        self.copied_uuid = None
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                editor.set_mole_uuid(
+                    mouse_x, mouse_y,
+                    uuid.uuid4().hex,
+                    is_canonical=False)
+            else:
+                if self.copied_uuid:
+                    if flags & cv2.EVENT_FLAG_ALTKEY:
+                        editor.remap_uuid(
+                            editor.get_mole_uuid(mouse_x, mouse_y),
+                            self.copied_uuid)
+                    else:
+                        editor.set_mole_uuid(
+                            mouse_x, mouse_y,
+                            self.copied_uuid)
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            if editor.from_moles is not None:
+                image_pos = editor.display.windowxy_to_imagexy(
+                    mouse_x, mouse_y)
+                index = mel.rotomap.moles.nearest_mole_index(
+                    editor.from_moles, *image_pos)
+                if index is not None:
+                    self.copied_uuid = editor.from_moles[index]['uuid']
+
+    def pre_key(self, editor, key):
+        if key in mel.lib.ui.WAITKEY_ARROWS:
+            editor.set_from_moles(copy.deepcopy(editor.moledata.moles))
+
+    def on_key(self, editor, key):
+        if key == ord('a'):
+            if editor.from_moles is not None:
+                theory = mel.rotomap.relate.best_theory(
+                    editor.from_moles,
+                    editor.moledata.moles,
+                    iterate=False)
+
+                if theory:
+                    guessed_moles = copy.deepcopy(editor.moledata.moles)
+                    for mole in guessed_moles:
+                        for p in theory:
+                            if p[0] and p[1]:
+                                if mole['uuid'] == p[1]:
+                                    mole['uuid'] = p[0]
+                                    break
+
+                editor.set_moles(guessed_moles)
+                editor.moledata.save_moles()
+
+        elif key == ord('g'):
+            if editor.from_moles is not None:
+                theory = mel.rotomap.relate.best_theory(
+                    editor.from_moles,
+                    editor.moledata.moles,
+                    iterate=False)
+
+                if theory:
+                    for from_uuid, to_uuid in theory:
+                        if from_uuid != to_uuid and from_uuid and to_uuid:
+                            editor.remap_uuid(to_uuid, from_uuid)
+
+                editor.moledata.save_moles()
+
+
 class AutomoleDebugController():
 
     def __init__(self):
@@ -297,6 +368,7 @@ class Controller():
         self.moleedit_controller = MoleEditController(editor, follow)
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
+        self.imagerelate_controller = ImageRelateController()
         self.automoledebug_controller = AutomoleDebugController()
         self.autorelatedebug_controller = AutoRelateDebugController()
         self.current_controller = self.moleedit_controller
@@ -343,6 +415,10 @@ class Controller():
             # Switch to mole marking mode
             self.current_controller = self.molemark_controller
             editor.set_molemark_mode()
+        elif key == ord('4'):
+            # Switch to image relating mode
+            self.current_controller = self.imagerelate_controller
+            editor.set_imagerelate_mode()
 
         if key in mel.lib.ui.WAITKEY_ARROWS:
             print(editor.moledata.current_image_path())
@@ -374,6 +450,7 @@ def process_args(args):
     print("Press '1' for mole edit mode (the starting mode).")
     print("Press '2' for mask edit mode.")
     print("Press '3' for mole marking mode.")
+    print("Press '4' for image relating mode.")
     print("Press '0' for auto-mole debug mode.")
     print("Press '9' for auto-relate debug mode.")
     print()
@@ -401,6 +478,14 @@ def process_args(args):
     print("Click on a point to add or move a mole there and save.")
     print("Shift-click on a point to delete it.")
     print("Press 'a' to accentuate marked moles, for considering removal.")
+    print()
+    print("In 'image relating' mode:")
+    print("Right-Click on a faded point to copy its UUID.")
+    print("Click on a non-faded point to paste the UUID.")
+    print("Alt-click on a non-faded point to paste the UUID globally.")
+    print("Shift-click on a non-faded point to randomize the uuid.")
+    print("Press 'a' to apply auto-relate results to image.")
+    print("Press 'g' to apply auto-relate results globally to rotomap.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         controller.on_key(editor, key)

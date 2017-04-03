@@ -2,6 +2,7 @@
 
 import enum
 
+import collections
 import cv2
 import numpy
 
@@ -256,6 +257,104 @@ class MarkedMoleOverlay():
         return image
 
 
+class ImageRelateOverlay():
+    """An overlay to make image-to-image mappings obvious."""
+
+    def __init__(self):
+        self.prev_moles = None
+        self.moles = None
+
+    def __call__(self, image, transform):
+
+        # grey = [[255] * 3, [128] * 3, [0] * 3]
+        blue = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
+        green = [[0, 255, 0], [128, 255, 128], [0, 255, 0]]
+        red = [[0, 0, 255], [128, 128, 255], [0, 0, 255]]
+        alert = [[0, 255, 255], [0, 0, 255], [0, 255, 255]]
+
+        from_moles = self.prev_moles
+        to_moles = self.moles
+
+        default_theory_uuids = set()
+        best_theory = []
+        from_duplicates = set()
+        to_duplicates = set()
+
+        if self.prev_moles is not None:
+            make_info = mel.rotomap.relate.mole_list_overlap_info
+            _, _, _, _, default_theory_uuids = make_info(
+                self.prev_moles, self.moles)
+
+            from_counts = collections.Counter(x['uuid'] for x in from_moles)
+            to_counts = collections.Counter(x['uuid'] for x in to_moles)
+            from_duplicates = {u for u, c in from_counts.items() if c > 1}
+            to_duplicates = {u for u, c in to_counts.items() if c > 1}
+
+            best_theory = mel.rotomap.relate.best_theory(
+                self.prev_moles, self.moles, iterate=False)
+
+        if self.prev_moles is not None:
+            for mole in self.prev_moles:
+                x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+
+                colour = red
+                if mole['uuid'] in default_theory_uuids:
+                    colour = blue
+                if mole['uuid'] in from_duplicates:
+                    colour = alert
+
+                draw_mole(image, x, y, colour)
+
+        image //= 2
+
+        for mole in self.moles:
+            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+
+            colour = green
+            if mole['uuid'] in default_theory_uuids:
+                colour = blue
+            if mole['uuid'] in to_duplicates:
+                colour = alert
+
+            draw_mole(image, x, y, colour)
+
+        if self.prev_moles is not None:
+            from_uuid_points = mel.rotomap.moles.to_uuid_points(
+                self.prev_moles)
+            to_uuid_points = mel.rotomap.moles.to_uuid_points(self.moles)
+            for from_uuid, to_uuid in best_theory:
+                if from_uuid and to_uuid:
+                    from_pos = from_uuid_points[from_uuid]
+                    to_pos = to_uuid_points[to_uuid]
+
+                    from_pos = transform.imagexy_to_transformedxy(*from_pos)
+                    to_pos = transform.imagexy_to_transformedxy(*to_pos)
+
+                    colour = (255, 255, 255)
+                    if from_uuid == to_uuid:
+                        colour = (255, 0, 0)
+
+                    cv2.arrowedLine(
+                        image,
+                        tuple(from_pos),
+                        tuple(to_pos),
+                        colour,
+                        10,
+                        cv2.LINE_AA,
+                        tipLength=0.25)
+
+                    cv2.arrowedLine(
+                        image,
+                        tuple(from_pos),
+                        tuple(to_pos),
+                        (0, 0, 0),
+                        3,
+                        cv2.LINE_AA,
+                        tipLength=0.25)
+
+        return image
+
+
 class ZoomedImageTransform():
 
     def __init__(self, image, pos, rect):
@@ -308,6 +407,7 @@ class EditorMode(enum.Enum):
     edit_mole = 1
     edit_mask = 2
     mole_mark = 3
+    image_relate = 4
     debug_automole = 0
     debug_autorelate = 9
 
@@ -326,10 +426,11 @@ class Editor:
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.marked_mole_overlay = MarkedMoleOverlay()
+        self._image_relate_overlay = ImageRelateOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
 
-        self._from_moles = None
+        self.from_moles = None
 
     def set_automoledebug_mode(self):
         self._mode = EditorMode.debug_automole
@@ -349,6 +450,10 @@ class Editor:
 
     def set_molemark_mode(self):
         self._mode = EditorMode.mole_mark
+        self.show_current()
+
+    def set_imagerelate_mode(self):
+        self._mode = EditorMode.image_relate
         self.show_current()
 
     def set_status(self, text):
@@ -394,7 +499,7 @@ class Editor:
         self.show_current()
 
     def set_from_moles(self, moles):
-        self._from_moles = moles
+        self.from_moles = moles
 
     def set_mask(self, mouse_x, mouse_y, enable):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
@@ -416,7 +521,7 @@ class Editor:
         elif self._mode is EditorMode.debug_autorelate:
             image = numpy.copy(image)
             image = mel.rotomap.relate.draw_debug(
-                image, self.moledata.moles, self._from_moles)
+                image, self.moledata.moles, self.from_moles)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             image = image // 2
@@ -429,6 +534,12 @@ class Editor:
             self.display.show_current(
                 image,
                 self.marked_mole_overlay)
+        elif self._mode is EditorMode.image_relate:
+            self._image_relate_overlay.moles = self.moledata.moles
+            self._image_relate_overlay.prev_moles = self.from_moles
+            self.display.show_current(
+                image,
+                self._image_relate_overlay)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(
