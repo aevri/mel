@@ -254,7 +254,10 @@ class MoleMarkController():
         pass
 
     def on_key(self, editor, key):
-        pass
+        if key == ord('a'):
+            is_alt = editor.marked_mole_overlay.is_accentuate_marked_mode
+            editor.marked_mole_overlay.is_accentuate_marked_mode = not is_alt
+            editor.show_current()
 
 
 class AutomoleDebugController():
@@ -397,6 +400,7 @@ def process_args(args):
     print("In 'mole marking' mode:")
     print("Click on a point to add or move a mole there and save.")
     print("Shift-click on a point to delete it.")
+    print("Press 'a' to accentuate marked moles, for considering removal.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         controller.on_key(editor, key)

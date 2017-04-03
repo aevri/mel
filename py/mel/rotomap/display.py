@@ -208,12 +208,50 @@ class MarkedMoleOverlay():
 
     def __init__(self):
         self.moles = None
+        self.is_accentuate_marked_mode = False
 
     def __call__(self, image, transform):
+        if self.is_accentuate_marked_mode:
+            return self._draw_accentuated(image, transform)
+        else:
+            return self._draw_markers(image, transform)
+
+    def _draw_accentuated(self, image, transform):
+        # Reveal the moles that have been marked, whilst still showing
+        # markers. This is good for verifying that markers are actually
+        # positioned on moles.
+
+        mask_radius = 50
+
+        image = image.copy() // 2
+        mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
 
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_mole(image, x, y, [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
+            draw_mole(mask, x, y, [[255] * 3] * 3)
+            cv2.circle(mask, (x, y), mask_radius, 255, -1)
+
+        masked_faded = cv2.bitwise_and(image, image, mask=mask)
+        image = cv2.add(masked_faded, image)
+
+        for mole in self.moles:
+            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            draw_crosshair(image, x, y)
+
+        return image
+
+    def _draw_markers(self, image, transform):
+        # Hide the moles that have been marked, showing markers
+        # distinctly from moles. This is good for marking moles that
+        # haven't been marked, without worrying about the ones that
+        # have been marked.
+
+        for mole in self.moles:
+            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            draw_mole(
+                image,
+                x, y,
+                [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
 
         return image
 
@@ -287,7 +325,7 @@ class Editor:
         self.moledata = self.moledata_list[self.moledata_index]
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
-        self._marked_mole_overlay = MarkedMoleOverlay()
+        self.marked_mole_overlay = MarkedMoleOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
 
@@ -385,10 +423,10 @@ class Editor:
             composite_image = cv2.add(masked_image, image)
             self.display.show_current(composite_image, None)
         elif self._mode is EditorMode.mole_mark:
-            self._marked_mole_overlay.moles = self.moledata.moles
+            self.marked_mole_overlay.moles = self.moledata.moles
             self.display.show_current(
                 image,
-                self._marked_mole_overlay)
+                self.marked_mole_overlay)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(
