@@ -89,14 +89,11 @@ def draw_debug(image, to_moles, from_moles):
     if from_moles is None:
         from_moles = []
 
-    from_dict = mole_list_to_uuid_dict(from_moles)
-    to_dict = mole_list_to_uuid_dict(to_moles)
-    from_set = set(from_dict.keys())
-    to_set = set(to_dict.keys())
+    from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
+        from_moles, to_moles)
 
     from_only = from_set - to_set
     to_only = to_set - from_set
-    in_both = from_set & to_set
 
     theory = []
     theory.extend((u, None) for u in from_only)
@@ -213,12 +210,8 @@ def offset_theory_points(from_moles, to_moles):
     :returns: (from_uuid_points, to_uuid_points, point_offsets)
 
     """
-    from_dict = mole_list_to_uuid_dict(from_moles)
-    to_dict = mole_list_to_uuid_dict(to_moles)
-    from_set = set(from_dict.keys())
-    to_set = set(to_dict.keys())
-
-    in_both = from_set & to_set
+    from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
+        from_moles, to_moles)
 
     theory = []
     theory.extend((u, u) for u in in_both)
@@ -230,6 +223,15 @@ def offset_theory_points(from_moles, to_moles):
     to_uuid_points = mel.rotomap.moles.to_uuid_points(new_to_moles)
 
     return from_uuid_points, to_uuid_points, point_offsets, theory
+
+
+def mole_list_overlap_info(from_moles, to_moles):
+    from_dict = mole_list_to_uuid_dict(from_moles)
+    to_dict = mole_list_to_uuid_dict(to_moles)
+    from_set = set(from_dict.keys())
+    to_set = set(to_dict.keys())
+    in_both = from_set & to_set
+    return from_dict, to_dict, from_set, to_set, in_both
 
 
 def guess_mole_pos(from_uuid, from_moles, to_moles):
