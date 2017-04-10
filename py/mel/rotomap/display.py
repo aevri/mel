@@ -11,6 +11,7 @@ import mel.lib.image
 import mel.lib.math
 import mel.lib.ui
 import mel.rotomap.detectmoles
+import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
 import mel.rotomap.tricolour
