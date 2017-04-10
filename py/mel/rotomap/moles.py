@@ -75,6 +75,10 @@ def sorted_by_distances(mole_list, x, y):
 
 
 def nearest_mole_index(moles, x, y):
+    return nearest_mole_index_distance(moles, x, y)[0]
+
+
+def nearest_mole_index_distance(moles, x, y):
     nearest_index = None
     nearest_distance = None
     for i, mole in enumerate(moles):
@@ -85,7 +89,7 @@ def nearest_mole_index(moles, x, y):
             nearest_index = i
             nearest_distance = distance
 
-    return nearest_index
+    return nearest_index, nearest_distance
 
 
 def uuid_mole_index(moles, mole_uuid):

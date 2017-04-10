@@ -284,13 +284,26 @@ class ImageRelateController():
                             mouse_x, mouse_y,
                             self.copied_uuid)
         elif event == cv2.EVENT_RBUTTONDOWN:
+            image_pos = editor.display.windowxy_to_imagexy(mouse_x, mouse_y)
+            nearest = mel.rotomap.moles.nearest_mole_index_distance
+            from_index = from_distance = None
             if editor.from_moles is not None:
-                image_pos = editor.display.windowxy_to_imagexy(
-                    mouse_x, mouse_y)
-                index = mel.rotomap.moles.nearest_mole_index(
+                from_index, from_distance = nearest(
                     editor.from_moles, *image_pos)
-                if index is not None:
-                    self.copied_uuid = editor.from_moles[index]['uuid']
+
+            to_index, to_distance = nearest(editor.moledata.moles, *image_pos)
+
+            if from_distance is None:
+                if to_index is not None:
+                    self.copied_uuid = editor.moledata.moles[to_index]['uuid']
+            elif to_distance is None:
+                if from_index is not None:
+                    self.copied_uuid = editor.from_moles[from_index]['uuid']
+            else:
+                if from_distance < to_distance:
+                    self.copied_uuid = editor.from_moles[from_index]['uuid']
+                else:
+                    self.copied_uuid = editor.moledata.moles[to_index]['uuid']
 
     def pre_key(self, editor, key):
         if key in mel.lib.ui.WAITKEY_ARROWS:
@@ -485,7 +498,7 @@ def process_args(args):
     print("Press 'a' to accentuate marked moles, for considering removal.")
     print()
     print("In 'image relating' mode:")
-    print("Right-Click on a faded point to copy its UUID.")
+    print("Right-Click on a mole to copy its UUID.")
     print("Click on a non-faded point to paste the UUID.")
     print("Alt-click on a non-faded point to paste the UUID globally.")
     print("Shift-click on a non-faded point to randomize the uuid.")
