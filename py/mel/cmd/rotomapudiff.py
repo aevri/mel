@@ -35,48 +35,21 @@ Example output:
 """
 
 
-import argparse
 import collections
 import itertools
-import os
 
 import mel.rotomap.moles
-
-
-class ArgparseRotomapDirectoryType():
-
-    """Use in the 'type=' parameter to add_argument()."""
-
-    def __init__(self, path):
-        self.path = path
-        if not os.path.isdir(self.path):
-            raise argparse.ArgumentTypeError(
-                '"{}" is not a directory, so not a rotomap.'.format(self.path))
-        files = os.listdir(self.path)
-        self._image_paths = [
-            os.path.join(self.path, f)
-            for f in files
-            if f.lower().endswith('.jpg')
-        ]
-        if not self._image_paths:
-            raise argparse.ArgumentTypeError(
-                '"{}" has no images, so not a rotomap.'.format(self.path))
-
-    def yield_mole_lists(self):
-        """Yield (image_path, mole_list) for all mole image files."""
-        for imagepath in self._image_paths:
-            yield imagepath, mel.rotomap.moles.load_image_moles(imagepath)
 
 
 def setup_parser(parser):
     parser.add_argument(
         'OLD',
-        type=ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
         nargs='+',
         help="Paths to the rotomap directories to base comparison on.")
     parser.add_argument(
         'NEW',
-        type=ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
         help="Path to the new rotomap directory to compare with.")
 
 
