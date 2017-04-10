@@ -210,7 +210,7 @@ def get_moles_from_points(mole_list, point_list):
     output_moles = []
     for point in point_list:
         for mole in mole_list:
-            molepoint = mel.rotomap.moles.mole_to_point(mole)
+            molepoint = mole_to_point(mole)
             if numpy.allclose(point, molepoint):
                 output_moles.append(mole)
 
