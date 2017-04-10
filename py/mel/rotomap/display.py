@@ -292,7 +292,8 @@ class ImageRelateOverlay():
         red = [[0, 0, 255], [128, 128, 255], [0, 0, 255]]
 
         if self.is_target_mode:
-            image = self._draw_accentuated(image, transform)
+            image = self._draw_accentuated(
+                image, transform, default_theory_uuids)
 
         if self.is_target_mode:
             saved_image = image.copy()
@@ -385,7 +386,7 @@ class ImageRelateOverlay():
             cv2.LINE_AA,
             tipLength=0.25)
 
-    def _draw_accentuated(self, image, transform):
+    def _draw_accentuated(self, image, transform, in_both):
         # Reveal the moles that have been marked, whilst still showing
         # markers. This is good for verifying that markers are actually
         # positioned on moles.
@@ -404,8 +405,9 @@ class ImageRelateOverlay():
         image = cv2.add(masked_faded, image)
 
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_crosshair(image, x, y)
+            if mole['uuid'] not in in_both:
+                x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+                draw_crosshair(image, x, y)
 
         return image
 
