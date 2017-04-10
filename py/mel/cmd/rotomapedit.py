@@ -330,6 +330,11 @@ class ImageRelateController():
 
                 editor.moledata.save_moles()
 
+        elif key == ord('t'):
+            is_alt = editor.image_relate_overlay.is_target_mode
+            editor.image_relate_overlay.is_target_mode = not is_alt
+            editor.show_current()
+
 
 class AutomoleDebugController():
 
@@ -486,6 +491,7 @@ def process_args(args):
     print("Shift-click on a non-faded point to randomize the uuid.")
     print("Press 'a' to apply auto-relate results to image.")
     print("Press 'g' to apply auto-relate results globally to rotomap.")
+    print("Press 't' to toggle target mode, which emphasises mole images.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         controller.on_key(editor, key)
