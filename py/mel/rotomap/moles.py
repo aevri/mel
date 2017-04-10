@@ -23,18 +23,18 @@ class ArgparseRotomapDirectoryType():
             raise argparse.ArgumentTypeError(
                 '"{}" is not a directory, so not a rotomap.'.format(self.path))
         files = os.listdir(self.path)
-        self._image_paths = [
+        self.image_paths = [
             os.path.join(self.path, f)
             for f in files
             if f.lower().endswith('.jpg')
         ]
-        if not self._image_paths:
+        if not self.image_paths:
             raise argparse.ArgumentTypeError(
                 '"{}" has no images, so not a rotomap.'.format(self.path))
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""
-        for imagepath in self._image_paths:
+        for imagepath in self.image_paths:
             yield imagepath, load_image_moles(imagepath)
 
 

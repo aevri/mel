@@ -13,17 +13,16 @@ import mel.lib.ui
 
 import mel.rotomap.display
 import mel.rotomap.mask
+import mel.rotomap.moles
 import mel.rotomap.relate
 
 
 def setup_parser(parser):
     parser.add_argument(
-        '--images',
+        'ROTOMAP',
+        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
         nargs='+',
-        action='append',
-        required=True,
-        help="A list of paths to images, specify multiple times for multiple "
-             "sets.")
+        help="A list of paths to rotomaps.")
     parser.add_argument(
         '--display-width',
         type=int,
@@ -38,7 +37,7 @@ def setup_parser(parser):
         '--follow',
         type=str,
         default=None,
-        help="UUID of a mole to follow.")
+        help="UUID of a mole to follow, try to jump to it in the first set.")
 
 
 class MoveController():
@@ -447,7 +446,7 @@ class Controller():
 def process_args(args):
 
     editor = mel.rotomap.display.Editor(
-        args.images, args.display_width, args.display_height)
+        args.ROTOMAP, args.display_width, args.display_height)
 
     mel.lib.ui.bring_python_to_front()
 

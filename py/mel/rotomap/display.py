@@ -472,10 +472,10 @@ class EditorMode(enum.Enum):
 
 class Editor:
 
-    def __init__(self, path_list_list, width, height):
+    def __init__(self, directory_list, width, height):
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
         self.display = Display(width, height)
-        self.moledata_list = [MoleData(x) for x in path_list_list]
+        self.moledata_list = [MoleData(x.image_paths) for x in directory_list]
 
         self._mode = EditorMode.edit_mole
 
