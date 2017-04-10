@@ -276,7 +276,7 @@ class ImageRelateOverlay():
         from_duplicates = set()
         to_duplicates = set()
 
-        if self.prev_moles is not None:
+        if self.prev_moles:
             make_info = mel.rotomap.relate.mole_list_overlap_info
             _, _, _, _, default_theory_uuids = make_info(
                 self.prev_moles, self.moles)
@@ -286,8 +286,9 @@ class ImageRelateOverlay():
             from_duplicates = {u for u, c in from_counts.items() if c > 1}
             to_duplicates = {u for u, c in to_counts.items() if c > 1}
 
-            best_theory = mel.rotomap.relate.best_theory(
-                self.prev_moles, self.moles, iterate=False)
+            if self.moles:
+                best_theory = mel.rotomap.relate.best_theory(
+                    self.prev_moles, self.moles, iterate=False)
 
         green = [[0, 255, 0], [128, 255, 128], [0, 255, 0]]
         red = [[0, 0, 255], [128, 128, 255], [0, 0, 255]]
@@ -299,7 +300,7 @@ class ImageRelateOverlay():
         if self.is_target_mode:
             saved_image = image.copy()
 
-        if self.prev_moles is not None:
+        if self.prev_moles:
             self._draw_moles(
                 image,
                 transform,
@@ -318,7 +319,7 @@ class ImageRelateOverlay():
                 default_theory_uuids,
                 to_duplicates)
 
-        if self.prev_moles is not None:
+        if self.prev_moles:
             from_uuid_points = mel.rotomap.moles.to_uuid_points(
                 self.prev_moles)
             to_uuid_points = mel.rotomap.moles.to_uuid_points(self.moles)
