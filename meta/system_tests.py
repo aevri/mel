@@ -84,7 +84,6 @@ def run_mel_debug_tests():
     subcommands = [
         'bench-relate',
         'render-valuefield',
-        'triangulate',
     ]
 
     for s in subcommands:

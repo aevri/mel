@@ -5,7 +5,6 @@ import argparse
 
 import mel.cmddebug.benchrelate
 import mel.cmddebug.rendervaluefield
-import mel.cmddebug.triangulate
 
 
 def main():
@@ -31,8 +30,6 @@ def main():
         subparsers, mel.cmddebug.benchrelate, 'bench-relate')
     _setup_parser_for_module(
         subparsers, mel.cmddebug.rendervaluefield, 'render-valuefield')
-    _setup_parser_for_module(
-        subparsers, mel.cmddebug.triangulate, 'triangulate')
 
     args = parser.parse_args()
     return args.func(args)
