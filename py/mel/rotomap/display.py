@@ -334,23 +334,28 @@ class ImageRelateOverlay():
                     if from_uuid == to_uuid:
                         colour = (255, 0, 0)
 
-                    cv2.arrowedLine(
-                        image,
-                        tuple(from_pos),
-                        tuple(to_pos),
-                        colour,
-                        10,
-                        cv2.LINE_AA,
-                        tipLength=0.25)
+                    self._arrow(image, from_pos, to_pos, colour)
 
-                    cv2.arrowedLine(
-                        image,
-                        tuple(from_pos),
-                        tuple(to_pos),
-                        (0, 0, 0),
-                        3,
-                        cv2.LINE_AA,
-                        tipLength=0.25)
+        return image
+
+    def _arrow(self, image, from_pos, to_pos, colour):
+        cv2.arrowedLine(
+            image,
+            tuple(from_pos),
+            tuple(to_pos),
+            colour,
+            10,
+            cv2.LINE_AA,
+            tipLength=0.25)
+
+        cv2.arrowedLine(
+            image,
+            tuple(from_pos),
+            tuple(to_pos),
+            (0, 0, 0),
+            3,
+            cv2.LINE_AA,
+            tipLength=0.25)
 
         return image
 
