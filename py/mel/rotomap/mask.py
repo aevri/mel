@@ -44,8 +44,8 @@ def guess_mask(image, skin_hist):
 
     mask = numpy.zeros((height, width, 1), numpy.uint8)
 
-    for y in range(0, width, stride):
-        for x in range(0, height, stride):
+    for y in range(0, height, stride):
+        for x in range(0, width, stride):
             frag = image[y:y + stride, x:x + stride]
             hsv = cv2.cvtColor(frag, cv2.COLOR_BGR2HSV)
             hist = _calc_hist(hsv)
