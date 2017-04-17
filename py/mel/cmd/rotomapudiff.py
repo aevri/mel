@@ -14,6 +14,10 @@ Finally print moles that appeared in at least some previous rotomaps and the
 NEW rotomap. These are the expected case when comparing the OLD and NEW
 rotomaps, and can build confidence that the maps are matched correctly.
 
+Add UUIDs to a file 'ignore-new', or 'ignore-missing' in the rotomap dir to
+suppress messages about new or missing moles respectively. Blank lines and
+lines beginning with '#' are ignored in these files.
+
 Example output:
 
     New moles:
@@ -37,8 +41,13 @@ Example output:
 
 import collections
 import itertools
+import os
 
 import mel.rotomap.moles
+
+
+IGNORE_NEW_FILENAME = 'ignore-new'
+IGNORE_MISSING_FILENAME = 'ignore-missing'
 
 
 def setup_parser(parser):
@@ -51,6 +60,10 @@ def setup_parser(parser):
         'NEW',
         type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
         help="Path to the new rotomap directory to compare with.")
+    parser.add_argument(
+        '--show-all', '-a',
+        action='store_true',
+        help="Show all mole UUIDs, even if ignored.")
 
 
 def uuids_from_dir(rotomap_dir):
@@ -79,12 +92,17 @@ def process_args(args):
 
     from_uuids = set(uuid_to_fromdirs.keys())
 
+    ignore_new = load_potential_set_file(
+        args.NEW.path, IGNORE_NEW_FILENAME)
+    ignore_missing = load_potential_set_file(
+        args.NEW.path, IGNORE_MISSING_FILENAME)
+
     to_uuids = uuids_from_dir(args.NEW)
 
-    print_category('New moles:', to_uuids - from_uuids)
+    print_category('New moles:', to_uuids - from_uuids - ignore_new)
 
     missing_uuids = sorted(
-        list(from_uuids - to_uuids),
+        list(from_uuids - to_uuids - ignore_missing),
         key=uuid_to_fromdirs.get,
         reverse=True)
     for group, ids in itertools.groupby(missing_uuids, uuid_to_fromdirs.get):
@@ -97,3 +115,30 @@ def process_args(args):
                 ids)
 
     print_category('Old moles, also seen in NEW map:', from_uuids & to_uuids)
+
+    if args.show_all:
+        print_category(
+            'Ignored new moles:',
+            (to_uuids - from_uuids) & ignore_new)
+        print_category(
+            'Would ignore new moles:',
+            ignore_new - (to_uuids - from_uuids))
+        print_category(
+            'Ignored missing moles:',
+            (from_uuids - to_uuids) & ignore_missing)
+        print_category(
+            'Would ignore missing moles:',
+            ignore_missing - (from_uuids - to_uuids))
+
+
+def load_potential_set_file(path, filename):
+    ignore_set = set()
+    file_path = os.path.join(path, filename)
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+            lines = f.read().splitlines()
+        for l in lines:
+            text = l.strip()
+            if text and not text.startswith('#'):
+                ignore_set.add(text)
+    return ignore_set
