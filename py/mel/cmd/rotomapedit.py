@@ -207,9 +207,11 @@ class MoleEditController():
 
         if self.sub_controller:
             try:
-                self.sub_controller.on_key(editor, key)
+                sub_controller_onkey = self.sub_controller.on_key
             except AttributeError:
                 pass
+            else:
+                sub_controller_onkey(editor, key)
 
 
 class MaskEditController():
