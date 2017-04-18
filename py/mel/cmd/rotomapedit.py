@@ -5,6 +5,7 @@ import copy
 import uuid
 
 import cv2
+import numpy
 
 import mel.lib.common
 import mel.lib.image
@@ -15,6 +16,11 @@ import mel.rotomap.display
 import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
+
+
+# Radius within which we should look for moles, in later work perhaps we'll
+# make this configurable by the user.
+_MAGIC_MOLE_FINDER_RADIUS = 50
 
 
 def setup_parser(parser):
@@ -526,6 +532,14 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             editor.moledata.moles)
 
         if guess_pos is not None:
+            ellipse = mel.lib.moleimaging.find_mole_ellipse(
+                editor.moledata.get_image().copy(),
+                guess_pos,
+                _MAGIC_MOLE_FINDER_RADIUS)
+
+            if ellipse is not None:
+                guess_pos = numpy.array(ellipse[0], dtype=int)
+
             print(guess_pos)
             editor.show_zoomed_display(
                 guess_pos[0], guess_pos[1])
@@ -566,7 +580,7 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
                 mel.rotomap.moles.set_molepos_to_nparray(new_m, pos)
 
             ellipse = mel.lib.moleimaging.find_mole_ellipse(
-                current_image, pos, 50)
+                current_image, pos, _MAGIC_MOLE_FINDER_RADIUS)
             if ellipse is not None:
                 mel.rotomap.moles.set_molepos_to_nparray(new_m, ellipse[0])
 
