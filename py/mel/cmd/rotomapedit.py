@@ -527,6 +527,8 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             editor.moledata.moles, follow_uuid) is None:
 
         guess_pos = mel.rotomap.relate.guess_mole_pos(
+        # guess_pos = guess_mole_position(
+        #     editor.moledata.get_image().copy(),
             follow_uuid,
             prev_moles,
             editor.moledata.moles)
@@ -549,6 +551,35 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
                     guess_pos[0], guess_pos[1], follow_uuid)
 
     return guess_pos
+
+
+def guess_mole_position(image, mole_uuid, previous_moles, current_moles):
+
+    prev_uuids = set(m['uuid'] for m in previous_moles)
+    curr_uuids = set(m['uuid'] for m in current_moles)
+    matched_uuids = prev_uuids.intersection(curr_uuids)
+
+    prev_moles_for_mapping = [
+        m for m in previous_moles
+        if m['uuid'] in matched_uuids
+    ]
+
+    image_rect = (0, 0, image.shape[1], image.shape[0])
+
+    new_moles = copy.deepcopy(current_moles)
+    for mole in previous_moles:
+        if mole['uuid'] == mole_uuid:
+            pos = mel.rotomap.moles.mole_to_point(mole)
+
+            # XXX: assume that image and prev_image have the same dimensions
+            moles_for_mapping = mel.rotomap.moles.get_best_moles_for_mapping(
+                pos, prev_moles_for_mapping, image_rect)
+
+            if moles_for_mapping:
+                return mel.rotomap.moles.mapped_pos(
+                    pos, moles_for_mapping, current_moles)
+
+    return None
 
 
 def guess_mole_positions(previous_moles, current_moles, current_image):
