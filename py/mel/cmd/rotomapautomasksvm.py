@@ -73,27 +73,31 @@ def process_args(args):
 
 
 def train(classifier, path):
-    image = cv2.imread(path)
+    image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2HSV)
     mask = mel.rotomap.mask.load(path)
-    yield_regions = mel.rotomap.mask.yield_hsv_hist_mask_regions
+    yield_regions = mel.rotomap.mask.yield_regions
 
-    for hist, mask_frag in yield_regions(image, mask):
+    for image_frag, mask_frag in yield_regions(image, mask):
+        hist = mel.rotomap.mask.calc_hist(image_frag, width=32)
         coverage = mask_frag.mean()
         if coverage == 0 or coverage == 255:
             region_class = "not skin"
             if coverage == 255:
                 region_class = "skin"
-            classifier.add_sample(hist_to_sample(hist), region_class)
+            classifier.add_sample(
+                hist_to_sample(hist),
+                region_class)
 
 
 def trial(classifier, path, svm_c, svm_gamma):
-    image = cv2.imread(path)
+    image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2HSV)
     mask = mel.rotomap.mask.load(path)
-    yield_regions = mel.rotomap.mask.yield_hsv_hist_mask_regions
+    yield_regions = mel.rotomap.mask.yield_regions
 
     hits = 0
     misses = 0
-    for hist, mask_frag in yield_regions(image, mask):
+    for image_frag, mask_frag in yield_regions(image, mask):
+        hist = mel.rotomap.mask.calc_hist(image_frag, width=32)
         coverage = mask_frag.mean()
         if coverage == 0 or coverage == 255:
             region_class = "not skin"
@@ -109,11 +113,12 @@ def trial(classifier, path, svm_c, svm_gamma):
 
 
 def target(classifier, path):
-    image = cv2.imread(path)
+    image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2HSV)
     mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
-    yield_regions = mel.rotomap.mask.yield_hsv_hist_mask_regions
+    yield_regions = mel.rotomap.mask.yield_regions
 
-    for hist, mask_frag in yield_regions(image, mask):
+    for image_frag, mask_frag in yield_regions(image, mask):
+        hist = mel.rotomap.mask.calc_hist(image_frag, width=32)
         if classifier.predict(hist_to_sample(hist)) == "skin":
             mask_frag[:] = 255
         else:
@@ -125,4 +130,4 @@ def target(classifier, path):
 
 
 def hist_to_sample(hist):
-    return hist.flatten() / 100.0
+    return hist[:12, :12].flatten() / 100.0

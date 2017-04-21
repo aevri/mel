@@ -24,31 +24,31 @@ def load_or_none(mole_image_path):
 
 def histogram_from_image_mask(image, mask):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    skin_hist = _calc_hist(hsv, mask)
+    skin_hist = calc_hist(hsv, mask)
     return skin_hist
 
 
-def yield_hsv_hist_mask_regions(bgr_image, mask, size=40):
+def yield_regions(*image_list, size=40):
     """Yield (histogram, mask_average) regions from an image."""
-    image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
 
-    width = image.shape[1]
-    height = image.shape[0]
+    width = image_list[0].shape[1]
+    height = image_list[0].shape[0]
 
     for y in range(0, height, size):
         for x in range(0, width, size):
-            image_frag = image[y:y + size, x:x + size]
-            mask_frag = mask[y:y + size, x:x + size]
-            hist = _calc_hist(image_frag)
-            yield(hist, mask_frag)
+            frag_list = [
+                image[y:y + size, x:x + size]
+                for image in image_list
+            ]
+            yield tuple(frag_list)
 
 
-def _calc_hist(image, mask=None):
+def calc_hist(image, mask=None, width=8):
     return cv2.calcHist(
         [image],
         [0, 0],
         mask,
-        [8] * 2,
+        [width] * 2,
         [0, 256] * 2)
 
 
@@ -91,7 +91,7 @@ def guess_mask(image, skin_hist):
         for x in range(0, width, stride):
             frag = image[y:y + stride, x:x + stride]
             hsv = cv2.cvtColor(frag, cv2.COLOR_BGR2HSV)
-            hist = _calc_hist(hsv)
+            hist = calc_hist(hsv)
             distance = cv2.compareHist(hist, skin_hist, cv2.HISTCMP_HELLINGER)
             is_skin_hist = distance <= 0.5
             if is_skin_hist:
