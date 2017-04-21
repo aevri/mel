@@ -1,13 +1,11 @@
 [MAIN]
 
-extension-pkg-whitelist = cv2
-
 good-names = _, x, y, f, i, j, u, v, m, m1, m2, a, b, p
 
 disable = missing-docstring
 
 [TYPECHECK]
 
-# Pylint won't recognise a lot of members of numpy and will generate spurious
-# errors. Ignore it for now.
-ignored-modules = numpy
+# Pylint won't recognise a lot of members of numpy or cv2.ml and will generate
+# spurious errors. Ignore for now.
+ignored-modules = numpy, cv2
