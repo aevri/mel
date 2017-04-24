@@ -176,7 +176,7 @@ def process_args(args):
             "any other key to save and quit.")
         while True:
             key = cv2.waitKey(50)
-            if key != -1:
+            if key != 255:
                 if key == ord('a'):
                     raise Exception('User aborted.')
                 elif key == ord('r'):
@@ -214,7 +214,7 @@ def capture(cap, display, capindex, mole_acquirer):
             raise Exception("Could not read frame.")
 
         key = cv2.waitKey(50)
-        if key != -1:
+        if key != 255:
             if key == ord('c'):
                 print('Force capturing frame.')
                 centre = None
