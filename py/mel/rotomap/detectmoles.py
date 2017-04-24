@@ -6,6 +6,12 @@ import numpy
 import mel.rotomap.moles
 
 
+# Magic number to specify how close to the edge of an inclusion mask we can be
+# before we should discard detected blobs. Generally it seems that we get a lot
+# of falso positives near those edges.
+_MASK_EXCLUSION_SQUARE_SIZE = 5
+
+
 def draw_debug(image, mask):
     keypoints, image = _keypoints(image, mask)
     image = cv2.drawKeypoints(
@@ -22,9 +28,30 @@ def moles(image, mask):
     moles_ = []
     for point in keypoints(image, mask):
         xy = point.pt
+
+        # Exclude points that are near mask boundaries
+        if mask is not None:
+            if not _is_mask_region_all_set(
+                    mask, xy, _MASK_EXCLUSION_SQUARE_SIZE):
+                continue
+
         mel.rotomap.moles.add_mole(moles_, int(xy[0]), int(xy[1]))
         moles_[-1]['radius'] = point.size // 2
     return moles_
+
+
+def _is_mask_region_all_set(mask, point, region_size):
+    x, y = (int(i) for i in point)
+    x_slice = slice(x - region_size, x + region_size)
+    y_slice = slice(y - region_size, y + region_size)
+    mask_slice = y_slice, x_slice
+
+    # If we do the .mean() test on a region with no values then numpy will
+    # print a RuntimeWarning about it. Therefore here we avoid calling .mean()
+    # for this case.
+    has_values = mask[mask_slice].size > 0
+
+    return has_values and mask[mask_slice].mean() == 255
 
 
 def keypoints(image, mask):
