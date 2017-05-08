@@ -526,9 +526,9 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
     if mel.rotomap.moles.uuid_mole_index(
             editor.moledata.moles, follow_uuid) is None:
 
-        guess_pos = mel.rotomap.relate.guess_mole_pos(
-        # guess_pos = guess_mole_position(
-        #     editor.moledata.get_image().copy(),
+        # guess_pos = mel.rotomap.relate.guess_mole_pos(
+        guess_pos = guess_mole_position(
+            editor.moledata.get_image().copy(),
             follow_uuid,
             prev_moles,
             editor.moledata.moles)
@@ -577,7 +577,7 @@ def guess_mole_position(image, mole_uuid, previous_moles, current_moles):
 
             if moles_for_mapping:
                 return mel.rotomap.moles.mapped_pos(
-                    pos, moles_for_mapping, current_moles)
+                    pos, moles_for_mapping, current_moles).astype(int)
 
     return None
 
