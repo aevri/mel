@@ -2,9 +2,11 @@
 
 
 import argparse
+import sys
 
 import mel.cmd.addcluster
 import mel.cmd.addsingle
+import mel.cmd.error
 import mel.cmd.list
 import mel.cmd.microadd
 import mel.cmd.microcompare
@@ -72,7 +74,11 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
 
     args = parser.parse_args()
-    return args.func(args)
+    try:
+        return args.func(args)
+    except mel.cmd.error.UsageError as e:
+        print('Usage error:', e, file=sys.stderr)
+        return 2
 
 
 def _setup_parser_for_module(subparsers, module, name):
