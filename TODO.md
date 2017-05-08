@@ -59,3 +59,30 @@ A simple list to capture outstanding tasks, roughly in priority order.
   relating
 
 - mel rotomap-automark: reduce false +ves on borders of mask
+
+- mel rotomap-edit: follow-paste shouldn't paste on top of existing mole, to
+  avoid auto-snapping to a more visible local mole.
+
+- mel rotomap-edit: backspace to remove auto-pasted mole.
+- mel rotomap-edit: remove canonical / non-canonical distinction, doesn't seem
+  to help and makes visuals more confusing.
+- mel rotomap-edit: mouse wheel to move to next/prev image.
+
+- mel rotomap-edit, follow paste workflow:
+    - Register with previous moles loop (x20)
+        - Find next mole to copy
+            - Compare prev and curr, look for missing
+        - Copy uuid of mole to copy
+        - Enter follow-paste mode
+        - Go to current rotomap
+        - Copy loop (x2 or x3)
+            - Refine position
+            - Go to next image
+        - Erase last pasted mole, doesn't exist in image
+        - Return to original image
+        - Copy loop in opposite direction (x2 or x3)
+            - Refine position
+            - Go to next image
+        - Erase last pasted mole, doesn't exist in image
+        - Exit follow-paste mode
+    - Examine uncovered moles
