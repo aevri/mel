@@ -102,6 +102,10 @@ def setup_parser(parser):
         type=str,
         default=None,
         help="UUID of a mole to follow, try to jump to it in the first set.")
+    parser.add_argument(
+        '--copy-to-clipboard',
+        action='store_true',
+        help='Copy UUID to the clipboard, as well as printing. Mac OSX only.')
 
 
 class MoveController():
@@ -159,7 +163,7 @@ class FollowController():
 
 class MoleEditController():
 
-    def __init__(self, editor, follow):
+    def __init__(self, editor, follow, copy_to_clipboard):
         self.mole_uuid_list = [None]
 
         self.follow_controller = FollowController(
@@ -169,6 +173,8 @@ class MoleEditController():
 
         self.copied_moles = None
         self.previous_moles = None
+
+        self.copy_to_clipboard = copy_to_clipboard
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -181,6 +187,8 @@ class MoleEditController():
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
                 self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                 print(self.mole_uuid_list[0])
+                if self.copy_to_clipboard:
+                    mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
             else:
                 editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
         elif flags & cv2.EVENT_FLAG_SHIFTKEY:
@@ -446,8 +454,9 @@ class AutoRelateDebugController():
 
 class Controller():
 
-    def __init__(self, editor, follow):
-        self.moleedit_controller = MoleEditController(editor, follow)
+    def __init__(self, editor, follow, copy_to_clipboard):
+        self.moleedit_controller = MoleEditController(
+            editor, follow, copy_to_clipboard)
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
         self.imagerelate_controller = ImageRelateController()
@@ -512,7 +521,7 @@ def process_args(args):
 
     mel.lib.ui.bring_python_to_front()
 
-    controller = Controller(editor, args.follow)
+    controller = Controller(editor, args.follow, args.copy_to_clipboard)
 
     def mouse_callback(*args):
         controller.on_mouse_event(editor, *args)
