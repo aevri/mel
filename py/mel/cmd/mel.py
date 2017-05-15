@@ -79,6 +79,13 @@ def main():
     except mel.cmd.error.UsageError as e:
         print('Usage error:', e, file=sys.stderr)
         return 2
+    except BrokenPipeError:
+        # Silently exit on broken pipes, e.g. when our output is piped to head.
+
+        # Explicitly close stderr before exiting, to avoid an additional
+        # message from Python on stderr about the pipe break being ignored.
+        # http://bugs.python.org/issue11380,#msg153320
+        sys.stderr.close()
 
 
 def _setup_parser_for_module(subparsers, module, name):
