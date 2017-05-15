@@ -1,4 +1,61 @@
-"""Edit a 'rotomap' series of images."""
+"""Edit a 'rotomap' series of images.
+
+In all modes:
+
+    Press 'q' to quit.
+    Press left for previous image, right for next image.
+    Press up for previous map, down for next map.
+    Ctrl-click on a point to zoom in on it.
+    Press space to restore original zoom.
+
+Mode selection:
+
+    Press '1' for mole edit mode (the starting mode).
+    Press '2' for mask edit mode.
+    Press '3' for mole marking mode.
+    Press '4' for image relating mode.
+    Press '0' for auto-mole debug mode.
+    Press '9' for auto-relate debug mode.
+
+In 'mole edit' mode:
+
+    Click on a point to add or move a mole there and save.
+    Shift-click on a point to delete it.
+    Shift-right-click on a point to randomize the uuid.
+    Alt-Shift-click on a point to copy it's uuid.
+    Alt-click on a point to paste the copied uuid.
+    Alt-right-click on a point to replace the uuid in the whole map.
+    Press 'o' to toggle follow mode.
+    Press 'm' to toggle move mode.
+    Press 'c' to copy the moles in the displayed image.
+    Press 'a' to auto-paste the copied moles in the displayed image.
+    Press 'r' to auto-mark moles visible in the current mask.
+    Press 't' to auto-relate moles from the previously viewed image.
+    Press enter to toggle mole markers.
+
+In 'mask edit' mode:
+
+    Click on a point to draw masking there.
+    Shift-click on a point to remove masking there.
+    Press 'a' to auto-mask based on the current mask.
+
+In 'mole marking' mode:
+
+    Click on a point to add or move a mole there and save.
+    Shift-click on a point to delete it.
+    Press 'a' to accentuate marked moles, for considering removal.
+
+In 'image relating' mode:
+
+    Right-Click on a mole to copy its UUID.
+    Click on a non-faded point to paste the UUID.
+    Alt-click on a non-faded point to paste the UUID globally.
+    Shift-click on a non-faded point to randomize the uuid.
+    Press 'a' to apply auto-relate results to image.
+    Press 'g' to apply auto-relate results globally to rotomap.
+    Press 't' to toggle target mode, which emphasises mole images.
+
+"""
 
 
 import copy
@@ -465,53 +522,6 @@ def process_args(args):
 
     editor.display.set_mouse_callback(
         mouse_callback)
-
-    print("Press 'q' to quit.")
-    print("Press left for previous image, right for next image.")
-    print("Press up for previous map, down for next map.")
-    print("Ctrl-click on a point to zoom in on it.")
-    print("Press space to restore original zoom.")
-    print()
-    print("Press '1' for mole edit mode (the starting mode).")
-    print("Press '2' for mask edit mode.")
-    print("Press '3' for mole marking mode.")
-    print("Press '4' for image relating mode.")
-    print("Press '0' for auto-mole debug mode.")
-    print("Press '9' for auto-relate debug mode.")
-    print()
-    print("In 'mole edit' mode:")
-    print("Click on a point to add or move a mole there and save.")
-    print("Shift-click on a point to delete it.")
-    print("Shift-right-click on a point to randomize the uuid.")
-    print("Alt-Shift-click on a point to copy it's uuid.")
-    print("Alt-click on a point to paste the copied uuid.")
-    print("Alt-right-click on a point to replace the uuid in the whole map.")
-    print("Press 'o' to toggle follow mode.")
-    print("Press 'm' to toggle move mode.")
-    print("Press 'c' to copy the moles in the displayed image.")
-    print("Press 'a' to auto-paste the copied moles in the displayed image.")
-    print("Press 'r' to auto-mark moles visible in the current mask.")
-    print("Press 't' to auto-relate moles from the previously viewed image.")
-    print("Press enter to toggle mole markers.")
-    print()
-    print("In 'mask edit' mode:")
-    print("Click on a point to draw masking there.")
-    print("Shift-click on a point to remove masking there.")
-    print("Press 'a' to auto-mask based on the current mask.")
-    print()
-    print("In 'mole marking' mode:")
-    print("Click on a point to add or move a mole there and save.")
-    print("Shift-click on a point to delete it.")
-    print("Press 'a' to accentuate marked moles, for considering removal.")
-    print()
-    print("In 'image relating' mode:")
-    print("Right-Click on a mole to copy its UUID.")
-    print("Click on a non-faded point to paste the UUID.")
-    print("Alt-click on a non-faded point to paste the UUID globally.")
-    print("Shift-click on a non-faded point to randomize the uuid.")
-    print("Press 'a' to apply auto-relate results to image.")
-    print("Press 'g' to apply auto-relate results globally to rotomap.")
-    print("Press 't' to toggle target mode, which emphasises mole images.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         controller.on_key(editor, key)
