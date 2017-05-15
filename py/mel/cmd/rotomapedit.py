@@ -224,7 +224,6 @@ class MoleEditController():
             if not is_follow and self.mole_uuid_list[0]:
                 self.sub_controller = self.follow_controller
                 editor.set_status(self.sub_controller.status)
-                print(self.mole_uuid_list[0])
             else:
                 self.sub_controller = None
                 editor.set_status('')
@@ -502,9 +501,6 @@ class Controller():
             self.current_controller = self.imagerelate_controller
             editor.set_imagerelate_mode()
 
-        if key in mel.lib.ui.WAITKEY_ARROWS:
-            print(editor.moledata.current_image_path())
-
         self.current_controller.on_key(editor, key)
 
 
@@ -550,7 +546,6 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             if ellipse is not None:
                 guess_pos = numpy.array(ellipse[0], dtype=int)
 
-            print(guess_pos)
             editor.show_zoomed_display(
                 guess_pos[0], guess_pos[1])
 
