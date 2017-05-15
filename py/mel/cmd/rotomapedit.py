@@ -3,6 +3,7 @@
 In all modes:
 
     Press 'q' to quit.
+    Press 'Q' to quit with exit code 1.
     Press left for previous image, right for next image.
     Press up for previous map, down for next map.
     Ctrl-click on a point to zoom in on it.
@@ -519,10 +520,13 @@ def process_args(args):
     editor.display.set_mouse_callback(
         mouse_callback)
 
-    for key in mel.lib.ui.yield_keys_until_quitkey():
-        controller.on_key(editor, key)
-
-    editor.display.clear_mouse_callback()
+    try:
+        for key in mel.lib.ui.yield_keys_until_quitkey():
+            controller.on_key(editor, key)
+    except mel.lib.ui.AbortKeyInterruptError:
+        return 1
+    finally:
+        editor.display.clear_mouse_callback()
 
 
 def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
