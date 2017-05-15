@@ -63,10 +63,8 @@ def process_args(args):
     mel.lib.common.indicate_mole(context_image, (x, y, radius))
 
     context_scale = montage_height / context_image.shape[0]
-    montage_half_size = montage_height // 2
 
-    mhs = montage_half_size
-    detail_image = context_image[y - mhs:y + mhs, x - mhs:x + mhs]
+    detail_image = make_detail_image(context_image, x, y, montage_height)
 
     context_scaled_width = int(context_image.shape[1] * context_scale)
     context_image = cv2.resize(
@@ -77,3 +75,12 @@ def process_args(args):
         50, context_image, detail_image)
 
     cv2.imwrite(args.OUTPUT, montage_image)
+
+
+def make_detail_image(context_image, x, y, size):
+    half_size = size // 2
+    left = max(x - half_size, 0)
+    top = max(y - half_size, 0)
+    right = left + half_size * 2
+    bottom = top + half_size * 2
+    return context_image[top:bottom, left:right]
