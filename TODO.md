@@ -40,7 +40,6 @@ A simple list to capture outstanding tasks, roughly in priority order.
         - mel r diff
         - mel r edit
         - mel r list
-        - mel r molepicker
         - mel r organise
         - mel r overview
         - mel r relate

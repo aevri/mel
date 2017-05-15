@@ -62,7 +62,6 @@ def run_mel_tests():
         'rotomap-diff',
         'rotomap-edit',
         'rotomap-list',
-        'rotomap-molepicker',
         'rotomap-organise',
         'rotomap-overview',
         'rotomap-relate',
