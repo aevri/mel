@@ -44,7 +44,7 @@ def run_tests():
 
 def run_mel_tests():
 
-    mel_cmd = './bin/mel'
+    mel_cmd = 'mel'
 
     expect_returncode(2, mel_cmd)
     expect_ok(mel_cmd, '-h')
@@ -76,7 +76,7 @@ def run_mel_tests():
 
 def run_mel_debug_tests():
 
-    mel_cmd = './bin/mel-debug'
+    mel_cmd = 'mel-debug'
 
     expect_returncode(2, mel_cmd)
     expect_ok(mel_cmd, '-h')

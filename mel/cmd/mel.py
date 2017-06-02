@@ -100,3 +100,7 @@ def _setup_parser_for_module(subparsers, module, name):
         epilog=doc_epilog)
     module.setup_parser(parser)
     parser.set_defaults(func=module.process_args)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
