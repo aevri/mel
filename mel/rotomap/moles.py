@@ -13,14 +13,12 @@ import numpy
 import mel.lib.math
 
 
-class ArgparseRotomapDirectoryType():
-
-    """Use in the 'type=' parameter to add_argument()."""
+class RotomapDirectory():
 
     def __init__(self, path):
         self.path = path
         if not os.path.isdir(self.path):
-            raise argparse.ArgumentTypeError(
+            raise ValueError(
                 '"{}" is not a directory, so not a rotomap.'.format(self.path))
         files = os.listdir(self.path)
         self.image_paths = [
@@ -29,13 +27,21 @@ class ArgparseRotomapDirectoryType():
             if f.lower().endswith('.jpg')
         ]
         if not self.image_paths:
-            raise argparse.ArgumentTypeError(
+            raise ValueError(
                 '"{}" has no images, so not a rotomap.'.format(self.path))
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""
         for imagepath in self.image_paths:
             yield imagepath, load_image_moles(imagepath)
+
+
+def make_argparse_rotomap_directory(path):
+    """Use in the 'type=' parameter to add_argument()."""
+    try:
+        return RotomapDirectory(path)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
 
 
 def load_image_moles(image_path):

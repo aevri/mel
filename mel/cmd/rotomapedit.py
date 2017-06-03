@@ -84,7 +84,7 @@ _MAGIC_MOLE_FINDER_RADIUS = 50
 def setup_parser(parser):
     parser.add_argument(
         'ROTOMAP',
-        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
         help="A list of paths to rotomaps.")
     parser.add_argument(

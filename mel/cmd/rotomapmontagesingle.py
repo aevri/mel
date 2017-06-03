@@ -11,7 +11,7 @@ def setup_parser(parser):
 
     parser.add_argument(
         'ROTOMAP',
-        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.make_argparse_rotomap_directory,
         help="Path to the rotomap to copy from.")
 
     parser.add_argument(

@@ -53,12 +53,12 @@ IGNORE_MISSING_FILENAME = 'ignore-missing'
 def setup_parser(parser):
     parser.add_argument(
         'OLD',
-        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
         help="Paths to the rotomap directories to base comparison on.")
     parser.add_argument(
         'NEW',
-        type=mel.rotomap.moles.ArgparseRotomapDirectoryType,
+        type=mel.rotomap.moles.make_argparse_rotomap_directory,
         help="Path to the new rotomap directory to compare with.")
     parser.add_argument(
         '--show-all', '-a',
