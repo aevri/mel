@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 import os
+import pathlib
 import uuid
 
 import cv2
@@ -16,15 +17,14 @@ import mel.lib.math
 class RotomapDirectory():
 
     def __init__(self, path):
-        self.path = path
-        if not os.path.isdir(self.path):
+        self.path = pathlib.Path(path)
+        if not self.path.is_dir():
             raise ValueError(
                 '"{}" is not a directory, so not a rotomap.'.format(self.path))
-        files = os.listdir(self.path)
         self.image_paths = [
             os.path.join(self.path, f)
-            for f in files
-            if f.lower().endswith('.jpg')
+            for f in self.path.iterdir()
+            if f.suffix.lower() == '.jpg'
         ]
         if not self.image_paths:
             raise ValueError(

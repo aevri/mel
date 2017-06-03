@@ -41,7 +41,6 @@ Example output:
 
 import collections
 import itertools
-import os
 
 import mel.rotomap.moles
 
@@ -133,9 +132,9 @@ def process_args(args):
 
 def load_potential_set_file(path, filename):
     ignore_set = set()
-    file_path = os.path.join(path, filename)
-    if os.path.isfile(file_path):
-        with open(file_path) as f:
+    file_path = path / filename
+    if file_path.is_file():
+        with file_path.open() as f:
             lines = f.read().splitlines()
         for l in lines:
             text = l.strip()
