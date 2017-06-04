@@ -138,13 +138,13 @@ class MoleAcquirer(object):
                 stats))
 
             self._last_stats = list(map(
-                lambda x, y: mel.lib.math.lerp(x, y, 0.2),
+                lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                 self._last_stats,
                 stats))
 
             if self._last_stats_diff:
                 self._last_stats_diff = list(map(
-                    lambda x, y: mel.lib.math.lerp(x, y, 0.2),
+                    lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                     self._last_stats_diff,
                     stats_diff))
 
