@@ -202,10 +202,8 @@ def process_args(args):
 def capture(cap, display, capindex, mole_acquirer):
 
     # loop until the user presses a key
-    print("Press 'd' to disable rotation sensitivity.")
     print("Press 'c' to force capture a frame, any other key to abort.")
 
-    is_rot_sensitive = True
     centre = None
     rotation = None
     while True:
@@ -220,9 +218,6 @@ def capture(cap, display, capindex, mole_acquirer):
                 centre = None
                 rotation = None
                 break
-            elif key == ord('d'):
-                print('Disable rotation sensitivity.')
-                is_rot_sensitive = False
             else:
                 raise Exception('User aborted.')
 
@@ -230,7 +225,7 @@ def capture(cap, display, capindex, mole_acquirer):
         asys_image = numpy.copy(frame)
         is_aligned, centre, rotation = mel.lib.moleimaging.annotate_image(
             asys_image,
-            is_rot_sensitive)
+            is_rot_sensitive=False)
 
         mole_acquirer.update(stats)
 
@@ -242,7 +237,7 @@ def capture(cap, display, capindex, mole_acquirer):
     normal_image = numpy.copy(frame)
     if centre is not None:
         normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
-    if is_rot_sensitive and rotation is not None:
+    if rotation is not None:
         normal_image = mel.lib.image.rotated(normal_image, rotation)
 
     display.update_image(normal_image, capindex)
