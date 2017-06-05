@@ -530,7 +530,7 @@ def process_args(args):
         mouse_callback)
 
     try:
-        for key in mel.lib.ui.yield_keys_until_quitkey():
+        for key in mel.lib.ui.yield_keys_until_quitkey(error_key='Q'):
             controller.on_key(editor, key)
     except mel.lib.ui.AbortKeyInterruptError:
         return 1

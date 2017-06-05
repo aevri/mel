@@ -33,16 +33,19 @@ class AbortKeyInterruptError(Exception):
     pass
 
 
-def yield_keys_until_quitkey(delay=50, quit_key='q', quit_func=None):
+def yield_keys_until_quitkey(
+        delay=50, quit_key='q', error_key=None, quit_func=None):
+
     while True:
         key = cv2.waitKey(delay) % 256
         if key != 255:
             if key == ord(quit_key):
                 return
-            elif key == ord(quit_key.upper()):
+            elif error_key is not None and key == ord(error_key):
                 raise AbortKeyInterruptError()
             else:
                 yield key
+
         if quit_func is not None and quit_func():
             return
 

@@ -171,24 +171,21 @@ def process_args(args):
     capindex = display.add_image(frame, 'capture')
     while not is_finished:
         frame = capture(cap, display, capindex, mole_acquirer)
-        print(
-            "Press 'a' to abort, 'r' to retry, "
-            "any other key to save and quit.")
-        while True:
-            key = cv2.waitKey(50)
-            if key != 255:
-                if key == ord('a'):
-                    raise Exception('User aborted.')
-                elif key == ord('r'):
-                    print("Retry capture")
-                    break
-                elif key == ord('u'):
-                    print("Rotated 180.")
-                    frame = mel.lib.image.rotated180(frame)
-                    display.update_image(frame, capindex)
-                else:
-                    is_finished = True
-                    break
+        print("Press space to save and exit, 'r' to retry, 'u' to rotate 180.")
+        print("Press 'a' to abort without saving and exit with an error code.")
+
+        is_finished = True
+        for key in mel.lib.ui.yield_keys_until_quitkey(
+                quit_key=' ', error_key='a'):
+
+            if key == ord('r'):
+                print("Retry capture")
+                is_finished = False
+                break
+            elif key == ord('u'):
+                print("Rotated 180.")
+                frame = mel.lib.image.rotated180(frame)
+                display.update_image(frame, capindex)
 
     # write the mole image
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"

@@ -60,7 +60,7 @@ def process_args(args):
 
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")
-    print("Press any other key to exit.")
+    print("Press 'q' to quit.")
 
     for key in mel.lib.ui.yield_keys_until_quitkey():
         if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
