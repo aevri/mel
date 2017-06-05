@@ -66,7 +66,13 @@ def process_args(args):
     context_image = cv2.imread(path)
     x = mole['x']
     y = mole['y']
+
+    # Draw a faded mark to indicate the mole. Make it faded in case we
+    # accidentally cover moles or other distinguishing marks.
+    unmarked_context_image = context_image.copy()
     mel.lib.common.indicate_mole(context_image, (x, y, radius))
+    context_image = cv2.addWeighted(
+        unmarked_context_image, 0.75, context_image, 0.25, 0.0)
 
     context_image = mel.lib.common.rotated90(context_image, args.rot90)
     for _ in range(args.rot90 % 4):
