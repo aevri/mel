@@ -34,7 +34,7 @@ def overwrite_image(directory, filename, image):
     if os.path.exists(path):
         os.remove(path)
 
-    cv2.imwrite(path, image)
+    write_image(path, image)
 
 
 def write_image(path, image):

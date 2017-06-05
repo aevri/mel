@@ -755,7 +755,7 @@ class MoleData:
         return self._list_index
 
     def save_mask(self):
-        cv2.imwrite(self._mask_path, self.mask)
+        mel.lib.common.write_image(self._mask_path, self.mask)
 
     def save_moles(self):
         image_path = self._path_list[self._list_index]

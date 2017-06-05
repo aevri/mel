@@ -39,4 +39,4 @@ def process_args(args):
             print('Target:', path)
         image = cv2.imread(path)
         mask = mel.rotomap.mask.guess_mask(image, skin_hist)
-        cv2.imwrite(path + '.mask.png', mask)
+        mel.lib.common.write_image(path + '.mask.png', mask)

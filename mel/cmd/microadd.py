@@ -196,7 +196,7 @@ def process_args(args):
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     file_path = os.path.join(dirname, filename)
-    cv2.imwrite(file_path, frame)
+    mel.lib.common.write_image(file_path, frame)
 
 
 def capture(cap, display, capindex, mole_acquirer):

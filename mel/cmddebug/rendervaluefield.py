@@ -10,9 +10,9 @@ introduced.
 
 """
 
-import cv2
 import numpy
 
+import mel.lib.common
 import mel.rotomap.relate
 
 
@@ -38,4 +38,4 @@ def process_args(args):
                 point_values)
             image[row, col, :] = (value[0], value[1], error)
 
-    cv2.imwrite('valuefield.png', image)
+    mel.lib.common.write_image('valuefield.png', image)

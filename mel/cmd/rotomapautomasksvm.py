@@ -126,7 +126,7 @@ def target(classifier, path):
 
     mask = mel.rotomap.mask.shrunk_to_largest_region(mask)
 
-    cv2.imwrite(path + '.mask.png', mask)
+    mel.lib.common.write_image(path + '.mask.png', mask)
 
 
 def hist_to_sample(hist):
