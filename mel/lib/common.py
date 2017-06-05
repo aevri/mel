@@ -37,6 +37,11 @@ def overwrite_image(directory, filename, image):
     cv2.imwrite(path, image)
 
 
+def write_image(path, image):
+    if not cv2.imwrite(str(path), image):
+        raise Exception("Was unable to write image to '{}'.".format(path))
+
+
 def user_mark_moles(window_name, context_image, detail_image, num_moles):
 
     display_image = numpy.copy(context_image)
