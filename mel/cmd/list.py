@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import pathlib
 
 
 def setup_parser(parser):
@@ -103,7 +104,11 @@ def _yield_mole_dirs(rootpath, args):
 
         micro_filenames = []
         if '__micro__' in unknown_dirs:
-            micro_filenames = os.listdir(os.path.join(path, '__micro__'))
+            micro_filenames = []
+            for filename in (pathlib.Path(path) / '__micro__').iterdir():
+                suffix = filename.suffix.lower()
+                if suffix in ['.jpg', '.jpeg']:
+                    micro_filenames.append(filename.stem)
 
         discard_dirs = set(x for x in unknown_dirs if x.startswith('__'))
         unknown_dirs -= discard_dirs
