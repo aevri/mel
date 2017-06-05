@@ -97,6 +97,51 @@ def arrange_images(total_width, total_height, *images_positions):
     return result
 
 
+def montage_horizontal_inner_border(divider_size, *image_list):
+    """Return a new image, of the supplied images in a row.
+
+    Will keep a separator of 'divider_size' pixels between each image. The
+    images are vertically centered.
+
+    Usage example:
+
+        Arrange varied images in a row, with a 50 pixel separator:
+        >>> blue = numpy.full((600, 800, 3), (255, 0, 0), dtype=numpy.uint8)
+        >>> grey_half = numpy.full((300, 800, 1), (128), dtype=numpy.uint8)
+        >>> red = numpy.full((600, 800, 3), (0, 0, 255), dtype=numpy.uint8)
+        >>> image = montage_horizontal_inner_border(50, blue, grey_half, red)
+
+    Counter example:
+
+        Forget to specify image list:
+        >>> mel.lib.image.montage_horizontal_inner_border(50)
+        Traceback (most recent call last):
+            ...
+        ValueError: Must provide image_list
+
+    """
+    if not image_list:
+        raise ValueError('Must provide image_list')
+
+    height = max(i.shape[0] for i in image_list)
+    width = sum(i.shape[1] for i in image_list)
+    splits = len(image_list) - 1
+
+    width += divider_size * splits
+
+    output = mel.lib.common.new_image(height, width)
+
+    x = 0
+    for image in image_list:
+        iheight = image.shape[0]
+        iwidth = image.shape[1]
+        y = (height - iheight) // 2
+        output[y:y + iheight, x:x + iwidth] = image[:, :]
+        x += iwidth + divider_size
+
+    return output
+
+
 def montage_horizontal(border_size, *image_list):
     geometry = calc_montage_horizontal(
         border_size,

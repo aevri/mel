@@ -71,8 +71,8 @@ def process_args(args):
         context_image,
         (context_scaled_width, montage_height))
 
-    montage_image = mel.lib.image.montage_horizontal(
-        50, context_image, detail_image)
+    montage_image = mel.lib.image.montage_horizontal_inner_border(
+        25, context_image, detail_image)
 
     cv2.imwrite(args.OUTPUT, montage_image)
 
