@@ -24,6 +24,12 @@ def setup_parser(parser):
         type=str,
         help="Name of the image to write.")
 
+    parser.add_argument(
+        '--rot90',
+        type=int,
+        default=0,
+        help="Rotate images 90 degrees clockwise this number of times.")
+
 
 def process_args(args):
 
@@ -62,10 +68,17 @@ def process_args(args):
     y = mole['y']
     mel.lib.common.indicate_mole(context_image, (x, y, radius))
 
-    context_scale = montage_height / context_image.shape[0]
+    context_image = mel.lib.common.rotated90(context_image, args.rot90)
+    for _ in range(args.rot90 % 4):
+        x, y = -y, x
+    if x < 0:
+        x = x + context_image.shape[1]
+    if y < 0:
+        y = y + context_image.shape[0]
 
     detail_image = make_detail_image(context_image, x, y, montage_height)
 
+    context_scale = montage_height / context_image.shape[0]
     context_scaled_width = int(context_image.shape[1] * context_scale)
     context_image = cv2.resize(
         context_image,
