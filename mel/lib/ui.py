@@ -33,6 +33,23 @@ class AbortKeyInterruptError(Exception):
     pass
 
 
+def yield_frames_keys(video_capture, delay=50, error_key='a'):
+
+    while True:
+        ret, frame = video_capture.read()
+        if not ret:
+            raise Exception("Could not read frame.")
+
+        key = cv2.waitKey(delay) % 256
+        if key != 255:
+            if key == ord(error_key):
+                raise AbortKeyInterruptError()
+            else:
+                yield frame, key
+        else:
+            yield frame, None
+
+
 def yield_keys_until_quitkey(
         delay=50, quit_key='q', error_key=None, quit_func=None):
 
