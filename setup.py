@@ -6,7 +6,14 @@ setuptools.setup(
     author='Angelos Evripiotis',
     author_email='angelos.evripiotis@gmail.com',
     zip_safe=False,
-    packages=['mel', 'mel.cmd', 'mel.cmddebug', 'mel.rotomap', 'mel.lib'],
+    packages=[
+        'mel',
+        'mel.cmd',
+        'mel.cmddebug',
+        'mel.lib',
+        'mel.micro',
+        'mel.rotomap',
+    ],
     entry_points={
         'console_scripts': [
             'mel=mel.cmd.mel:main',

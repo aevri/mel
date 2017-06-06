@@ -1,8 +1,8 @@
 """List the moles in a mole catalog."""
 
 import datetime
-import os
-import pathlib
+
+import mel.micro.fs
 
 
 def setup_parser(parser):
@@ -36,9 +36,9 @@ def setup_parser(parser):
 def process_args(args):
     if args.sort == 'lastmicro':
         def keyfunc(x):
-            if not x.micro_filenames:
+            if not x.micro_image_names:
                 return str()
-            return sorted(x.micro_filenames)[-1]
+            return sorted(x.micro_image_names)[-1]
     else:
         def keyfunc(x):
             return 0
@@ -47,13 +47,13 @@ def process_args(args):
 
     for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
         mole_data = {
-            'relpath': mole.catalog_relative_path,
+            'relpath': mole.refrelpath,
             'lastmicro': '',
             'lastmicro_age_days': '',
-            'id': mole.id_,
+            'id': mole.id,
         }
-        if mole.micro_filenames:
-            lastmicro = sorted(mole.micro_filenames)[-1]
+        if mole.micro_image_names:
+            lastmicro = sorted(mole.micro_image_names)[-1]
             mole_data['lastmicro'] = lastmicro
             lastmicrodtstring = lastmicro.split('.', 1)[0]
             lastmicrodt = datetime.datetime.strptime(
@@ -64,63 +64,16 @@ def process_args(args):
         print(args.format.format(**mole_data))
 
 
-class _Mole():
-
-    def __init__(self, catalog_relative_path, micro_filenames):
-        self.catalog_relative_path = catalog_relative_path
-        self.micro_filenames = micro_filenames
-        self.id_ = None
-
-
 def _yield_mole_dirs(rootpath, args):
-    for path, dirs, files in os.walk(rootpath):
+    for mole in mel.micro.fs.yield_moles(rootpath):
 
-        this_dirname = os.path.basename(path)
-
-        if this_dirname.startswith('__'):
+        if args.only_no_micro and mole.micro_image_names:
             continue
 
-        catalog_relpath = os.path.relpath(path, rootpath)
-
-        # ignore directories with no files
-        if not files:
+        if args.without_assistance and mole.need_assistance:
             continue
 
-        # ignore dot-directories in the root, like '.git'
-        if catalog_relpath.startswith('.'):
+        if args.with_assistance and not mole.need_assistance:
             continue
-
-        unknown_dirs = set(dirs)
-
-        if args.only_no_micro and '__micro__' in unknown_dirs:
-            if os.listdir(os.path.join(path, '__micro__')):
-                continue
-
-        if args.without_assistance and '__need_assistance__' in files:
-            continue
-
-        if args.with_assistance and '__need_assistance__' not in files:
-            continue
-
-        micro_filenames = []
-        if '__micro__' in unknown_dirs:
-            micro_filenames = []
-            for filename in (pathlib.Path(path) / '__micro__').iterdir():
-                suffix = filename.suffix.lower()
-                if suffix in ['.jpg', '.jpeg']:
-                    micro_filenames.append(filename.stem)
-
-        discard_dirs = set(x for x in unknown_dirs if x.startswith('__'))
-        unknown_dirs -= discard_dirs
-
-        # mole clusters have a picture and all the moles as child dirs, ignore
-        if unknown_dirs:
-            continue
-
-        mole = _Mole(catalog_relpath, micro_filenames)
-
-        if '__id__' in files:
-            with open(os.path.join(path, '__id__')) as f:
-                mole.id_ = f.read().strip()
 
         yield mole
