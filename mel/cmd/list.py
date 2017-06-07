@@ -89,9 +89,9 @@ def _yield_mole_dirs(rootpath, args):
 
     if args.sort == 'lastmicro' or args.sort is None:
         def keyfunc(x):
-            if not x.micro_image_names:
+            if not x.micro_image_details:
                 return str()
-            return sorted(x.micro_image_names)[-1]
+            return x.micro_image_details[-1].name
         mole_iter = sorted(mole_iter, key=keyfunc)
 
     no_recent_days = args.ignore_with_recent_micro
@@ -100,7 +100,7 @@ def _yield_mole_dirs(rootpath, args):
 
     for mole in mole_iter:
 
-        if args.only_no_micro and mole.micro_image_names:
+        if args.only_no_micro and mole.micro_image_details:
             continue
 
         if args.without_assistance and mole.need_assistance:

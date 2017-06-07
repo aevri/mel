@@ -14,10 +14,16 @@ Mole = collections.namedtuple(
         'id',
         'need_assistance',
         'context_image_name_tuple_tuple',  # The most local paths appear last
-        'micro_image_names',
+        'micro_image_details',
         'last_micro',
         'last_micro_age_days',
     ]
+)
+
+
+MicroImageDetail = collections.namedtuple(
+    'mel_micro_fs__MicroImageDetail',
+    ['name', 'datetime']
 )
 
 
@@ -72,7 +78,7 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
 
     if should_be_mole_dir:
         _validate_mole_dir(path)
-        micro_image_names = _list_micro_dir_if_exists(path / Names.MICRO)
+        micro_image_details = _list_micro_dir_if_exists(path / Names.MICRO)
         yield Mole(
             abspath=path.resolve(strict=True),
             path=path,
@@ -80,9 +86,9 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
             id=_read_stripped_text_file_if_exists(path / Names.ID),
             need_assistance=(path / Names.NEED_ASSISTANCE).exists(),
             context_image_name_tuple_tuple=context_image_name_tuple_tuple,
-            micro_image_names=micro_image_names,
-            last_micro=calc_last_micro(micro_image_names),
-            last_micro_age_days=calc_last_micro_age_days(micro_image_names),
+            micro_image_details=micro_image_details,
+            last_micro=calc_last_micro(micro_image_details),
+            last_micro_age_days=calc_last_micro_age_days(micro_image_details),
         )
     else:
         for sub in path.iterdir():
@@ -148,27 +154,34 @@ def _list_micro_dir_if_exists(path):
         image_names.append(sub.name)
 
     image_names.sort()
-    return tuple(image_names)
+
+    details = [
+        MicroImageDetail(name=x, datetime=calc_micro_datetime(x))
+        for x in image_names
+    ]
+
+    return tuple(details)
 
 
-def calc_last_micro(micro_image_names):
-    if not micro_image_names:
+def calc_micro_datetime(micro_image_name):
+    lastmicrodtstring = micro_image_name.split('.', 1)[0]
+    dt = datetime.datetime.strptime(lastmicrodtstring, '%Y%m%dT%H%M%S')
+    return dt
+
+
+def calc_last_micro(micro_image_details):
+    if not micro_image_details:
         return None
 
-    return micro_image_names[-1]
+    return micro_image_details[-1].name
 
 
-def calc_last_micro_age_days(micro_image_names):
+def calc_last_micro_age_days(micro_image_details):
+    if not micro_image_details:
+        return None
+
     now = datetime.datetime.now()
-
-    if not micro_image_names:
-        return None
-
-    lastmicro = micro_image_names[-1]
-    lastmicrodtstring = lastmicro.split('.', 1)[0]
-    lastmicrodt = datetime.datetime.strptime(
-        lastmicrodtstring, '%Y%m%dT%H%M%S')
-    age = now - lastmicrodt
+    age = now - micro_image_details[-1].datetime
     return age.days
 
 
