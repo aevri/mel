@@ -133,6 +133,7 @@ def load_comparison_image(path, min_compare_age_days):
 
 
 def process_args(args):
+    print(args.PATH)
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
