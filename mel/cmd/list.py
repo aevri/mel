@@ -30,13 +30,28 @@ def setup_parser(parser):
              'This means moles with no images are first then the oldest '
              'images.')
 
-    parser.add_argument(
+    format_args = parser.add_mutually_exclusive_group()
+
+    format_args.add_argument(
         '--format',
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
              "'{relpath}'. Available keys: relpath, lastmicro, "
              "lastmicro_age_days, id.")
 
+    format_args.add_argument(
+        '--ages',
+        dest='format',
+        action='store_const',
+        const='{relpath} {lastmicro_age_days}',
+        help="Print the relative paths of the moles and their ages.")
+
+    format_args.add_argument(
+        '--ids',
+        dest='format',
+        action='store_const',
+        const='{relpath} {id}',
+        help="Print the relative paths of the moles and their ids.")
 
 
 def process_args(args):
