@@ -3,6 +3,14 @@
 import mel.micro.fs
 
 
+# If we're trying to stick to 'Every mole compared every month', we won't want
+# to accidentally exclude moles that were compared just under a month ago.
+# Setting the default to roughly half a month should lean towards
+# over-comparing rather than under-comparing. This isn't medical advice, just
+# the personal inclination of the author.
+_DEFAULT_NO_RECENT_DAYS = 15
+
+
 def setup_parser(parser):
     parser.add_argument(
         '--only-no-micro',
@@ -18,6 +26,17 @@ def setup_parser(parser):
         '--with-assistance',
         action='store_true',
         help="Only list moles that require assistance to capture.")
+
+    parser.add_argument(
+        '--ignore-with-recent-micro',
+        '--no-recent',
+        default=0,
+        type=int,
+        metavar='DAYS',
+        nargs='?',
+        help='Do not list moles with micro images less than this number of '
+             'days. Off by default, will assume {days} days if none '
+             'specified.'.format(days=_DEFAULT_NO_RECENT_DAYS))
 
     parser.add_argument(
         '--sort',
@@ -75,6 +94,10 @@ def _yield_mole_dirs(rootpath, args):
             return sorted(x.micro_image_names)[-1]
         mole_iter = sorted(mole_iter, key=keyfunc)
 
+    no_recent_days = args.ignore_with_recent_micro
+    if no_recent_days is None:
+        no_recent_days = _DEFAULT_NO_RECENT_DAYS
+
     for mole in mole_iter:
 
         if args.only_no_micro and mole.micro_image_names:
@@ -85,5 +108,9 @@ def _yield_mole_dirs(rootpath, args):
 
         if args.with_assistance and not mole.need_assistance:
             continue
+
+        if mole.last_micro_age_days is not None and no_recent_days is not None:
+            if mole.last_micro_age_days < no_recent_days:
+                continue
 
         yield mole
