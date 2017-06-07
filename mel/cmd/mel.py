@@ -86,6 +86,10 @@ def main():
         # message from Python on stderr about the pipe break being ignored.
         # http://bugs.python.org/issue11380,#msg153320
         sys.stderr.close()
+    except mel.lib.ui.AbortKeyInterruptError:
+        # Using this return code may also break us out of an outer loop, e.g.
+        # 'xargs' will stop processing if the program it calls exists with 255.
+        return 255
 
 
 def _setup_parser_for_module(subparsers, module, name):
