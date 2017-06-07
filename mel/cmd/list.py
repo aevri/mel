@@ -55,20 +55,10 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    if args.sort == 'lastmicro' or args.sort is None:
-        def keyfunc(x):
-            if not x.micro_image_names:
-                return str()
-            return sorted(x.micro_image_names)[-1]
-    else:
-        assert(args.sort == 'unsorted')
-
-        def keyfunc(x):
-            return 0
 
     now = datetime.datetime.now()
 
-    for mole in sorted(_yield_mole_dirs('.', args), key=keyfunc):
+    for mole in _yield_mole_dirs('.', args):
         mole_data = {
             'relpath': mole.refrelpath,
             'lastmicro': '',
@@ -88,7 +78,17 @@ def process_args(args):
 
 
 def _yield_mole_dirs(rootpath, args):
-    for mole in mel.micro.fs.yield_moles(rootpath):
+
+    mole_iter = mel.micro.fs.yield_moles(rootpath)
+
+    if args.sort == 'lastmicro' or args.sort is None:
+        def keyfunc(x):
+            if not x.micro_image_names:
+                return str()
+            return sorted(x.micro_image_names)[-1]
+        mole_iter = sorted(mole_iter, key=keyfunc)
+
+    for mole in mole_iter:
 
         if args.only_no_micro and mole.micro_image_names:
             continue
