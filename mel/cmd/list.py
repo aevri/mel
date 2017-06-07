@@ -1,7 +1,5 @@
 """List the moles in a mole catalog."""
 
-import datetime
-
 import mel.micro.fs
 
 
@@ -55,24 +53,13 @@ def setup_parser(parser):
 
 
 def process_args(args):
-
-    now = datetime.datetime.now()
-
     for mole in _yield_mole_dirs('.', args):
         mole_data = {
             'relpath': mole.refrelpath,
-            'lastmicro': '',
-            'lastmicro_age_days': '',
+            'lastmicro': mole.last_micro,
+            'lastmicro_age_days': mole.last_micro_age_days,
             'id': mole.id,
         }
-        if mole.micro_image_names:
-            lastmicro = sorted(mole.micro_image_names)[-1]
-            mole_data['lastmicro'] = lastmicro
-            lastmicrodtstring = lastmicro.split('.', 1)[0]
-            lastmicrodt = datetime.datetime.strptime(
-                lastmicrodtstring, '%Y%m%dT%H%M%S')
-            age = now - lastmicrodt
-            mole_data['lastmicro_age_days'] = age.days
 
         print(args.format.format(**mole_data))
 
