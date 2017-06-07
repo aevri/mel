@@ -22,24 +22,32 @@ def setup_parser(parser):
         help="Only list moles that require assistance to capture.")
 
     parser.add_argument(
+        '--sort',
+        default='unsorted',
+        nargs='?',
+        choices=['lastmicro'],
+        help='Sort the moles by the date of their last micro image. '
+             'This means moles with no images are first then the oldest '
+             'images.')
+
+    parser.add_argument(
         '--format',
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
              "'{relpath}'. Available keys: relpath, lastmicro, "
              "lastmicro_age_days, id.")
 
-    parser.add_argument(
-        '--sort',
-        choices=['lastmicro'])
 
 
 def process_args(args):
-    if args.sort == 'lastmicro':
+    if args.sort == 'lastmicro' or args.sort is None:
         def keyfunc(x):
             if not x.micro_image_names:
                 return str()
             return sorted(x.micro_image_names)[-1]
     else:
+        assert(args.sort == 'unsorted')
+
         def keyfunc(x):
             return 0
 
