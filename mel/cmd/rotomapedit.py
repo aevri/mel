@@ -24,6 +24,7 @@ In 'mole edit' mode:
     Shift-click on a point to delete it.
     Shift-right-click on a point to randomize the uuid.
     Alt-Shift-click on a point to copy it's uuid.
+    Also, press 'end' or '+' when over a point to copy it's uuid.
     Alt-click on a point to paste the copied uuid.
     Alt-right-click on a point to replace the uuid in the whole map.
     Press 'o' to toggle follow mode.
@@ -174,9 +175,14 @@ class MoleEditController():
         self.copied_moles = None
         self.previous_moles = None
 
+        self.mouse_x = 0
+        self.mouse_y = 0
+
         self.copy_to_clipboard = copy_to_clipboard
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        self.mouse_x = mouse_x
+        self.mouse_y = mouse_y
         if event == cv2.EVENT_LBUTTONDOWN:
             self.on_lbutton_down(editor, mouse_x, mouse_y, flags)
         if event == cv2.EVENT_RBUTTONDOWN:
@@ -275,6 +281,12 @@ class MoleEditController():
             editor.toggle_faded_markers()
         elif key == 13:
             editor.toggle_markers()
+        elif key == ord('+'):
+            self.mole_uuid_list[0] = editor.get_mole_uuid(
+                self.mouse_x, self.mouse_y)
+            print(self.mole_uuid_list[0])
+            if self.copy_to_clipboard:
+                mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
 
         if self.sub_controller:
             try:
