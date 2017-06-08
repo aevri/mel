@@ -18,7 +18,9 @@ import mel.rotomap.tricolour
 
 
 def load_image(path):
-    image = cv2.imread(path)
+    image = cv2.imread(str(path))
+    if image is None:
+        raise Exception('Failed to load image: {}'.format(path))
 
     return image
 
