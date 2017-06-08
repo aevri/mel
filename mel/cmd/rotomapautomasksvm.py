@@ -65,7 +65,11 @@ def process_args(args):
     for path in args.trial:
         if args.verbose:
             print('Trial on:', path)
-        trial(classifier, _load_mole_data(path), args.svm_c, args.svm_gamma)
+        hits, misses = trial(
+            classifier, _load_mole_data(path), args.svm_c, args.svm_gamma)
+        if hits or misses:
+            success_rate = hits / (hits + misses)
+            print(args.svm_c, args.svm_gamma, success_rate, path, sep=',')
 
     for path in args.target:
         if args.verbose:
@@ -160,8 +164,7 @@ def trial(classifier, data, svm_c, svm_gamma):
             else:
                 misses += 1
 
-    success_rate = hits / max(hits + misses, 1)
-    print(svm_c, svm_gamma, success_rate, sep=',')
+    return hits, misses
 
 
 def target(classifier, data, path):
