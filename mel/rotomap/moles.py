@@ -21,11 +21,12 @@ class RotomapDirectory():
         if not self.path.is_dir():
             raise ValueError(
                 '"{}" is not a directory, so not a rotomap.'.format(self.path))
+
         self.image_paths = [
-            os.path.join(self.path, f)
-            for f in self.path.iterdir()
+            str(f) for f in self.path.iterdir()
             if f.suffix.lower() == '.jpg'
         ]
+
         if not self.image_paths:
             raise ValueError(
                 '"{}" has no images, so not a rotomap.'.format(self.path))
