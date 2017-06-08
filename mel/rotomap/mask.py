@@ -28,6 +28,15 @@ def histogram_from_image_mask(image, mask):
     return skin_hist
 
 
+def yield_shifted_regions(*image_list, size=40, shift_step=5):
+    """Yield tuple(r1, r2, ...) of regions from image_list, shift by size."""
+
+    for xshift in range(0, size, shift_step):
+        for yshift in range(0, size, shift_step):
+            shifted_images = [i[yshift:, xshift:] for i in image_list]
+            yield from yield_regions(*shifted_images, size=size)
+
+
 def yield_regions(*image_list, size=40):
     """Yield tuple(r1, r2, ...) of regions from a list of images."""
 

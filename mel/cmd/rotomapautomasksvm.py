@@ -124,6 +124,7 @@ def _load_mole_data(photo_path):
 
 def train(classifier, data):
     hsv_photo = cv2.cvtColor(data.photo, cv2.COLOR_BGR2HSV)
+    # yield_regions = mel.rotomap.mask.yield_shifted_regions
     yield_regions = mel.rotomap.mask.yield_regions
 
     for photo, skin, not_skin in yield_regions(
