@@ -29,7 +29,7 @@ def histogram_from_image_mask(image, mask):
 
 
 def yield_regions(*image_list, size=40):
-    """Yield (histogram, mask_average) regions from an image."""
+    """Yield tuple(r1, r2, ...) of regions from a list of images."""
 
     width = image_list[0].shape[1]
     height = image_list[0].shape[0]
