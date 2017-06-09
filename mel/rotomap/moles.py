@@ -4,7 +4,6 @@
 import argparse
 import json
 import math
-import os
 import pathlib
 import uuid
 
@@ -54,10 +53,11 @@ def load_image(path):
 
 
 def load_image_moles(image_path):
-    moles_path = image_path + '.json'
+    moles_path = pathlib.Path(str(image_path) + '.json')
+
     moles = []
-    if os.path.exists(moles_path):
-        with open(moles_path) as moles_file:
+    if moles_path.exists():
+        with moles_path.open() as moles_file:
             moles = json.load(moles_file)
 
     for m in moles:
