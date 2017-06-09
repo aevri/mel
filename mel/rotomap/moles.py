@@ -45,6 +45,14 @@ def make_argparse_rotomap_directory(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
+def load_image(path):
+    image = cv2.imread(str(path))
+    if image is None:
+        raise Exception('Failed to load image: {}'.format(path))
+
+    return image
+
+
 def load_image_moles(image_path):
     moles_path = image_path + '.json'
     moles = []

@@ -16,14 +16,6 @@ import mel.rotomap.relate
 import mel.rotomap.tricolour
 
 
-def load_image(path):
-    image = cv2.imread(str(path))
-    if image is None:
-        raise Exception('Failed to load image: {}'.format(path))
-
-    return image
-
-
 def draw_mole(image, x, y, colours):
 
     radius = 16
@@ -721,7 +713,7 @@ class MoleData:
             return
 
         image_path = self._path_list[self._list_index]
-        self.image = load_image(image_path)
+        self.image = mel.rotomap.moles.load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
