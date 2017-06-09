@@ -8,7 +8,6 @@ import numpy
 
 import mel.lib.common
 import mel.lib.image
-import mel.lib.math
 import mel.lib.ui
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
