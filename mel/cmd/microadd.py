@@ -114,6 +114,8 @@ def pick_comparison_path(path_list, min_compare_age_days):
 def get_comparison_image_path(path, min_compare_age_days):
 
     micro_path = os.path.join(path, '__micro__')
+    if not os.path.exists(micro_path):
+        return None
 
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
