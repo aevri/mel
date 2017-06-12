@@ -221,6 +221,16 @@ def capture(cap, display, capindex, mole_acquirer):
             asys_image,
             is_rot_sensitive=False)
 
+        lvar = laplacian_variance(asys_image)
+        cv2.putText(
+            asys_image,
+            f'{lvar}',
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 0, 255),
+            3)
+
         mole_acquirer.update(stats)
 
         if mole_acquirer.is_locked and is_aligned:
@@ -238,3 +248,9 @@ def capture(cap, display, capindex, mole_acquirer):
     print("locked and aligned")
 
     return normal_image
+
+
+def laplacian_variance(image):
+    # http://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return cv2.Laplacian(gray, cv2.CV_64F).var()
