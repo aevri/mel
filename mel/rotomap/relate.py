@@ -1,6 +1,7 @@
 """Relate rotomaps to eachother."""
 
 import copy
+import itertools
 
 import cv2
 import numpy
@@ -232,6 +233,131 @@ def mole_list_overlap_info(from_moles, to_moles):
     to_set = set(to_dict.keys())
     in_both = from_set & to_set
     return from_dict, to_dict, from_set, to_set, in_both
+
+
+def best_pair_to_guess_target(target, pairs_of_pairs):
+    if not pairs_of_pairs:
+        raise ValueError('pairs must not be empty.')
+
+    best_dist_pairs = []
+
+    best_dist = None
+    for (a, b), (c, d) in pairs_of_pairs:
+        dist_a = numpy.linalg.norm(a - target)
+        dist_b = numpy.linalg.norm(b - target)
+        min_dist = min(dist_a, dist_b)
+        if best_dist is None or min_dist < best_dist:
+            best_dist_pairs = [((a, b), (c, d))]
+            best_dist = min_dist
+        elif best_dist is not None and min_dist == best_dist:
+            best_dist_pairs.append(((a, b), (c, d)))
+
+    best_u_pairs = None
+    best_u = None
+    for (a, b), (c, d) in best_dist_pairs:
+        _, u = calc_point_in_ab_space(target, a, b)
+        u = abs(u)
+        if best_u is None or u < best_u:
+            best_u_pairs = [((a, b), (c, d))]
+            best_u = u
+        elif u is not None and u == best_u:
+            best_u_pairs.append(((a, b), (c, d)))
+
+    return best_u_pairs[0]
+
+
+def calc_right_angle_units(point_a, point_b):
+    """Return (forward, right, length) from point a to point b.
+
+    :point_a: The start point of the path, a 2d numpy array.
+    :point_b: The end point of the path, a 2d numpy array.
+    :returns: A 3-tuple of: 'forward', a 2d unit vector in the direction a->b;
+              'right', a 2d unit vector pointed 90 degrees clockwise from a->b;
+              and 'length', the scalar length of a->b.
+
+    Usage example:
+
+        >>> a = numpy.array((0.0, 0.0))
+        >>> b = numpy.array((0.0, 1.0))
+        >>> calc_right_angle_units(a, b)
+        (array([ 0.,  1.]), array([ 1., -0.]), 1.0)
+
+    """
+    a_to_b = point_b - point_a
+    length = numpy.linalg.norm(a_to_b)
+    forward = a_to_b / length
+    right = numpy.array((forward[1], -forward[0]))
+
+    return forward, right, length
+
+
+def calc_point_in_ab_space(target, point_a, point_b):
+    """Take a -> b to be the forward basis vector, and project target there.
+
+    :target: The 2d numpy.array to project into the space of a to b.
+    :point_a: The 2d numpy.array, which is the origin of the new space.
+    :point_b: The 2d numpy.array, which is taken to be one unit forward of a.
+    :returns: A float pair, (forward, right) describing 'target' in a->b space.
+
+    Usage example:
+
+        >>> a = numpy.array((1.0, 2.0))
+        >>> b = numpy.array((1.0, 4.0))
+        >>> t = numpy.array((3.0, 4.0))
+        >>> calc_point_in_ab_space(t, a, b)
+        (1.0, 1.0)
+
+    """
+
+    forward, right, length = calc_right_angle_units(point_a, point_b)
+
+    a_to_target = target - point_a
+
+    target_forward_distance = numpy.dot(forward, a_to_target)
+    target_forward_units = target_forward_distance / length
+
+    target_right_distance = numpy.dot(right, a_to_target)
+    target_right_units = target_right_distance / length
+
+    return target_forward_units, target_right_units
+
+
+def guess_mole_pos_from_pair(from_target, from_a, from_b, to_a, to_b):
+    u, v = calc_point_in_ab_space(from_target, from_a, from_b)
+
+    to_forward, to_right, to_length = calc_right_angle_units(to_a, to_b)
+
+    to_guess = to_a + (u * to_length * to_forward) + (v * to_length * to_right)
+
+    return to_guess.astype(int)
+
+
+def guess_mole_pos_pair_method(from_uuid, from_moles, to_moles):
+    from_data = mel.rotomap.moles.MoleData(from_moles)
+    to_data = mel.rotomap.moles.MoleData(to_moles)
+
+    in_both = from_data.uuids & to_data.uuids
+
+    f = from_data.uuid_points
+    t = to_data.uuid_points
+
+    from_target = f[from_uuid]
+    pairs_of_pairs = [
+        ((f[u1], f[u2]), (t[u1], t[u2]))
+        for u1, u2 in itertools.combinations(in_both, 2)
+    ]
+
+    if not pairs_of_pairs:
+        return None
+
+    ((from_a, from_b), (to_a, to_b)) = best_pair_to_guess_target(
+        from_target,
+        pairs_of_pairs)
+
+    guess_pos = guess_mole_pos_from_pair(
+        from_target, from_a, from_b, to_a, to_b)
+
+    return guess_pos
 
 
 def guess_mole_pos(from_uuid, from_moles, to_moles):

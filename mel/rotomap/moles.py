@@ -36,6 +36,49 @@ class RotomapDirectory():
             yield imagepath, load_image_moles(imagepath)
 
 
+def iter_all_frames(*search_paths):
+    for root in search_paths:
+        root = pathlib.Path(root)
+        for i in root.iterdir():
+            if i.is_dir():
+                yield from iter_all_frames(i)
+            elif i.suffix.lower() == '.jpg':
+                yield RotomapFrame(i)
+
+
+class RotomapFrame():
+
+    def __init__(self, path):
+        self.path = pathlib.Path(path)
+        if self.path.is_dir():
+            raise ValueError(
+                f'Expected file, not directory: {path}')
+        if not self.path.exists():
+            raise ValueError(
+                f'Path does not exist: {path}')
+        if self.path.suffix.lower() != '.jpg':
+            raise ValueError(
+                f'Unrecognised suffix for rotomap frame: {path}')
+
+        self.moles = load_image_moles(self.path)
+        self.moledata = MoleData(self.moles)
+
+    def load_image(self):
+        return load_image(self.path)
+
+    def __repr__(self):
+        return f"RotomapFrame('{self.path}')"
+
+
+class MoleData():
+
+    def __init__(self, mole_iter):
+        self.moles = tuple(mole_iter)
+        self.uuids = frozenset(m['uuid'] for m in self.moles)
+        self.uuid_points = to_uuid_points(self.moles)
+        # self.uuid_moles = {m['uuid']: m for m in self.moles}
+
+
 def make_argparse_rotomap_directory(path):
     """Use in the 'type=' parameter to add_argument()."""
     try:

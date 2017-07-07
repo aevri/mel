@@ -125,11 +125,11 @@ def process_combinations(from_path, to_path, args):
 
 def guess_mole_pos(target_uuid, from_moles, to_moles, to_image):
 
-    guess_pos = mel.rotomap.relate.guess_mole_pos(
-        target_uuid, from_moles, to_moles)
-
-    # guess_pos = mel.rotomap.relate.guess_mole_pos_pair_method(
+    # guess_pos = mel.rotomap.relate.guess_mole_pos(
     #     target_uuid, from_moles, to_moles)
+
+    guess_pos = mel.rotomap.relate.guess_mole_pos_pair_method(
+        target_uuid, from_moles, to_moles)
 
     if guess_pos is not None:
         guess_pos = snap_to_mole_findellipse(to_image, guess_pos)
