@@ -2,7 +2,7 @@ sudo: false
 
 language: python
 python:
-  - "3.5"
+  - "3.6"
 
 # This doesn't seem to result in 'cv2' being available for import, perhaps this
 # is because the Travis container infrastructure is based on Ubuntu 12.04,
