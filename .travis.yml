@@ -24,7 +24,6 @@ install:
 script:
   # Only run non-runtime tests until we can get opencv working under Travis.
   # - ./meta/run_tests.sh
-  - ./meta/static_tests.sh
   - ./meta/autofix.sh
   - git diff --exit-code
   - ./meta/static_tests.sh
