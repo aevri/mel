@@ -82,6 +82,7 @@ def run_mel_debug_tests():
     expect_ok(mel_cmd, '-h')
 
     subcommands = [
+        'bench-autopaste',
         'bench-relate',
         'render-valuefield',
     ]

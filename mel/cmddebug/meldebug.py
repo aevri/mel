@@ -4,6 +4,7 @@
 import argparse
 import sys
 
+import mel.cmddebug.benchautopaste
 import mel.cmddebug.benchrelate
 import mel.cmddebug.rendervaluefield
 
@@ -27,6 +28,8 @@ def main():
     subparsers.dest
     # pylint: enable=pointless-statement
 
+    _setup_parser_for_module(
+        subparsers, mel.cmddebug.benchautopaste, 'bench-autopaste')
     _setup_parser_for_module(
         subparsers, mel.cmddebug.benchrelate, 'bench-relate')
     _setup_parser_for_module(
