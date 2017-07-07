@@ -5,6 +5,7 @@ import math
 
 import cv2
 
+import mel.lib.image
 import mel.lib.math
 
 
