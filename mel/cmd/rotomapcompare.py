@@ -75,9 +75,9 @@ def process_args(args):
         elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
             display.prev_image()
         elif key == mel.lib.ui.WAITKEY_UP_ARROW:
-            display.prev_group()
+            display.prev_rotomap()
         elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
-            display.next_group()
+            display.next_rotomap()
         elif key == ord('n'):
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index += 1
@@ -107,59 +107,54 @@ class ImageCompareDisplay():
                 raise ValueError(
                     "path_images_tuple not have empty groups.")
 
-        self._data = path_images_tuple
+        self._rotomaps = path_images_tuple
 
-        self._indices = [
-            [0, 0],
-            [-1, 0],
-        ]
+        self._rotomap_cursors = [0] * len(self._rotomaps)
+
+        self._indices = [0, -1]
 
         self._show()
 
     def next_image(self):
         ix = self._indices[0]
-        num_images = len(self._data[ix[0]])
-        ix[1] = (ix[1] + 1) % num_images
+        num_images = len(self._rotomaps[ix])
+        self._rotomap_cursors[ix] += 1
+        self._rotomap_cursors[ix] %= num_images
         self._show()
 
     def prev_image(self):
         ix = self._indices[0]
-        num_images = len(self._data[ix[0]])
-        ix[1] = (ix[1] - 1) % num_images
+        num_images = len(self._rotomaps[ix])
+        self._rotomap_cursors[ix] -= 1
+        self._rotomap_cursors[ix] %= num_images
         self._show()
 
-    def next_group(self):
-        ix = self._indices[0]
-        num_groups = len(self._data)
-        ix[0] = (ix[0] + 1) % num_groups
+    def next_rotomap(self):
+        num_rotomaps = len(self._rotomaps)
+        self._indices[0] += 1
+        self._indices[0] %= num_rotomaps
         self._show()
 
-    def prev_group(self):
-        ix = self._indices[0]
-        num_groups = len(self._data)
-        ix[0] = (ix[0] - 1) % num_groups
+    def prev_rotomap(self):
+        num_rotomaps = len(self._rotomaps)
+        self._indices[0] -= 1
+        self._indices[0] %= num_rotomaps
         self._show()
 
     def swap_images(self):
         self._indices.reverse()
         self._show()
 
-    def _path_pos(self, indices):
-        i = indices
-        return self._data[i[0]][i[1]]
-
-    def _path(self, indices):
-        return self._path_pos(indices)[0]
-
-    def _pos(self, indices):
-        return self._path_pos(indices)[1]
+    def _path_pos(self, index):
+        image_index = self._rotomap_cursors[index]
+        return self._rotomaps[index][image_index]
 
     def _show(self):
         image_width = self._display.width // 2
         image_height = self._display.height
         image_size = numpy.array((image_width, image_height))
         images = [
-            captioned_mole_image(self._path(i), self._pos(i), image_size)
+            captioned_mole_image(*self._path_pos(i), image_size)
             for i in self._indices
         ]
         montage = mel.lib.image.montage_horizontal(10, *images)
