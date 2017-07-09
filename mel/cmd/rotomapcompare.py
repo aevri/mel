@@ -86,6 +86,14 @@ def process_args(args):
             path_images_tuple = tuple(
                 uuid_to_rotomaps_imagepos_list[uuid_].values())
             display.reset(path_images_tuple)
+        elif key == ord('p'):
+            num_uuids = len(uuid_to_rotomaps_imagepos_list)
+            index -= 1
+            index %= num_uuids
+            uuid_ = uuid_order[index]
+            path_images_tuple = tuple(
+                uuid_to_rotomaps_imagepos_list[uuid_].values())
+            display.reset(path_images_tuple)
         elif key == ord(' '):
             display.swap_images()
 
