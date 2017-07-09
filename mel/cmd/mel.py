@@ -17,6 +17,7 @@ import mel.cmd.rotomapautomasksvm
 import mel.cmd.rotomapcompare
 import mel.cmd.rotomapdiff
 import mel.cmd.rotomapedit
+import mel.cmd.rotomapfsck
 import mel.cmd.rotomaplist
 import mel.cmd.rotomapmontagesingle
 import mel.cmd.rotomaporganise
@@ -62,6 +63,7 @@ def main():
         subparsers, mel.cmd.rotomapcompare, 'rotomap-compare')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
+    _setup_parser_for_module(subparsers, mel.cmd.rotomapfsck, 'rotomap-fsck')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaplist, 'rotomap-list')
     _setup_parser_for_module(
