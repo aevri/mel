@@ -54,6 +54,13 @@ def process_args(args):
                 uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
                     (frame.path, point))
 
+    # We can't compare moles that are only in one rotomap, cull these.
+    uuid_to_rotomaps_imagepos_list = {
+        key: value
+        for key, value in uuid_to_rotomaps_imagepos_list.items()
+        if len(value) > 1
+    }
+
     if not uuid_to_rotomaps_imagepos_list:
         raise Exception("Nothing to compare.")
 
