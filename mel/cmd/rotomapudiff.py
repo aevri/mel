@@ -108,7 +108,7 @@ def process_args(args):
         if len(group) == len(args.OLD):
             print_category('Not in NEW map, in all OLD maps:', ids)
         else:
-            group_desc = ', '.join(group)
+            group_desc = ', '.join(str(x) for x in group)
             print_category(
                 'Not in NEW map. Only in {}:'.format(group_desc),
                 ids)
