@@ -64,6 +64,7 @@ def process_args(args):
     if not uuid_to_rotomaps_imagepos_list:
         raise Exception("Nothing to compare.")
 
+    # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)
 
     uuid_order = tuple(sorted(iter(uuid_to_rotomaps_imagepos_list)))
