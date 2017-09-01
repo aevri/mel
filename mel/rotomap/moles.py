@@ -14,6 +14,7 @@ import mel.lib.math
 
 
 class RotomapDirectory():
+    """RotomapFrame-s for all images in a single rotomap dir."""
 
     def __init__(self, path):
         self.path = pathlib.Path(path)
@@ -51,6 +52,7 @@ def iter_all_frames(*search_paths):
 
 
 class RotomapFrame():
+    """Image and mole data for a single image in a rotomap."""
 
     def __init__(self, path):
         self.path = pathlib.Path(path)
@@ -75,6 +77,7 @@ class RotomapFrame():
 
 
 class MoleData():
+    """Iterables of UUIDs, locations, and other data on moles in an image."""
 
     def __init__(self, mole_iter):
         self.moles = tuple(mole_iter)
