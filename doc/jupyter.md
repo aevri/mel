@@ -41,3 +41,24 @@ plt.figure(figsize=(20, 20))
 # OpenCV images are BGR, whereas matplotlib expects RGB.
 plt.imshow(cv2.cvtColor(i, cv2.COLOR_BGR2RGB))
 ```
+
+WIP: Image Segmentation
+-----------------------
+
+```
+frames = list(d.yield_frames())
+
+from mpl_toolkits.axes_grid1 import ImageGrid
+
+fig = plt.figure(1, (4., 4.))
+grid = ImageGrid(fig, 111,  # similar to subplot(111)
+                 nrows_ncols=(3, 3),  # creates 2x2 grid of axes
+                 axes_pad=0.1,  # pad between axes in inch.
+                 )
+
+for j, f in enumerate(frames):
+    i = f.load_image()
+    gray = cv2.cvtColor(i,cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    grid[j].imshow(thresh)
+```
