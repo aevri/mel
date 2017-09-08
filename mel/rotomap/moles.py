@@ -40,6 +40,9 @@ class RotomapDirectory():
         for imagepath in self.image_paths:
             yield RotomapFrame(imagepath)
 
+    def __repr__(self):
+        return f'RotomapDirectory({self.path!r})'
+
 
 def iter_all_frames(*search_paths):
     for root in search_paths:
