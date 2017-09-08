@@ -76,7 +76,7 @@ class RotomapFrame():
         return load_image(self.path)
 
     def __repr__(self):
-        return f"RotomapFrame('{self.path}')"
+        return f"RotomapFrame({self.path!r})"
 
 
 class MoleData():
