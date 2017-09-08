@@ -10,13 +10,7 @@ import mel.rotomap.mask
 
 def setup_parser(parser):
     parser.add_argument(
-        '--source',
-        '-s',
-        help="Path to the masked image to train on.",
-    )
-    parser.add_argument(
-        '--target',
-        '-t',
+        'TARGET',
         nargs='+',
         help="Paths to images to automask.")
     parser.add_argument(
@@ -27,16 +21,9 @@ def setup_parser(parser):
 
 
 def process_args(args):
-
-    if args.verbose:
-        print('Source:', args.source)
-    skin_hist = mel.rotomap.mask.histogram_from_image_mask(
-        cv2.imread(args.source),
-        mel.rotomap.mask.load(args.source))
-
-    for path in args.target:
+    for path in args.TARGET:
         if args.verbose:
             print('Target:', path)
         image = cv2.imread(path)
-        mask = mel.rotomap.mask.guess_mask(image, skin_hist)
+        mask = mel.rotomap.mask.guess_mask_otsu(image)
         mel.lib.common.write_image(path + '.mask.png', mask)
