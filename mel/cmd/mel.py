@@ -4,6 +4,24 @@
 import argparse
 import sys
 
+
+OLD_PYTHON_MESSAGE="""You are running mel on an old Python interpreter
+
+Unfortunately Frobulator 6.0 and above are not compatible with Python < 3.6
+anymore, and you still ended up with this version installed on your system.
+Make sure you have pip >= 9.0 to avoid this kind of issues, as well as
+setuptools >= 24.2:
+
+ $ pip install pip setuptools --upgrade
+
+Upgrade your system to use Python 3.6 or later to run this version of mel.
+
+"""
+
+if sys.version_info < (3,6):
+    raise ImportError(OLD_PYTHON_MESSAGE)
+
+
 import mel.cmd.addcluster
 import mel.cmd.addsingle
 import mel.cmd.error
