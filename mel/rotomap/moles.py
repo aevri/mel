@@ -12,6 +12,8 @@ import numpy
 
 import mel.lib.math
 
+import mel.rotomap.mask
+
 
 class RotomapDirectory():
     """RotomapFrame-s for all images in a single rotomap dir."""
@@ -74,6 +76,9 @@ class RotomapFrame():
 
     def load_image(self):
         return load_image(self.path)
+
+    def load_mask(self):
+        return mel.rotomap.mask.load_or_none(self.path)
 
     def __repr__(self):
         return f"RotomapFrame({self.path!r})"
