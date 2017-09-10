@@ -1,6 +1,7 @@
 """Handy stuff for working in Jupyter notebooks."""
 
 import cv2
+import numpy
 
 import mel.lib.moleimaging
 
@@ -36,6 +37,32 @@ def ellipse_center_up_right(ellipse):
     rmag = ellipse[1][0] / 2
 
     return center, up, right, umag, rmag
+
+
+class EllipseSpace():
+
+    def __init__(ellipse):
+        self.center, self.up, self.right, umag, rmag =
+            ellipse_center_up_right(ellipse)
+
+        self.pos, self.center, self.up, self.right = (
+            numpy.array(x) for x in (pos, center, up, right))
+
+        self.mag = numpy.array((rmag, umag))
+        self.inv_mag = 1 / self.mag
+
+    def to_space(self, pos):
+        pos -= self.center
+        pos = numpy.array(
+            numpy.dot(pos, self.right),
+            numpy.dot(pos, self.up),
+        )
+        return pos * self.inv_mag
+
+    def from_space(self, pos):
+        return self.right * pos[0] * self.mag[0]
+            + self.up * pos[1] * self.mag[1]
+            + self.center
 
 
 def from_ellipse_space(ellipse, pos):
