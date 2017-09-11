@@ -556,7 +556,7 @@ class Editor:
     def set_mask(self, mouse_x, mouse_y, enable):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         value = 255 if enable else 0
-        radius = 100
+        radius = 200
         cv2.circle(self.moledata.mask, (image_x, image_y), radius, value, -1)
         self.moledata.save_mask()
         self.show_current()
