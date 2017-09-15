@@ -4,7 +4,7 @@ import collections
 
 import cv2
 import numpy
-import scipy
+import scipy.stats
 
 import mel.lib.moleimaging
 
@@ -21,6 +21,21 @@ def frames_to_uuid_poslist(frame_iterable):
             uuid_to_poslist[uuid].append(elspace.to_space(pos))
 
     return uuid_to_poslist
+
+
+def frames_to_uuid_frameposlist(frame_iterable):
+    uuid_to_frameposlist = collections.defaultdict(list)
+
+    for frame in frame_iterable:
+        mask = frame.load_mask()
+        contour = biggest_contour(mask)
+        ellipse = cv2.fitEllipse(contour)
+        elspace = EllipseSpace(ellipse)
+        for uuid, pos in frame.moledata.uuid_points.items():
+            uuid_to_frameposlist[uuid].append(
+                (str(frame), elspace.to_space(pos)))
+
+    return uuid_to_frameposlist
 
 
 class MoleClassifier():
@@ -44,44 +59,30 @@ class MoleClassifier():
         return self.uuids[i], d, d / total_density
 
 
-def frames_to_uuid_frameposlist(frame_iterable):
-    uuid_to_frameposlist = collections.defaultdict(list)
-
-    for frame in frame_iterable:
-        mask = frame.load_mask()
-        contour = biggest_contour(mask)
-        ellipse = cv2.fitEllipse(contour)
-        elspace = EllipseSpace(ellipse)
-        for uuid, pos in frame.moledata.uuid_points.items():
-            uuid_to_frameposlist[uuid].append(
-                (str(frame), elspace.to_space(pos)))
-
-    return uuid_to_frameposlist
-
-
 class MoleClassifier2():
 
     def __init__(self, uuid_to_frameposlist):
-        self.uuids, self.frameposlistlist = zip(*uuid_to_frameposlist.items())
-        # print(tuple(x[1] for x in self.frameposlistlist[0]))
+        uuid_to_poslist = {
+            uuid_: [pos for frame, pos in frameposlist]
+            for uuid_, frameposlist in uuid_to_frameposlist.items()
+        }
+        # self.uuids, self.frameposlistlist = zip(*uuid_to_frameposlist.items())
+        self.uuids, self.poslistlist = zip(*uuid_to_poslist.items())
         # self.poslistlist = tuple(
-        #     numpy.array(x[1]) for x in self.frameposlistlist)
-        self.poslistlist = tuple(
-            numpy.array([numpy.array(pos) for frame, pos in frameposlist])
-            for frameposlist in self.frameposlistlist
-        )
-        # print(self.poslistlist[0][:, 1])
+        #     [pos for frame, pos in frameposlist]
+        #     for frameposlist in self.frameposlistlist
+        # )
         yposlistlist = tuple(
-            poslist[:, 1]
+            numpy.array(tuple(y for x, y in poslist))
             for poslist in self.poslistlist
         )
-        print(yposlistlist)
         self.ykernels = tuple(
             scipy.stats.gaussian_kde(yposlist)
             for yposlist in yposlistlist
         )
 
     def guess_from_ypos(self, ypos):
+        # TODO: check that ypos is scalar
         densities = numpy.array(tuple(k(ypos) for k in self.ykernels))
         total_density = numpy.sum(densities)
         i = numpy.argmax(densities)
