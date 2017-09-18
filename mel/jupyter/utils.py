@@ -1,6 +1,7 @@
 """Handy stuff for working in Jupyter notebooks."""
 
 import collections
+import heapq
 
 import cv2
 import numpy
@@ -53,6 +54,108 @@ class AttentuatedKde():
 
     def __call__(self, x):
         return self.kde(x) * self.attenuation
+
+
+class StatePriorityQueue():
+
+    def __init__(self):
+        self.heap = []
+        self.next_tie_breaker = 0
+
+    def push(self, value, state):
+        heapq.heappush(self.heap, (1 - value, self.next_tie_breaker, state))
+        self.next_tie_breaker += 1
+
+    def pop(self):
+        value, _, state = heapq.heappop(self.heap)
+        return 1 - value, state
+
+    def max(self):
+        filled_counts = collections.Counter()
+        max_filled = 0
+        max_state = None
+        for v, _, state in self.heap:
+            filled = sum(1 for a, b in state.items() if b is not None)
+            max_filled = max(max_filled, filled)
+            max_state = state
+        return max_state
+
+    def __str__(self):
+        filled_counts = collections.Counter()
+        total_value = 0
+        max_value = 0
+        max_filled = 0
+        for v, _, state in self.heap:
+            value = 1 - v
+            total_value += value
+            max_value = max(value, max_value)
+            filled = sum(1 for a, b in state.items() if b is not None)
+            filled_counts[filled] += 1
+            max_filled = max(max_filled, filled)
+        mean_value = total_value / len(self.heap)
+
+        return ("<StatePriorityQueue:: "
+                "len:{}, max:{}, fill:{}, mean_v:{:.3f}, max_v:{:.3f}>".format(
+                len(self.heap),
+                max_filled,
+                filled_counts.most_common(5),
+                mean_value,
+                max_value))
+
+
+def best_match_combination(a_b_p_list):
+    # TODO: don't forget new mole cases
+
+    a_to_bp = collections.defaultdict(dict)
+    for a, b, p in a_b_p_list:
+        if p > 1:
+            raise ValueError(
+                f"'p' must be equal to or less than 1, "
+                "got: a={a}, b={b}, p={p}")
+        a_to_bp[a][b] = p
+
+    state_q = StatePriorityQueue()
+    state_q.push(1, {a: None for a in a_to_bp})
+
+    while True:
+        print("--")
+        print(state_q)
+
+        # Advance best state.
+        total_p, state = state_q.pop()
+
+        # See if we're done.
+        if all(state.values()):
+            return state
+
+        # if numpy.isclose(0, total_p):
+        if total_p == 0:
+            return state_q.max()
+            raise NotImplementedError("Decide what to do when no options.")
+
+        # Nope, advance states.
+        already_taken = {b for a, b in state.items() if b is not None}
+        for a, b in state.items():
+            if b is not None:
+                continue
+
+            p_max = None
+            b_best = None
+            for b, p in a_to_bp[a].items():
+                if b not in already_taken:
+                    if b_best is None or p_max < p:
+                        p_max = p
+                        b_best = b
+
+            if b_best is None:
+                # If we ran out of moles to match against, this must be a new
+                # mole. This isn't the only way we can detect a new mole.
+                raise NotImplementedError("New mole!")
+
+            total_p *= p_max
+            new_state = dict(state)
+            new_state[a] = b_best
+            state_q.push(total_p, new_state)
 
 
 class MoleClassifier():
