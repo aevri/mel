@@ -41,6 +41,20 @@ def frames_to_uuid_frameposlist(frame_iterable):
     return uuid_to_frameposlist
 
 
+class AttentuatedKde():
+
+    def __init__(self, kde_factory, training_data):
+        self.kde = kde_factory(training_data)
+        self.len = len(training_data)
+        if not self.len:
+            self.attenuation = 0.0
+        else:
+            self.attenuation = 1 - (1 / (1 + (self.len + 4) / 5))
+
+    def __call__(self, x):
+        return self.kde(x) * self.attenuation
+
+
 class MoleClassifier():
 
     def __init__(self, uuid_to_frameposlist):
@@ -54,7 +68,7 @@ class MoleClassifier():
             for poslist in self.poslistlist
         )
         self.ykernels = tuple(
-            scipy.stats.gaussian_kde(yposlist)
+            AttentuatedKde(scipy.stats.gaussian_kde, yposlist)
             for yposlist in yposlistlist
         )
 
@@ -71,9 +85,9 @@ class MoleClassifier():
         self.uuid_to_neighbourlist = uuid_to_neighbourlist
 
         self.numclose_kernels = tuple(
-            scipy.stats.gaussian_kde(
-                numpy.array(
-                    uuid_to_neighbourlist[uuid_]))
+            AttentuatedKde(
+                scipy.stats.gaussian_kde,
+                numpy.array( uuid_to_neighbourlist[uuid_]))
             for uuid_ in self.uuids
         )
 
@@ -86,7 +100,7 @@ class MoleClassifier():
         total_density = numpy.sum(densities)
 
         if numpy.isclose(total_density, 0):
-            return []
+            total_density = -1
 
         matches = []
         for i, m_uuid in enumerate(self.uuids):
@@ -109,7 +123,7 @@ class MoleClassifier():
             total_density = numpy.sum(densities)
 
             if numpy.isclose(total_density, 0):
-                continue
+                total_density = -1
 
             # i = numpy.argmax(densities)
             # d = densities[i][0]
