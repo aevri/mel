@@ -63,14 +63,18 @@ class StatePriorityQueue():
         self.next_tie_breaker = 0
         self.max_filled = 0
 
-    def push(self, value, state):
-        heapq.heappush(self.heap, (1 - value, self.next_tie_breaker, state))
+    def push(self, estimate, value, state):
+
+        heapq.heappush(
+            self.heap,
+            (1 - estimate, 1 - value, self.next_tie_breaker, state))
+
         self.max_filled = max(self._count_filled(state), self.max_filled)
         self.next_tie_breaker += 1
 
     def pop(self):
-        value, _, state = heapq.heappop(self.heap)
-        return 1 - value, state
+        estimate, value, _, state = heapq.heappop(self.heap)
+        return 1 - estimate, 1 - value, state
 
     def _count_filled(self, state):
         return sum(1 for a, b in state.items() if b is not None)
@@ -79,11 +83,14 @@ class StatePriorityQueue():
         filled_counts = collections.Counter()
         max_filled = 0
         max_state = None
-        for v, _, state in self.heap:
+        for e, v, _, state in self.heap:
             filled = sum(1 for a, b in state.items() if b is not None)
             max_filled = max(max_filled, filled)
             max_state = state
         return max_state
+
+    def __len__(self):
+        return len(self.heap)
 
     def __str__(self):
         return ("<StatePriorityQueue:: len:{}, max:{}>".format(
@@ -93,7 +100,7 @@ class StatePriorityQueue():
         total_value = 0
         max_value = 0
         max_filled = 0
-        for v, _, state in self.heap:
+        for e, v, _, state in self.heap:
             value = 1 - v
             total_value += value
             max_value = max(value, max_value)
@@ -113,7 +120,6 @@ class StatePriorityQueue():
 
 def best_match_combination(a_b_p_list):
     # TODO: don't forget new mole cases
-
     a_to_bp = collections.defaultdict(dict)
     for a, b, p in a_b_p_list:
         if p > 1:
@@ -123,7 +129,7 @@ def best_match_combination(a_b_p_list):
         a_to_bp[a][b] = p
 
     state_q = StatePriorityQueue()
-    state_q.push(1, {a: None for a in a_to_bp})
+    state_q.push(1, 1, {a: None for a in a_to_bp})
 
     loop_count = 0
     while True:
@@ -132,31 +138,62 @@ def best_match_combination(a_b_p_list):
             print("--", loop_count)
             print(state_q)
 
+        if not state_q:
+            # If we ran out of moles to match against, this must be a new mole.
+            # This isn't the only way we can detect a new mole.
+            raise NotImplementedError("Ran out of options!")
+
         # Advance best state.
-        total_p, state = state_q.pop()
+        est_p, total_p, state = state_q.pop()
+
+        if loop_count % 100 == 0:
+            print('all', all(state.values()), tuple(state.values()))
 
         # See if we're done.
         if all(state.values()):
-            return state
+            return total_p, state
 
         if numpy.isclose(0, total_p):
             return state_q.max()
             raise NotImplementedError("Decide what to do when no options.")
 
         # Nope, advance states.
+
         already_taken = {b for a, b in state.items() if b is not None}
+
+        best_estimates = {}
+        new_est_p = total_p
+        for a, b in state.items():
+            if b is not None:
+                continue
+            best_p = None
+            for b, p in a_to_bp[a].items():
+                if b not in already_taken:
+                    if best_p is None or p > best_p:
+                        best_p = p
+            if best_p is not None:
+                best_estimates[a] = best_p
+                new_est_p *= best_p
+
+        if numpy.isclose(0, new_est_p):
+            # If we ran out of moles to match against, this must be a new mole.
+            # This isn't the only way we can detect a new mole.
+            # raise NotImplementedError("New mole!")
+            pass
+
         for a, b in state.items():
             if b is not None:
                 continue
 
             num_added = 0
+            base_est_p = new_est_p / best_estimates[a]
             for b, p in a_to_bp[a].items():
                 if b not in already_taken:
                     new_p = total_p * p
                     if not numpy.isclose(0, new_p):
                         new_state = dict(state)
                         new_state[a] = b
-                        state_q.push(new_p, new_state)
+                        state_q.push(base_est_p * p, new_p, new_state)
                         num_added += 1
 
             if not num_added:
@@ -164,6 +201,10 @@ def best_match_combination(a_b_p_list):
                 # mole. This isn't the only way we can detect a new mole.
                 # raise NotImplementedError("New mole!")
                 pass
+
+        if not state_q:
+            # This is the last and apparently best option.
+            return total_p, state
 
 
 class MoleClassifier():
