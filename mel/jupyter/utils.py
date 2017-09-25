@@ -81,45 +81,11 @@ class StatePriorityQueue():
         estimate, value, _, state = heapq.heappop(self.heap)
         return 1 - estimate, 1 - value, state
 
-    def _count_filled(self, state):
-        return sum(1 for a, b in state.items() if b is not None)
-
-    def max(self):
-        filled_counts = collections.Counter()
-        max_filled = 0
-        max_state = None
-        for e, v, _, state in self.heap:
-            filled = sum(1 for a, b in state.items() if b is not None)
-            max_filled = max(max_filled, filled)
-            max_state = state
-        return max_state
-
     def __len__(self):
         return len(self.heap)
 
     def __str__(self):
         return ("<StatePriorityQueue:: len:{}>".format(len(self.heap)))
-
-        filled_counts = collections.Counter()
-        total_value = 0
-        max_value = 0
-        max_filled = 0
-        for e, v, _, state in self.heap:
-            value = 1 - v
-            total_value += value
-            max_value = max(value, max_value)
-            filled = sum(1 for a, b in state.items() if b is not None)
-            filled_counts[filled] += 1
-            max_filled = max(max_filled, filled)
-        mean_value = total_value / len(self.heap)
-
-        return ("<StatePriorityQueue:: "
-                "len:{}, max:{}, fill:{}, mean_v:{:.3f}, max_v:{:.3f}>".format(
-                len(self.heap),
-                max_filled,
-                filled_counts.most_common(5),
-                mean_value,
-                max_value))
 
 
 def best_match_combination(a_b_p_list):
@@ -173,8 +139,7 @@ def best_match_combination(a_b_p_list):
 
         if numpy.isclose(0, total_p):
             print('Nearly zero')
-            return state_q.max()
-            raise NotImplementedError("Decide what to do when no options.")
+            return total_p, state
 
         # Nope, advance states.
 
