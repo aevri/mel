@@ -62,8 +62,14 @@ class StatePriorityQueue():
         self.heap = []
         self.next_tie_breaker = 0
         self.max_filled = 0
+        self.already_tried = set()
 
     def push(self, estimate, value, state):
+
+        normalised = tuple(sorted(state.items()))
+        if normalised in self.already_tried:
+            return
+        self.already_tried.add(normalised)
 
         heapq.heappush(
             self.heap,
