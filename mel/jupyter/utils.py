@@ -103,6 +103,17 @@ class Guesser():
                 self.a_to_bc[a][b] = cost
                 # print(a, b, cost)
 
+    def print_correct_stats(self):
+        correct = 1
+        for a, b_to_c in self.a_to_bc.items():
+            found = False
+            if a in b_to_c:
+                correct *= b_to_c[a]
+            else:
+                correct = 0
+
+        print('cost of correct solution', correct)
+
     def print_space_stats(self):
         size_est = 1
         for a, bc in self.a_to_bc.items():
@@ -166,6 +177,7 @@ def best_match_combination(a_b_p_list):
 
     guesser = Guesser(a_b_p_list)
     # guesser.print_space_stats()
+    # guesser.print_correct_stats()
 
     state_q = StatePriorityQueue()
     state_q.push(1, 1, guesser.initial_state())
