@@ -91,8 +91,6 @@ class StatePriorityQueue():
 class Guesser():
 
     def __init__(self, a_b_p_list):
-        self.a_b_p_list = a_b_p_list
-
         # TODO: don't forget new mole cases
         self.a_to_bp = collections.defaultdict(dict)
         for a, b, p in a_b_p_list:
@@ -100,15 +98,16 @@ class Guesser():
                 raise ValueError(
                     f"'p' must be equal to or less than 1, "
                     "got: a={a}, b={b}, p={p}")
-            self.a_to_bp[a][b] = p
+            if not numpy.isclose(0, p):
+                self.a_to_bp[a][b] = p
+                # print(a, b, int(1 / p))
 
     def print_space_stats(self):
-        num_options = len(self.a_b_p_list)
-        num_a = len(self.a_to_bp)
-        est_b = num_options / num_a
-        est_space = int(
-            math.factorial(est_b) / math.factorial(max(0, est_b - num_a)))
-        print(f"best_match_combination: {num_a}, {est_b}, {est_space:,}")
+        size_est = 1
+        for a, bp in self.a_to_bp.items():
+            size_est *= len(bp)
+
+        print(f"best_match_combination:: est_size:{size_est:,}")
 
     def initial_state(self):
         return {a: None for a in self.a_to_bp}
