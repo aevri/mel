@@ -90,7 +90,33 @@ class StatePriorityQueue():
 
 class Guesser():
 
-    def __init__(self, a_b_p_list):
+    def __init__(self, uuid_to_pos, classifier):
+        self.classifer = classifier
+        neighbour_guesses = classifier.guesses_from_neighbours(uuid_to_pos)
+
+        y_guesses = []
+        for uuid_, pos in uuid_to_pos.items():
+            y_guesses.extend(
+                (uuid_, *args) for args in classifier.guesses_from_ypos(pos[1])
+            )
+
+        match_to_n = {
+            (x[0], x[1]): (x[2] * x[3])
+            for x in neighbour_guesses
+        }
+
+        match_to_y = {
+            (x[0], x[1]): (x[2] * x[3])
+            for x in y_guesses
+        }
+
+        matches = tuple(
+            (*key, match_to_y[key] * value, match_to_y[key], value)
+            for key, value in match_to_n.items()
+        )
+
+        a_b_p_list = [(a, b, p) for a, b, p, _, _ in matches]
+
         # TODO: don't forget new mole cases
         self.a_to_bc = collections.defaultdict(dict)
         for a, b, p in a_b_p_list:
@@ -173,9 +199,8 @@ class Guesser():
         return best_estimates, new_est_cost
 
 
-def best_match_combination(a_b_p_list):
+def best_match_combination(guesser):
 
-    guesser = Guesser(a_b_p_list)
     # guesser.print_space_stats()
     # guesser.print_correct_stats()
 
