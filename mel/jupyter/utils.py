@@ -88,26 +88,95 @@ class StatePriorityQueue():
         return ("<StatePriorityQueue:: len:{}>".format(len(self.heap)))
 
 
+class Guesser():
+
+    def __init__(self, a_b_p_list):
+        self.a_b_p_list = a_b_p_list
+
+        # TODO: don't forget new mole cases
+        self.a_to_bp = collections.defaultdict(dict)
+        for a, b, p in a_b_p_list:
+            if p > 1:
+                raise ValueError(
+                    f"'p' must be equal to or less than 1, "
+                    "got: a={a}, b={b}, p={p}")
+            self.a_to_bp[a][b] = p
+
+    def print_space_stats(self):
+        num_options = len(self.a_b_p_list)
+        num_a = len(self.a_to_bp)
+        est_b = num_options / num_a
+        est_space = int(
+            math.factorial(est_b) / math.factorial(max(0, est_b - num_a)))
+        print(f"best_match_combination: {num_a}, {est_b}, {est_space:,}")
+
+    def initial_state(self):
+        return {a: None for a in self.a_to_bp}
+
+    def yield_next_states(self, est_p, total_p, state):
+        already_taken = {b for a, b in state.items() if b is not None}
+
+        best_estimates, new_est_p = self.calc_estimates(
+            total_p, state, already_taken)
+
+        if numpy.isclose(0, new_est_p):
+            # If we ran out of moles to match against, this must be a new mole.
+            # This isn't the only way we can detect a new mole.
+            # raise NotImplementedError("New mole!")
+            return
+
+        for a, b in state.items():
+            if b is not None:
+                continue
+
+            num_added = 0
+            base_est_p = new_est_p / best_estimates[a]
+            for b, p in self.a_to_bp[a].items():
+                if b not in already_taken:
+                    new_p = total_p * p
+                    new_est_p = base_est_p * p
+                    if numpy.isclose(0, new_p):
+                        continue
+                    if numpy.isclose(0, new_est_p):
+                        continue
+                    new_state = dict(state)
+                    new_state[a] = b
+                    yield new_est_p, new_p, new_state
+                    num_added += 1
+
+            if not num_added:
+                # If we ran out of moles to match against, this must be a new
+                # mole. This isn't the only way we can detect a new mole.
+                # raise NotImplementedError("New mole!")
+                new_state = dict(state)
+                new_state[a] = 'NewMole'
+                yield p, p, new_state
+
+    def calc_estimates(self, total_p, state, already_taken):
+        best_estimates = {}
+        new_est_p = total_p
+        for a, b in state.items():
+            if b is not None:
+                continue
+            best_p = None
+            for b, p in self.a_to_bp[a].items():
+                if b not in already_taken:
+                    if best_p is None or p > best_p:
+                        best_p = p
+            if best_p is not None:
+                best_estimates[a] = best_p
+                new_est_p *= best_p
+
+        return best_estimates, new_est_p
+
+
 def best_match_combination(a_b_p_list):
 
-    # TODO: don't forget new mole cases
-    a_to_bp = collections.defaultdict(dict)
-    for a, b, p in a_b_p_list:
-        if p > 1:
-            raise ValueError(
-                f"'p' must be equal to or less than 1, "
-                "got: a={a}, b={b}, p={p}")
-        a_to_bp[a][b] = p
-
-    num_options = len(a_b_p_list)
-    num_a = len(a_to_bp)
-    est_b = num_options / num_a
-    est_space = int(
-        math.factorial(est_b) / math.factorial(max(0, est_b - num_a)))
-    print(f"best_match_combination: {num_a}, {est_b}, {est_space:,}")
+    guesser = Guesser(a_b_p_list)
+    guesser.print_space_stats()
 
     state_q = StatePriorityQueue()
-    state_q.push(1, 1, {a: None for a in a_to_bp})
+    state_q.push(1, 1, guesser.initial_state())
 
     loop_count = 0
     while True:
@@ -142,55 +211,9 @@ def best_match_combination(a_b_p_list):
             return total_p, state
 
         # Nope, advance states.
-
-        already_taken = {b for a, b in state.items() if b is not None}
-
-        best_estimates = {}
-        new_est_p = total_p
-        for a, b in state.items():
-            if b is not None:
-                continue
-            best_p = None
-            for b, p in a_to_bp[a].items():
-                if b not in already_taken:
-                    if best_p is None or p > best_p:
-                        best_p = p
-            if best_p is not None:
-                best_estimates[a] = best_p
-                new_est_p *= best_p
-
-        if numpy.isclose(0, new_est_p):
-            # If we ran out of moles to match against, this must be a new mole.
-            # This isn't the only way we can detect a new mole.
-            # raise NotImplementedError("New mole!")
-            pass
-
-        for a, b in state.items():
-            if b is not None:
-                continue
-
-            num_added = 0
-            base_est_p = new_est_p / best_estimates[a]
-            for b, p in a_to_bp[a].items():
-                if b not in already_taken:
-                    new_p = total_p * p
-                    new_est_p = base_est_p * p
-                    if numpy.isclose(0, new_p):
-                        continue
-                    if 0 == new_est_p:
-                        continue
-                    new_state = dict(state)
-                    new_state[a] = b
-                    state_q.push(new_est_p, new_p, new_state)
-                    num_added += 1
-
-            if not num_added:
-                # If we ran out of moles to match against, this must be a new
-                # mole. This isn't the only way we can detect a new mole.
-                # raise NotImplementedError("New mole!")
-                new_state = dict(state)
-                new_state[a] = 'NewMole'
-                state_q.push(p, p, new_state)
+        for new_est_p, new_p, new_state in guesser.yield_next_states(
+                est_p, total_p, state):
+            state_q.push(new_est_p, new_p, new_state)
 
         if not state_q:
             # This is the last and apparently best option.
