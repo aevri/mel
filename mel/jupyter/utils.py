@@ -119,12 +119,6 @@ class Guesser():
         best_estimates, new_est_cost = self.calc_estimates(
             total_cost, state, already_taken)
 
-        # if numpy.isclose(0, new_est_cost):
-        #     # If we ran out of moles to match against, this must be a new mole.
-        #     # This isn't the only way we can detect a new mole.
-        #     # raise NotImplementedError("New mole!")
-        #     return
-
         for a, b in state.items():
             if b is not None:
                 continue
@@ -135,10 +129,6 @@ class Guesser():
                 if b not in already_taken:
                     new_cost = total_cost * cost
                     new_est_cost = base_est_cost * cost
-                    # if numpy.isclose(0, new_cost):
-                    #     continue
-                    # if numpy.isclose(0, new_est_cost):
-                    #     continue
                     new_state = dict(state)
                     new_state[a] = b
                     yield new_est_cost, new_cost, new_state
@@ -207,10 +197,6 @@ def best_match_combination(a_b_p_list):
         if all(state.values()):
             print('All matched!')
             return total_cost, state
-
-        # if numpy.isclose(0, total_p):
-        #     print('Nearly zero')
-        #     return total_p, state
 
         # Nope, advance states.
         for new_est_cost, new_cost, new_state in guesser.yield_next_states(
