@@ -91,13 +91,19 @@ class StatePriorityQueue():
 class Guesser():
 
     def __init__(self, uuid_to_pos, classifier):
-        self.classifer = classifier
-        neighbour_guesses = classifier.guesses_from_neighbours(uuid_to_pos)
+        self.uuid_to_pos = uuid_to_pos
+        self.classifier = classifier
+        self.init_abc()
+
+    def init_abc(self):
+        neighbour_guesses = self.classifier.guesses_from_neighbours(
+            self.uuid_to_pos)
 
         y_guesses = []
-        for uuid_, pos in uuid_to_pos.items():
+        for uuid_, pos in self.uuid_to_pos.items():
             y_guesses.extend(
-                (uuid_, *args) for args in classifier.guesses_from_ypos(pos[1])
+                (uuid_, *args)
+                for args in self.classifier.guesses_from_ypos(pos[1])
             )
 
         match_to_n = {
@@ -117,7 +123,6 @@ class Guesser():
 
         a_b_p_list = [(a, b, p) for a, b, p, _, _ in matches]
 
-        # TODO: don't forget new mole cases
         self.a_to_bc = collections.defaultdict(dict)
         for a, b, p in a_b_p_list:
             if p > 1:
@@ -127,7 +132,6 @@ class Guesser():
             if not numpy.isclose(0, p):
                 cost = int(1 / p)
                 self.a_to_bc[a][b] = cost
-                # print(a, b, cost)
 
     def print_correct_stats(self):
         correct = 1
