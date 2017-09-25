@@ -73,13 +73,13 @@ class StatePriorityQueue():
 
         heapq.heappush(
             self.heap,
-            (1 - estimate, 1 - value, self.next_tie_breaker, state))
+            (estimate, value, self.next_tie_breaker, state))
 
         self.next_tie_breaker += 1
 
     def pop(self):
         estimate, value, _, state = heapq.heappop(self.heap)
-        return 1 - estimate, 1 - value, state
+        return estimate, value, state
 
     def __len__(self):
         return len(self.heap)
@@ -92,55 +92,56 @@ class Guesser():
 
     def __init__(self, a_b_p_list):
         # TODO: don't forget new mole cases
-        self.a_to_bp = collections.defaultdict(dict)
+        self.a_to_bc = collections.defaultdict(dict)
         for a, b, p in a_b_p_list:
             if p > 1:
                 raise ValueError(
                     f"'p' must be equal to or less than 1, "
                     "got: a={a}, b={b}, p={p}")
             if not numpy.isclose(0, p):
-                self.a_to_bp[a][b] = p
-                # print(a, b, int(1 / p))
+                cost = int(1 / p)
+                self.a_to_bc[a][b] = cost
+                # print(a, b, cost)
 
     def print_space_stats(self):
         size_est = 1
-        for a, bp in self.a_to_bp.items():
-            size_est *= len(bp)
+        for a, bc in self.a_to_bc.items():
+            size_est *= len(bc)
 
         print(f"best_match_combination:: est_size:{size_est:,}")
 
     def initial_state(self):
-        return {a: None for a in self.a_to_bp}
+        return {a: None for a in self.a_to_bc}
 
-    def yield_next_states(self, est_p, total_p, state):
+    def yield_next_states(self, est_cost, total_cost, state):
         already_taken = {b for a, b in state.items() if b is not None}
 
-        best_estimates, new_est_p = self.calc_estimates(
-            total_p, state, already_taken)
+        best_estimates, new_est_cost = self.calc_estimates(
+            total_cost, state, already_taken)
 
-        if numpy.isclose(0, new_est_p):
-            # If we ran out of moles to match against, this must be a new mole.
-            # This isn't the only way we can detect a new mole.
-            # raise NotImplementedError("New mole!")
-            return
+        # if numpy.isclose(0, new_est_cost):
+        #     # If we ran out of moles to match against, this must be a new mole.
+        #     # This isn't the only way we can detect a new mole.
+        #     # raise NotImplementedError("New mole!")
+        #     return
 
         for a, b in state.items():
             if b is not None:
                 continue
 
             num_added = 0
-            base_est_p = new_est_p / best_estimates[a]
-            for b, p in self.a_to_bp[a].items():
+            base_est_cost = new_est_cost / best_estimates[a]
+            for b, cost in self.a_to_bc[a].items():
                 if b not in already_taken:
-                    new_p = total_p * p
-                    new_est_p = base_est_p * p
-                    if numpy.isclose(0, new_p):
-                        continue
-                    if numpy.isclose(0, new_est_p):
-                        continue
+                    new_cost = total_cost * cost
+                    new_est_cost = base_est_cost * cost
+                    # if numpy.isclose(0, new_cost):
+                    #     continue
+                    # if numpy.isclose(0, new_est_cost):
+                    #     continue
                     new_state = dict(state)
                     new_state[a] = b
-                    yield new_est_p, new_p, new_state
+                    yield new_est_cost, new_cost, new_state
                     num_added += 1
 
             if not num_added:
@@ -149,24 +150,26 @@ class Guesser():
                 # raise NotImplementedError("New mole!")
                 new_state = dict(state)
                 new_state[a] = 'NewMole'
-                yield p, p, new_state
+                yield cost, cost, new_state
 
-    def calc_estimates(self, total_p, state, already_taken):
+    def calc_estimates(self, total_cost, state, already_taken):
         best_estimates = {}
-        new_est_p = total_p
+        new_est_cost = total_cost
         for a, b in state.items():
             if b is not None:
                 continue
-            best_p = None
-            for b, p in self.a_to_bp[a].items():
+            best_cost = None
+            for b, cost in self.a_to_bc[a].items():
                 if b not in already_taken:
-                    if best_p is None or p > best_p:
-                        best_p = p
-            if best_p is not None:
-                best_estimates[a] = best_p
-                new_est_p *= best_p
+                    if best_cost is None or cost > best_cost:
+                        best_cost = cost
+            if best_cost is not None:
+                best_estimates[a] = best_cost
+                new_est_cost *= best_cost
+            else:
+                best_estimates[a] = 1
 
-        return best_estimates, new_est_p
+        return best_estimates, new_est_cost
 
 
 def best_match_combination(a_b_p_list):
@@ -194,7 +197,7 @@ def best_match_combination(a_b_p_list):
             raise NotImplementedError("Ran out of options!")
 
         # Advance best state.
-        est_p, total_p, state = state_q.pop()
+        est_cost, total_cost, state = state_q.pop()
 
         if trace:
             filled = sum(1 for a, b in state.items() if b is not None)
@@ -203,21 +206,21 @@ def best_match_combination(a_b_p_list):
         # See if we're done.
         if all(state.values()):
             print('All matched!')
-            return total_p, state
+            return total_cost, state
 
-        if numpy.isclose(0, total_p):
-            print('Nearly zero')
-            return total_p, state
+        # if numpy.isclose(0, total_p):
+        #     print('Nearly zero')
+        #     return total_p, state
 
         # Nope, advance states.
-        for new_est_p, new_p, new_state in guesser.yield_next_states(
-                est_p, total_p, state):
-            state_q.push(new_est_p, new_p, new_state)
+        for new_est_cost, new_cost, new_state in guesser.yield_next_states(
+                est_cost, total_cost, state):
+            state_q.push(new_est_cost, new_cost, new_state)
 
         if not state_q:
             # This is the last and apparently best option.
             print('Last option')
-            return total_p, state
+            return total_cost, state
 
 
 class MoleClassifier():
