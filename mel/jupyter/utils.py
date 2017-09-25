@@ -147,7 +147,7 @@ def best_match_combination(a_b_p_list):
     while True:
         loop_count += 1
         trace = False
-        if loop_count % 100 == 0:
+        if loop_count % 1000 == 0:
             trace = True
 
         if trace:
@@ -168,9 +168,11 @@ def best_match_combination(a_b_p_list):
 
         # See if we're done.
         if all(state.values()):
+            print('All matched!')
             return total_p, state
 
         if numpy.isclose(0, total_p):
+            print('Nearly zero')
             return state_q.max()
             raise NotImplementedError("Decide what to do when no options.")
 
@@ -221,10 +223,13 @@ def best_match_combination(a_b_p_list):
                 # If we ran out of moles to match against, this must be a new
                 # mole. This isn't the only way we can detect a new mole.
                 # raise NotImplementedError("New mole!")
-                pass
+                new_state = dict(state)
+                new_state[a] = 'NewMole'
+                state_q.push(p, p, new_state)
 
         if not state_q:
             # This is the last and apparently best option.
+            print('Last option')
             return total_p, state
 
 
