@@ -2,6 +2,7 @@
 
 import collections
 import heapq
+import math
 
 import cv2
 import numpy
@@ -61,7 +62,6 @@ class StatePriorityQueue():
     def __init__(self):
         self.heap = []
         self.next_tie_breaker = 0
-        self.max_filled = 0
         self.already_tried = set()
 
     def push(self, estimate, value, state):
@@ -75,7 +75,6 @@ class StatePriorityQueue():
             self.heap,
             (1 - estimate, 1 - value, self.next_tie_breaker, state))
 
-        self.max_filled = max(self._count_filled(state), self.max_filled)
         self.next_tie_breaker += 1
 
     def pop(self):
@@ -99,8 +98,7 @@ class StatePriorityQueue():
         return len(self.heap)
 
     def __str__(self):
-        return ("<StatePriorityQueue:: len:{}, max:{}>".format(
-            len(self.heap), self.max_filled))
+        return ("<StatePriorityQueue:: len:{}>".format(len(self.heap)))
 
         filled_counts = collections.Counter()
         total_value = 0
@@ -125,6 +123,7 @@ class StatePriorityQueue():
 
 
 def best_match_combination(a_b_p_list):
+
     # TODO: don't forget new mole cases
     a_to_bp = collections.defaultdict(dict)
     for a, b, p in a_b_p_list:
@@ -134,13 +133,24 @@ def best_match_combination(a_b_p_list):
                 "got: a={a}, b={b}, p={p}")
         a_to_bp[a][b] = p
 
+    num_options = len(a_b_p_list)
+    num_a = len(a_to_bp)
+    est_b = num_options / num_a
+    est_space = int(
+        math.factorial(est_b) / math.factorial(max(0, est_b - num_a)))
+    print(f"best_match_combination: {num_a}, {est_b}, {est_space:,}")
+
     state_q = StatePriorityQueue()
     state_q.push(1, 1, {a: None for a in a_to_bp})
 
     loop_count = 0
     while True:
         loop_count += 1
+        trace = False
         if loop_count % 100 == 0:
+            trace = True
+
+        if trace:
             print("--", loop_count)
             print(state_q)
 
@@ -152,8 +162,9 @@ def best_match_combination(a_b_p_list):
         # Advance best state.
         est_p, total_p, state = state_q.pop()
 
-        if loop_count % 100 == 0:
-            print('all', all(state.values()), tuple(state.values()))
+        if trace:
+            filled = sum(1 for a, b in state.items() if b is not None)
+            print('all', filled, tuple(state.values()))
 
         # See if we're done.
         if all(state.values()):
@@ -196,11 +207,15 @@ def best_match_combination(a_b_p_list):
             for b, p in a_to_bp[a].items():
                 if b not in already_taken:
                     new_p = total_p * p
-                    if not numpy.isclose(0, new_p):
-                        new_state = dict(state)
-                        new_state[a] = b
-                        state_q.push(base_est_p * p, new_p, new_state)
-                        num_added += 1
+                    new_est_p = base_est_p * p
+                    if numpy.isclose(0, new_p):
+                        continue
+                    if 0 == new_est_p:
+                        continue
+                    new_state = dict(state)
+                    new_state[a] = b
+                    state_q.push(new_est_p, new_p, new_state)
+                    num_added += 1
 
             if not num_added:
                 # If we ran out of moles to match against, this must be a new
