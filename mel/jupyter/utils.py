@@ -165,21 +165,12 @@ class Guesser():
 def best_match_combination(a_b_p_list):
 
     guesser = Guesser(a_b_p_list)
-    guesser.print_space_stats()
+    # guesser.print_space_stats()
 
     state_q = StatePriorityQueue()
     state_q.push(1, 1, guesser.initial_state())
 
-    loop_count = 0
     while True:
-        loop_count += 1
-        trace = False
-        if loop_count % 1000 == 0:
-            trace = True
-
-        if trace:
-            print("--", loop_count)
-            print(state_q)
 
         if not state_q:
             # If we ran out of moles to match against, this must be a new mole.
@@ -189,13 +180,8 @@ def best_match_combination(a_b_p_list):
         # Advance best state.
         est_cost, total_cost, state = state_q.pop()
 
-        if trace:
-            filled = sum(1 for a, b in state.items() if b is not None)
-            print('all', filled, tuple(state.values()))
-
         # See if we're done.
         if all(state.values()):
-            print('All matched!')
             return total_cost, state
 
         # Nope, advance states.
@@ -205,7 +191,6 @@ def best_match_combination(a_b_p_list):
 
         if not state_q:
             # This is the last and apparently best option.
-            print('Last option')
             return total_cost, state
 
 
