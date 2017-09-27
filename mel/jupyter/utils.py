@@ -6,6 +6,7 @@ import math
 
 import cv2
 import numpy
+import scipy.linalg
 import scipy.stats
 
 import mel.lib.moleimaging
@@ -46,19 +47,22 @@ def frames_to_uuid_frameposlist(frame_iterable):
 class AttentuatedKde():
 
     def __init__(self, kde_factory, training_data):
-        self.len = len(training_data)
-        if not self.len:
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
-            return
-        elif self.len == 1:
+        self.len = training_data.shape[-1]
+        if self.len < 3:
             self.attenuation = 0.0
             self.kde = lambda x: numpy.array((0.0,))
             return
         else:
             self.attenuation = 1 - (1 / (1 + (self.len + 4) / 5))
 
-        self.kde = kde_factory(training_data)
+        try:
+            self.kde = kde_factory(training_data)
+        except scipy.linalg.LinAlgError as e:
+            print(e)
+            print(training_data)
+            raise
+            self.attenuation = 0.0
+            self.kde = lambda x: numpy.array((0.0,))
 
     def __call__(self, x):
         return self.kde(x) * self.attenuation
@@ -346,36 +350,32 @@ class MoleClassifier():
                 uuid_to_xoffsetlist[uuid_].append(offset[0])
                 uuid_to_yoffsetlist[uuid_].append(offset[1])
 
-        xoffset_kernels = tuple(
+        kernels = tuple(
             AttentuatedKde(
                 scipy.stats.gaussian_kde,
-                numpy.array(uuid_to_xoffsetlist[uuid_]))
+                numpy.vstack([
+                    numpy.array(uuid_to_xoffsetlist[uuid_]),
+                    numpy.array(uuid_to_yoffsetlist[uuid_])
+                ])
+            )
             for uuid_ in self.uuids
         )
 
-        yoffset_kernels = tuple(
-            AttentuatedKde(
-                scipy.stats.gaussian_kde,
-                numpy.array(uuid_to_yoffsetlist[uuid_]))
-            for uuid_ in self.uuids
+        densities = numpy.array(
+            tuple(
+                k(numpy.vstack([pos[0], pos[1]]))[0]
+                for k in kernels
+            )
         )
 
-        xdensities = numpy.array(tuple(k(pos[0])[0] for k in xoffset_kernels))
-        ydensities = numpy.array(tuple(k(pos[1])[0] for k in yoffset_kernels))
-        total_xdensity = numpy.sum(xdensities)
-        total_ydensity = numpy.sum(ydensities)
-        total_density = numpy.sum(xdensities * ydensities)
+        total_density = numpy.sum(densities)
         if numpy.isclose(total_density, 0):
             total_density = -1
 
         matches = []
         for i, m_uuid in enumerate(self.uuids):
-            p = xdensities[i] * ydensities[i]
+            p = densities[i]
             q = p / total_density
-            # p = ydensities[i]
-            # q = p / total_ydensity
-            # p = xdensities[i]
-            # q = p / total_xdensity
             matches.append((m_uuid, p, q))
 
         return matches
