@@ -283,6 +283,8 @@ class MoleClassifier():
             for uuid_ in self.uuids
         )
 
+        self.molepos_kernels = {}
+
     def guesses_from_ypos(self, ypos):
 
         if not numpy.isscalar(ypos):
@@ -326,7 +328,69 @@ class MoleClassifier():
 
         return matches
 
+    def calc_uuid_offset_kernels(self, known_uuid):
+            uuid_to_xoffsetlist = collections.defaultdict(list)
+            uuid_to_yoffsetlist = collections.defaultdict(list)
+            for uuid_to_pos in self.frames.values():
+                if known_uuid not in uuid_to_pos:
+                    continue
+
+                center = uuid_to_pos[known_uuid]
+                offsets = {
+                    uuid_: kpos - center
+                    for uuid_, kpos in uuid_to_pos.items()
+                    if uuid_ != known_uuid
+                }
+                for uuid_, offset in offsets.items():
+                    uuid_to_xoffsetlist[uuid_].append(offset[0])
+                    uuid_to_yoffsetlist[uuid_].append(offset[1])
+
+            return tuple(
+                AttentuatedKde(
+                    lambda x: scipy.stats.gaussian_kde(x, None),
+                    numpy.vstack([
+                        numpy.array(uuid_to_xoffsetlist[uuid_]),
+                        numpy.array(uuid_to_yoffsetlist[uuid_])
+                    ])
+                )
+                for uuid_ in self.uuids
+            )
+
     def guesses_from_known_mole(self, known_uuid, known_pos, pos):
+
+        # TODO: check that known_uuid looks like a uuid
+        if known_pos.shape != (2,):
+            raise ValueError(
+                f'known_pos must be 2d, not {known_pos.shape}')
+        if pos.shape != (2,):
+            raise ValueError(f'pos must be 2d, not {pos.shape}')
+
+        if not known_uuid in self.molepos_kernels:
+            self.molepos_kernels[known_uuid] = self.calc_uuid_offset_kernels(
+                known_uuid)
+
+        kernels = self.molepos_kernels[known_uuid]
+
+        densities = numpy.array(
+            tuple(
+                k(numpy.vstack([pos[0], pos[1]]))[0]
+                for k in kernels
+            )
+        )
+
+        total_density = numpy.sum(densities)
+        if numpy.isclose(total_density, 0):
+            total_density = -1
+
+        matches = []
+        for i, m_uuid in enumerate(self.uuids):
+            p = densities[i]
+            q = p / total_density
+            matches.append((m_uuid, p, q))
+
+        return matches
+
+    def guesses_from_known_mole_xy(self, known_uuid, known_pos, pos):
 
         # TODO: check that known_uuid looks like a uuid
         if known_pos.shape != (2,):
@@ -350,32 +414,36 @@ class MoleClassifier():
                 uuid_to_xoffsetlist[uuid_].append(offset[0])
                 uuid_to_yoffsetlist[uuid_].append(offset[1])
 
-        kernels = tuple(
+        xoffset_kernels = tuple(
             AttentuatedKde(
                 scipy.stats.gaussian_kde,
-                numpy.vstack([
-                    numpy.array(uuid_to_xoffsetlist[uuid_]),
-                    numpy.array(uuid_to_yoffsetlist[uuid_])
-                ])
-            )
+                numpy.array(uuid_to_xoffsetlist[uuid_]))
             for uuid_ in self.uuids
         )
 
-        densities = numpy.array(
-            tuple(
-                k(numpy.vstack([pos[0], pos[1]]))[0]
-                for k in kernels
-            )
+        yoffset_kernels = tuple(
+            AttentuatedKde(
+                scipy.stats.gaussian_kde,
+                numpy.array(uuid_to_yoffsetlist[uuid_]))
+            for uuid_ in self.uuids
         )
 
-        total_density = numpy.sum(densities)
+        xdensities = numpy.array(tuple(k(pos[0])[0] for k in xoffset_kernels))
+        ydensities = numpy.array(tuple(k(pos[1])[0] for k in yoffset_kernels))
+        total_xdensity = numpy.sum(xdensities)
+        total_ydensity = numpy.sum(ydensities)
+        total_density = numpy.sum(xdensities * ydensities)
         if numpy.isclose(total_density, 0):
             total_density = -1
 
         matches = []
         for i, m_uuid in enumerate(self.uuids):
-            p = densities[i]
-            q = p / total_density
+            # p = xdensities[i] * ydensities[i]
+            # q = p / total_density
+            # p = ydensities[i]
+            # q = p / total_ydensity
+            p = xdensities[i]
+            q = p / total_xdensity
             matches.append((m_uuid, p, q))
 
         return matches
