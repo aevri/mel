@@ -53,7 +53,7 @@ class Kde():
             self.kde = lambda x: numpy.array((0.0,))
             return
         else:
-            self.attenuation = 1 - (1 / (1 + (self.len + 4) / 5))
+            self.attenuation = 1
 
         try:
             self.kde = scipy.stats.gaussian_kde(training_data)
@@ -67,7 +67,7 @@ class Kde():
     def __call__(self, x):
         return self.kde(x) * self.attenuation
 
-    def integrate(lower, upper):
+    def integrate(self, lower, upper):
         if self.attenuation:
             return self.kde.integrate_box(lower, upper)
         else:
@@ -417,7 +417,7 @@ class MoleClassifier():
 
 class MoleRelativeClassifier():
 
-    def __init__(self, uuid_to_frameposlist):
+    def __init__(self, uuid_to_frameposlist, box_radius):
 
         uuid_to_poslist = {
             uuid_: [pos for frame, pos in frameposlist]
@@ -431,8 +431,8 @@ class MoleRelativeClassifier():
             for frame, pos in frameposlist:
                 self.frames[frame][uuid_] = pos
 
-        self.lower = numpy.array((-0.1, -0.1))
-        self.upper = numpy.array((0.1, 0.1))
+        self.lower = numpy.array((box_radius, box_radius))
+        self.upper = -self.lower
 
         self.molepos_kernels = {}
 
@@ -482,8 +482,8 @@ class MoleRelativeClassifier():
 
         densities = numpy.array(
             tuple(
-                k(numpy.vstack([rpos[0], rpos[1]]))[0]
-                # k.integrate(numpy.vstack([pos[0], pos[1]]))[0]
+                # k(numpy.vstack([rpos[0], rpos[1]]))[0]
+                k.integrate(rpos + self.lower, rpos + self.upper)
                 for k in kernels
             )
         )
