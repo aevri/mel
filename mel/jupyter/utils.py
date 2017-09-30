@@ -272,6 +272,68 @@ def best_match_combination(guesser):
             return total_cost, state
 
 
+class ColdGuessMoleClassifier():
+
+    def __init__(self, uuid_to_frameposlist):
+        self.uuid_to_frameposlist = uuid_to_frameposlist
+        uuid_to_poslist = {
+            uuid_: [pos for frame, pos in frameposlist]
+            for uuid_, frameposlist in uuid_to_frameposlist.items()
+        }
+        self.uuids, self.poslistlist = zip(*uuid_to_poslist.items())
+        yposlistlist = tuple(
+            numpy.array(tuple(y for x, y in poslist))
+            for poslist in self.poslistlist
+        )
+        self.ykernels = tuple(
+            AttentuatedKde(scipy.stats.gaussian_kde, yposlist)
+            for yposlist in yposlistlist
+        )
+
+        self.frames = collections.defaultdict(dict)
+        for uuid_, frameposlist in uuid_to_frameposlist.items():
+            for frame, pos in frameposlist:
+                self.frames[frame][uuid_] = pos
+
+        uuid_to_neighbourlist = collections.defaultdict(list)
+        for uuid_to_pos in self.frames.values():
+            for uuid_, num_close in uuidtopos_to_numclose(uuid_to_pos).items():
+                uuid_to_neighbourlist[uuid_].append(num_close)
+
+        self.uuid_to_neighbourlist = uuid_to_neighbourlist
+
+        self.numclose_kernels = tuple(
+            AttentuatedKde(
+                scipy.stats.gaussian_kde,
+                numpy.array( uuid_to_neighbourlist[uuid_]))
+            for uuid_ in self.uuids
+        )
+
+    def __call__(self, ypos, numclose):
+
+        if not numpy.isscalar(ypos):
+            raise ValueError(f"'ypos' must be a scalar, got '{ypos}'.")
+
+        ydensities = numpy.array(tuple(k(ypos)[0] for k in self.ykernels))
+        ndensities = numpy.array(tuple(
+            k(numclose)[0] for k in self.numclose_kernels))
+
+        densities = ydensities * ndensities
+
+        total_density = numpy.sum(densities)
+
+        if numpy.isclose(total_density, 0):
+            total_density = -1
+
+        matches = []
+        for i, m_uuid in enumerate(self.uuids):
+            p = densities[i]
+            q = p / total_density
+            matches.append((m_uuid, p, q))
+
+        return matches
+
+
 class MoleClassifier():
 
     def __init__(self, uuid_to_frameposlist):
