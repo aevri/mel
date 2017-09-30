@@ -48,6 +48,7 @@ class Kde():
 
     def __init__(self, training_data):
         self.len = training_data.shape[-1]
+
         if self.len < 3:
             self.attenuation = 0.0
             self.kde = lambda x: numpy.array((0.0,))
@@ -61,13 +62,8 @@ class Kde():
             print(e)
             print(training_data)
             raise
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
 
-    def __call__(self, x):
-        return self.kde(x) * self.attenuation
-
-    def integrate(self, lower, upper):
+    def __call__(self, lower, upper):
         if self.attenuation:
             return self.kde.integrate_box(lower, upper)
         else:
@@ -482,8 +478,7 @@ class MoleRelativeClassifier():
 
         densities = numpy.array(
             tuple(
-                # k(numpy.vstack([rpos[0], rpos[1]]))[0]
-                k.integrate(rpos + self.lower, rpos + self.upper)
+                k(rpos + self.lower, rpos + self.upper)
                 for k in kernels
             )
         )
