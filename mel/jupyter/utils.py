@@ -280,15 +280,12 @@ class ColdGuessMoleClassifier():
             uuid_: [pos for frame, pos in frameposlist]
             for uuid_, frameposlist in uuid_to_frameposlist.items()
         }
-        self.uuids, self.poslistlist = zip(*uuid_to_poslist.items())
-        yposlistlist = tuple(
-            numpy.array(tuple(y for x, y in poslist))
-            for poslist in self.poslistlist
-        )
-        self.ykernels = tuple(
-            AttentuatedKde(scipy.stats.gaussian_kde, yposlist)
-            for yposlist in yposlistlist
-        )
+        uuid_to_yposlist = {
+            uuid_: numpy.array(tuple(y for x, y in poslist))
+            for uuid_, poslist in uuid_to_poslist.items()
+        }
+
+        self.uuids = tuple(uuid_to_poslist.keys())
 
         self.frames = collections.defaultdict(dict)
         for uuid_, frameposlist in uuid_to_frameposlist.items():
@@ -302,23 +299,34 @@ class ColdGuessMoleClassifier():
 
         self.uuid_to_neighbourlist = uuid_to_neighbourlist
 
-        self.numclose_kernels = tuple(
-            AttentuatedKde(
-                scipy.stats.gaussian_kde,
-                numpy.array( uuid_to_neighbourlist[uuid_]))
+        self.kernels = tuple(
+            Kde(
+                numpy.vstack([
+                    numpy.array(uuid_to_yposlist[uuid_]),
+                    numpy.array(uuid_to_neighbourlist[uuid_])
+                ])
+            )
             for uuid_ in self.uuids
         )
+
+        ypos_radius = 0.1
+        neighbor_radius = 1
+        self.lower = numpy.array((-ypos_radius, -neighbor_radius))
+        self.upper = numpy.array((ypos_radius, neighbor_radius))
 
     def __call__(self, ypos, numclose):
 
         if not numpy.isscalar(ypos):
             raise ValueError(f"'ypos' must be a scalar, got '{ypos}'.")
 
-        ydensities = numpy.array(tuple(k(ypos)[0] for k in self.ykernels))
-        ndensities = numpy.array(tuple(
-            k(numclose)[0] for k in self.numclose_kernels))
+        a = numpy.array((ypos, numclose))
 
-        densities = ydensities * ndensities
+        densities = numpy.array(
+            tuple(
+                k(a + self.lower, a + self.upper)
+                for k in self.kernels
+            )
+        )
 
         total_density = numpy.sum(densities)
 
@@ -508,12 +516,11 @@ def uuidtopos_to_numclose(uuid_to_pos):
             for n_uuid, n_pos in uuid_to_pos.items()
             if n_uuid != uuid_
         ]
-        if distances:
-            num_close = sum(
-                1 / ((m / _MAGIC_CLOSE_DISTANCE) + 1)
-                for m in distances
-            )
-            uuid_to_numclose[uuid_] = num_close
+        num_close = sum(
+            1 / ((m / _MAGIC_CLOSE_DISTANCE) + 1)
+            for m in distances
+        )
+        uuid_to_numclose[uuid_] = num_close
     return uuid_to_numclose
 
 
@@ -618,3 +625,60 @@ def to_ellipse_space(ellipse, pos):
         pos[0] / rmag,
         pos[1] / umag,
     ))
+
+
+def yield_relative_results(classifier, frame_list):
+    for frame in frame_list:
+        uuid_to_pos = frame_to_uuid_to_pos(frame)
+        for uuid_, pos in uuid_to_pos.items():
+            for uuid2, pos2 in uuid_to_pos.items():
+                if uuid_ == uuid2:
+                    continue
+                results = classifier(uuid_, pos, pos2)
+                yield (uuid2, results)
+
+
+def yield_cold_results(classifier, frame_list):
+    for frame in frame_list:
+        uuid_to_pos = frame_to_uuid_to_pos(frame)
+        uuid_to_numclose = uuidtopos_to_numclose(uuid_to_pos)
+        for uuid_, pos in uuid_to_pos.items():
+            numclose = uuid_to_numclose[uuid_]
+            results = classifier(pos[1], numclose)
+            yield (uuid_, results)
+
+
+def count_matches(result_generator, pass_threshold):
+    quartile_counts = collections.Counter()
+    hits = 0
+    misses = 0
+    passes = 0
+
+    for target_uuid, results in result_generator:
+        matched = False
+        for i, r in enumerate(reversed(sorted(results, key=lambda x: x[2]))):
+            uuid2, p, q = r
+            if uuid2 == target_uuid:
+                matched = True
+                quartile = int(4 * i / len(results))
+                quartile_counts[quartile] += 1
+                if p * q > pass_threshold:
+                    if i == 0:
+                        hits += 1
+                    else:
+                        misses += 1
+                else:
+                    passes += 1
+        if not matched:
+            raise Exception(f'No match for {target_uuid}')
+
+    return quartile_counts, hits, misses, passes
+
+
+def print_matches(quartile_counts, hits, misses, passes):
+    print(f'hits: {hits}, misses: {misses}, ', end='')
+    print(f'pct: {100*hits/(hits+misses):.2f}%, passes: {passes}')
+
+    total_match_index_counts = sum(quartile_counts.values())
+    for index, count in sorted(quartile_counts.items()):
+        print(index, count / total_match_index_counts)
