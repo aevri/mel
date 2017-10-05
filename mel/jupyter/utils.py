@@ -274,7 +274,7 @@ def best_match_combination(guesser):
 
 class ColdGuessMoleClassifier():
 
-    def __init__(self, uuid_to_frameposlist):
+    def __init__(self, uuid_to_frameposlist, ypos_radius, neighbour_radius):
         self.uuid_to_frameposlist = uuid_to_frameposlist
         uuid_to_poslist = {
             uuid_: [pos for frame, pos in frameposlist]
@@ -309,15 +309,16 @@ class ColdGuessMoleClassifier():
             for uuid_ in self.uuids
         )
 
-        ypos_radius = 0.1
-        neighbor_radius = 1
-        self.lower = numpy.array((-ypos_radius, -neighbor_radius))
-        self.upper = numpy.array((ypos_radius, neighbor_radius))
+        self.lower = numpy.array((-ypos_radius, -neighbour_radius))
+        self.upper = numpy.array((ypos_radius, neighbour_radius))
 
     def __call__(self, ypos, numclose):
 
         if not numpy.isscalar(ypos):
             raise ValueError(f"'ypos' must be a scalar, got '{ypos}'.")
+
+        if not numpy.isscalar(numclose):
+            raise ValueError(f"'numclose' must be a scalar, got '{numclose}'.")
 
         a = numpy.array((ypos, numclose))
 
@@ -648,6 +649,47 @@ def yield_cold_results(classifier, frame_list):
             yield (uuid_, results)
 
 
+def yield_ypos_neighbour_results(classifier, frame_list):
+    for frame in frame_list:
+        uuid_to_pos = frame_to_uuid_to_pos(frame)
+        multi_results = classifier.guesses_from_neighbours(uuid_to_pos)
+        uuid_to_guesses = collections.defaultdict(list)
+        for u1, u2, p, q in multi_results:
+            uuid_to_guesses[u1].append((u2, p, q))
+        for uuid_, nresults in uuid_to_guesses.items():
+            pos = uuid_to_pos[uuid_]
+            yresults = classifier.guesses_from_ypos(pos[1])
+            uuid_to_yresult = {
+                uuid3: (p, q)
+                for uuid3, p, q in yresults
+            }
+            results = [
+                (uuid3, np * yp, nq * yq)
+                for uuid3, np, nq in nresults
+                for yp, yq in (uuid_to_yresult[uuid3],)
+            ]
+            yield (uuid_, results)
+
+
+def yield_neighbour_results(classifier, frame_list):
+    for frame in frame_list:
+        uuid_to_pos = frame_to_uuid_to_pos(frame)
+        multi_results = classifier.guesses_from_neighbours(uuid_to_pos)
+        uuid_to_guesses = collections.defaultdict(list)
+        for u1, u2, p, q in multi_results:
+            uuid_to_guesses[u1].append((u2, p, q))
+        for uuid_, results in uuid_to_guesses.items():
+            yield (uuid_, results)
+
+
+def yield_ypos_results(classifier, frame_list):
+    for frame in frame_list:
+        uuid_to_pos = frame_to_uuid_to_pos(frame)
+        for uuid_, pos in uuid_to_pos.items():
+            results = classifier.guesses_from_ypos(pos[1])
+            yield (uuid_, results)
+
+
 def count_matches(result_generator, pass_threshold):
     quartile_counts = collections.Counter()
     hits = 0
@@ -658,17 +700,20 @@ def count_matches(result_generator, pass_threshold):
         matched = False
         for i, r in enumerate(reversed(sorted(results, key=lambda x: x[2]))):
             uuid2, p, q = r
-            if uuid2 == target_uuid:
-                matched = True
-                quartile = int(4 * i / len(results))
-                quartile_counts[quartile] += 1
-                if p * q > pass_threshold:
+            if p * q > pass_threshold:
+                if uuid2 == target_uuid:
+                    matched = True
+                    quartile = int(4 * i / len(results))
+                    quartile_counts[quartile] += 1
                     if i == 0:
                         hits += 1
                     else:
                         misses += 1
-                else:
-                    passes += 1
+                    break
+            else:
+                passes += 1
+                matched = True
+                break
         if not matched:
             raise Exception(f'No match for {target_uuid}')
 
