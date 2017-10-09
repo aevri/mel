@@ -1,6 +1,7 @@
 """Identify moles."""
 
 import collections
+import functools
 
 import numpy
 
@@ -14,6 +15,15 @@ class Guesser():
         self.cold_classifier = cold_classifier
         self.warm_classifier = warm_classifier
         self.init_a_to_bc()
+
+        @functools.lru_cache(maxsize=1024)
+        def warm(ref_uuid, ref_a, a):
+            ref_pos = self.uuid_to_pos[ref_a]
+            pos = self.uuid_to_pos[a]
+            return self.warm_classifier(ref_uuid, ref_pos, pos)
+
+        self.warm = warm
+
 
     def init_a_to_bc(self):
         uuid_to_numclose = mel.jupyter.utils.uuidtopos_to_numclose(
@@ -56,7 +66,8 @@ class Guesser():
             pos = self.uuid_to_pos[a]
 
             num_added = 0
-            for b, p, q in self.warm_classifier(ref_uuid, ref_pos, pos):
+            # for b, p, q in self.warm(ref_uuid, ref_pos, pos):
+            for b, p, q in self.warm(ref_uuid, ref_a, a):
                 if b not in already_taken:
                     r = p * q
                     if r > 1:
