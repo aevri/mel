@@ -8,6 +8,10 @@ import numpy
 import mel.jupyter.utils
 
 
+# Individual probabilities less than this are out of consideration.
+_MAGIC_P_THRESHOLD = 0.00001
+
+
 def p_to_cost(p):
     # return int(10 / p) - 9
     return int(1 / p)
@@ -28,7 +32,8 @@ class Guesser():
             return tuple(
                 (b, p_to_cost(p * q))
                 for b, p, q in self.warm_classifier(ref_uuid, ref_pos, pos)
-                if not numpy.isclose(0, p * q)
+                if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
+                # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
 
         self.warm = warm
