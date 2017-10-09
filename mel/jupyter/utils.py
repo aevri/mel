@@ -248,6 +248,8 @@ def best_match_combination(guesser):
     state_q = StatePriorityQueue()
     state_q.push(1, 1, guesser.initial_state())
 
+    deepest = 0
+    most_correct = 0
     count = 0
     while True:
 
@@ -260,13 +262,21 @@ def best_match_combination(guesser):
         est_cost, total_cost, state = state_q.pop()
 
         count += 1
-        should_report = 0 == count % 100
+        should_report = 0 == count % 1000
+        depth = sum(1 for a, b in state.items() if b is not None)
+        correct = sum(1 for a, b in state.items() if a == b)
+        if depth > deepest:
+            deepest = depth
+            should_report = True
+        if correct > most_correct:
+            most_correct = correct
+            should_report = True
         if should_report:
             print(
                 count,
                 est_cost,
-                sum(1 for a, b in state.items() if b is not None),
-                sum(1 for a, b in state.items() if a == b)
+                depth,
+                correct
             )
 
         # See if we're done.

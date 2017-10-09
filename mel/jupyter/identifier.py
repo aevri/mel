@@ -8,6 +8,11 @@ import numpy
 import mel.jupyter.utils
 
 
+def p_to_cost(p):
+    # return int(10 / p) - 9
+    return int(1 / p)
+
+
 class Guesser():
 
     def __init__(self, uuid_to_pos, cold_classifier, warm_classifier):
@@ -20,7 +25,11 @@ class Guesser():
         def warm(ref_uuid, ref_a, a):
             ref_pos = self.uuid_to_pos[ref_a]
             pos = self.uuid_to_pos[a]
-            return self.warm_classifier(ref_uuid, ref_pos, pos)
+            return tuple(
+                (b, p_to_cost(p * q))
+                for b, p, q in self.warm_classifier(ref_uuid, ref_pos, pos)
+                if not numpy.isclose(0, p * q)
+            )
 
         self.warm = warm
 
@@ -39,7 +48,7 @@ class Guesser():
                         f"'r' must be equal to or less than 1, "
                         "got: a={a}, b={b}, r={r}")
                 if not numpy.isclose(0, r):
-                    cost = int(1 / r)
+                    cost = p_to_cost(r)
                     self.a_to_bc[a][b] = cost
 
     def initial_state(self):
@@ -59,29 +68,28 @@ class Guesser():
         ref_a, ref_uuid = next(iter(filled.items()))
         ref_pos = self.uuid_to_pos[ref_a]
 
+        total_est, a_to_est = self.estimates(
+            state, already_taken, ref_a, ref_uuid, ref_pos)
+
         for a, b in state.items():
             if b is not None:
                 continue
 
             pos = self.uuid_to_pos[a]
 
-            num_added = 0
-            # for b, p, q in self.warm(ref_uuid, ref_pos, pos):
-            for b, p, q in self.warm(ref_uuid, ref_a, a):
-                if b not in already_taken:
-                    r = p * q
-                    if r > 1:
-                        raise ValueError(
-                            f"'r' must be equal to or less than 1, "
-                            "got: a={a}, b={b}, r={r}")
+            est_without_a = total_est // a_to_est[a]
 
-                    if not numpy.isclose(0, r):
-                        cost = int(1 / r)
-                        new_cost = total_cost * cost
-                        new_state = dict(state)
-                        new_state[a] = b
-                        yield new_cost, new_cost, new_state
-                        num_added += 1
+            num_added = 0
+            for b, cost in self.warm(ref_uuid, ref_a, a):
+                if b not in already_taken:
+                    new_cost = total_cost * cost
+                    new_state = dict(state)
+                    new_state[a] = b
+
+                    new_est = est_without_a * cost * total_cost
+
+                    yield new_est, new_cost, new_state
+                    num_added += 1
 
             # if not num_added:
             #     # If we ran out of moles to match against, this must be a new
@@ -91,6 +99,28 @@ class Guesser():
             #     new_state[a] = 'NewMole'
             #     yield total_cost, total_cost, new_state
 
+    def estimates(self, state, already_taken, ref_a, ref_uuid, ref_pos):
+
+        total_est = 1
+        a_to_est = {}
+
+        for a, b in state.items():
+            if b is not None:
+                continue
+
+            best_cost = None
+            for b, cost in self.warm(ref_uuid, ref_a, a):
+                if b not in already_taken:
+                    if best_cost is None or cost < best_cost:
+                        best_cost = cost
+
+            if best_cost is None:
+                a_to_est[a] = 1
+            else:
+                a_to_est[a] = best_cost
+                total_est *= best_cost
+
+        return total_est, a_to_est
 
     def yield_next_states_cold(self, _est_cost, total_cost, state):
         for a, b in state.items():
@@ -112,3 +142,12 @@ class Guesser():
                 new_state = dict(state)
                 new_state[a] = 'NewMole'
                 yield cost, cost, new_state
+
+    # def yield_next_states_cold(self, _est_cost, total_cost, state):
+    #     for a, b in state.items():
+    #         if b is not None:
+    #             raise Exception('b must be None')
+
+    #         new_state = dict(state)
+    #         new_state[a] = a
+    #         yield 1, 1, new_state
