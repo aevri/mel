@@ -248,6 +248,7 @@ def best_match_combination(guesser):
     state_q = StatePriorityQueue()
     state_q.push(1, 1, guesser.initial_state())
 
+    count = 0
     while True:
 
         if not state_q:
@@ -257,6 +258,16 @@ def best_match_combination(guesser):
 
         # Advance best state.
         est_cost, total_cost, state = state_q.pop()
+
+        count += 1
+        should_report = 0 == count % 100
+        if should_report:
+            print(
+                count,
+                est_cost,
+                sum(1 for a, b in state.items() if b is not None),
+                sum(1 for a, b in state.items() if a == b)
+            )
 
         # See if we're done.
         if all(state.values()):
