@@ -260,7 +260,7 @@ class Guesser():
         return best_estimates, new_est_cost
 
 
-def best_match_combination(guesser, *, max_iterations=10**6):
+def best_match_combination(guesser, *, max_iterations=10**5):
 
     # guesser.print_space_stats()
     # guesser.print_correct_stats()
