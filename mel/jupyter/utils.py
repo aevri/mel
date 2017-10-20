@@ -94,11 +94,35 @@ class AttentuatedKde():
         return self.kde(x) * self.attenuation
 
 
-class StatePriorityQueue():
+class PriorityQueue():
 
     def __init__(self):
         self.heap = []
         self.next_tie_breaker = 0
+
+    def push(self, priority, value):
+
+        heapq.heappush(
+            self.heap,
+            (priority, self.next_tie_breaker, value))
+
+        self.next_tie_breaker += 1
+
+    def pop(self):
+        priority, _, value = heapq.heappop(self.heap)
+        return priority, value
+
+    def __len__(self):
+        return len(self.heap)
+
+    def __str__(self):
+        return ("<PriorityQueue:: len:{}>".format(len(self.heap)))
+
+
+class StatePriorityQueue():
+
+    def __init__(self):
+        self.queue = PriorityQueue()
         self.already_tried = set()
 
     def push(self, estimate, value, state):
@@ -108,21 +132,17 @@ class StatePriorityQueue():
             return
         self.already_tried.add(normalised)
 
-        heapq.heappush(
-            self.heap,
-            (estimate, value, self.next_tie_breaker, state))
-
-        self.next_tie_breaker += 1
+        self.queue.push((estimate, value), state)
 
     def pop(self):
-        estimate, value, _, state = heapq.heappop(self.heap)
+        (estimate, value), state = self.queue.pop()
         return estimate, value, state
 
     def __len__(self):
-        return len(self.heap)
+        return len(self.queue)
 
     def __str__(self):
-        return ("<StatePriorityQueue:: len:{}>".format(len(self.heap)))
+        return ("<StatePriorityQueue:: len:{}>".format(len(self.queue)))
 
 
 class Guesser():
@@ -274,7 +294,7 @@ def best_match_combination(guesser):
         if should_report:
             print(
                 count,
-                est_cost,
+                total_cost,
                 depth,
                 correct
             )
