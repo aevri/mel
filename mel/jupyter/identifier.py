@@ -27,7 +27,8 @@ class Guesser():
 
         # Note that we want one cache per instance of Guesser. This means that
         # the values will be correct for the classifiers and positions
-        # provided. Therefore we must create it dynamically.
+        # provided. Therefore we must create these dynamically.
+
         @functools.lru_cache(maxsize=1024)
         def warm(uuid_for_history, uuid_for_position, uuid_to_guess):
             ref_pos = self.uuid_to_pos[uuid_for_position]
@@ -39,8 +40,18 @@ class Guesser():
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
-
         self.warm = warm
+
+        @functools.lru_cache(maxsize=1024)
+        def closest_uuids(uuid_for_position):
+            ref_pos = self.uuid_to_pos[uuid_for_position]
+            sqdist_uuid_list = sorted(
+                (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
+                for uuid_, pos in self.uuid_to_pos.items()
+                if uuid_ != uuid_for_position
+            )
+            return tuple(uuid_ for _, uuid_ in sqdist_uuid_list)
+        self.closest_uuids = closest_uuids
 
     def init_a_to_bc(self):
         uuid_to_numclose = mel.jupyter.utils.uuidtopos_to_numclose(
@@ -81,7 +92,11 @@ class Guesser():
             if b is not None:
                 continue
 
-            pos = self.uuid_to_pos[a]
+            uuid_for_pos = next(
+                uuid_
+                for uuid_ in self.closest_uuids(a)
+                if state[uuid_] is not None)
+            uuid_for_history = state[uuid_for_pos]
 
             est_without_a = total_est // a_to_est[a]
 

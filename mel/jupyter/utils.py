@@ -282,7 +282,7 @@ def best_match_combination(guesser):
         est_cost, total_cost, state = state_q.pop()
 
         count += 1
-        should_report = 0 == count % 1000
+        should_report = 0 == count % 10000
         depth = sum(1 for a, b in state.items() if b is not None)
         correct = sum(1 for a, b in state.items() if a == b)
         if depth > deepest:
