@@ -70,10 +70,8 @@ class Guesser():
         # TODO: pick a non-arbitrary 'reference a', perhaps the closest to the
         # target?
         ref_a, ref_uuid = next(iter(filled.items()))
-        ref_pos = self.uuid_to_pos[ref_a]
-
         total_est, a_to_est = self.estimates(
-            state, already_taken, ref_a, ref_uuid, ref_pos)
+            state, already_taken, ref_a, ref_uuid)
 
         for a, b in state.items():
             if b is not None:
@@ -103,7 +101,9 @@ class Guesser():
             #     new_state[a] = 'NewMole'
             #     yield total_cost, total_cost, new_state
 
-    def estimates(self, state, already_taken, ref_a, ref_uuid, ref_pos):
+    def estimates(self, state, already_taken, ref_a, ref_uuid):
+
+        ref_pos = self.uuid_to_pos[ref_a]
 
         total_est = 1
         a_to_est = {}
