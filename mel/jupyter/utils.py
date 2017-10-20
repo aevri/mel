@@ -274,6 +274,13 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
         # See if we're done.
         if all(state.values()):
+            print(
+                count,
+                (est_cost, total_cost),
+                depth,
+                correct
+            )
+            print(state_q)
             return total_cost, state
 
         # Nope, advance states.
@@ -283,6 +290,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
         if not state_q:
             # This is the last and apparently best option.
+            print('Final option')
+            # TODO: mark new moles or update contract to say some can be None
             return total_cost, state
 
     raise LookupError(

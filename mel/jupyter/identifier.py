@@ -19,10 +19,17 @@ def p_to_cost(p):
 
 class Guesser():
 
-    def __init__(self, uuid_to_pos, cold_classifier, warm_classifier):
+    def __init__(
+            self,
+            uuid_to_pos,
+            cold_classifier,
+            warm_classifier,
+            canonical_uuid_set):
+
         self.uuid_to_pos = uuid_to_pos
         self.cold_classifier = cold_classifier
         self.warm_classifier = warm_classifier
+        self.canonical_uuid_set = canonical_uuid_set
         self.init_a_to_bc()
 
         # Note that we want one cache per instance of Guesser. This means that
@@ -71,22 +78,21 @@ class Guesser():
                     self.a_to_bc[a][b] = cost
 
     def initial_state(self):
-        return {a: None for a in self.a_to_bc}
+        return {
+            a: a if a in self.canonical_uuid_set else None
+            for a in self.a_to_bc
+        }
 
     def yield_next_states(self, _est_cost, total_cost, state):
         filled = {a: b for a, b in state.items() if b is not None}
-        already_taken = set(filled.values())
 
         if not filled:
             yield from self.yield_next_states_cold(
                 _est_cost, total_cost, state)
             return
 
-        # TODO: pick a non-arbitrary 'reference a', perhaps the closest to the
-        # target?
-        uuid_for_pos, uuid_for_history = next(iter(filled.items()))
-        total_est, a_to_est = self.estimates(
-            state, already_taken, uuid_for_pos, uuid_for_history)
+        already_taken = set(filled.values())
+        total_est, a_to_est = self.estimates(state, already_taken)
 
         for a, b in state.items():
             if b is not None:
@@ -120,7 +126,7 @@ class Guesser():
             #     new_state[a] = 'NewMole'
             #     yield total_cost, total_cost, new_state
 
-    def estimates(self, state, already_taken, uuid_for_pos, uuid_for_history):
+    def estimates(self, state, already_taken):
 
         total_est = 1
         a_to_est = {}
@@ -128,6 +134,12 @@ class Guesser():
         for a, b in state.items():
             if b is not None:
                 continue
+
+            uuid_for_pos = next(
+                uuid_
+                for uuid_ in self.closest_uuids(a)
+                if state[uuid_] is not None)
+            uuid_for_history = state[uuid_for_pos]
 
             best_cost = None
             for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
@@ -142,6 +154,49 @@ class Guesser():
                 total_est *= best_cost
 
         return total_est, a_to_est
+
+    def yield_next_states_cold(self, _, total_cost, state):
+        best_estimates, new_est_cost = self.estimates_cold(total_cost, state)
+
+        for a, b in state.items():
+            if b is not None:
+                raise Exception('b must be None')
+
+            num_added = 0
+            base_est_cost = new_est_cost // best_estimates[a]
+            for b, cost in self.a_to_bc[a].items():
+                new_cost = total_cost * cost
+                est_cost = base_est_cost * cost
+                new_state = dict(state)
+                new_state[a] = b
+                yield est_cost, new_cost, new_state
+                num_added += 1
+
+            if not num_added:
+                # If we ran out of moles to match against, this must be a new
+                # mole. This isn't the only way we can detect a new mole.
+                # raise NotImplementedError("New mole!")
+                new_state = dict(state)
+                new_state[a] = 'NewMole'
+                yield cost, cost, new_state
+
+    def estimates_cold(self, total_cost, state):
+        best_estimates = {}
+        new_est_cost = total_cost
+        for a, b in state.items():
+            if b is not None:
+                raise Exception('b must be None')
+            best_cost = None
+            for _, cost in self.a_to_bc[a].items():
+                if best_cost is None or cost > best_cost:
+                    best_cost = cost
+            if best_cost is not None:
+                best_estimates[a] = best_cost
+                new_est_cost *= best_cost
+            else:
+                best_estimates[a] = 1
+
+        return best_estimates, new_est_cost
 
     def yield_next_states_cold(self, _est_cost, total_cost, state):
         for a, b in state.items():
