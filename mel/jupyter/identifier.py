@@ -25,13 +25,17 @@ class Guesser():
         self.warm_classifier = warm_classifier
         self.init_a_to_bc()
 
+        # Note that we want one cache per instance of Guesser. This means that
+        # the values will be correct for the classifiers and positions
+        # provided. Therefore we must create it dynamically.
         @functools.lru_cache(maxsize=1024)
-        def warm(ref_uuid, ref_a, a):
-            ref_pos = self.uuid_to_pos[ref_a]
-            pos = self.uuid_to_pos[a]
+        def warm(uuid_for_history, uuid_for_position, uuid_to_guess):
+            ref_pos = self.uuid_to_pos[uuid_for_position]
+            pos = self.uuid_to_pos[uuid_to_guess]
             return tuple(
                 (b, p_to_cost(p * q))
-                for b, p, q in self.warm_classifier(ref_uuid, ref_pos, pos)
+                for b, p, q in self.warm_classifier(
+                    uuid_for_history, ref_pos, pos)
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
@@ -69,9 +73,9 @@ class Guesser():
 
         # TODO: pick a non-arbitrary 'reference a', perhaps the closest to the
         # target?
-        ref_a, ref_uuid = next(iter(filled.items()))
+        uuid_for_pos, uuid_for_history = next(iter(filled.items()))
         total_est, a_to_est = self.estimates(
-            state, already_taken, ref_a, ref_uuid)
+            state, already_taken, uuid_for_pos, uuid_for_history)
 
         for a, b in state.items():
             if b is not None:
@@ -82,7 +86,7 @@ class Guesser():
             est_without_a = total_est // a_to_est[a]
 
             num_added = 0
-            for b, cost in self.warm(ref_uuid, ref_a, a):
+            for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
                 if b not in already_taken:
                     new_cost = total_cost * cost
                     new_state = dict(state)
@@ -101,7 +105,7 @@ class Guesser():
             #     new_state[a] = 'NewMole'
             #     yield total_cost, total_cost, new_state
 
-    def estimates(self, state, already_taken, ref_a, ref_uuid):
+    def estimates(self, state, already_taken, uuid_for_pos, uuid_for_history):
 
         total_est = 1
         a_to_est = {}
@@ -111,7 +115,7 @@ class Guesser():
                 continue
 
             best_cost = None
-            for b, cost in self.warm(ref_uuid, ref_a, a):
+            for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
                 if b not in already_taken:
                     if best_cost is None or cost < best_cost:
                         best_cost = cost
