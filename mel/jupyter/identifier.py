@@ -103,8 +103,6 @@ class Guesser():
 
     def estimates(self, state, already_taken, ref_a, ref_uuid):
 
-        ref_pos = self.uuid_to_pos[ref_a]
-
         total_est = 1
         a_to_est = {}
 
