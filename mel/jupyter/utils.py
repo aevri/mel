@@ -260,7 +260,7 @@ class Guesser():
         return best_estimates, new_est_cost
 
 
-def best_match_combination(guesser):
+def best_match_combination(guesser, *, max_iterations=10**6):
 
     # guesser.print_space_stats()
     # guesser.print_correct_stats()
@@ -271,7 +271,7 @@ def best_match_combination(guesser):
     deepest = 0
     most_correct = 0
     count = 0
-    while True:
+    while count != max_iterations:
 
         if not state_q:
             # If we ran out of moles to match against, this must be a new mole.
@@ -311,6 +311,9 @@ def best_match_combination(guesser):
         if not state_q:
             # This is the last and apparently best option.
             return total_cost, state
+
+    raise LookupError(
+        f'Could not find a best match in under {max_iterations:,} iterations.')
 
 
 class ColdGuessMoleClassifier():
