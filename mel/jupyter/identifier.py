@@ -42,7 +42,7 @@ class Guesser():
             )
         self.warm = warm
 
-        @functools.lru_cache(maxsize=1024)
+        @functools.lru_cache(maxsize=128)
         def closest_uuids(uuid_for_position):
             ref_pos = self.uuid_to_pos[uuid_for_position]
             sqdist_uuid_list = sorted(
