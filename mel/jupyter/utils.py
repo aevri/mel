@@ -70,30 +70,6 @@ class Kde():
             return 0
 
 
-class AttentuatedKde():
-
-    def __init__(self, kde_factory, training_data):
-        self.len = training_data.shape[-1]
-        if self.len < 3:
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
-            return
-        else:
-            self.attenuation = 1 - (1 / (1 + (self.len + 4) / 5))
-
-        try:
-            self.kde = kde_factory(training_data)
-        except scipy.linalg.LinAlgError as e:
-            print(e)
-            print(training_data)
-            raise
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
-
-    def __call__(self, x):
-        return self.kde(x) * self.attenuation
-
-
 class PriorityQueue():
 
     def __init__(self):
@@ -262,9 +238,6 @@ class Guesser():
 
 def best_match_combination(guesser, *, max_iterations=10**5):
 
-    # guesser.print_space_stats()
-    # guesser.print_correct_stats()
-
     state_q = StatePriorityQueue()
     state_q.push(1, 1, guesser.initial_state())
 
@@ -383,87 +356,6 @@ class ColdGuessMoleClassifier():
             p = densities[i]
             q = p / total_density
             matches.append((m_uuid, p, q))
-
-        return matches
-
-
-class MoleClassifier():
-
-    def __init__(self, uuid_to_frameposlist):
-        self.uuid_to_frameposlist = uuid_to_frameposlist
-        uuid_to_poslist = {
-            uuid_: [pos for frame, pos in frameposlist]
-            for uuid_, frameposlist in uuid_to_frameposlist.items()
-        }
-        self.uuids, self.poslistlist = zip(*uuid_to_poslist.items())
-        yposlistlist = tuple(
-            numpy.array(tuple(y for x, y in poslist))
-            for poslist in self.poslistlist
-        )
-        self.ykernels = tuple(
-            AttentuatedKde(scipy.stats.gaussian_kde, yposlist)
-            for yposlist in yposlistlist
-        )
-
-        self.frames = collections.defaultdict(dict)
-        for uuid_, frameposlist in uuid_to_frameposlist.items():
-            for frame, pos in frameposlist:
-                self.frames[frame][uuid_] = pos
-
-        uuid_to_neighbourlist = collections.defaultdict(list)
-        for uuid_to_pos in self.frames.values():
-            for uuid_, num_close in uuidtopos_to_numclose(uuid_to_pos).items():
-                uuid_to_neighbourlist[uuid_].append(num_close)
-
-        self.uuid_to_neighbourlist = uuid_to_neighbourlist
-
-        self.numclose_kernels = tuple(
-            AttentuatedKde(
-                scipy.stats.gaussian_kde,
-                numpy.array( uuid_to_neighbourlist[uuid_]))
-            for uuid_ in self.uuids
-        )
-
-    def guesses_from_ypos(self, ypos):
-
-        if not numpy.isscalar(ypos):
-            raise ValueError(f"'ypos' must be a scalar, got '{ypos}'.")
-
-        densities = numpy.array(tuple(k(ypos)[0] for k in self.ykernels))
-        total_density = numpy.sum(densities)
-
-        if numpy.isclose(total_density, 0):
-            total_density = -1
-
-        matches = []
-        for i, m_uuid in enumerate(self.uuids):
-            p = densities[i]
-            q = p / total_density
-            matches.append((m_uuid, p, q))
-
-        return matches
-
-    def guesses_from_neighbours(self, uuid_pos):
-
-        # Calculate neighbour values for all supplied moles
-        uuid_to_numclose = uuidtopos_to_numclose(uuid_pos)
-
-        # Calculate probability for all supplied moles vs. all self moles
-        matches = []
-        for uuid_, numclose in uuid_to_numclose.items():
-            densities = numpy.array(tuple(
-                k(numclose)[0] for k in self.numclose_kernels))
-            total_density = numpy.sum(densities)
-
-            if numpy.isclose(total_density, 0):
-                total_density = -1
-
-            # i = numpy.argmax(densities)
-            # d = densities[i][0]
-            for i, m_uuid in enumerate(self.uuids):
-                p = densities[i]
-                q = p / total_density
-                matches.append((uuid_, m_uuid, p, q))
 
         return matches
 
