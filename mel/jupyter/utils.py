@@ -294,7 +294,7 @@ def best_match_combination(guesser):
         if should_report:
             print(
                 count,
-                total_cost,
+                (est_cost, total_cost),
                 depth,
                 correct
             )
