@@ -38,7 +38,6 @@ class Guesser():
 
         self.warm = warm
 
-
     def init_a_to_bc(self):
         uuid_to_numclose = mel.jupyter.utils.uuidtopos_to_numclose(
             self.uuid_to_pos)
@@ -149,10 +148,10 @@ class Guesser():
                 yield cost, cost, new_state
 
     # Automatically guess all the first ones correctly, just for testing.
-    # def yield_next_states_cold(self, _est_cost, total_cost, state):
-    #     for a, b in state.items():
-    #         if b is not None:
-    #             raise Exception('b must be None')
-    #         new_state = dict(state)
-    #         new_state[a] = a
-    #         yield 1, 1, new_state
+    def yield_next_states_cold(self, _est_cost, total_cost, state):
+        for a, b in state.items():
+            if b is not None:
+                raise Exception('b must be None')
+            new_state = dict(state)
+            new_state[a] = a
+            yield 1, 1, new_state
