@@ -9,7 +9,9 @@ import numpy
 import scipy.linalg
 import scipy.stats
 
+import mel.lib.ellipsespace
 import mel.lib.moleimaging
+import mel.rotomap.identify
 
 
 def frames_to_uuid_frameposlist(frame_iterable):
@@ -17,9 +19,9 @@ def frames_to_uuid_frameposlist(frame_iterable):
 
     for frame in frame_iterable:
         mask = frame.load_mask()
-        contour = biggest_contour(mask)
+        contour = mel.rotomap.identify.biggest_contour(mask)
         ellipse = cv2.fitEllipse(contour)
-        elspace = EllipseSpace(ellipse)
+        elspace = mel.lib.ellipsespace.Transform(ellipse)
         for uuid, pos in frame.moledata.uuid_points.items():
             uuid_to_frameposlist[uuid].append(
                 (str(frame), elspace.to_space(pos)))
