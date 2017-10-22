@@ -153,6 +153,10 @@ class Guesser():
                 a_to_est[a] = best_cost
                 total_est *= best_cost
 
+            # XXX: Temp hack to test without estimates
+            a_to_est[a] = 1
+            total_est = 1
+
         return total_est, a_to_est
 
     def yield_next_states_cold(self, _, total_cost, state):
