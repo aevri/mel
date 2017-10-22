@@ -2,7 +2,6 @@
 
 import collections
 import functools
-import heapq
 
 import cv2
 import numpy
@@ -11,6 +10,7 @@ import scipy.stats
 
 import mel.lib.ellipsespace
 import mel.lib.moleimaging
+import mel.lib.priorityq
 
 
 # Individual probabilities less than this are out of consideration.
@@ -22,31 +22,6 @@ _MAGIC_CLOSE_DISTANCE = 0.1
 def p_to_cost(p):
     # return int(10 / p) - 9
     return int(1 / p)
-
-
-class PriorityQueue():
-
-    def __init__(self):
-        self.heap = []
-        self.next_tie_breaker = 0
-
-    def push(self, priority, value):
-
-        heapq.heappush(
-            self.heap,
-            (priority, self.next_tie_breaker, value))
-
-        self.next_tie_breaker += 1
-
-    def pop(self):
-        priority, _, value = heapq.heappop(self.heap)
-        return priority, value
-
-    def __len__(self):
-        return len(self.heap)
-
-    def __str__(self):
-        return ("<PriorityQueue:: len:{}>".format(len(self.heap)))
 
 
 class Guesser():
@@ -178,7 +153,7 @@ class Guesser():
 
 def best_match_combination(guesser, *, max_iterations=10**5):
 
-    state_q = PriorityQueue()
+    state_q = mel.lib.priorityq.PriorityQueue()
     state_q.push(1, guesser.initial_state())
 
     deepest = 0
