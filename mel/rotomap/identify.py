@@ -48,32 +48,6 @@ class PriorityQueue():
         return ("<PriorityQueue:: len:{}>".format(len(self.heap)))
 
 
-class StatePriorityQueue():
-
-    def __init__(self):
-        self.queue = PriorityQueue()
-        self.already_tried = set()
-
-    def push(self, estimate, value, state):
-
-        # normalised = tuple(sorted(state.items()))
-        # if normalised in self.already_tried:
-        #     return
-        # self.already_tried.add(normalised)
-
-        self.queue.push((estimate, value), state)
-
-    def pop(self):
-        (estimate, value), state = self.queue.pop()
-        return estimate, value, state
-
-    def __len__(self):
-        return len(self.queue)
-
-    def __str__(self):
-        return ("<StatePriorityQueue:: len:{}>".format(len(self.queue)))
-
-
 class Guesser():
 
     def __init__(
@@ -140,16 +114,15 @@ class Guesser():
             for a in self.a_to_bc
         }
 
-    def yield_next_states(self, _est_cost, total_cost, state):
+    def yield_next_states(self, total_cost, state):
         filled = {a: b for a, b in state.items() if b is not None}
 
         if not filled:
             yield from self.yield_next_states_cold(
-                _est_cost, total_cost, state)
+                total_cost, state)
             return
 
         already_taken = set(filled.values())
-        total_est, a_to_est = self.estimates(state, already_taken)
 
         for a, b in state.items():
             if b is not None:
@@ -160,8 +133,6 @@ class Guesser():
                 for uuid_ in self.closest_uuids(a)
                 if state[uuid_] is not None)
             uuid_for_history = state[uuid_for_pos]
-
-            est_without_a = total_est // a_to_est[a]
 
             num_added = 0
             for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
@@ -170,9 +141,7 @@ class Guesser():
                     new_state = dict(state)
                     new_state[a] = b
 
-                    new_est = est_without_a * cost * total_cost
-
-                    yield new_est, new_cost, new_state
+                    yield new_cost, new_state
                     num_added += 1
 
             # if not num_added:
@@ -181,85 +150,10 @@ class Guesser():
             #     # raise NotImplementedError("New mole!")
             #     new_state = dict(state)
             #     new_state[a] = 'NewMole'
-            #     yield total_cost, total_cost, new_state
+            #     yield total_cost, new_state
 
-    def estimates(self, state, already_taken):
 
-        total_est = 1
-        a_to_est = {}
-
-        for a, b in state.items():
-            if b is not None:
-                continue
-
-            uuid_for_pos = next(
-                uuid_
-                for uuid_ in self.closest_uuids(a)
-                if state[uuid_] is not None)
-            uuid_for_history = state[uuid_for_pos]
-
-            best_cost = None
-            for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
-                if b not in already_taken:
-                    if best_cost is None or cost < best_cost:
-                        best_cost = cost
-
-            if best_cost is None:
-                a_to_est[a] = 1
-            else:
-                a_to_est[a] = best_cost
-                total_est *= best_cost
-
-            # XXX: Temp hack to test without estimates
-            a_to_est[a] = 1
-            total_est = 1
-
-        return total_est, a_to_est
-
-    def yield_next_states_cold(self, _, total_cost, state):
-        best_estimates, new_est_cost = self.estimates_cold(total_cost, state)
-
-        for a, b in state.items():
-            if b is not None:
-                raise Exception('b must be None')
-
-            num_added = 0
-            base_est_cost = new_est_cost // best_estimates[a]
-            for b, cost in self.a_to_bc[a].items():
-                new_cost = total_cost * cost
-                est_cost = base_est_cost * cost
-                new_state = dict(state)
-                new_state[a] = b
-                yield est_cost, new_cost, new_state
-                num_added += 1
-
-            if not num_added:
-                # If we ran out of moles to match against, this must be a new
-                # mole. This isn't the only way we can detect a new mole.
-                # raise NotImplementedError("New mole!")
-                new_state = dict(state)
-                new_state[a] = 'NewMole'
-                yield cost, cost, new_state
-
-    def estimates_cold(self, total_cost, state):
-        best_estimates = {}
-        new_est_cost = total_cost
-        for a, b in state.items():
-            if b is not None:
-                raise Exception('b must be None')
-            best_cost = None
-            for _, cost in self.a_to_bc[a].items():
-                if best_cost is None or cost > best_cost:
-                    best_cost = cost
-            if best_cost is not None:
-                best_estimates[a] = best_cost
-                new_est_cost *= best_cost
-            else:
-                best_estimates[a] = 1
-
-        return best_estimates, new_est_cost
-
-    def yield_next_states_cold(self, _est_cost, total_cost, state):
+    def yield_next_states_cold(self, total_cost, state):
         for a, b in state.items():
             if b is not None:
                 raise Exception('b must be None')
@@ -269,7 +163,7 @@ class Guesser():
                 new_cost = total_cost * cost
                 new_state = dict(state)
                 new_state[a] = b
-                yield new_cost, new_cost, new_state
+                yield new_cost, new_state
                 num_added += 1
 
             if not num_added:
@@ -278,22 +172,13 @@ class Guesser():
                 # raise NotImplementedError("New mole!")
                 new_state = dict(state)
                 new_state[a] = 'NewMole'
-                yield cost, cost, new_state
-
-    # Automatically guess all the first ones correctly, just for testing.
-    # def yield_next_states_cold(self, _est_cost, total_cost, state):
-    #     for a, b in state.items():
-    #         if b is not None:
-    #             raise Exception('b must be None')
-    #         new_state = dict(state)
-    #         new_state[a] = a
-    #         yield 1, 1, new_state
+                yield cost, new_state
 
 
 def best_match_combination(guesser, *, max_iterations=10**5):
 
-    state_q = StatePriorityQueue()
-    state_q.push(1, 1, guesser.initial_state())
+    state_q = PriorityQueue()
+    state_q.push(1, guesser.initial_state())
 
     deepest = 0
     most_correct = 0
@@ -306,7 +191,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
             raise NotImplementedError("Ran out of options!")
 
         # Advance best state.
-        est_cost, total_cost, state = state_q.pop()
+        total_cost, state = state_q.pop()
 
         count += 1
         should_report = 0 == count % 10000
@@ -321,7 +206,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         if should_report:
             print(
                 count,
-                (est_cost, total_cost),
+                total_cost,
                 depth,
                 correct
             )
@@ -330,23 +215,23 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         if all(state.values()):
             print(
                 count,
-                (est_cost, total_cost),
+                total_cost,
                 depth,
                 correct
             )
             return total_cost, state
 
         # Nope, advance states.
-        for new_est_cost, new_cost, new_state in guesser.yield_next_states(
-                est_cost, total_cost, state):
-            state_q.push(new_est_cost, new_cost, new_state)
+        for new_cost, new_state in guesser.yield_next_states(
+                total_cost, state):
+            state_q.push(new_cost, new_state)
 
         if not state_q:
             # This is the last and apparently best option.
             print('Final option')
             print(
                 count,
-                (est_cost, total_cost),
+                total_cost,
                 depth,
                 correct
             )
