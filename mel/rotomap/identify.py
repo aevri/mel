@@ -5,8 +5,6 @@ import functools
 
 import cv2
 import numpy
-import scipy.linalg
-import scipy.stats
 
 import mel.lib.ellipsespace
 import mel.lib.moleimaging
@@ -246,7 +244,7 @@ class ColdGuessMoleClassifier():
         self.uuid_to_neighbourlist = uuid_to_neighbourlist
 
         self.kernels = tuple(
-            Kde(
+            mel.lib.kde.Kde(
                 numpy.vstack([
                     numpy.array(uuid_to_yposlist[uuid_]),
                     numpy.array(uuid_to_neighbourlist[uuid_])
@@ -328,7 +326,7 @@ class MoleRelativeClassifier():
                 uuid_to_yoffsetlist[uuid_].append(offset[1])
 
         return tuple(
-            Kde(
+            mel.lib.kde.Kde(
                 numpy.vstack([
                     numpy.array(uuid_to_xoffsetlist[uuid_]),
                     numpy.array(uuid_to_yoffsetlist[uuid_])
@@ -386,32 +384,6 @@ def frame_to_uuid_to_pos(frame):
     }
 
     return uuid_to_pos
-
-
-class Kde():
-
-    def __init__(self, training_data):
-        self.len = training_data.shape[-1]
-
-        if self.len < 3:
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
-            return
-        else:
-            self.attenuation = 1
-
-        try:
-            self.kde = scipy.stats.gaussian_kde(training_data)
-        except scipy.linalg.LinAlgError as e:
-            print(e)
-            print(training_data)
-            raise
-
-    def __call__(self, lower, upper):
-        if self.attenuation:
-            return self.kde.integrate_box(lower, upper)
-        else:
-            return 0
 
 
 def uuidtopos_to_numclose(uuid_to_pos):
