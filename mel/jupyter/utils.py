@@ -14,21 +14,6 @@ import mel.lib.moleimaging
 import mel.rotomap.identify
 
 
-def frames_to_uuid_frameposlist(frame_iterable):
-    uuid_to_frameposlist = collections.defaultdict(list)
-
-    for frame in frame_iterable:
-        mask = frame.load_mask()
-        contour = mel.rotomap.identify.biggest_contour(mask)
-        ellipse = cv2.fitEllipse(contour)
-        elspace = mel.lib.ellipsespace.Transform(ellipse)
-        for uuid, pos in frame.moledata.uuid_points.items():
-            uuid_to_frameposlist[uuid].append(
-                (str(frame), elspace.to_space(pos)))
-
-    return uuid_to_frameposlist
-
-
 class Guesser():
 
     def __init__(self, uuid_to_pos, classifier):
