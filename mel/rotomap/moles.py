@@ -14,6 +14,8 @@ import mel.lib.math
 
 KEY_IS_CONFIRMED = 'is_uuid_canonical'
 
+import mel.rotomap.mask
+
 
 class RotomapDirectory():
     """RotomapFrame-s for all images in a single rotomap dir."""
@@ -41,6 +43,9 @@ class RotomapDirectory():
     def yield_frames(self):
         for imagepath in self.image_paths:
             yield RotomapFrame(imagepath)
+
+    def __repr__(self):
+        return f'RotomapDirectory({self.path!r})'
 
 
 def iter_all_frames(*search_paths):
@@ -74,8 +79,11 @@ class RotomapFrame():
     def load_image(self):
         return load_image(self.path)
 
+    def load_mask(self):
+        return mel.rotomap.mask.load_or_none(self.path)
+
     def __repr__(self):
-        return f"RotomapFrame('{self.path}')"
+        return f"RotomapFrame({self.path!r})"
 
 
 class MoleData():

@@ -37,6 +37,24 @@ def log10_zero(x):
         return math.log10(x)
 
 
+def biggest_contour(image):
+    _, contours, _ = cv2.findContours(
+        image,
+        cv2.RETR_LIST,
+        cv2.CHAIN_APPROX_SIMPLE)
+
+    max_area = 0
+    max_index = None
+    for i, c in enumerate(contours):
+        if c is not None and len(c) > 5:
+            area = cv2.contourArea(c)
+            if max_index is None or area > max_area:
+                max_area = area
+                max_index = i
+
+    return contours[max_index]
+
+
 def process_contours(mole_regions, original):
 
     final = original.copy()

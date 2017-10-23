@@ -20,4 +20,5 @@ setuptools.setup(
             'mel-debug=mel.cmddebug.meldebug:main',
         ]
     },
+    python_requires='>=3.6',
 )

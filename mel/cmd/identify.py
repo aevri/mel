@@ -1,18 +1,17 @@
-"""Automatically mask rotomap images."""
+"""Guess which mole is which in a rotomap image."""
 
-import cv2
 
-import mel.lib.common
-import mel.lib.fs
-import mel.lib.ui
-import mel.rotomap.mask
+import json
+
+import mel.lib.math
+import mel.rotomap.relate
 
 
 def setup_parser(parser):
     parser.add_argument(
         'TARGET',
         nargs='+',
-        help="Paths to images to automask.")
+        help="Paths to images to identify.")
     parser.add_argument(
         '--verbose',
         '-v',
