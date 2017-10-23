@@ -108,7 +108,7 @@ def make_argparse_rotomap_directory(path):
 def load_image(path):
     image = cv2.imread(str(path))
     if image is None:
-        raise Exception('Failed to load image: {}'.format(path))
+        raise Exception(f'Failed to load image: "{path}"')
 
     return image
 
