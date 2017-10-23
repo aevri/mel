@@ -109,8 +109,7 @@ def load_image_moles(image_path):
 
     moles = []
     if moles_path.exists():
-        with moles_path.open() as moles_file:
-            moles = json.load(moles_file)
+        moles = load_json(moles_path)
 
     for m in moles:
         if KEY_IS_CONFIRMED not in m:
@@ -131,16 +130,25 @@ def normalise_moles(moles):
 
 def save_image_moles(moles, image_path):
     moles_path = image_path + '.json'
-    with open(moles_path, 'w') as moles_file:
+    save_json(moles_path, moles)
+
+
+def load_json(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def save_json(path, data):
+    with open(path, 'w') as f:
         json.dump(
-            moles,
-            moles_file,
+            data,
+            f,
             indent=4,
             separators=(',', ': '),
             sort_keys=True)
 
         # There's no newline after dump(), add one here for happier viewing
-        print(file=moles_file)
+        print(file=f)
 
 
 def add_mole(moles, x, y, mole_uuid=None):

@@ -4,6 +4,7 @@
 import json
 
 import mel.lib.math
+import mel.rotomap.moles
 import mel.rotomap.relate
 
 
@@ -42,8 +43,8 @@ def pairwise(iterable):
 
 def process_pair(from_path, to_path):
 
-    from_moles = load_json(from_path)
-    to_moles = load_json(to_path)
+    from_moles = mel.rotomap.moles.load_json(from_path)
+    to_moles = mel.rotomap.moles.load_json(to_path)
 
     pairs = mel.rotomap.relate.best_offset_theory(
         from_moles, to_moles)
