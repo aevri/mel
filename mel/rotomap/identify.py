@@ -7,6 +7,7 @@ import cv2
 import numpy
 
 import mel.lib.ellipsespace
+import mel.lib.kde
 import mel.lib.moleimaging
 import mel.lib.priorityq
 
