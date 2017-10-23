@@ -12,9 +12,9 @@ import numpy
 
 import mel.lib.math
 
-KEY_IS_CONFIRMED = 'is_uuid_canonical'
-
 import mel.rotomap.mask
+
+KEY_IS_CONFIRMED = 'is_uuid_canonical'
 
 
 class RotomapDirectory():
