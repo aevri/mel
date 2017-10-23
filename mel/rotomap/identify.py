@@ -376,7 +376,7 @@ class MoleRelativeClassifier():
 
 def frame_to_uuid_to_pos(frame):
     mask = frame.load_mask()
-    contour = biggest_contour(mask)
+    contour = mel.lib.moleimaging.biggest_contour(mask)
     ellipse = cv2.fitEllipse(contour)
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
@@ -428,22 +428,3 @@ def uuidtopos_to_numclose(uuid_to_pos):
         )
         uuid_to_numclose[uuid_] = num_close
     return uuid_to_numclose
-
-
-def biggest_contour(mask):
-    _, contours, _ = cv2.findContours(
-        mask,
-        cv2.RETR_LIST,
-        cv2.CHAIN_APPROX_SIMPLE)
-
-    max_area = 0
-    max_index = None
-    for i, c in enumerate(contours):
-        if c is not None and len(c) > 5:
-            area = cv2.contourArea(c)
-            if max_index is None or area > max_area:
-                max_area = area
-                max_index = i
-
-    # TODO: actually get the biggest
-    return contours[max_index]
