@@ -1,12 +1,15 @@
 """Kernel Density Estimate."""
 
-import scipy.linalg
-import scipy.stats
-
-
 class Kde():
 
     def __init__(self, training_data):
+
+        # These imports take quite a long time. At the time of writing this is
+        # the only place we need them, so avoid paying the cost if we can by
+        # moving them into the only method that uses them.
+        import scipy.linalg
+        import scipy.stats
+
         self.len = training_data.shape[-1]
 
         if self.len < 3:
