@@ -107,6 +107,13 @@ def setup_parser(parser):
         '--copy-to-clipboard',
         action='store_true',
         help='Copy UUID to the clipboard, as well as printing. Mac OSX only.')
+    parser.add_argument(
+        '--advance-n-frames',
+        '--skip',
+        type=int,
+        metavar='N',
+        default=None,
+        help="Start with the image with the specified index, instead of 0.")
 
 
 class MoveController():
@@ -532,6 +539,9 @@ def process_args(args):
         args.ROTOMAP, args.display_width, args.display_height)
 
     mel.lib.ui.bring_python_to_front()
+
+    if args.advance_n_frames:
+        editor.show_next_n(args.advance_n_frames)
 
     controller = Controller(editor, args.follow, args.copy_to_clipboard)
 

@@ -633,6 +633,12 @@ class Editor:
         self.moledata.increment()
         self.show_current()
 
+    def show_next_n(self, number_to_advance):
+        for i in range(number_to_advance):
+            self.moledata.increment()
+            self.moledata.get_image()
+        self.show_current()
+
     def add_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y)
