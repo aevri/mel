@@ -188,7 +188,7 @@ class MoleMarkerOverlay():
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
             colours = self._uuid_to_tricolour(mole['uuid'])
-            if mole['is_uuid_canonical']:
+            if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
                 draw_mole(marker_image, x, y, colours)
             else:
                 draw_non_canonical_mole(marker_image, x, y, colours)
@@ -731,7 +731,7 @@ class MoleData:
             for m in moles:
                 if m['uuid'] == from_uuid:
                     m['uuid'] = to_uuid
-                    m['is_uuid_canonical'] = True
+                    m[mel.rotomap.moles.KEY_IS_CONFIRMED] = True
             mel.rotomap.moles.save_image_moles(moles, image_path)
 
         image_path = self._path_list[self._list_index]

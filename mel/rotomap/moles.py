@@ -12,6 +12,8 @@ import numpy
 
 import mel.lib.math
 
+KEY_IS_CONFIRMED = 'is_uuid_canonical'
+
 
 class RotomapDirectory():
     """RotomapFrame-s for all images in a single rotomap dir."""
@@ -111,8 +113,8 @@ def load_image_moles(image_path):
             moles = json.load(moles_file)
 
     for m in moles:
-        if 'is_uuid_canonical' not in m:
-            m['is_uuid_canonical'] = True
+        if KEY_IS_CONFIRMED not in m:
+            m[KEY_IS_CONFIRMED] = True
 
     for m in moles:
         m['x'] = int(m['x'])
@@ -151,7 +153,7 @@ def add_mole(moles, x, y, mole_uuid=None):
         'x': x,
         'y': y,
         'uuid': mole_uuid,
-        'is_uuid_canonical': is_uuid_canonical,
+        KEY_IS_CONFIRMED: is_uuid_canonical,
     })
 
 
@@ -195,7 +197,7 @@ def set_nearest_mole_uuid(moles, x, y, mole_uuid, is_canonical=True):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         moles[nearest_index]['uuid'] = mole_uuid
-        moles[nearest_index]['is_uuid_canonical'] = is_canonical
+        moles[nearest_index][KEY_IS_CONFIRMED] = is_canonical
 
 
 def get_nearest_mole_uuid(moles, x, y):

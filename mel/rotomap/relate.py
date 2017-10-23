@@ -66,7 +66,7 @@ def draw_non_canonical_mole(image, x, y, colour):
 def draw_mole(image, mole, colour):
     x = mole['x']
     y = mole['y']
-    if mole['is_uuid_canonical']:
+    if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
         draw_canonical_mole(image, x, y, colour)
     else:
         draw_non_canonical_mole(image, x, y, colour)
