@@ -1,6 +1,7 @@
 """Guess which mole is which in a rotomap image."""
 
 import collections
+import copy
 import itertools
 
 import mel.rotomap.moles
@@ -71,18 +72,18 @@ def process_args(args):
 
         cost, old_to_new = mel.rotomap.identify.best_match_combination(guesser)
 
-        # TODO: we need to actually handle this for the new mole or incomplete
-        # mapping cases.
-        assert not any(x is None for x in old_to_new.values())
-
-        # Avoid overlapping transitive mappings by constructing an entirely new
-        # mole dict.
-        new_moles = {
-            new: frame.moledata.uuid_moles[old]
-            for old, new in old_to_new.items()
-            if new is not None
-        }
-
         import pprint
         print('Cost', cost)
         pprint.pprint(old_to_new)
+
+        new_id_set = set(old_to_new.values())
+        new_moles = copy.deepcopy(frame.moles)
+        for mole in new_moles:
+            old_id = mole['uuid']
+            new_id = old_to_new[old_id]
+            if new_id is not None:
+                mole['uuid'] = new_id
+            elif old_id in new_id_set:
+                raise Exception(f'{frame.path}: would duplicate {old_id}')
+
+        mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
