@@ -155,6 +155,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     state_q = mel.lib.priorityq.PriorityQueue()
     state_q.push(1, guesser.initial_state())
 
+    seen_set = set()
+
     deepest = 0
     most_correct = 0
     count = 0
@@ -194,7 +196,11 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         # Nope, advance states.
         for new_cost, new_state in guesser.yield_next_states(
                 total_cost, state):
-            state_q.push(new_cost, new_state)
+
+            hashable_state = tuple(sorted(new_state.items()))
+            if (new_cost, hashable_state) not in seen_set:
+                state_q.push(new_cost, new_state)
+                seen_set.add((new_cost, hashable_state))
 
         if not state_q:
             # This is the last and apparently best option.
@@ -208,6 +214,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
             # TODO: mark new moles or update contract to say some can be None
             return total_cost, state
 
+    total_cost, state = state_q.pop()
+    return total_cost, state
     raise LookupError(
         f'Could not find a best match in under {max_iterations:,} iterations.')
 
