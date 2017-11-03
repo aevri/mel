@@ -158,12 +158,24 @@ def make_cost_state(cost, state):
     return (cost, count_nonevals(state)), state
 
 
+class DuplicateDetector():
+
+    def __init__(self):
+        self.seen = set()
+
+    def has_seen(self, *args):
+        return hash(args) in self.seen
+
+    def see(self, *args):
+        self.seen.add(hash(args))
+
+
 def best_match_combination(guesser, *, max_iterations=10**5):
 
     state_q = mel.lib.priorityq.PriorityQueue()
     state_q.push(*make_cost_state(1, guesser.initial_state()))
 
-    seen_set = set()
+    seen = DuplicateDetector()
 
     deepest = 0
     most_correct = 0
@@ -206,9 +218,9 @@ def best_match_combination(guesser, *, max_iterations=10**5):
                 total_cost, state):
 
             hashable_state = tuple(sorted(new_state.items()))
-            if (new_cost, hashable_state) not in seen_set:
+            if not seen.has_seen(new_cost, hashable_state):
                 state_q.push(*make_cost_state(new_cost, new_state))
-                seen_set.add((new_cost, hashable_state))
+                seen.see(new_cost, hashable_state)
 
         if not state_q:
             # This is the last and apparently best option.
