@@ -3,6 +3,9 @@
 import collections
 import copy
 import itertools
+import json
+
+import numpy
 
 import mel.rotomap.moles
 import mel.rotomap.identify
@@ -22,26 +25,67 @@ def setup_parser(parser):
         default=[],
         help="Paths to rotomaps to read for reference.")
     parser.add_argument(
+        '--cache',
+        '-c',
+        metavar='PATH',
+        help="Path to cache training data. Will write if sources suppled, "
+             "will read otherwise."
+    )
+    parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
         help="Print information about the processing.")
 
 
+def transformed_frames_to_uuid_frameposlist(uuid_to_frameposlist, pos_fn):
+    out_uuid_to_frameposlist = {}
+    for uuid_, frameposlist in uuid_to_frameposlist.items():
+        out_frameposlist = []
+        for frame, pos in frameposlist:
+            out_frameposlist.append((frame, pos_fn(pos)))
+        out_uuid_to_frameposlist[uuid_] = out_frameposlist
+
+    return out_uuid_to_frameposlist
+
+
+def save_frames_to_uuid_frameposlist(uuid_to_frameposlist, path):
+    data = transformed_frames_to_uuid_frameposlist(uuid_to_frameposlist, list)
+    with open(path, 'w') as f:
+        json.dump(data, f)
+
+
+def load_frames_to_uuid_frameposlist(path):
+    with open(path) as f:
+        data = json.load(f)
+    return transformed_frames_to_uuid_frameposlist(data, numpy.array)
+
+
 def process_args(args):
 
-    if args.verbose:
-        print('Loading ..')
+    if args.cache and not args.source:
+        if args.verbose:
+            print('Reading cache ..')
+            uuid_to_frameposlist = load_frames_to_uuid_frameposlist(args.cache)
+    else:
+        if args.verbose:
+            print('Loading from sources ..')
 
-    training_frames = itertools.chain.from_iterable(
-        x.yield_frames() for x in args.source)
+        training_frames = itertools.chain.from_iterable(
+            x.yield_frames() for x in args.source)
+
+        uuid_to_frameposlist = mel.rotomap.moles.frames_to_uuid_frameposlist(
+            training_frames)
+
+        if args.cache:
+            if args.verbose:
+                print('Writing cache ..')
+                save_frames_to_uuid_frameposlist(
+                    uuid_to_frameposlist, args.cache)
 
     target_frames = [
         mel.rotomap.moles.RotomapFrame(x) for x in args.TARGET_IMAGE
     ]
-
-    uuid_to_frameposlist = mel.rotomap.moles.frames_to_uuid_frameposlist(
-        itertools.chain(training_frames, target_frames))
 
     if args.verbose:
         print('Training ..')
