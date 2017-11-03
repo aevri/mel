@@ -150,10 +150,18 @@ class Guesser():
                 yield cost, new_state
 
 
+def count_nonevals(d):
+    return sum(1 for x in d.values() if x is None)
+
+
+def make_cost_state(cost, state):
+    return (cost, count_nonevals(state)), state
+
+
 def best_match_combination(guesser, *, max_iterations=10**5):
 
     state_q = mel.lib.priorityq.PriorityQueue()
-    state_q.push(1, guesser.initial_state())
+    state_q.push(*make_cost_state(1, guesser.initial_state()))
 
     seen_set = set()
 
@@ -163,7 +171,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     while count != max_iterations:
 
         # Advance best state.
-        total_cost, state = state_q.pop()
+        (total_cost, _), state = state_q.pop()
 
         count += 1
         should_report = 0 == count % 10000
@@ -199,7 +207,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
             hashable_state = tuple(sorted(new_state.items()))
             if (new_cost, hashable_state) not in seen_set:
-                state_q.push(new_cost, new_state)
+                state_q.push(*make_cost_state(new_cost, new_state))
                 seen_set.add((new_cost, hashable_state))
 
         if not state_q:
@@ -214,7 +222,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
             # TODO: mark new moles or update contract to say some can be None
             return total_cost, state
 
-    total_cost, state = state_q.pop()
+    (total_cost, _), state = state_q.pop()
     return total_cost, state
     raise LookupError(
         f'Could not find a best match in under {max_iterations:,} iterations.')
