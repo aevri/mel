@@ -115,7 +115,7 @@ def process_args(args):
             uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
 
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
-            guesser, max_iterations=2*10**5)
+            guesser, max_iterations=1*10**5)
 
         import pprint
         print('Cost', cost)
