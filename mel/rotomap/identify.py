@@ -160,11 +160,6 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     count = 0
     while count != max_iterations:
 
-        if not state_q:
-            # If we ran out of moles to match against, this must be a new mole.
-            # This isn't the only way we can detect a new mole.
-            raise NotImplementedError("Ran out of options!")
-
         # Advance best state.
         total_cost, state = state_q.pop()
 
