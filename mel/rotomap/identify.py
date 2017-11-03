@@ -232,13 +232,13 @@ class ColdGuessMoleClassifier():
 
         self.uuids = tuple(uuid_to_poslist.keys())
 
-        self.frames = collections.defaultdict(dict)
+        frames = collections.defaultdict(dict)
         for uuid_, frameposlist in uuid_to_frameposlist.items():
             for frame, pos in frameposlist:
-                self.frames[frame][uuid_] = pos
+                frames[frame][uuid_] = pos
 
         uuid_to_neighbourlist = collections.defaultdict(list)
-        for uuid_to_pos in self.frames.values():
+        for uuid_to_pos in frames.values():
             for uuid_, num_close in uuidtopos_to_numclose(uuid_to_pos).items():
                 uuid_to_neighbourlist[uuid_].append(num_close)
 
