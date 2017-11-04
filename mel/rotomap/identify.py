@@ -84,7 +84,7 @@ class Guesser():
                     self.a_to_bc[a][b] = cost
 
     def initial_state(self):
-        return {
+        return 1, {
             a: a if a in self.canonical_uuid_set else None
             for a in self.a_to_bc
         }
@@ -170,13 +170,45 @@ class DuplicateDetector():
         self.seen.add(hash(args))
 
 
+class StateFormatter():
+
+    def __init__(self, initial_state):
+        unfilled_keys = set(
+            key for key, value in initial_state.items() if value is None
+        )
+        self.key_order = tuple(sorted(unfilled_keys))
+        self.value_names = {}
+        self.name_count = 0
+
+    def name(self, value):
+        if value is None:
+            return '__'
+        name = self.value_names.get(value, None)
+        if name is None:
+            name = '{:>2}'.format(self.name_count)
+            self.name_count += 1
+            self.value_names[value] = name
+        return name
+
+    def __call__(self, count, total_cost, state):
+        s = ' '.join(self.name(state[key]) for key in self.key_order)
+        if isinstance(total_cost, tuple):
+            return f'{count:>6} {total_cost} ({s})'
+        else:
+            return f'{count:>6} {total_cost:>12} ({s})'
+
+
 def best_match_combination(guesser, *, max_iterations=10**5):
 
     state_q = mel.lib.priorityq.PriorityQueue()
-    state_q.push(*make_cost_state(1, guesser.initial_state()))
+    initial_cost, initial_state = guesser.initial_state()
+    formatter = StateFormatter(initial_state)
+    state_q.push(*make_cost_state(initial_cost, initial_state))
 
     seen = DuplicateDetector()
 
+    best_cost = initial_cost
+    best_state = initial_state
     deepest = 0
     most_correct = 0
     count = 0
@@ -187,6 +219,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
         count += 1
         should_report = 0 == count % 10000
+        # should_report = 0 == count % 1
         depth = sum(1 for a, b in state.items() if b is not None)
         correct = sum(1 for a, b in state.items() if a == b)
         if depth > deepest:
@@ -194,23 +227,15 @@ def best_match_combination(guesser, *, max_iterations=10**5):
             should_report = True
         if correct > most_correct:
             most_correct = correct
+            best_cost = total_cost
+            best_state = state
             should_report = True
         if should_report:
-            print(
-                count,
-                total_cost,
-                depth,
-                correct
-            )
+            print(formatter(count, total_cost, state))
 
         # See if we're done.
         if all(state.values()):
-            print(
-                count,
-                total_cost,
-                depth,
-                correct
-            )
+            print(formatter(count, total_cost, state))
             return total_cost, state
 
         # Nope, advance states.
@@ -223,19 +248,14 @@ def best_match_combination(guesser, *, max_iterations=10**5):
                 seen.see(new_cost, hashable_state)
 
         if not state_q:
-            # This is the last and apparently best option.
+            # This is the last option, return the best.
             print('Final option')
-            print(
-                count,
-                total_cost,
-                depth,
-                correct
-            )
+            print(formatter(count, total_cost, state))
             # TODO: mark new moles or update contract to say some can be None
-            return total_cost, state
+            return best_cost, best_state
 
     (total_cost, _), state = state_q.pop()
-    return total_cost, state
+    return best_cost, best_state
     raise LookupError(
         f'Could not find a best match in under {max_iterations:,} iterations.')
 

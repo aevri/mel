@@ -132,3 +132,44 @@ def process_args(args):
                 raise Exception(f'{frame.path}: would duplicate {old_id}')
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+
+
+def _process_args(args):
+    cost, old_to_new = mel.rotomap.identify.best_match_combination(Guesser())
+
+    import pprint
+    print('Cost', cost)
+    pprint.pprint(old_to_new)
+
+
+class Guesser():
+
+    def __init__(self):
+        pass
+
+    def initial_state(self):
+        slots = 24
+        state = {}
+        for i in range(slots):
+            state[str(i)] = None
+        return (2 ** slots, slots, 2), state
+
+    def yield_next_states(self, total_cost, state):
+        unfilled = tuple(k for k, v in state.items() if v is None)
+        guess = 2 ** (len(unfilled) - 1)
+        num_unfilled = len(unfilled) - 1
+        for u in unfilled:
+            yield (
+                (total_cost[2] * 2 * guess, num_unfilled, total_cost[2] * 2),
+                updated(state, u, u)
+            )
+            yield (
+                (total_cost[2] * 100 * guess, num_unfilled, total_cost[2] * 100),
+                updated(state, u, u + '_wrong')
+            )
+
+
+def updated(d, key, value):
+    new_d = dict(d)
+    new_d[key] = value
+    return new_d
