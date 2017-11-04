@@ -84,7 +84,8 @@ class Guesser():
                     self.a_to_bc[a][b] = cost
 
     def initial_state(self):
-        return 1, {
+        num_to_fill = len(self.a_to_bc) - len(self.canonical_uuid_set)
+        return (1, num_to_fill), {
             a: a if a in self.canonical_uuid_set else None
             for a in self.a_to_bc
         }
@@ -98,10 +99,10 @@ class Guesser():
             return
 
         already_taken = set(filled.values())
+        not_taken = set(state.keys()) - already_taken
+        num_not_taken = len(not_taken) - 1
 
-        for a, b in state.items():
-            if b is not None:
-                continue
+        for a in not_taken:
 
             uuid_for_pos = next(
                 uuid_
@@ -112,7 +113,7 @@ class Guesser():
             num_added = 0
             for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
                 if b not in already_taken:
-                    new_cost = total_cost * cost
+                    new_cost = (total_cost[0] * cost, num_not_taken)
                     new_state = dict(state)
                     new_state[a] = b
 
@@ -129,13 +130,14 @@ class Guesser():
 
 
     def yield_next_states_cold(self, total_cost, state):
+        num_not_taken = len(state)
         for a, b in state.items():
             if b is not None:
                 raise Exception('b must be None')
 
             num_added = 0
             for b, cost in self.a_to_bc[a].items():
-                new_cost = total_cost * cost
+                new_cost = (total_cost[0] * cost, num_not_taken)
                 new_state = dict(state)
                 new_state[a] = b
                 yield new_cost, new_state
@@ -147,15 +149,7 @@ class Guesser():
                 # raise NotImplementedError("New mole!")
                 new_state = dict(state)
                 new_state[a] = 'NewMole'
-                yield cost, new_state
-
-
-def count_nonevals(d):
-    return sum(1 for x in d.values() if x is None)
-
-
-def make_cost_state(cost, state):
-    return (cost, count_nonevals(state)), state
+                yield total_cost, new_state
 
 
 class DuplicateDetector():
@@ -203,7 +197,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     state_q = mel.lib.priorityq.PriorityQueue()
     initial_cost, initial_state = guesser.initial_state()
     formatter = StateFormatter(initial_state)
-    state_q.push(*make_cost_state(initial_cost, initial_state))
+    state_q.push(initial_cost, initial_state)
 
     seen = DuplicateDetector()
 
@@ -215,7 +209,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     while count != max_iterations:
 
         # Advance best state.
-        (total_cost, _), state = state_q.pop()
+        total_cost, state = state_q.pop()
 
         count += 1
         should_report = 0 == count % 10000
@@ -244,7 +238,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
             hashable_state = tuple(sorted(new_state.items()))
             if not seen.has_seen(new_cost, hashable_state):
-                state_q.push(*make_cost_state(new_cost, new_state))
+                state_q.push(new_cost, new_state)
                 seen.see(new_cost, hashable_state)
 
         if not state_q:
