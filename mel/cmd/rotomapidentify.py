@@ -4,6 +4,7 @@ import collections
 import copy
 import itertools
 import json
+import uuid
 
 import numpy
 
@@ -129,11 +130,9 @@ def process_args(args):
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
-        guesser = mel.rotomap.identify.Guesser(
-            uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
 
-        cost, old_to_new = mel.rotomap.identify.best_match_combination(
-            guesser, max_iterations=1*10**5)
+        cost, old_to_new = guess_old_to_new(
+            uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
 
         import pprint
         print('Cost', cost)
@@ -150,6 +149,79 @@ def process_args(args):
                 raise Exception(f'{frame.path}: would duplicate {old_id}')
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+
+
+def guess_old_to_new(
+        uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set):
+
+    max_unknowns = 8
+
+    remap_stack = []
+
+    uuid_to_pos = dict(uuid_to_pos)
+    reduced_uuid_to_pos = dict(uuid_to_pos)
+    canonical_uuid_set = set(canonical_uuid_set)
+
+    final_run = False
+    while not final_run:
+
+        unknown_uuids = set(uuid_to_pos.keys()) - canonical_uuid_set
+        if len(unknown_uuids) > max_unknowns:
+            accept_uuids = list(unknown_uuids)[:max_unknowns]
+            reduced_uuid_to_pos = {
+                key: value
+                for key, value in uuid_to_pos.items()
+                if key in canonical_uuid_set or key in accept_uuids
+            }
+        else:
+            reduced_uuid_to_pos = uuid_to_pos
+            final_run = True
+
+        guesser = mel.rotomap.identify.Guesser(
+            reduced_uuid_to_pos,
+            cold_classifier,
+            warm_classifier,
+            canonical_uuid_set)
+
+        cost, old_to_new = mel.rotomap.identify.best_match_combination(guesser)
+
+        print('Num canon pre:', len(canonical_uuid_set))
+        canonical_uuid_set = set(
+            new for old, new in old_to_new.items()
+            if new is not None
+        )
+
+        print('Num canon:', len(canonical_uuid_set))
+
+        remap_stack.append({})
+        new_uuid_to_pos = {}
+        for old_uuid, pos in uuid_to_pos.items():
+            if old_uuid not in old_to_new:
+                if old_uuid in new_uuid_to_pos:
+                    uuid_ = uuid.uuid4().hex
+                    remap_stack[-1][uuid_] = old_uuid
+                    new_uuid_to_pos[uuid_] = pos
+                else:
+                    remap_stack[-1][old_uuid] = old_uuid
+                    new_uuid_to_pos[old_uuid] = pos
+            else:
+                new_uuid = old_to_new[old_uuid]
+                if new_uuid in new_uuid_to_pos:
+                    dup_pos = new_uuid_to_pos[new_uuid]
+                    dup_uuid = uuid.uuid4().hex
+                    remap_stack[-1][dup_uuid] = new_uuid
+                    new_uuid_to_pos[dup_uuid] = dup_pos
+                remap_stack[-1][new_uuid] = old_uuid
+                new_uuid_to_pos[new_uuid] = pos
+        uuid_to_pos = new_uuid_to_pos
+
+    for remap in reversed(remap_stack[:-1]):
+        old_to_new = {
+            remap[old]: new
+            for old, new in old_to_new.items()
+        }
+
+    return cost, old_to_new
 
 
 def _process_args(args):
