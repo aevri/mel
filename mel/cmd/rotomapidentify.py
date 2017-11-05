@@ -12,7 +12,11 @@ import mel.rotomap.identify
 
 
 # TODO: tackle large amounts of unknowns in chunks, grouped by proximity to
-# known moles.
+# known moles. Perhaps the idea of 'adjacency' is important.
+
+# TODO: define cost function based on nearest neighbour (later: neighbours
+# within proportion of nearest). Provide lower-bound estimate by looking at all
+# possibilities for nearest neighbour and their lowest cost for this mole.
 
 # TODO: consider that we don't have a real cost function and that everything is
 # currently an estimate instead.
