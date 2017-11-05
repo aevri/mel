@@ -11,6 +11,20 @@ import mel.rotomap.moles
 import mel.rotomap.identify
 
 
+# TODO: tackle large amounts of unknowns in chunks, grouped by proximity to
+# known moles.
+
+# TODO: consider that we don't have a real cost function and that everything is
+# currently an estimate instead.
+#   o Think about what a real cost function would look like
+#       o Try implementing a model where the cost of a mole guess is determined
+#       finally, only by its nearest neighbour. Costs can be updated as we go.
+#       This might give us muliple levels of estimates -
+#       (impossible est., nearest known guesses, nearest guesses).
+#   o Think about what algorithms could deal with just an estimate
+#   o Perhaps the estimate / cost should be identical for identical states,
+#   history maybe should not matter.
+
 def setup_parser(parser):
     parser.add_argument(
         'TARGET_IMAGE',
