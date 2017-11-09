@@ -106,20 +106,20 @@ class PosGuesser():
         for a, b in state.items():
             if a in self.canonical_uuid_set:
                 continue
+            uuid_for_position = next(
+                uuid_
+                for uuid_ in self.closest_uuids(a))
+            uuid_for_history = state[uuid_for_position]
             if b is not None:
-                lb *= self.lower_bound_mole(state, already_taken, a, b)
+                lb *= self.lower_bound_mole(
+                    uuid_for_position, uuid_for_history, already_taken, a, b)
             else:
-                lb *= self.lower_bound_unk_mole(state, already_taken, a)
+                lb *= self.lower_bound_unk_mole(
+                    uuid_for_position, uuid_for_history, already_taken, a)
 
         return lb
 
-    def lower_bound_mole(self, state, already_taken, a, b):
-
-        uuid_for_position = next(
-            uuid_
-            for uuid_ in self.closest_uuids(a))
-
-        uuid_for_history = state[uuid_for_position]
+    def lower_bound_mole(self, uuid_for_position, uuid_for_history, already_taken, a, b):
         if uuid_for_history is not None:
             return self.cost_for_guess(
                 uuid_for_history, uuid_for_position, a, b)
@@ -142,13 +142,7 @@ class PosGuesser():
         )
         return min(costs, default=MAX_MOLE_COST)
 
-
-    def lower_bound_unk_mole(self, state, already_taken, a):
-        uuid_for_position = next(
-            uuid_
-            for uuid_ in self.closest_uuids(a))
-        uuid_for_history = state[uuid_for_position]
-
+    def lower_bound_unk_mole(self, uuid_for_position, uuid_for_history, already_taken, a):
         cost_list = []
         if uuid_for_history is not None:
             for b in self.possible_uuid_set - already_taken:
