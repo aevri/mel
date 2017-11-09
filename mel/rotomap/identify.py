@@ -100,13 +100,54 @@ class PosGuesser():
         filled = {a: b for a, b in state.items() if b is not None}
         already_taken = set(filled.values())
 
-        lb = 0
+        lb = 1
 
         for a, b in state.items():
-            if b is None:
+            if a in self.canonical_uuid_set:
                 continue
+            if b is not None:
+                lb *= self.lower_bound_mole(state, already_taken, a, b)
             else:
-                continue
+                lb *= self.lower_bound_unk_mole(already_taken, a)
+
+    def lower_bound_mole(self, state, already_taken, a, b):
+
+        uuid_for_pos = next(
+            uuid_
+            for uuid_ in self.closest_uuids(a))
+
+        uuid_for_history = state[uuid_for_pos]
+        if uuid_for_history is not None:
+            return self.cost_for_guess(
+                uuid_for_history, uuid_for_position, a, b)
+        else:
+            return self.lower_bound_guess(
+                already_taken, uuid_for_history, uuid_for_position, a, b)
+
+    def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
+        guesses = self.pos_guess(self, uuid_for_history, uuid_for_position, a)
+        for g_b, g_cost in guesses:
+            if b == g_b:
+                return g_cost
+        raise Exception('No known cost')
+
+    def lower_bound_guess(
+            self, already_taken, uuid_for_history, uuid_for_position, a, b):
+        guesses = self.pos_guess(self, uuid_for_history, uuid_for_position, a)
+        return min(cost for g, cost in guesses if g == b)
+
+    def lower_bound_unk_mole(self, already_taken, a):
+        uuid_for_position = next(
+            uuid_
+            for uuid_ in self.closest_uuids(a))
+        cost_list = []
+        for uuid_for_history in self.possible_uuid_set - already_taken:
+            guesses = self.pos_guess(
+                self, uuid_for_history, uuid_for_position, a)
+            cost_list.append(
+                min(cost for cost, b in guesses if b not in already_taken)
+            )
+        return min(cost_list)
 
 
 class Guesser():
