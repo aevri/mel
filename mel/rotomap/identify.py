@@ -136,11 +136,12 @@ class PosGuesser():
         return MAX_MOLE_COST
 
     def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
-        cost_list = []
-        for uuid_for_history in self.possible_uuid_set - already_taken:
-            cost_list.append(
-                self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
-        return min(cost_list, default=MAX_MOLE_COST)
+        costs = (
+            self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
+            for uuid_for_history in self.possible_uuid_set - already_taken
+        )
+        return min(costs, default=MAX_MOLE_COST)
+
 
     def lower_bound_unk_mole(self, state, already_taken, a):
         uuid_for_position = next(
