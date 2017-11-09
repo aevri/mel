@@ -17,6 +17,7 @@ _MAGIC_P_THRESHOLD = 0.00001
 
 _MAGIC_CLOSE_DISTANCE = 0.1
 
+MAX_MOLE_COST = 10 ** 5
 
 def p_to_cost(p):
     # return int(10 / p) - 9
@@ -47,12 +48,12 @@ class PosGuesser():
             pos = self.uuid_to_pos[uuid_to_guess]
             return tuple(
                 (b, p_to_cost(p * q))
-                for b, p, q in self.warm_classifier(
+                for b, p, q in self.pos_classifier(
                     uuid_for_history, ref_pos, pos)
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
-        self.warm = warm
+        self.pos_guess = pos_guess
 
         @functools.lru_cache(maxsize=128)
         def closest_uuids(uuid_for_position):
@@ -66,9 +67,9 @@ class PosGuesser():
         self.closest_uuids = closest_uuids
 
     def initial_state(self):
-        return {
+        return 1, {
             a: a if a in self.canonical_uuid_set else None
-            for a in self.uuid_for_pos
+            for a in self.uuid_to_pos
         }
 
     def yield_next_states(self, total_cost, state):
@@ -110,13 +111,15 @@ class PosGuesser():
             else:
                 lb *= self.lower_bound_unk_mole(already_taken, a)
 
+        return lb
+
     def lower_bound_mole(self, state, already_taken, a, b):
 
-        uuid_for_pos = next(
+        uuid_for_position = next(
             uuid_
             for uuid_ in self.closest_uuids(a))
 
-        uuid_for_history = state[uuid_for_pos]
+        uuid_for_history = state[uuid_for_position]
         if uuid_for_history is not None:
             return self.cost_for_guess(
                 uuid_for_history, uuid_for_position, a, b)
@@ -125,16 +128,19 @@ class PosGuesser():
                 already_taken, uuid_for_history, uuid_for_position, a, b)
 
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess(self, uuid_for_history, uuid_for_position, a)
+        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
         for g_b, g_cost in guesses:
             if b == g_b:
                 return g_cost
-        raise Exception('No known cost')
+        return MAX_MOLE_COST
 
     def lower_bound_guess(
             self, already_taken, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess(self, uuid_for_history, uuid_for_position, a)
-        return min(cost for g, cost in guesses if g == b)
+        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
+        return min(
+            (cost for g, cost in guesses if g == b),
+            default=MAX_MOLE_COST
+        )
 
     def lower_bound_unk_mole(self, already_taken, a):
         uuid_for_position = next(
@@ -143,9 +149,12 @@ class PosGuesser():
         cost_list = []
         for uuid_for_history in self.possible_uuid_set - already_taken:
             guesses = self.pos_guess(
-                self, uuid_for_history, uuid_for_position, a)
+                uuid_for_history, uuid_for_position, a)
             cost_list.append(
-                min(cost for cost, b in guesses if b not in already_taken)
+                min(
+                    (cost for b, cost in guesses if b not in already_taken),
+                    default=MAX_MOLE_COST
+                )
             )
         return min(cost_list)
 

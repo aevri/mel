@@ -120,7 +120,7 @@ def process_args(args):
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
         uuid_to_frameposlist, box_radius)
 
-    possible_uuid_set = set(uuid_to_frameposlist.values())
+    possible_uuid_set = set(uuid_to_frameposlist.keys())
     for frame in target_frames:
         if args.verbose:
             print('Processing', frame.path, '..')
