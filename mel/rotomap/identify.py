@@ -109,7 +109,7 @@ class PosGuesser():
             if b is not None:
                 lb *= self.lower_bound_mole(state, already_taken, a, b)
             else:
-                lb *= self.lower_bound_unk_mole(already_taken, a)
+                lb *= self.lower_bound_unk_mole(state, already_taken, a)
 
         return lb
 
@@ -125,7 +125,7 @@ class PosGuesser():
                 uuid_for_history, uuid_for_position, a, b)
         else:
             return self.lower_bound_guess(
-                already_taken, uuid_for_history, uuid_for_position, a, b)
+                already_taken, uuid_for_position, a, b)
 
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
         guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
@@ -134,28 +134,35 @@ class PosGuesser():
                 return g_cost
         return MAX_MOLE_COST
 
-    def lower_bound_guess(
-            self, already_taken, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
-        return min(
-            (cost for g, cost in guesses if g == b),
-            default=MAX_MOLE_COST
-        )
+    def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
+        cost_list = []
+        for uuid_for_history in self.possible_uuid_set - already_taken:
+            guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
+            cost_list.append(min(
+                (cost for g, cost in guesses if g == b),
+                default=MAX_MOLE_COST
+            ))
+        return min(cost_list, default=MAX_MOLE_COST)
 
-    def lower_bound_unk_mole(self, already_taken, a):
+    def lower_bound_unk_mole(self, state, already_taken, a):
         uuid_for_position = next(
             uuid_
             for uuid_ in self.closest_uuids(a))
+        uuid_for_history = state[uuid_for_position]
+
         cost_list = []
-        for uuid_for_history in self.possible_uuid_set - already_taken:
-            guesses = self.pos_guess(
-                uuid_for_history, uuid_for_position, a)
-            cost_list.append(
-                min(
-                    (cost for b, cost in guesses if b not in already_taken),
-                    default=MAX_MOLE_COST
-                )
-            )
+        if uuid_for_history is not None:
+            for b in self.possible_uuid_set - already_taken:
+                cost_list.append(
+                    self.cost_for_guess(
+                        uuid_for_history, uuid_for_position, a, b))
+        else:
+            for b in self.possible_uuid_set - already_taken:
+                temp_taken = set(already_taken)
+                temp_taken.add(b)
+                cost_list.append(
+                    self.lower_bound_guess(
+                        temp_taken, uuid_for_position, a, b))
         return min(cost_list)
 
 
