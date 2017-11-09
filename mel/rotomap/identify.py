@@ -23,6 +23,95 @@ def p_to_cost(p):
     return int(1 / p)
 
 
+class PosGuesser():
+
+    def __init__(
+            self,
+            uuid_to_pos,
+            pos_classifier,
+            canonical_uuid_set,
+            possible_uuid_set):
+
+        self.uuid_to_pos = uuid_to_pos
+        self.pos_classifier = pos_classifier
+        self.canonical_uuid_set = canonical_uuid_set
+
+        # Note that we want one cache per instance of Guesser. This means that
+        # the values will be correct for the classifiers and positions
+        # provided. Therefore we must create these dynamically.
+
+        @functools.lru_cache(maxsize=1024)
+        def pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess):
+            ref_pos = self.uuid_to_pos[uuid_for_position]
+            pos = self.uuid_to_pos[uuid_to_guess]
+            return tuple(
+                (b, p_to_cost(p * q))
+                for b, p, q in self.warm_classifier(
+                    uuid_for_history, ref_pos, pos)
+                if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
+                # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
+            )
+        self.warm = warm
+
+        @functools.lru_cache(maxsize=128)
+        def closest_uuids(uuid_for_position):
+            ref_pos = self.uuid_to_pos[uuid_for_position]
+            sqdist_uuid_list = sorted(
+                (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
+                for uuid_, pos in self.uuid_to_pos.items()
+                if uuid_ != uuid_for_position
+            )
+            return tuple(uuid_ for _, uuid_ in sqdist_uuid_list)
+        self.closest_uuids = closest_uuids
+
+    def initial_state(self):
+        return {
+            a: a if a in self.canonical_uuid_set else None
+            for a in self.uuid_for_pos
+        }
+
+    def yield_next_states(self, total_cost, state):
+        filled = {a: b for a, b in state.items() if b is not None}
+
+        if not filled:
+            raise Exception('Must have canonical moles')
+            return
+
+        already_taken = set(filled.values())
+
+        estimate = 1
+        cost = total_cost
+
+        for a, b in state.items():
+            if b is not None:
+                continue
+
+            self.estimate(state, a)
+            uuid_for_pos = next(
+                uuid_
+                for uuid_ in self.closest_uuids(a)
+                if state[uuid_] is not None)
+            uuid_for_history = state[uuid_for_pos]
+
+            num_added = 0
+            for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
+                if b not in already_taken:
+                    new_cost = total_cost * cost
+                    new_state = dict(state)
+                    new_state[a] = b
+
+                    yield new_cost, new_state
+                    num_added += 1
+
+            # if not num_added:
+            #     # If we ran out of moles to match against, this must be a new
+            #     # mole. This isn't the only way we can detect a new mole.
+            #     # raise NotImplementedError("New mole!")
+            #     new_state = dict(state)
+            #     new_state[a] = 'NewMole'
+            #     yield total_cost, new_state
+
+
 class Guesser():
 
     def __init__(

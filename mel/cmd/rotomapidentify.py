@@ -120,6 +120,7 @@ def process_args(args):
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
         uuid_to_frameposlist, box_radius)
 
+    possible_uuid_set = set(uuid_to_frameposlist.values())
     for frame in target_frames:
         if args.verbose:
             print('Processing', frame.path, '..')
@@ -130,9 +131,16 @@ def process_args(args):
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
+        guesser = mel.rotomap.identify.PosGuesser(
+            uuid_to_pos,
+            warm_classifier,
+            canonical_uuid_set,
+            possible_uuid_set)
 
-        cost, old_to_new = guess_old_to_new(
-            uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
+        # cost, old_to_new = guess_old_to_new(
+        #     uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
+        cost, old_to_new = mel.rotomap.identify.best_match_combination(
+            guesser, max_iterations=1*10**5)
 
         import pprint
         print('Cost', cost)
