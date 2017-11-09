@@ -35,6 +35,7 @@ class PosGuesser():
         self.uuid_to_pos = uuid_to_pos
         self.pos_classifier = pos_classifier
         self.canonical_uuid_set = canonical_uuid_set
+        self.possible_uuid_set = possible_uuid_set
 
         # Note that we want one cache per instance of Guesser. This means that
         # the values will be correct for the classifiers and positions
@@ -79,37 +80,33 @@ class PosGuesser():
 
         already_taken = set(filled.values())
 
-        estimate = 1
-        cost = total_cost
+        # Generate additional states.
 
         for a, b in state.items():
             if b is not None:
                 continue
 
-            self.estimate(state, a)
             uuid_for_pos = next(
                 uuid_
-                for uuid_ in self.closest_uuids(a)
-                if state[uuid_] is not None)
-            uuid_for_history = state[uuid_for_pos]
+                for uuid_ in self.closest_uuids(a))
 
-            num_added = 0
-            for b, cost in self.warm(uuid_for_history, uuid_for_pos, a):
-                if b not in already_taken:
-                    new_cost = total_cost * cost
-                    new_state = dict(state)
-                    new_state[a] = b
+            for b in self.possible_uuid_set - already_taken:
+                new_state = dict(state)
+                new_state[a] = b
+                lower_bound = self.lower_bound(new_state)
+                yield lower_bound, new_state
 
-                    yield new_cost, new_state
-                    num_added += 1
+    def lower_bound(self, state):
+        filled = {a: b for a, b in state.items() if b is not None}
+        already_taken = set(filled.values())
 
-            # if not num_added:
-            #     # If we ran out of moles to match against, this must be a new
-            #     # mole. This isn't the only way we can detect a new mole.
-            #     # raise NotImplementedError("New mole!")
-            #     new_state = dict(state)
-            #     new_state[a] = 'NewMole'
-            #     yield total_cost, new_state
+        lb = 0
+
+        for a, b in state.items():
+            if b is None:
+                continue
+            else:
+                continue
 
 
 class Guesser():
