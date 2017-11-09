@@ -99,7 +99,7 @@ class PosGuesser():
 
     def lower_bound(self, state):
         filled = {a: b for a, b in state.items() if b is not None}
-        already_taken = set(filled.values())
+        already_taken = frozenset(filled.values())
 
         lb = 1
 
@@ -127,6 +127,7 @@ class PosGuesser():
             return self.lower_bound_guess(
                 already_taken, uuid_for_position, a, b)
 
+    @functools.lru_cache(maxsize=1024)
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
         guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
         for g_b, g_cost in guesses:
@@ -162,7 +163,7 @@ class PosGuesser():
                 temp_taken.add(b)
                 cost_list.append(
                     self.lower_bound_guess(
-                        temp_taken, uuid_for_position, a, b))
+                        frozenset(temp_taken), uuid_for_position, a, b))
         return min(cost_list)
 
 
