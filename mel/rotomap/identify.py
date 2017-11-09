@@ -83,6 +83,7 @@ class PosGuesser():
 
         # Generate additional states.
 
+        bounder = Bounder(self.pos_guess, self.closest_uuids, self.possible_uuid_set, self.canonical_uuid_set, already_taken)
         for a, b in state.items():
             if b is not None:
                 continue
@@ -94,8 +95,18 @@ class PosGuesser():
             for b in self.possible_uuid_set - already_taken:
                 new_state = dict(state)
                 new_state[a] = b
-                lower_bound = self.lower_bound(new_state)
+                lower_bound = bounder.lower_bound(new_state)
                 yield lower_bound, new_state
+
+
+class Bounder():
+
+    def __init__(self, pos_guess, closest_uuids, possible_uuid_set, canonical_uuid_set, already_taken):
+        self.pos_guess = pos_guess
+        self.closest_uuids = closest_uuids
+        self.possible_uuid_set = possible_uuid_set
+        self.canonical_uuid_set = canonical_uuid_set
+        self.already_taken = already_taken
 
     def lower_bound(self, state):
         filled = {a: b for a, b in state.items() if b is not None}
