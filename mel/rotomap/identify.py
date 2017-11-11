@@ -146,12 +146,25 @@ class Bounder():
                 return g_cost
         return MAX_MOLE_COST
 
-    def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
+    @functools.lru_cache(maxsize=2)
+    def lower_bound_guess_base(self, uuid_for_position, a, b):
         costs = (
             self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
-            for uuid_for_history in self.possible_uuid_set - already_taken
+            for uuid_for_history in self.possible_uuid_set - self.already_taken
         )
         return min(costs, default=MAX_MOLE_COST)
+
+    def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
+        additional = already_taken - self.already_taken
+        # print(self.already_taken, additional, already_taken)
+        assert len(additional) > 0
+        assert len(additional) == 1
+        assert len(additional) <= 2
+        assert self.already_taken | additional == already_taken
+
+        base = self.lower_bound_guess_base(uuid_for_position, a, b)
+        cost = self.cost_for_guess(additional, uuid_for_position, a, b)
+        return min(base, cost)
 
     def lower_bound_unk_mole(self, uuid_for_position, uuid_for_history, already_taken, a):
         cost_list = []
