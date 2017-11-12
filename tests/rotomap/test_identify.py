@@ -137,6 +137,30 @@ class BounderTestCase(unittest.TestCase):
             }),
             6)
 
+        self.assertEqual(
+            bounder.lower_bound({
+                'sure': 'sure',
+                'pos1': 'id2',
+                'pos2': None
+            }),
+            200)
+
+        self.assertEqual(
+            bounder.lower_bound({
+                'sure': 'sure',
+                'pos1': None,
+                'pos2': 'id1'
+            }),
+            200)
+
+        self.assertEqual(
+            bounder.lower_bound({
+                'sure': 'sure',
+                'pos1': 'id2',
+                'pos2': 'id1'
+            }),
+            200)
+
 
 def make_bounder(
         closest, guesses, non_canonical_uuid_set, canonical_uuid_set):

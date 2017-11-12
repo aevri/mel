@@ -131,7 +131,7 @@ class Bounder():
         self.canonical_uuid_set = canonical_uuid_set
 
     def lower_bound(self, state):
-        already_taken = frozenset(a for a, b in state.items() if b is not None)
+        already_taken = frozenset(b for a, b in state.items() if b is not None)
 
         lb = 1
 
