@@ -114,6 +114,16 @@ class PosGuesser():
                 yield (lower_bound, num_remaining), new_state
 
 
+def trace(func):
+    def wrapper(*args, **kwargs):
+        print(func.__name__, '(', args, kwargs, ')', '...')
+        result = func(*args, **kwargs)
+        print('...', func.__name__, '(', args, kwargs, ')')
+        print('...', '->', result)
+        return result
+    return wrapper
+
+
 class Bounder():
 
     def __init__(
@@ -130,6 +140,7 @@ class Bounder():
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
 
+    # @trace
     def lower_bound(self, state):
         already_taken = frozenset(b for a, b in state.items() if b is not None)
 
@@ -151,10 +162,10 @@ class Bounder():
 
         return lb
 
+    # @trace
     def lower_bound_mole(
             self, uuid_for_history, uuid_for_position, already_taken, a, b):
 
-        print(f"lower_bound_mole({uuid_for_history}, {uuid_for_position}, {already_taken}, {a}, {b})")
         if uuid_for_history is not None:
             return self.cost_for_guess(
                 uuid_for_history, uuid_for_position, a, b)
@@ -162,11 +173,12 @@ class Bounder():
             return self.lower_bound_guess(
                 already_taken, uuid_for_position, a, b)
 
+    # @trace
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
-        print(f"cost_for_guess({uuid_for_history}, {uuid_for_position}, {a}, {b})")
         guesses = self.pos_guess_dict(uuid_for_history, uuid_for_position, a)
         return guesses.get(b, MAX_MOLE_COST)
 
+    # @trace
     def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
         costs = (
             self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
@@ -174,6 +186,7 @@ class Bounder():
         )
         return min(costs, default=MAX_MOLE_COST)
 
+    # @trace
     def lower_bound_unk_mole(
             self, uuid_for_history, uuid_for_position, already_taken, a):
 
@@ -183,6 +196,7 @@ class Bounder():
 
         return self.lower_bound_unk_unk(already_taken, uuid_for_position, a)
 
+    # @trace
     def lower_bound_history(
             self, already_taken, uuid_for_history, uuid_for_position, a):
 
@@ -191,6 +205,7 @@ class Bounder():
             cost for uuid_, cost in guesses if uuid_ not in already_taken)
         return next(valid_costs)
 
+    # @trace
     def lower_bound_unk_unk(self, already_taken, uuid_for_position, a):
         costs = (
             self.lower_bound_history(
