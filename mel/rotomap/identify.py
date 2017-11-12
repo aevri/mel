@@ -24,19 +24,9 @@ def p_to_cost(p):
     return int(1 / p)
 
 
-class PosGuesser():
+class PosGuesserHelper():
 
-    def __init__(
-            self,
-            uuid_to_pos,
-            pos_classifier,
-            canonical_uuid_set,
-            possible_uuid_set):
-
-        self.uuid_to_pos = uuid_to_pos
-        self.pos_classifier = pos_classifier
-        self.canonical_uuid_set = canonical_uuid_set
-        self.possible_uuid_set = possible_uuid_set
+    def __init__(self, uuid_to_pos, pos_classifier):
 
         # Note that we want one cache per instance of Guesser. This means that
         # the values will be correct for the classifiers and positions
@@ -44,11 +34,11 @@ class PosGuesser():
 
         @functools.lru_cache(maxsize=1024)
         def pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess):
-            ref_pos = self.uuid_to_pos[uuid_for_position]
-            pos = self.uuid_to_pos[uuid_to_guess]
+            ref_pos = uuid_to_pos[uuid_for_position]
+            pos = uuid_to_pos[uuid_to_guess]
             guesses = (
                 (b, p_to_cost(p * q))
-                for b, p, q in self.pos_classifier(
+                for b, p, q in pos_classifier(
                     uuid_for_history, ref_pos, pos)
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
@@ -64,31 +54,41 @@ class PosGuesser():
 
         @functools.lru_cache(maxsize=128)
         def closest_uuids(uuid_for_position):
-            ref_pos = self.uuid_to_pos[uuid_for_position]
+            ref_pos = uuid_to_pos[uuid_for_position]
             sqdist_uuid_list = sorted(
                 (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
-                for uuid_, pos in self.uuid_to_pos.items()
+                for uuid_, pos in uuid_to_pos.items()
                 if uuid_ != uuid_for_position
             )
             return tuple(uuid_ for _, uuid_ in sqdist_uuid_list)
         self.closest_uuids = closest_uuids
 
+
+class PosGuesser():
+
+    def __init__(
+            self,
+            uuid_to_pos,
+            pos_classifier,
+            canonical_uuid_set,
+            possible_uuid_set):
+
+        self.pos_uuids = tuple(uuid_to_pos.keys())
+        self.canonical_uuid_set = canonical_uuid_set
+        self.possible_uuid_set = possible_uuid_set
+
+        helper = PosGuesserHelper(uuid_to_pos, pos_classifier)
+        self.pos_guess = helper.pos_guess
+        self.pos_guess_dict = helper.pos_guess_dict
+        self.closest_uuids = helper.closest_uuids
+
     def initial_state(self):
-        return (1, len(self.uuid_to_pos)), {
+        return (1, len(self.pos_uuids)), {
             a: a if a in self.canonical_uuid_set else None
-            for a in self.uuid_to_pos
+            for a in self.pos_uuids
         }
 
     def yield_next_states(self, total_cost, state):
-        filled = {a: b for a, b in state.items() if b is not None}
-
-        if not filled:
-            raise Exception('Must have canonical moles')
-            return
-
-        already_taken = set(filled.values())
-
-        # Generate additional states.
 
         bounder = Bounder(
             self.pos_guess,
@@ -97,7 +97,8 @@ class PosGuesser():
             self.possible_uuid_set,
             self.canonical_uuid_set)
 
-        num_remaining = len(state) - len(already_taken)
+        already_taken = {b for a, b in state.items() if b is not None}
+        num_remaining = 1 + len(state) - len(already_taken)
 
         for a, b in state.items():
             if b is not None:
