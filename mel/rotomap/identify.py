@@ -144,16 +144,17 @@ class Bounder():
             uuid_for_history = state[uuid_for_position]
             if b is not None:
                 lb *= self.lower_bound_mole(
-                    uuid_for_position, uuid_for_history, already_taken, a, b)
+                    uuid_for_history, uuid_for_position, already_taken, a, b)
             else:
                 lb *= self.lower_bound_unk_mole(
-                    uuid_for_position, uuid_for_history, already_taken, a)
+                    uuid_for_history, uuid_for_position, already_taken, a)
 
         return lb
 
     def lower_bound_mole(
-            self, uuid_for_position, uuid_for_history, already_taken, a, b):
+            self, uuid_for_history, uuid_for_position, already_taken, a, b):
 
+        print(f"lower_bound_mole({uuid_for_history}, {uuid_for_position}, {already_taken}, {a}, {b})")
         if uuid_for_history is not None:
             return self.cost_for_guess(
                 uuid_for_history, uuid_for_position, a, b)
@@ -162,6 +163,7 @@ class Bounder():
                 already_taken, uuid_for_position, a, b)
 
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
+        print(f"cost_for_guess({uuid_for_history}, {uuid_for_position}, {a}, {b})")
         guesses = self.pos_guess_dict(uuid_for_history, uuid_for_position, a)
         return guesses.get(b, MAX_MOLE_COST)
 
@@ -173,23 +175,26 @@ class Bounder():
         return min(costs, default=MAX_MOLE_COST)
 
     def lower_bound_unk_mole(
-            self, uuid_for_position, uuid_for_history, already_taken, a):
+            self, uuid_for_history, uuid_for_position, already_taken, a):
 
         if uuid_for_history is not None:
             return self.lower_bound_history(
-                uuid_for_history, uuid_for_position, a)
+                already_taken, uuid_for_history, uuid_for_position, a)
 
         return self.lower_bound_unk_unk(already_taken, uuid_for_position, a)
 
-    def lower_bound_history(self, uuid_for_history, uuid_for_position, a):
-        # TODO: only consider 'b' from the possible set.
+    def lower_bound_history(
+            self, already_taken, uuid_for_history, uuid_for_position, a):
+
         guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
-        best = guesses[0][1] if guesses else MAX_MOLE_COST
-        return best
+        valid_costs = (
+            cost for uuid_, cost in guesses if uuid_ not in already_taken)
+        return next(valid_costs)
 
     def lower_bound_unk_unk(self, already_taken, uuid_for_position, a):
         costs = (
-            self.lower_bound_history(uuid_for_history, uuid_for_position, a)
+            self.lower_bound_history(
+                already_taken, uuid_for_history, uuid_for_position, a)
             for uuid_for_history in self.possible_uuid_set - already_taken
         )
         return min(costs, default=MAX_MOLE_COST)
