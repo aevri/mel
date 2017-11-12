@@ -46,14 +46,21 @@ class PosGuesser():
         def pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess):
             ref_pos = self.uuid_to_pos[uuid_for_position]
             pos = self.uuid_to_pos[uuid_to_guess]
-            return tuple(
+            guesses = (
                 (b, p_to_cost(p * q))
                 for b, p, q in self.pos_classifier(
                     uuid_for_history, ref_pos, pos)
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
+            return tuple(sorted(guesses, key=lambda x: x[1]))
         self.pos_guess = pos_guess
+
+        @functools.lru_cache(maxsize=1024)
+        def pos_guess_dict(uuid_for_history, uuid_for_position, uuid_to_guess):
+            return dict(
+                pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess))
+        self.pos_guess_dict = pos_guess_dict
 
         @functools.lru_cache(maxsize=128)
         def closest_uuids(uuid_for_position):
@@ -67,7 +74,7 @@ class PosGuesser():
         self.closest_uuids = closest_uuids
 
     def initial_state(self):
-        return 1, {
+        return (1, len(self.uuid_to_pos)), {
             a: a if a in self.canonical_uuid_set else None
             for a in self.uuid_to_pos
         }
@@ -83,7 +90,15 @@ class PosGuesser():
 
         # Generate additional states.
 
-        bounder = Bounder(self.pos_guess, self.closest_uuids, self.possible_uuid_set, self.canonical_uuid_set, already_taken)
+        bounder = Bounder(
+            self.pos_guess,
+            self.pos_guess_dict,
+            self.closest_uuids,
+            self.possible_uuid_set,
+            self.canonical_uuid_set)
+
+        num_remaining = len(state) - len(already_taken)
+
         for a, b in state.items():
             if b is not None:
                 continue
@@ -96,21 +111,27 @@ class PosGuesser():
                 new_state = dict(state)
                 new_state[a] = b
                 lower_bound = bounder.lower_bound(new_state)
-                yield lower_bound, new_state
+                yield (lower_bound, num_remaining), new_state
 
 
 class Bounder():
 
-    def __init__(self, pos_guess, closest_uuids, possible_uuid_set, canonical_uuid_set, already_taken):
+    def __init__(
+            self,
+            pos_guess,
+            pos_guess_dict,
+            closest_uuids,
+            possible_uuid_set,
+            canonical_uuid_set):
+
         self.pos_guess = pos_guess
+        self.pos_guess_dict = pos_guess_dict
         self.closest_uuids = closest_uuids
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
-        self.already_taken = already_taken
 
     def lower_bound(self, state):
-        filled = {a: b for a, b in state.items() if b is not None}
-        already_taken = frozenset(filled.values())
+        already_taken = frozenset(a for a, b in state.items() if b is not None)
 
         lb = 1
 
@@ -130,7 +151,9 @@ class Bounder():
 
         return lb
 
-    def lower_bound_mole(self, uuid_for_position, uuid_for_history, already_taken, a, b):
+    def lower_bound_mole(
+            self, uuid_for_position, uuid_for_history, already_taken, a, b):
+
         if uuid_for_history is not None:
             return self.cost_for_guess(
                 uuid_for_history, uuid_for_position, a, b)
@@ -138,49 +161,38 @@ class Bounder():
             return self.lower_bound_guess(
                 already_taken, uuid_for_position, a, b)
 
-    @functools.lru_cache(maxsize=1024)
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
-        for g_b, g_cost in guesses:
-            if b == g_b:
-                return g_cost
-        return MAX_MOLE_COST
+        guesses = self.pos_guess_dict(uuid_for_history, uuid_for_position, a)
+        return guesses.get(b, MAX_MOLE_COST)
 
-    @functools.lru_cache(maxsize=2)
-    def lower_bound_guess_base(self, uuid_for_position, a, b):
+    def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
         costs = (
             self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
-            for uuid_for_history in self.possible_uuid_set - self.already_taken
+            for uuid_for_history in self.possible_uuid_set - already_taken
         )
         return min(costs, default=MAX_MOLE_COST)
 
-    def lower_bound_guess(self, already_taken, uuid_for_position, a, b):
-        additional = already_taken - self.already_taken
-        # print(self.already_taken, additional, already_taken)
-        assert len(additional) > 0
-        assert len(additional) == 1
-        assert len(additional) <= 2
-        assert self.already_taken | additional == already_taken
+    def lower_bound_unk_mole(
+            self, uuid_for_position, uuid_for_history, already_taken, a):
 
-        base = self.lower_bound_guess_base(uuid_for_position, a, b)
-        cost = self.cost_for_guess(additional, uuid_for_position, a, b)
-        return min(base, cost)
-
-    def lower_bound_unk_mole(self, uuid_for_position, uuid_for_history, already_taken, a):
-        cost_list = []
         if uuid_for_history is not None:
-            for b in self.possible_uuid_set - already_taken:
-                cost_list.append(
-                    self.cost_for_guess(
-                        uuid_for_history, uuid_for_position, a, b))
-        else:
-            for b in self.possible_uuid_set - already_taken:
-                temp_taken = set(already_taken)
-                temp_taken.add(b)
-                cost_list.append(
-                    self.lower_bound_guess(
-                        frozenset(temp_taken), uuid_for_position, a, b))
-        return min(cost_list)
+            return self.lower_bound_history(
+                uuid_for_history, uuid_for_position, a)
+
+        return self.lower_bound_unk_unk(already_taken, uuid_for_position, a)
+
+    def lower_bound_history(self, uuid_for_history, uuid_for_position, a):
+        # TODO: only consider 'b' from the possible set.
+        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
+        best = guesses[0][1] if guesses else MAX_MOLE_COST
+        return best
+
+    def lower_bound_unk_unk(self, already_taken, uuid_for_position, a):
+        costs = (
+            self.lower_bound_history(uuid_for_history, uuid_for_position, a)
+            for uuid_for_history in self.possible_uuid_set - already_taken
+        )
+        return min(costs, default=MAX_MOLE_COST)
 
 
 class Guesser():
@@ -346,10 +358,7 @@ class StateFormatter():
 
     def __call__(self, count, total_cost, state):
         s = ' '.join(self.name(state[key]) for key in self.key_order)
-        if isinstance(total_cost, tuple):
-            return f'{count:>6} {total_cost} ({s})'
-        else:
-            return f'{count:>6} {total_cost:>12} ({s})'
+        return f'{count:>6} ({s}) {total_cost}'
 
 
 def best_match_combination(guesser, *, max_iterations=10**5):
@@ -372,8 +381,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         total_cost, state = state_q.pop()
 
         count += 1
-        should_report = 0 == count % 10000
-        # should_report = 0 == count % 1
+        # should_report = 0 == count % 10000
+        should_report = 0 == count % 1
         depth = sum(1 for a, b in state.items() if b is not None)
         correct = sum(1 for a, b in state.items() if a == b)
         if depth > deepest:
