@@ -274,61 +274,37 @@ class BounderTestCase(unittest.TestCase):
             non_canonical_uuid_set,
             canonical_uuid_set)
 
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': None,
-                'pos2': None,
-                'pos3': None,
-            }),
-            10 * 20 * 30)
+        def make_input(i1, i2, i3):
+            names = [None, 'id1', 'id2', 'id3']
+            return {
+                'pos1': names[i1],
+                'pos2': names[i2],
+                'pos3': names[i3],
+            }
 
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': 'id1',
-                'pos2': None,
-                'pos3': None,
-            }),
-            10 * 20 * 30)
+        input_output = [
+            ((0, 0, 0), 10 * 20 * 30),
+            ((1, 0, 0), 10 * 20 * 30),
+            ((0, 2, 0), 10 * 20 * 30),
+            ((0, 0, 3), 10 * 20 * 30),
+            ((1, 2, 0), 10 * 20 * 30),
+            ((1, 0, 3), 10 * 20 * 30),
+            ((0, 2, 3), 10 * 20 * 30),
+            ((1, 2, 3), 10 * 20 * 30),
 
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': None,
-                'pos2': 'id2',
-                'pos3': None,
-            }),
-            10 * 20 * 30)
+            ((2, 0, 0), 200 * 100 * 100),
+            ((0, 1, 0), 200 * 100 * 200),
+            ((2, 1, 0), 200 * 100 * 300),
 
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': 'id1',
-                'pos2': 'id2',
-                'pos3': None,
-            }),
-            10 * 20 * 30)
+            ((2, 1, 3), 200 * 100 * 300),
+            ((3, 2, 1), 300 * 200 * 100),
+        ]
 
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': 'id2',
-                'pos2': None,
-                'pos3': None,
-            }),
-            200 * 100 * 100)
-
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': None,
-                'pos2': 'id1',
-                'pos3': None,
-            }),
-            200 * 100 * 200)
-
-        self.assertEqual(
-            bounder.lower_bound({
-                'pos1': 'id2',
-                'pos2': 'id1',
-                'pos3': None,
-            }),
-            200 * 100 * 300)
+        for input_, output in input_output:
+            self.assertEqual(
+                bounder.lower_bound(
+                    make_input(*input_)),
+                output)
 
 
 def make_bounder(
