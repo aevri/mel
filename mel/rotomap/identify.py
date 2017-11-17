@@ -113,6 +113,11 @@ class PosGuesser():
                 new_state = dict(state)
                 new_state[a] = b
                 lower_bound = bounder.lower_bound(new_state)
+                lower_bound2 = bounder.lower_bound(new_state)
+                if lower_bound != lower_bound2:
+                    raise Exception('yarg!')
+                if lower_bound < total_cost[0]:
+                    raise Exception('blerg!')
                 yield (lower_bound, num_remaining - 1), new_state
 
 
