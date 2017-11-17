@@ -313,6 +313,99 @@ class BounderTestCase(unittest.TestCase):
                 output)
 
 
+    def test_unknown_history_unknown_mole3_with_matchless(self):
+
+        closest = {
+            'pos1': ['pos3', 'pos2'],
+            'pos2': ['pos3', 'pos1'],
+            'pos3': ['pos1', 'pos2'],
+        }
+
+        guesses = {
+            # Guesses from correct positions.
+            ('id1', 'pos1', 'pos2'): [('id2', 20), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos1', 'pos3'): [('id2', 200), ('id3', 30), ('id4', 400)],
+            ('id2', 'pos2', 'pos1'): [('id1', 10), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos2', 'pos3'): [('id1', 100), ('id3', 30), ('id4', 400)],
+            ('id3', 'pos3', 'pos1'): [('id1', 10), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos3', 'pos2'): [('id1', 100), ('id2', 20), ('id4', 400)],
+
+            # Out of place guesses from id1.
+            ('id1', 'pos2', 'pos1'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos2', 'pos3'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos3', 'pos1'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos3', 'pos2'): [('id2', 200), ('id3', 300), ('id4', 400)],
+
+            # Out of place guesses from id2.
+            ('id2', 'pos1', 'pos2'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos1', 'pos3'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos3', 'pos1'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos3', 'pos2'): [('id1', 100), ('id3', 300), ('id4', 400)],
+
+            # Out of place guesses from id3.
+            ('id3', 'pos1', 'pos2'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos1', 'pos3'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos2', 'pos1'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos2', 'pos3'): [('id1', 100), ('id2', 200), ('id4', 400)],
+
+            # Guesses from id4 are always out of place.
+            ('id4', 'pos1', 'pos2'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos1', 'pos3'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos2', 'pos1'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos2', 'pos3'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos3', 'pos1'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos3', 'pos2'): [('id1', 100), ('id2', 200), ('id3', 300)],
+        }
+
+        canonical_uuid_set = set()
+        non_canonical_uuid_set = {'id1', 'id2', 'id3', 'id4'}
+
+        bounder = make_bounder(
+            closest,
+            guesses,
+            non_canonical_uuid_set,
+            canonical_uuid_set)
+
+        def make_input(i1, i2, i3):
+            names = [None, 'id1', 'id2', 'id3', 'id4']
+            return {
+                'pos1': names[i1],
+                'pos2': names[i2],
+                'pos3': names[i3],
+            }
+
+        input_output = [
+            ((0, 0, 0), 10 * 20 * 30),
+            ((1, 0, 0), 10 * 20 * 30),
+            ((0, 2, 0), 10 * 20 * 30),
+            ((0, 0, 3), 10 * 20 * 30),
+            ((1, 2, 0), 10 * 20 * 30),
+            ((1, 0, 3), 10 * 20 * 30),
+            ((0, 2, 3), 10 * 20 * 30),
+            ((1, 2, 3), 10 * 20 * 30),
+
+            ((2, 0, 0), 200 * 100 * 100),
+            ((0, 1, 0), 200 * 100 * 200),
+            ((2, 1, 0), 200 * 100 * 300),
+
+            ((2, 1, 3), 200 * 100 * 300),
+
+            ((3, 2, 1), 300 * 200 * 100),
+
+            ((0, 4, 0), 10 * 400 * 30),
+            ((1, 4, 3), 10 * 400 * 30),
+
+            ((4, 0, 0), 400 * 20 * 300),
+            ((4, 2, 3), 400 * 20 * 300),
+        ]
+
+        for input_, output in input_output:
+            self.assertEqual(
+                bounder.lower_bound(
+                    make_input(*input_)),
+                output)
+
+
 class PosGuesserTestCase(unittest.TestCase):
 
     def test_breathing(self):
