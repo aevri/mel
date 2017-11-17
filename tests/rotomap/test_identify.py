@@ -9,46 +9,50 @@ class BounderTestCase(unittest.TestCase):
 
     def test_breathing(self):
 
-        def pos_guess(uuid_for_history, uuid_for_position, a):
-            return tuple()
+        class BreathingMockHelper():
 
-        def pos_guess_dict(uuid_for_history, uuid_for_position, a):
-            return dict()
+            def pos_guess(self, uuid_for_history, uuid_for_position, a):
+                return tuple()
 
-        def closest_uuids(a):
-            raise NotImplementedError()
+            def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
+                return dict()
+
+            def closest_uuids(self, a):
+                raise NotImplementedError()
 
         possible_uuid_set = set()
         canonical_uuid_set = set()
 
         bounder = mel.rotomap.identify.Bounder(
-            pos_guess,
-            pos_guess_dict,
-            closest_uuids,
+            BreathingMockHelper(),
             possible_uuid_set,
             canonical_uuid_set)
 
     def test_known_known(self):
 
-        def pos_guess(uuid_for_history, uuid_for_position, a):
-            self.assertEqual(uuid_for_history, 'canonical')
-            self.assertEqual(uuid_for_position, 'canonical')
-            self.assertEqual(a, 'a')
-            return [('correct', 1)]
+        test_self = self
 
-        def pos_guess_dict(uuid_for_history, uuid_for_position, a):
-            return dict(pos_guess(uuid_for_history, uuid_for_position, a))
+        class KnownKnownMockHelper():
 
-        def closest_uuids(a):
-            return ['canonical']
+            def pos_guess(self, uuid_for_history, uuid_for_position, a):
+                test_self.assertEqual(uuid_for_history, 'canonical')
+                test_self.assertEqual(uuid_for_position, 'canonical')
+                test_self.assertEqual(a, 'a')
+                return [('correct', 1)]
+
+            def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
+                return dict(
+                    self.pos_guess(
+                        uuid_for_history, uuid_for_position, a))
+
+            def closest_uuids(self, a):
+                return ['canonical']
 
         canonical_uuid_set = {'canonical'}
         possible_uuid_set = {'correct', 'canonical'}
 
         bounder = mel.rotomap.identify.Bounder(
-            pos_guess,
-            pos_guess_dict,
-            closest_uuids,
+            KnownKnownMockHelper(),
             possible_uuid_set,
             canonical_uuid_set)
 
@@ -58,25 +62,27 @@ class BounderTestCase(unittest.TestCase):
 
     def test_known_history_unknown_mole(self):
 
-        def pos_guess(uuid_for_history, uuid_for_position, a):
-            self.assertEqual(uuid_for_history, 'canonical')
-            self.assertEqual(uuid_for_position, 'canonical')
-            self.assertEqual(a, 'a')
-            return [('correct', 1)]
+        test_self = self
 
-        def pos_guess_dict(uuid_for_history, uuid_for_position, a):
-            return dict(pos_guess(uuid_for_history, uuid_for_position, a))
+        class KnownHistoryUnknownMoleMockHelper():
 
-        def closest_uuids(a):
-            return ['canonical']
+            def pos_guess(self, uuid_for_history, uuid_for_position, a):
+                test_self.assertEqual(uuid_for_history, 'canonical')
+                test_self.assertEqual(uuid_for_position, 'canonical')
+                test_self.assertEqual(a, 'a')
+                return [('correct', 1)]
+
+            def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
+                return dict(pos_guess(uuid_for_history, uuid_for_position, a))
+
+            def closest_uuids(self, a):
+                return ['canonical']
 
         canonical_uuid_set = {'canonical'}
         possible_uuid_set = {'correct', 'canonical'}
 
         bounder = mel.rotomap.identify.Bounder(
-            pos_guess,
-            pos_guess_dict,
-            closest_uuids,
+            KnownHistoryUnknownMoleMockHelper(),
             possible_uuid_set,
             canonical_uuid_set)
 
@@ -313,13 +319,13 @@ class PosGuesserTestCase(unittest.TestCase):
 
         class Helper():
 
-            def pos_guess(uuid_for_history, uuid_for_position, a):
+            def pos_guess(self, uuid_for_history, uuid_for_position, a):
                 raise NotImplementedError()
 
-            def pos_guess_dict(uuid_for_history, uuid_for_position, a):
+            def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
                 raise NotImplementedError()
 
-            def closest_uuids(a):
+            def closest_uuids(self, a):
                 raise NotImplementedError()
 
         pos_uuids = tuple()
@@ -334,24 +340,28 @@ class PosGuesserTestCase(unittest.TestCase):
             possible_uuid_set)
 
 
-def make_bounder(
-        closest, guesses, non_canonical_uuid_set, canonical_uuid_set):
+class MockHelper():
 
-    possible_uuid_set = non_canonical_uuid_set | canonical_uuid_set
+    def __init__(self, closest, guesses):
+        self.closest = closest
+        self.guesses = guesses
 
-    def pos_guess(uuid_for_history, uuid_for_position, a):
-        g = guesses[(uuid_for_history, uuid_for_position, a)]
+    def pos_guess(self, uuid_for_history, uuid_for_position, a):
+        g = self.guesses[(uuid_for_history, uuid_for_position, a)]
         return tuple(sorted(g, key=lambda x: x[1]))
 
-    def pos_guess_dict(uuid_for_history, uuid_for_position, a):
-        return dict(pos_guess(uuid_for_history, uuid_for_position, a))
+    def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
+        return dict(self.pos_guess(uuid_for_history, uuid_for_position, a))
 
-    def closest_uuids(a):
-        return closest[a]
+    def closest_uuids(self, a):
+        return self.closest[a]
 
+
+def make_bounder(closest, guesses, non_canonical_uuid_set, canonical_uuid_set):
+
+    possible_uuid_set = non_canonical_uuid_set | canonical_uuid_set
+    helper = MockHelper(closest, guesses)
     return mel.rotomap.identify.Bounder(
-        pos_guess,
-        pos_guess_dict,
-        closest_uuids,
+        helper,
         possible_uuid_set,
         canonical_uuid_set)

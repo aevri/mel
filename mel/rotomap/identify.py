@@ -75,6 +75,7 @@ class PosGuesser():
 
         self.pos_uuids = pos_uuids
 
+        self.helper = helper
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
         self.closest_uuids = helper.closest_uuids
@@ -91,9 +92,7 @@ class PosGuesser():
     def yield_next_states(self, total_cost, state):
 
         bounder = Bounder(
-            self.pos_guess,
-            self.pos_guess_dict,
-            self.closest_uuids,
+            self.helper,
             self.possible_uuid_set,
             self.canonical_uuid_set)
 
@@ -129,15 +128,13 @@ class Bounder():
 
     def __init__(
             self,
-            pos_guess,
-            pos_guess_dict,
-            closest_uuids,
+            helper,
             possible_uuid_set,
             canonical_uuid_set):
 
-        self.pos_guess = pos_guess
-        self.pos_guess_dict = pos_guess_dict
-        self.closest_uuids = closest_uuids
+        self.pos_guess = helper.pos_guess
+        self.pos_guess_dict = helper.pos_guess_dict
+        self.closest_uuids = helper.closest_uuids
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
 
