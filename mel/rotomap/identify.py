@@ -117,8 +117,52 @@ class PosGuesser():
                 if lower_bound != lower_bound2:
                     raise Exception('yarg!')
                 if lower_bound < total_cost[0]:
+
+                    print('old cost:', total_cost[0])
+                    cost_recalc = bounder.lower_bound(state)
+                    print('old cost recalc:', cost_recalc)
+                    print('new cost:', lower_bound)
+                    if cost_recalc != total_cost[0]:
+                        raise Exception('recalc mismatch')
+
+                    print_state_diff(state, new_state)
+
+                    print('a:', a)
+                    print('b:', b)
+
+                    global _DO_TRACE
+                    _DO_TRACE = True
+                    print()
+                    print('----- old state -----')
+                    bounder.lower_bound(state)
+                    print()
+                    print('----- new state -----')
+                    bounder.lower_bound(new_state)
+
                     raise Exception('blerg!')
                 yield (lower_bound, num_remaining - 1), new_state
+
+
+def print_state_diff(prev, curr):
+    import itertools
+    import mel.rotomap.format
+    uuid_set = set(
+        itertools.chain(
+            prev.keys(), prev.values(), curr.keys(), curr.values()))
+    uuid_set.discard(None)
+
+    short = {}
+    i = 0
+    for uuid_ in uuid_set:
+        short[uuid_] = i
+        i += 1
+    short[None] = '?'
+
+    import pprint
+    print('prev:')
+    pprint.pprint({short[k]: short[v] for k, v in prev.items()})
+    print('curr:')
+    pprint.pprint({short[k]: short[v] for k, v in curr.items()})
 
 
 def trace(func):
