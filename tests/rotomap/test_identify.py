@@ -397,7 +397,8 @@ class BounderTestCase(unittest.TestCase):
 
             ((4, 0, 0), 400 * 20 * 100),
             ((4, 2, 0), 400 * 20 * 100),
-            ((4, 2, 1), 400 * 20 * 100),
+
+            ((4, 2, 1), 400 * 200 * 100),
 
             ((4, 2, 3), 400 * 20 * 300),
         ]
@@ -423,6 +424,71 @@ class PosGuesserTestCase(unittest.TestCase):
             MockHelper({}, {}),
             canonical_uuid_set,
             possible_uuid_set)
+
+    def test_unknown_history_unknown_mole3_with_matchless(self):
+
+        closest = {
+            'pos1': ['pos3', 'pos2'],
+            'pos2': ['pos3', 'pos1'],
+            'pos3': ['pos1', 'pos2'],
+        }
+
+        guesses = {
+            # Guesses from correct positions.
+            ('id1', 'pos1', 'pos2'): [('id2', 20), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos1', 'pos3'): [('id2', 200), ('id3', 30), ('id4', 400)],
+            ('id2', 'pos2', 'pos1'): [('id1', 10), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos2', 'pos3'): [('id1', 100), ('id3', 30), ('id4', 400)],
+            ('id3', 'pos3', 'pos1'): [('id1', 10), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos3', 'pos2'): [('id1', 100), ('id2', 20), ('id4', 400)],
+
+            # Out of place guesses from id1.
+            ('id1', 'pos2', 'pos1'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos2', 'pos3'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos3', 'pos1'): [('id2', 200), ('id3', 300), ('id4', 400)],
+            ('id1', 'pos3', 'pos2'): [('id2', 200), ('id3', 300), ('id4', 400)],
+
+            # Out of place guesses from id2.
+            ('id2', 'pos1', 'pos2'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos1', 'pos3'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos3', 'pos1'): [('id1', 100), ('id3', 300), ('id4', 400)],
+            ('id2', 'pos3', 'pos2'): [('id1', 100), ('id3', 300), ('id4', 400)],
+
+            # Out of place guesses from id3.
+            ('id3', 'pos1', 'pos2'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos1', 'pos3'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos2', 'pos1'): [('id1', 100), ('id2', 200), ('id4', 400)],
+            ('id3', 'pos2', 'pos3'): [('id1', 100), ('id2', 200), ('id4', 400)],
+
+            # Guesses from id4 are always out of place.
+            ('id4', 'pos1', 'pos2'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos1', 'pos3'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos2', 'pos1'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos2', 'pos3'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos3', 'pos1'): [('id1', 100), ('id2', 200), ('id3', 300)],
+            ('id4', 'pos3', 'pos2'): [('id1', 100), ('id2', 200), ('id3', 300)],
+        }
+
+        pos_uuids = tuple(closest.keys())
+        canonical_uuid_set = set()
+        non_canonical_uuid_set = {'id1', 'id2', 'id3', 'id4'}
+
+        def make_state(i1, i2, i3):
+            names = [None, 'id1', 'id2', 'id3', 'id4']
+            return {
+                'pos1': names[i1],
+                'pos2': names[i2],
+                'pos3': names[i3],
+            }
+
+        helper = MockHelper(closest, guesses)
+        guesser = mel.rotomap.identify.PosGuesser(
+            pos_uuids,
+            helper,
+            canonical_uuid_set,
+            canonical_uuid_set | non_canonical_uuid_set)
+        _, result = mel.rotomap.identify.best_match_combination(guesser)
+        self.assertEqual(result, make_state(1, 2, 3))
 
 
 class MockHelper():

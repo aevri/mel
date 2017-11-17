@@ -97,7 +97,7 @@ class PosGuesser():
             self.canonical_uuid_set)
 
         already_taken = {b for a, b in state.items() if b is not None}
-        num_remaining = 1 + len(state) - len(already_taken)
+        num_remaining = len(state) - len(already_taken) - 1
 
         for a, b in state.items():
             if b is not None:
