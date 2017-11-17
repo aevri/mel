@@ -97,7 +97,7 @@ class PosGuesser():
             self.canonical_uuid_set)
 
         already_taken = {b for a, b in state.items() if b is not None}
-        num_remaining = len(state) - len(already_taken) - 1
+        num_remaining = len(state) - len(already_taken)
 
         for a, b in state.items():
             if b is not None:
@@ -111,7 +111,7 @@ class PosGuesser():
                 new_state = dict(state)
                 new_state[a] = b
                 lower_bound = bounder.lower_bound(new_state)
-                yield (lower_bound, num_remaining), new_state
+                yield (lower_bound, num_remaining - 1), new_state
 
 
 def trace(func):
