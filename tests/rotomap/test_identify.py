@@ -307,6 +307,33 @@ class BounderTestCase(unittest.TestCase):
                 output)
 
 
+class PosGuesserTestCase(unittest.TestCase):
+
+    def test_breathing(self):
+
+        class Helper():
+
+            def pos_guess(uuid_for_history, uuid_for_position, a):
+                raise NotImplementedError()
+
+            def pos_guess_dict(uuid_for_history, uuid_for_position, a):
+                raise NotImplementedError()
+
+            def closest_uuids(a):
+                raise NotImplementedError()
+
+        pos_uuids = tuple()
+
+        possible_uuid_set = set()
+        canonical_uuid_set = set()
+
+        guesser = mel.rotomap.identify.PosGuesser(
+            pos_uuids,
+            Helper(),
+            canonical_uuid_set,
+            possible_uuid_set)
+
+
 def make_bounder(
         closest, guesses, non_canonical_uuid_set, canonical_uuid_set):
 
