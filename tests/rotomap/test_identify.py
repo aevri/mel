@@ -317,17 +317,6 @@ class PosGuesserTestCase(unittest.TestCase):
 
     def test_breathing(self):
 
-        class Helper():
-
-            def pos_guess(self, uuid_for_history, uuid_for_position, a):
-                raise NotImplementedError()
-
-            def pos_guess_dict(self, uuid_for_history, uuid_for_position, a):
-                raise NotImplementedError()
-
-            def closest_uuids(self, a):
-                raise NotImplementedError()
-
         pos_uuids = tuple()
 
         possible_uuid_set = set()
@@ -335,7 +324,7 @@ class PosGuesserTestCase(unittest.TestCase):
 
         guesser = mel.rotomap.identify.PosGuesser(
             pos_uuids,
-            Helper(),
+            MockHelper({}, {}),
             canonical_uuid_set,
             possible_uuid_set)
 
