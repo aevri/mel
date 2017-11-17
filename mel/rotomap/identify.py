@@ -68,19 +68,19 @@ class PosGuesser():
 
     def __init__(
             self,
-            uuid_to_pos,
-            pos_classifier,
+            pos_uuids,
+            helper,
             canonical_uuid_set,
             possible_uuid_set):
 
-        self.pos_uuids = tuple(uuid_to_pos.keys())
-        self.canonical_uuid_set = canonical_uuid_set
-        self.possible_uuid_set = possible_uuid_set
+        self.pos_uuids = pos_uuids
 
-        helper = PosGuesserHelper(uuid_to_pos, pos_classifier)
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
         self.closest_uuids = helper.closest_uuids
+
+        self.canonical_uuid_set = canonical_uuid_set
+        self.possible_uuid_set = possible_uuid_set
 
     def initial_state(self):
         return (1, len(self.pos_uuids)), {
