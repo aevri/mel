@@ -29,23 +29,23 @@ class Transform():
         # )
         # return pos * self.inv_mag
 
-    def from_space(self, pos):
-        return from_ellipse_space(self.ellipse, pos)
-        # pos = numpy.array(pos)
-        # return (self.right * pos[0] * self.mag[0]
-        #     + self.up * pos[1] * self.mag[1]
-        #     + self.center)
+    # def from_space(self, pos):
+    #     return from_ellipse_space(self.ellipse, pos)
+    #     # pos = numpy.array(pos)
+    #     # return (self.right * pos[0] * self.mag[0]
+    #     #     + self.up * pos[1] * self.mag[1]
+    #     #     + self.center)
 
 
-def from_ellipse_space(ellipse, pos):
-    center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
+# def from_ellipse_space(ellipse, pos):
+#     center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
 
-    p = (
-        int(right[0] * pos[0] * rmag + up[0] * pos[1] * umag + center[0]),
-        int(right[1] * pos[0] * rmag + up[1] * pos[1] * umag + center[1]),
-    )
+#     p = (
+#         int(right[0] * pos[0] * rmag + up[0] * pos[1] * umag + center[0]),
+#         int(right[1] * pos[0] * rmag + up[1] * pos[1] * umag + center[1]),
+#     )
 
-    return numpy.array(p)
+#     return numpy.array(p)
 
 
 def to_ellipse_space(ellipse, pos):
