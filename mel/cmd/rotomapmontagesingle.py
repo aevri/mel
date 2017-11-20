@@ -5,6 +5,7 @@ import cv2
 import mel.lib.common
 import mel.lib.image
 import mel.rotomap.moles
+import mel.cmd.error
 
 
 def setup_parser(parser):
@@ -32,21 +33,27 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    mel.lib.common.write_image(
+        args.OUTPUT,
+        make_montage_image(args.ROTOMAP, args.UUID, args.rot90))
+
+
+def make_montage_image(rotomap, uuid_, rot90=0):
 
     path_moles_list = []
 
     radius = 10
     montage_height = 1024
 
-    for imagepath, moles in args.ROTOMAP.yield_mole_lists():
+    for imagepath, moles in rotomap.yield_mole_lists():
         for m in moles:
-            if m['uuid'] == args.UUID:
+            if m['uuid'] == uuid_:
                 path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
         raise mel.cmd.error.UsageError(
             'UUID "{}" not found in rotomap "{}".'.format(
-                args.UUID, args.ROTOMAP.path))
+                uuid_, rotomap.path))
 
     # Pick 'best' image for this particular mole, assuming that the middle
     # image is where the mole is most prominent. This assumption is based on
@@ -61,7 +68,7 @@ def process_args(args):
     path, mole_list = path_moles_list[len(path_moles_list) // 2]
 
     mole_dict = {m['uuid']: m for m in mole_list}
-    mole = mole_dict[args.UUID]
+    mole = mole_dict[uuid_]
 
     context_image = cv2.imread(path)
     x = mole['x']
@@ -74,8 +81,8 @@ def process_args(args):
     context_image = cv2.addWeighted(
         unmarked_context_image, 0.75, context_image, 0.25, 0.0)
 
-    context_image = mel.lib.common.rotated90(context_image, args.rot90)
-    for _ in range(args.rot90 % 4):
+    context_image = mel.lib.common.rotated90(context_image, rot90)
+    for _ in range(rot90 % 4):
         x, y = -y, x
     if x < 0:
         x = x + context_image.shape[1]
@@ -90,10 +97,8 @@ def process_args(args):
         context_image,
         (context_scaled_width, montage_height))
 
-    montage_image = mel.lib.image.montage_horizontal_inner_border(
+    return mel.lib.image.montage_horizontal_inner_border(
         25, context_image, detail_image)
-
-    mel.lib.common.write_image(args.OUTPUT, montage_image)
 
 
 def make_detail_image(context_image, x, y, size):
