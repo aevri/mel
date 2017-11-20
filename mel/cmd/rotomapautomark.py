@@ -1,7 +1,5 @@
 """Automatically mark moles on rotomap images."""
 
-import cv2
-
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
