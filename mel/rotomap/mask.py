@@ -7,7 +7,8 @@ import numpy
 
 
 def path(mole_image_path):
-    return mole_image_path + '.mask.png'
+    # Path might be a pathlib.Path, so convert to string first.
+    return str(mole_image_path) + '.mask.png'
 
 
 def load(mole_image_path):
