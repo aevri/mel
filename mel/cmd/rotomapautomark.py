@@ -23,7 +23,7 @@ def process_args(args):
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        image = cv2.imread(path)
+        image = mel.rotomap.moles.load_image(path)
         mask = mel.rotomap.mask.load(path)
         moles = mel.rotomap.detectmoles.moles(image, mask)
         mel.rotomap.moles.save_image_moles(moles, path)
