@@ -2,6 +2,7 @@
 
 
 import argparse
+import collections
 import json
 import math
 import pathlib
@@ -11,6 +12,8 @@ import cv2
 import numpy
 
 import mel.lib.math
+
+import mel.rotomap.mask
 
 KEY_IS_CONFIRMED = 'is_uuid_canonical'
 
@@ -41,6 +44,9 @@ class RotomapDirectory():
     def yield_frames(self):
         for imagepath in self.image_paths:
             yield RotomapFrame(imagepath)
+
+    def __repr__(self):
+        return f'RotomapDirectory({self.path!r})'
 
 
 def iter_all_frames(*search_paths):
@@ -74,8 +80,11 @@ class RotomapFrame():
     def load_image(self):
         return load_image(self.path)
 
+    def load_mask(self):
+        return mel.rotomap.mask.load_or_none(self.path)
+
     def __repr__(self):
-        return f"RotomapFrame('{self.path}')"
+        return f"RotomapFrame({self.path!r})"
 
 
 class MoleData():
@@ -99,7 +108,7 @@ def make_argparse_rotomap_directory(path):
 def load_image(path):
     image = cv2.imread(str(path))
     if image is None:
-        raise Exception('Failed to load image: {}'.format(path))
+        raise Exception(f'Failed to load image: "{path}"')
 
     return image
 
@@ -416,3 +425,18 @@ def mapped_pos(molepos, from_moles, to_moles):
         # the transformation.
 
     return molepos
+
+
+def frames_to_uuid_frameposlist(frame_iterable):
+    uuid_to_frameposlist = collections.defaultdict(list)
+
+    for frame in frame_iterable:
+        mask = frame.load_mask()
+        contour = mel.lib.moleimaging.biggest_contour(mask)
+        ellipse = cv2.fitEllipse(contour)
+        elspace = mel.lib.ellipsespace.Transform(ellipse)
+        for uuid_, pos in frame.moledata.uuid_points.items():
+            uuid_to_frameposlist[uuid_].append(
+                (str(frame), elspace.to_space(pos)))
+
+    return uuid_to_frameposlist
