@@ -1,10 +1,8 @@
 """Guess which mole is which in a rotomap image."""
 
-import collections
 import copy
 import itertools
 import json
-import uuid
 
 import numpy
 
@@ -12,23 +10,12 @@ import mel.rotomap.moles
 import mel.rotomap.identify
 
 
-# TODO: tackle large amounts of unknowns in chunks, grouped by proximity to
-# known moles. Perhaps the idea of 'adjacency' is important.
+# TODO: Determine a sensible upper-bound for early discard of hopeless avenues.
 
-# TODO: define cost function based on nearest neighbour (later: neighbours
-# within proportion of nearest). Provide lower-bound estimate by looking at all
-# possibilities for nearest neighbour and their lowest cost for this mole.
-
-# TODO: consider that we don't have a real cost function and that everything is
-# currently an estimate instead.
-#   o Think about what a real cost function would look like
-#       o Try implementing a model where the cost of a mole guess is determined
-#       finally, only by its nearest neighbour. Costs can be updated as we go.
-#       This might give us muliple levels of estimates -
-#       (impossible est., nearest known guesses, nearest guesses).
-#   o Think about what algorithms could deal with just an estimate
-#   o Perhaps the estimate / cost should be identical for identical states,
-#   history maybe should not matter.
+# TODO: Determine which groups of moles are 'closed', in that they are not
+# considered neighbours of any other mole groups. We want to create bridges
+# across these groups so that they may cross-check eachother and provide extra
+# constraints to satisfy. This should increase the quality of the results.
 
 def setup_parser(parser):
     parser.add_argument(
@@ -111,10 +98,10 @@ def process_args(args):
 
     # TODO: distinguish between canonical and non-canonical moles for training
 
-    yrad = 0.1
-    nrad = 1.2
-    cold_classifier = mel.rotomap.identify.ColdGuessMoleClassifier(
-        uuid_to_frameposlist, yrad, nrad)
+    # yrad = 0.1
+    # nrad = 1.2
+    # cold_classifier = mel.rotomap.identify.ColdGuessMoleClassifier(
+    #     uuid_to_frameposlist, yrad, nrad)
 
     box_radius = 0.1
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
@@ -140,9 +127,9 @@ def process_args(args):
             possible_uuid_set)
 
         # cost, old_to_new = guess_old_to_new(
-        #     uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
+        # uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
-            guesser, max_iterations=1*10**5)
+            guesser, max_iterations=1 * 10**5)
 
         import pprint
         print('Cost', cost)
@@ -159,117 +146,3 @@ def process_args(args):
                 raise Exception(f'{frame.path}: would duplicate {old_id}')
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
-
-
-def guess_old_to_new(
-        uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set):
-
-    max_unknowns = 8
-
-    remap_stack = []
-
-    uuid_to_pos = dict(uuid_to_pos)
-    reduced_uuid_to_pos = dict(uuid_to_pos)
-    canonical_uuid_set = set(canonical_uuid_set)
-
-    final_run = False
-    while not final_run:
-
-        unknown_uuids = set(uuid_to_pos.keys()) - canonical_uuid_set
-        if len(unknown_uuids) > max_unknowns:
-            accept_uuids = list(unknown_uuids)[:max_unknowns]
-            reduced_uuid_to_pos = {
-                key: value
-                for key, value in uuid_to_pos.items()
-                if key in canonical_uuid_set or key in accept_uuids
-            }
-        else:
-            reduced_uuid_to_pos = uuid_to_pos
-            final_run = True
-
-        guesser = mel.rotomap.identify.Guesser(
-            reduced_uuid_to_pos,
-            cold_classifier,
-            warm_classifier,
-            canonical_uuid_set)
-
-        cost, old_to_new = mel.rotomap.identify.best_match_combination(guesser)
-
-        print('Num canon pre:', len(canonical_uuid_set))
-        canonical_uuid_set = set(
-            new for old, new in old_to_new.items()
-            if new is not None
-        )
-
-        print('Num canon:', len(canonical_uuid_set))
-
-        remap_stack.append({})
-        new_uuid_to_pos = {}
-        for old_uuid, pos in uuid_to_pos.items():
-            if old_uuid not in old_to_new:
-                if old_uuid in new_uuid_to_pos:
-                    uuid_ = uuid.uuid4().hex
-                    remap_stack[-1][uuid_] = old_uuid
-                    new_uuid_to_pos[uuid_] = pos
-                else:
-                    remap_stack[-1][old_uuid] = old_uuid
-                    new_uuid_to_pos[old_uuid] = pos
-            else:
-                new_uuid = old_to_new[old_uuid]
-                if new_uuid in new_uuid_to_pos:
-                    dup_pos = new_uuid_to_pos[new_uuid]
-                    dup_uuid = uuid.uuid4().hex
-                    remap_stack[-1][dup_uuid] = new_uuid
-                    new_uuid_to_pos[dup_uuid] = dup_pos
-                remap_stack[-1][new_uuid] = old_uuid
-                new_uuid_to_pos[new_uuid] = pos
-        uuid_to_pos = new_uuid_to_pos
-
-    for remap in reversed(remap_stack[:-1]):
-        old_to_new = {
-            remap[old]: new
-            for old, new in old_to_new.items()
-        }
-
-    return cost, old_to_new
-
-
-def _process_args(args):
-    cost, old_to_new = mel.rotomap.identify.best_match_combination(Guesser())
-
-    import pprint
-    print('Cost', cost)
-    pprint.pprint(old_to_new)
-
-
-class Guesser():
-
-    def __init__(self):
-        pass
-
-    def initial_state(self):
-        slots = 24
-        state = {}
-        for i in range(slots):
-            state[str(i)] = None
-        return (2 ** slots, slots, 2), state
-
-    def yield_next_states(self, total_cost, state):
-        unfilled = tuple(k for k, v in state.items() if v is None)
-        guess = 2 ** (len(unfilled) - 1)
-        num_unfilled = len(unfilled) - 1
-        for u in unfilled:
-            yield (
-                (total_cost[2] * 2 * guess, num_unfilled, total_cost[2] * 2),
-                updated(state, u, u)
-            )
-            yield (
-                (total_cost[2] * 100 * guess, num_unfilled, total_cost[2] * 100),
-                updated(state, u, u + '_wrong')
-            )
-
-
-def updated(d, key, value):
-    new_d = dict(d)
-    new_d[key] = value
-    return new_d

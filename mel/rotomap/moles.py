@@ -94,7 +94,7 @@ class MoleData():
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m['uuid'] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
-        self.uuid_moles = {m['uuid']: m for m in self.moles}
+        # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
 
 def make_argparse_rotomap_directory(path):
@@ -435,8 +435,8 @@ def frames_to_uuid_frameposlist(frame_iterable):
         contour = mel.lib.moleimaging.biggest_contour(mask)
         ellipse = cv2.fitEllipse(contour)
         elspace = mel.lib.ellipsespace.Transform(ellipse)
-        for uuid, pos in frame.moledata.uuid_points.items():
-            uuid_to_frameposlist[uuid].append(
+        for uuid_, pos in frame.moledata.uuid_points.items():
+            uuid_to_frameposlist[uuid_].append(
                 (str(frame), elspace.to_space(pos)))
 
     return uuid_to_frameposlist

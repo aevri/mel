@@ -26,5 +26,3 @@ class PriorityQueue():
 
     def __str__(self):
         return ("<PriorityQueue:: len:{}>".format(len(self.heap)))
-
-

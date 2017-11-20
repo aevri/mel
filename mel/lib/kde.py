@@ -1,5 +1,8 @@
 """Kernel Density Estimate."""
 
+import numpy
+
+
 class Kde():
 
     def __init__(self, training_data):

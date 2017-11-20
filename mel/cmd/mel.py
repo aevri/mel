@@ -5,7 +5,7 @@ import argparse
 import sys
 
 
-OLD_PYTHON_MESSAGE="""You are running mel on an old Python interpreter
+OLD_PYTHON_MESSAGE = """You are running mel on an old Python interpreter
 
 Unfortunately Frobulator 6.0 and above are not compatible with Python < 3.6
 anymore, and you still ended up with this version installed on your system.
@@ -18,34 +18,37 @@ Upgrade your system to use Python 3.6 or later to run this version of mel.
 
 """
 
-if sys.version_info < (3,6):
+if sys.version_info < (3, 6):
     raise ImportError(OLD_PYTHON_MESSAGE)
 
 
-import mel.cmd.addcluster
-import mel.cmd.addsingle
-import mel.cmd.error
-import mel.cmd.list
-import mel.cmd.microadd
-import mel.cmd.microcompare
-import mel.cmd.microview
-import mel.cmd.rotomapautomark
-import mel.cmd.rotomapautomask
-import mel.cmd.rotomapautomasksvm
-import mel.cmd.rotomapcompare
-import mel.cmd.rotomapconfirm
-import mel.cmd.rotomapdiff
-import mel.cmd.rotomapedit
-import mel.cmd.rotomapfsck
-import mel.cmd.rotomapidentify
-import mel.cmd.rotomaplist
-import mel.cmd.rotomapmontagesingle
-import mel.cmd.rotomaporganise
-import mel.cmd.rotomapoverview
-import mel.cmd.rotomaprelate
-import mel.cmd.rotomapshow
-import mel.cmd.rotomapudiff
-import mel.cmd.rotomapuuid
+# note that we do this to ignore warnings about top-level imports not being at
+# the top of the file - noqa: E402
+
+import mel.cmd.addcluster  # noqa: E402
+import mel.cmd.addsingle  # noqa: E402
+import mel.cmd.error  # noqa: E402
+import mel.cmd.list  # noqa: E402
+import mel.cmd.microadd  # noqa: E402
+import mel.cmd.microcompare  # noqa: E402
+import mel.cmd.microview  # noqa: E402
+import mel.cmd.rotomapautomark  # noqa: E402
+import mel.cmd.rotomapautomask  # noqa: E402
+import mel.cmd.rotomapautomasksvm  # noqa: E402
+import mel.cmd.rotomapcompare  # noqa: E402
+import mel.cmd.rotomapconfirm  # noqa: E402
+import mel.cmd.rotomapdiff  # noqa: E402
+import mel.cmd.rotomapedit  # noqa: E402
+import mel.cmd.rotomapfsck  # noqa: E402
+import mel.cmd.rotomapidentify  # noqa: E402
+import mel.cmd.rotomaplist  # noqa: E402
+import mel.cmd.rotomapmontagesingle  # noqa: E402
+import mel.cmd.rotomaporganise  # noqa: E402
+import mel.cmd.rotomapoverview  # noqa: E402
+import mel.cmd.rotomaprelate  # noqa: E402
+import mel.cmd.rotomapshow  # noqa: E402
+import mel.cmd.rotomapudiff  # noqa: E402
+import mel.cmd.rotomapuuid  # noqa: E402
 
 
 def main():
