@@ -17,13 +17,13 @@ _MAGIC_P_THRESHOLD = 0.00001
 
 _MAGIC_CLOSE_DISTANCE = 0.1
 
-MAX_MOLE_COST = 10 ** 5
+MAX_MOLE_COST = 10 ** 4
 
 _DO_TRACE = False
 
 def p_to_cost(p):
-    # return int(10 / p) - 9
-    return int(1 / p)
+    return int(10 / p) - 9
+    # return int(1 / p)
 
 
 class PosGuesserHelper():
@@ -45,6 +45,11 @@ class PosGuesserHelper():
                 if _MAGIC_P_THRESHOLD < p * q  #and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
+            guesses = (
+                (b, cost)
+                for b, cost in guesses
+                if cost < MAX_MOLE_COST
+            )
             return tuple(sorted(guesses, key=lambda x: x[1]))
         self.pos_guess = pos_guess
 
@@ -55,15 +60,26 @@ class PosGuesserHelper():
         self.pos_guess_dict = pos_guess_dict
 
         @functools.lru_cache(maxsize=128)
-        def closest_uuids(uuid_for_position):
+        def closest_sqdist_uuids(uuid_for_position):
             ref_pos = uuid_to_pos[uuid_for_position]
             sqdist_uuid_list = sorted(
                 (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
                 for uuid_, pos in uuid_to_pos.items()
                 if uuid_ != uuid_for_position
             )
-            return tuple(uuid_ for _, uuid_ in sqdist_uuid_list)
+            return tuple(sqdist_uuid_list)
+        self.closest_sqdist_uuids = closest_sqdist_uuids
+
+        @functools.lru_cache(maxsize=128)
+        def closest_uuids(uuid_for_position):
+            return tuple(
+                uuid_ for _, uuid_ in closest_sqdist_uuids(uuid_for_position))
         self.closest_uuids = closest_uuids
+
+        @functools.lru_cache(maxsize=128)
+        def closest(uuid_for_position):
+            return closest_uuids(uuid_for_position)[0]
+        self.closest = closest
 
 
 class PosGuesser():
@@ -86,7 +102,7 @@ class PosGuesser():
         self.possible_uuid_set = possible_uuid_set
 
     def initial_state(self):
-        return (1, len(self.pos_uuids)), {
+        return (1, len(self.pos_uuids) - len(self.canonical_uuid_set)), {
             a: a if a in self.canonical_uuid_set else None
             for a in self.pos_uuids
         }
@@ -98,24 +114,58 @@ class PosGuesser():
             self.possible_uuid_set,
             self.canonical_uuid_set)
 
-        already_taken = {b for a, b in state.items() if b is not None}
+        decided = {a: b for a, b in state.items() if b is not None}
+        already_taken = set(decided.values())
         num_remaining = len(state) - len(already_taken)
 
-        for a, b in state.items():
-            if b is not None:
-                continue
+        remaining_positions = set(state.keys()) - set(decided.keys())
 
-            uuid_for_pos = next(
-                uuid_
-                for uuid_ in self.closest_uuids(a))
+        sqdist_posuuid_remaineruuid = [
+            (*self.helper.closest_sqdist_uuids(pos_uuid)[0], pos_uuid)
+            for pos_uuid in remaining_positions
+        ]
+        sqdist_posuuid_remaineruuid.sort()
 
-            for b in self.possible_uuid_set - already_taken:
-                new_state = dict(state)
-                new_state[a] = b
-                lower_bound = bounder.lower_bound(new_state)
-                if lower_bound < total_cost[0]:
-                    raise Exception('lower_bound lower than previous cost')
-                yield (lower_bound, num_remaining - 1), new_state
+        canonical_a = take_first_or_none(
+            pos_uuid
+            for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
+            if uuid_for_pos in self.canonical_uuid_set
+        )
+
+        decided_a = take_first_or_none(
+            pos_uuid
+            for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
+            if uuid_for_pos in decided.keys()
+        )
+
+        remaining_a = take_first(
+            pos_uuid
+            for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
+        )
+
+        if canonical_a is not None:
+            a = canonical_a
+        elif decided_a is not None:
+            a = decided_a
+        else:
+            a = remaining_a
+
+        uuid_for_pos = self.helper.closest(a)
+
+        for b in self.possible_uuid_set - already_taken:
+            new_state = dict(state)
+            new_state[a] = b
+            lower_bound = bounder.lower_bound(new_state)
+            if lower_bound < total_cost[0]:
+                _DO_TRACE = True
+                print('----- old')
+                old_lower_bound = bounder.lower_bound(state)
+                print('----- new')
+                bounder.lower_bound(new_state)
+                if old_lower_bound != total_cost[0]:
+                    raise Exception('old lower_bound recalculated differently')
+                raise Exception('lower_bound lower than previous cost')
+            yield (lower_bound, num_remaining - 1), new_state
 
 
 def trace(func):
@@ -140,6 +190,7 @@ class Bounder():
 
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
+        self.helper = helper
         self.closest_uuids = helper.closest_uuids
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
@@ -153,9 +204,7 @@ class Bounder():
         for a, b in state.items():
             if a in self.canonical_uuid_set:
                 continue
-            uuid_for_position = next(
-                uuid_
-                for uuid_ in self.closest_uuids(a))
+            uuid_for_position = self.helper.closest(a)
             uuid_for_history = state[uuid_for_position]
 
             if b is not None:
@@ -301,7 +350,7 @@ class Guesser():
 
         for a in not_taken:
 
-            uuid_for_pos = next(
+            uuid_for_pos = take_first(
                 uuid_
                 for uuid_ in self.closest_uuids(a)
                 if state[uuid_] is not None)
@@ -347,6 +396,18 @@ class Guesser():
                 new_state = dict(state)
                 new_state[a] = 'NewMole'
                 yield total_cost, new_state
+
+
+def take_first_or_none(iterable):
+    for item in iterable:
+        return item
+    return None
+
+
+def take_first(iterable):
+    for item in iterable:
+        return item
+    raise IndexError('No first item to take')
 
 
 class DuplicateDetector():
@@ -407,7 +468,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
         count += 1
         # should_report = 0 == count % 10000
-        should_report = 0 == count % 1
+        should_report = 0 == count % 1000
+        # should_report = 0 == count % 1
         depth = sum(1 for a, b in state.items() if b is not None)
         correct = sum(1 for a, b in state.items() if a == b)
         if depth > deepest:
