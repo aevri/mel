@@ -72,7 +72,7 @@ def process_args(args):
     if args.cache and not args.source:
         if args.verbose:
             print('Reading cache ..')
-            uuid_to_frameposlist = load_frames_to_uuid_frameposlist(args.cache)
+        uuid_to_frameposlist = load_frames_to_uuid_frameposlist(args.cache)
     else:
         if args.verbose:
             print('Loading from sources ..')
@@ -86,8 +86,8 @@ def process_args(args):
         if args.cache:
             if args.verbose:
                 print('Writing cache ..')
-                save_frames_to_uuid_frameposlist(
-                    uuid_to_frameposlist, args.cache)
+            save_frames_to_uuid_frameposlist(
+                uuid_to_frameposlist, args.cache)
 
     target_frames = [
         mel.rotomap.moles.RotomapFrame(x) for x in args.TARGET_IMAGE
