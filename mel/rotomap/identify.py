@@ -119,6 +119,25 @@ class PosGuesser():
         already_taken = set(decided.values())
         num_remaining = len(state) - len(already_taken)
 
+        a = self._next_a(state, decided)
+
+        for b in self.possible_uuid_set - already_taken:
+            new_state = dict(state)
+            new_state[a] = b
+            lower_bound = bounder.lower_bound(new_state)
+            if lower_bound < total_cost[0]:
+                global _DO_TRACE
+                _DO_TRACE = True
+                print('----- old')
+                old_lower_bound = bounder.lower_bound(state)
+                print('----- new')
+                bounder.lower_bound(new_state)
+                if old_lower_bound != total_cost[0]:
+                    raise Exception('old lower_bound recalculated differently')
+                raise Exception('lower_bound lower than previous cost')
+            yield (lower_bound, num_remaining - 1), new_state
+
+    def _next_a(self, state, decided):
         remaining_positions = set(state.keys()) - set(decided.keys())
 
         sqdist_posuuid_remaineruuid = [
@@ -151,21 +170,7 @@ class PosGuesser():
         else:
             a = remaining_a
 
-        for b in self.possible_uuid_set - already_taken:
-            new_state = dict(state)
-            new_state[a] = b
-            lower_bound = bounder.lower_bound(new_state)
-            if lower_bound < total_cost[0]:
-                global _DO_TRACE
-                _DO_TRACE = True
-                print('----- old')
-                old_lower_bound = bounder.lower_bound(state)
-                print('----- new')
-                bounder.lower_bound(new_state)
-                if old_lower_bound != total_cost[0]:
-                    raise Exception('old lower_bound recalculated differently')
-                raise Exception('lower_bound lower than previous cost')
-            yield (lower_bound, num_remaining - 1), new_state
+        return a
 
 
 def trace(func):
