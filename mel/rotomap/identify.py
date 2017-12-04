@@ -30,10 +30,12 @@ def p_to_cost(p):
 class PosGuesserHelper():
 
     def __init__(self, uuid_to_pos, pos_classifier):
+        self.predictors = predictors(uuid_to_pos)
 
         # Note that we want one cache per instance of Guesser. This means that
         # the values will be correct for the classifiers and positions
-        # provided. Therefore we must create these dynamically.
+        # provided. We also want the caches to be deleted along with the
+        # instance. Therefore we must create these dynamically.
 
         @functools.lru_cache(maxsize=1024)
         def pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess):
@@ -60,22 +62,30 @@ class PosGuesserHelper():
                 pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess))
         self.pos_guess_dict = pos_guess_dict
 
-        @functools.lru_cache(maxsize=128)
-        def best_sqdist_uuid(uuid_for_position):
-            ref_pos = uuid_to_pos[uuid_for_position]
-            sqdist_uuid_list = sorted(
-                (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
-                for uuid_, pos in uuid_to_pos.items()
-                if uuid_ != uuid_for_position
-            )
-            return sqdist_uuid_list[0]
-        self.best_sqdist_uuid = best_sqdist_uuid
+    def best_sqdist_uuid(self, uuid_for_position):
+        return self.predictors[uuid_for_position]
 
-        @functools.lru_cache(maxsize=128)
-        def best_predictor(uuid_for_position):
-            _, uuid_ = best_sqdist_uuid(uuid_for_position)
-            return uuid_
-        self.best_predictor = best_predictor
+    def best_predictor(self, uuid_for_position):
+        _, uuid_ = self.best_sqdist_uuid(uuid_for_position)
+        return uuid_
+
+
+def predictors(uuid_to_pos):
+    """Return a dictionary of uuid to (sqdist, predictor_uuid)."""
+
+    @functools.lru_cache(maxsize=128)
+    def closest_sqdist_uuids(uuid_for_position):
+        ref_pos = uuid_to_pos[uuid_for_position]
+        sqdist_uuid_list = sorted(
+            (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
+            for uuid_, pos in uuid_to_pos.items()
+            if uuid_ != uuid_for_position
+        )
+        return sqdist_uuid_list
+
+    return {
+        uuid_: closest_sqdist_uuids(uuid_)[0] for uuid_ in uuid_to_pos.keys()
+    }
 
 
 class PosGuesser():
