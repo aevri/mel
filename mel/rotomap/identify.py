@@ -378,8 +378,6 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
     (total_cost, _), state = state_q.pop()
     return best_cost, best_state
-    raise LookupError(
-        f'Could not find a best match in under {max_iterations:,} iterations.')
 
 
 class MoleRelativeClassifier():
