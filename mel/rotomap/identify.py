@@ -91,23 +91,39 @@ def predictors(uuid_to_pos):
     uuid_list = sorted(current_predictors.keys())
     uuid_to_index = {uuid_: i for i, uuid_ in enumerate(uuid_list)}
 
-    import scipy.sparse.csgraph
-    while True:
-        graph = predictor_graph(uuid_list, uuid_to_index, current_predictors)
-        num_groups, groups = scipy.sparse.csgraph.connected_components(
-            graph, directed=False)
+    swapped = set()
 
-        if num_groups == 1:
+    while True:
+        groups = predictor_groups(current_predictors, uuid_list, uuid_to_index)
+
+        if len(groups) == 1:
             break
 
-        first_nonzero_index = take_first(i for i, g in enumerate(groups) if g)
+        group_a = groups[0]
+        group_b = set(groups[1])
 
-        assert first_nonzero_index != 0
+        a_to_b_sqdist = [
+            (sqdist, uuid_a, uuid_b)
+            for uuid_a in group_a
+            for sqdist, uuid_b in closest_sqdist_uuids(uuid_a)
+            if uuid_b in group_b
+        ]
 
-        from_uuid = uuid_list[first_nonzero_index - 1]
-        to_uuid = uuid_list[first_nonzero_index]
-        print(f'predictor swap: {first_nonzero_index}, {num_groups} groups.')
-        current_predictors[from_uuid] = to_uuid
+        closest_a_to_b = take_first(
+            (d, a, b)
+            for d, a, b in sorted(a_to_b_sqdist)
+            if a not in swapped
+        )
+        sqdist, uuid_from, uuid_to = closest_a_to_b
+
+        print(f'predictor swap: {uuid_from} {uuid_to}, groups {len(groups)}')
+        current_predictors[uuid_from] = uuid_to
+
+        swapped.add(uuid_from)
+
+    #
+    # Map the predictors back to (sqdist, uuid) tuples
+    #
 
     def select_uuid(target_uuid, sqdist_uuids):
         for sqdist, uuid_ in sqdist_uuids:
@@ -120,6 +136,20 @@ def predictors(uuid_to_pos):
             closest_sqdist_uuids(uuid_))
         for uuid_ in uuid_to_pos.keys()
     }
+
+
+def predictor_groups(current_predictors, uuid_list, uuid_to_index):
+    import scipy.sparse.csgraph
+    graph = predictor_graph(uuid_list, uuid_to_index, current_predictors)
+    _, group_list = scipy.sparse.csgraph.connected_components(
+        graph, directed=False)
+
+    groups = collections.defaultdict(list)
+    for i, g in enumerate(group_list):
+        uuid_ = uuid_list[i]
+        groups[g].append(uuid_)
+
+    return list(groups.values())
 
 
 def predictor_graph(uuid_list, uuid_to_index, predictor_dict):
