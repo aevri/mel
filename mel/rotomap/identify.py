@@ -83,9 +83,53 @@ def predictors(uuid_to_pos):
         )
         return sqdist_uuid_list
 
-    return {
-        uuid_: closest_sqdist_uuids(uuid_)[0] for uuid_ in uuid_to_pos.keys()
+    current_predictors = {
+        uuid_: closest_sqdist_uuids(uuid_)[0][1]
+        for uuid_ in uuid_to_pos.keys()
     }
+
+    uuid_list = sorted(current_predictors.keys())
+    uuid_to_index = {uuid_: i for i, uuid_ in enumerate(uuid_list)}
+
+    import scipy.sparse.csgraph
+    while True:
+        graph = predictor_graph(uuid_list, uuid_to_index, current_predictors)
+        num_groups, groups = scipy.sparse.csgraph.connected_components(
+            graph, directed=False)
+
+        if num_groups == 1:
+            break
+
+        first_nonzero_index = take_first(i for i, g in enumerate(groups) if g)
+
+        assert first_nonzero_index != 0
+
+        from_uuid = uuid_list[first_nonzero_index - 1]
+        to_uuid = uuid_list[first_nonzero_index]
+        print(f'predictor swap: {first_nonzero_index}, {num_groups} groups.')
+        current_predictors[from_uuid] = to_uuid
+
+    def select_uuid(target_uuid, sqdist_uuids):
+        for sqdist, uuid_ in sqdist_uuids:
+            if uuid_ == target_uuid:
+                return sqdist, uuid_
+
+    return {
+        uuid_: select_uuid(
+            current_predictors[uuid_],
+            closest_sqdist_uuids(uuid_))
+        for uuid_ in uuid_to_pos.keys()
+    }
+
+
+def predictor_graph(uuid_list, uuid_to_index, predictor_dict):
+    graph = numpy.zeros((len(uuid_list), len(uuid_list)))
+    for i, uuid_ in enumerate(uuid_list):
+        predictor_uuid = predictor_dict[uuid_]
+        predictor_index = uuid_to_index[predictor_uuid]
+        graph[i][predictor_index] = 1
+
+    return graph
 
 
 class PosGuesser():
