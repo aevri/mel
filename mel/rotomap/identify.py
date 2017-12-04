@@ -61,7 +61,7 @@ class PosGuesserHelper():
         self.pos_guess_dict = pos_guess_dict
 
         @functools.lru_cache(maxsize=128)
-        def closest_sqdist_uuid(uuid_for_position):
+        def best_sqdist_uuid(uuid_for_position):
             ref_pos = uuid_to_pos[uuid_for_position]
             sqdist_uuid_list = sorted(
                 (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
@@ -69,13 +69,13 @@ class PosGuesserHelper():
                 if uuid_ != uuid_for_position
             )
             return sqdist_uuid_list[0]
-        self.closest_sqdist_uuid = closest_sqdist_uuid
+        self.best_sqdist_uuid = best_sqdist_uuid
 
         @functools.lru_cache(maxsize=128)
-        def closest(uuid_for_position):
-            _, uuid_ = closest_sqdist_uuid(uuid_for_position)
+        def best_predictor(uuid_for_position):
+            _, uuid_ = best_sqdist_uuid(uuid_for_position)
             return uuid_
-        self.closest = closest
+        self.best_predictor = best_predictor
 
 
 class PosGuesser():
@@ -135,7 +135,7 @@ class PosGuesser():
         remaining_positions = set(state.keys()) - set(decided.keys())
 
         sqdist_posuuid_remaineruuid = [
-            (*self.helper.closest_sqdist_uuid(pos_uuid), pos_uuid)
+            (*self.helper.best_sqdist_uuid(pos_uuid), pos_uuid)
             for pos_uuid in remaining_positions
         ]
         sqdist_posuuid_remaineruuid.sort()
@@ -202,7 +202,7 @@ class Bounder():
         for a, b in state.items():
             if a in self.canonical_uuid_set:
                 continue
-            uuid_for_position = self.helper.closest(a)
+            uuid_for_position = self.helper.best_predictor(a)
             uuid_for_history = state[uuid_for_position]
 
             if b is not None:
