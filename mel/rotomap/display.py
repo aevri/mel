@@ -16,6 +16,9 @@ import mel.rotomap.relate
 import mel.rotomap.tricolour
 
 
+DEFAULT_MASKER_RADIUS = 200
+
+
 def draw_mole(image, x, y, colours):
 
     radius = 16
@@ -482,7 +485,18 @@ class Editor:
         self._status_overlay = StatusOverlay()
         self.show_current()
 
+        self.masker_radius = DEFAULT_MASKER_RADIUS
+
         self.from_moles = None
+
+    def set_smaller_masker(self):
+        self.masker_radius //= 2
+
+    def set_larger_masker(self):
+        self.masker_radius *= 2
+
+    def set_default_masker(self):
+        self.masker_radius = DEFAULT_MASKER_RADIUS
 
     def set_automoledebug_mode(self):
         self._mode = EditorMode.debug_automole
@@ -556,7 +570,7 @@ class Editor:
     def set_mask(self, mouse_x, mouse_y, enable):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         value = 255 if enable else 0
-        radius = 200
+        radius = self.masker_radius
         cv2.circle(self.moledata.mask, (image_x, image_y), radius, value, -1)
         self.moledata.save_mask()
         self.show_current()
