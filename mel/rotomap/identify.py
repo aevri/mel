@@ -72,14 +72,11 @@ class PosGuesserHelper():
         self.closest_sqdist_uuids = closest_sqdist_uuids
 
         @functools.lru_cache(maxsize=128)
-        def closest_uuids(uuid_for_position):
-            return tuple(
-                uuid_ for _, uuid_ in closest_sqdist_uuids(uuid_for_position))
-        self.closest_uuids = closest_uuids
-
-        @functools.lru_cache(maxsize=128)
         def closest(uuid_for_position):
-            return closest_uuids(uuid_for_position)[0]
+            closest_uuid = take_first(
+                uuid_ for _, uuid_ in closest_sqdist_uuids(uuid_for_position)
+            )
+            return closest_uuid
         self.closest = closest
 
 
@@ -97,7 +94,6 @@ class PosGuesser():
         self.helper = helper
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
-        self.closest_uuids = helper.closest_uuids
 
         self.canonical_uuid_set = canonical_uuid_set
         self.possible_uuid_set = possible_uuid_set
@@ -196,7 +192,6 @@ class Bounder():
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
         self.helper = helper
-        self.closest_uuids = helper.closest_uuids
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
 
