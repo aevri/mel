@@ -576,11 +576,11 @@ class Editor:
                 image, self.moledata.moles, self.from_moles)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
-            image = image // 2
             mask = self.moledata.mask
-            masked_image = cv2.bitwise_and(image, image, mask=mask)
-            composite_image = cv2.add(masked_image, image)
-            self.display.show_current(composite_image, None)
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
+            gray_image[:, :, 2] = mask
+            self.display.show_current(gray_image, None)
         elif self._mode is EditorMode.mole_mark:
             self.marked_mole_overlay.moles = self.moledata.moles
             self.display.show_current(
