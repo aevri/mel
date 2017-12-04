@@ -61,22 +61,20 @@ class PosGuesserHelper():
         self.pos_guess_dict = pos_guess_dict
 
         @functools.lru_cache(maxsize=128)
-        def closest_sqdist_uuids(uuid_for_position):
+        def closest_sqdist_uuid(uuid_for_position):
             ref_pos = uuid_to_pos[uuid_for_position]
             sqdist_uuid_list = sorted(
                 (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
                 for uuid_, pos in uuid_to_pos.items()
                 if uuid_ != uuid_for_position
             )
-            return tuple(sqdist_uuid_list)
-        self.closest_sqdist_uuids = closest_sqdist_uuids
+            return sqdist_uuid_list[0]
+        self.closest_sqdist_uuid = closest_sqdist_uuid
 
         @functools.lru_cache(maxsize=128)
         def closest(uuid_for_position):
-            closest_uuid = take_first(
-                uuid_ for _, uuid_ in closest_sqdist_uuids(uuid_for_position)
-            )
-            return closest_uuid
+            _, uuid_ = closest_sqdist_uuid(uuid_for_position)
+            return uuid_
         self.closest = closest
 
 
@@ -137,7 +135,7 @@ class PosGuesser():
         remaining_positions = set(state.keys()) - set(decided.keys())
 
         sqdist_posuuid_remaineruuid = [
-            (*self.helper.closest_sqdist_uuids(pos_uuid)[0], pos_uuid)
+            (*self.helper.closest_sqdist_uuid(pos_uuid), pos_uuid)
             for pos_uuid in remaining_positions
         ]
         sqdist_posuuid_remaineruuid.sort()
