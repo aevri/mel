@@ -31,6 +31,7 @@ class RotomapDirectory():
             str(f) for f in self.path.iterdir()
             if f.suffix.lower() == '.jpg'
         ]
+        self.image_paths.sort()
 
         if not self.image_paths:
             raise ValueError(
