@@ -70,7 +70,7 @@ class PosGuesserHelper():
         return uuid_
 
 
-def predictors(uuid_to_pos):
+def predictors_convoluted(uuid_to_pos):
     """Return a dictionary of uuid to (sqdist, predictor_uuid)."""
 
     @functools.lru_cache(maxsize=128)
@@ -136,6 +136,43 @@ def predictors(uuid_to_pos):
             closest_sqdist_uuids(uuid_))
         for uuid_ in uuid_to_pos.keys()
     }
+
+
+def predictors(uuid_to_pos):
+    """Return a dictionary of uuid to (sqdist, predictor_uuid)."""
+
+    @functools.lru_cache(maxsize=128)
+    def closest_sqdist_uuids(uuid_for_position):
+        ref_pos = uuid_to_pos[uuid_for_position]
+        sqdist_uuid_list = sorted(
+            (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
+            for uuid_, pos in uuid_to_pos.items()
+            if uuid_ != uuid_for_position
+        )
+        return sqdist_uuid_list
+
+    remaining_uuid_set = set(uuid_to_pos.keys())
+
+    # Deterministically pick the initial_uuid. If we were to take_first()
+    # instead of min() then the value could be different between runs.
+    initial_uuid = min(remaining_uuid_set)
+
+    remaining_uuid_set.remove(initial_uuid)
+    uuid_to_predictor = {
+        initial_uuid: take_first(closest_sqdist_uuids(initial_uuid))
+    }
+
+    while remaining_uuid_set:
+        sqdist, uuid_a, uuid_b = min(
+            (sqdist, uuid_a, uuid_b)
+            for uuid_a in remaining_uuid_set
+            for sqdist, uuid_b in closest_sqdist_uuids(uuid_a)
+            if uuid_b in uuid_to_predictor
+        )
+        uuid_to_predictor[uuid_a] = (sqdist, uuid_b)
+        remaining_uuid_set.remove(uuid_a)
+
+    return uuid_to_predictor
 
 
 def predictor_groups(current_predictors, uuid_list, uuid_to_index):
