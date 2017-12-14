@@ -139,7 +139,25 @@ def predictors_convoluted(uuid_to_pos):
 
 
 def predictors(uuid_to_pos):
-    """Return a dictionary of uuid to (sqdist, predictor_uuid)."""
+    """Return a dictionary of uuid to (sqdist, predictor_uuid).
+
+    Ensure that all uuids are transitively connected to eachother by a
+    prediction link. This seems to result in better overall identification
+    performance and correctness by increasing the number of constraints.
+
+    Try to keep the distance of predictive links low, as accuracy does seem to
+    dimish with distance.
+
+    If care were not taken to connect all the uuids, 'islands' could form.
+    These 'islands' would be identified completely independently of the others.
+    This would mean in the case where a canonical mole is present, it would
+    provide no benefit to the prediction of the islands it's not a part of.
+
+    There is a trade-off to be had with connecting islands that are far apart
+    from each-other, as the prediction accuracy does decrease with distance.
+    Anecdotally it seems to be most important to connect everything together.
+
+    """
 
     @functools.lru_cache(maxsize=128)
     def closest_sqdist_uuids(uuid_for_position):
@@ -154,7 +172,7 @@ def predictors(uuid_to_pos):
     remaining_uuid_set = set(uuid_to_pos.keys())
 
     # Deterministically pick the initial_uuid. If we were to take_first()
-    # instead of min() then the value could be different between runs.
+    # instead of min(), then the value could be different between runs.
     initial_uuid = min(remaining_uuid_set)
 
     remaining_uuid_set.remove(initial_uuid)
