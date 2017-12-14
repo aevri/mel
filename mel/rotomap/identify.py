@@ -70,74 +70,6 @@ class PosGuesserHelper():
         return uuid_
 
 
-def predictors_convoluted(uuid_to_pos):
-    """Return a dictionary of uuid to (sqdist, predictor_uuid)."""
-
-    @functools.lru_cache(maxsize=128)
-    def closest_sqdist_uuids(uuid_for_position):
-        ref_pos = uuid_to_pos[uuid_for_position]
-        sqdist_uuid_list = sorted(
-            (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
-            for uuid_, pos in uuid_to_pos.items()
-            if uuid_ != uuid_for_position
-        )
-        return sqdist_uuid_list
-
-    current_predictors = {
-        uuid_: closest_sqdist_uuids(uuid_)[0][1]
-        for uuid_ in uuid_to_pos.keys()
-    }
-
-    uuid_list = sorted(current_predictors.keys())
-    uuid_to_index = {uuid_: i for i, uuid_ in enumerate(uuid_list)}
-
-    swapped = set()
-
-    while True:
-        groups = predictor_groups(current_predictors, uuid_list, uuid_to_index)
-
-        if len(groups) == 1:
-            break
-
-        group_a = groups[0]
-        group_b = set(groups[1])
-
-        a_to_b_sqdist = [
-            (sqdist, uuid_a, uuid_b)
-            for uuid_a in group_a
-            for sqdist, uuid_b in closest_sqdist_uuids(uuid_a)
-            if uuid_b in group_b
-        ]
-
-        closest_a_to_b = take_first(
-            (d, a, b)
-            for d, a, b in sorted(a_to_b_sqdist)
-            if a not in swapped
-        )
-        sqdist, uuid_from, uuid_to = closest_a_to_b
-
-        print(f'predictor swap: {uuid_from} {uuid_to}, groups {len(groups)}')
-        current_predictors[uuid_from] = uuid_to
-
-        swapped.add(uuid_from)
-
-    #
-    # Map the predictors back to (sqdist, uuid) tuples
-    #
-
-    def select_uuid(target_uuid, sqdist_uuids):
-        for sqdist, uuid_ in sqdist_uuids:
-            if uuid_ == target_uuid:
-                return sqdist, uuid_
-
-    return {
-        uuid_: select_uuid(
-            current_predictors[uuid_],
-            closest_sqdist_uuids(uuid_))
-        for uuid_ in uuid_to_pos.keys()
-    }
-
-
 def predictors(uuid_to_pos):
     """Return a dictionary of uuid to (sqdist, predictor_uuid).
 
@@ -191,30 +123,6 @@ def predictors(uuid_to_pos):
         remaining_uuid_set.remove(uuid_a)
 
     return uuid_to_predictor
-
-
-def predictor_groups(current_predictors, uuid_list, uuid_to_index):
-    import scipy.sparse.csgraph
-    graph = predictor_graph(uuid_list, uuid_to_index, current_predictors)
-    _, group_list = scipy.sparse.csgraph.connected_components(
-        graph, directed=False)
-
-    groups = collections.defaultdict(list)
-    for i, g in enumerate(group_list):
-        uuid_ = uuid_list[i]
-        groups[g].append(uuid_)
-
-    return list(groups.values())
-
-
-def predictor_graph(uuid_list, uuid_to_index, predictor_dict):
-    graph = numpy.zeros((len(uuid_list), len(uuid_list)))
-    for i, uuid_ in enumerate(uuid_list):
-        predictor_uuid = predictor_dict[uuid_]
-        predictor_index = uuid_to_index[predictor_uuid]
-        graph[i][predictor_index] = 1
-
-    return graph
 
 
 class PosGuesser():
