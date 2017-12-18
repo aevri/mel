@@ -4,23 +4,8 @@ language: python
 python:
   - "3.6"
 
-# This doesn't seem to result in 'cv2' being available for import, perhaps this
-# is because the Travis container infrastructure is based on Ubuntu 12.04,
-# which is now a little dated. To revisit later.
-#
-# addons:
-#   apt:
-#     packages:
-#     - python-opencv
-
 install:
-  - pip3 install autopep8
-  - pip3 install docformatter
-  - pip3 install flake8
-  - pip3 install nose
-  - pip3 install vulture
-  - pip3 install pylint
-  - pip3 install scipy
+  - pip3 install -e .[dev]
 
 script:
   # Only run non-runtime tests until we can get opencv working under Travis.

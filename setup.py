@@ -20,5 +20,19 @@ setuptools.setup(
             'mel-debug=mel.cmddebug.meldebug:main',
         ]
     },
+    install_requires=[
+        # 'opencv',  # Not a possibility as yet.
+        'scipy'
+    ],
+    extras_require={
+        'dev': [
+            'autopep8',
+            'docformatter',
+            'flake8',
+            'nose',
+            'vulture',
+            'pylint',
+        ]
+    },
     python_requires='>=3.6',
 )
