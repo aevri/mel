@@ -65,6 +65,7 @@ def run_mel_tests():
         'rotomap-organise',
         'rotomap-udiff',
         'rotomap-uuid',
+        'status',
     ]
 
     for s in subcommands:

@@ -109,6 +109,20 @@ def make_argparse_rotomap_directory(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
+class MoleListDiff():
+
+    def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
+
+        self.new = (new_uuids - old_uuids) - ignore_new
+        self.missing = (old_uuids - new_uuids) - ignore_missing
+        self.matching = old_uuids & new_uuids
+
+        self.ignored_new = (new_uuids - old_uuids) & ignore_new
+        self.ignored_missing = (old_uuids - new_uuids) & ignore_missing
+        self.would_ignore_new = ignore_new - (new_uuids - old_uuids)
+        self.would_ignore_missing = ignore_missing - (old_uuids - new_uuids)
+
+
 def load_image(path):
     image = cv2.imread(str(path))
     if image is None:

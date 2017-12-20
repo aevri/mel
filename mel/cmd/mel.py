@@ -45,6 +45,7 @@ import mel.cmd.rotomapmontagesingle  # noqa: E402
 import mel.cmd.rotomaporganise  # noqa: E402
 import mel.cmd.rotomapudiff  # noqa: E402
 import mel.cmd.rotomapuuid  # noqa: E402
+import mel.cmd.status  # noqa: E402
 
 
 def main():
@@ -94,6 +95,7 @@ def main():
         subparsers, mel.cmd.rotomaporganise, 'rotomap-organise')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapudiff, 'rotomap-udiff')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
+    _setup_parser_for_module(subparsers, mel.cmd.status, 'status')
 
     args = parser.parse_args()
     try:

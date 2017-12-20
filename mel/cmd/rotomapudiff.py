@@ -94,10 +94,13 @@ def process_args(args):
 
     to_uuids = uuids_from_dir(args.NEW)
 
-    print_category('New moles:', to_uuids - from_uuids - ignore_new)
+    diff = mel.rotomap.moles.MoleListDiff(
+        from_uuids, to_uuids, ignore_new, ignore_missing)
+
+    print_category('New moles:', diff.new)
 
     missing_uuids = sorted(
-        list(from_uuids - to_uuids - ignore_missing),
+        list(diff.missing),
         key=uuid_to_fromdirs.get,
         reverse=True)
     for group, ids in itertools.groupby(missing_uuids, uuid_to_fromdirs.get):
@@ -109,21 +112,23 @@ def process_args(args):
                 'Not in NEW map. Only in {}:'.format(group_desc),
                 ids)
 
-    print_category('Old moles, also seen in NEW map:', from_uuids & to_uuids)
+    print_category('Old moles, also seen in NEW map:', diff.matching)
 
     if args.show_all:
         print_category(
             'Ignored new moles:',
-            (to_uuids - from_uuids) & ignore_new)
+            diff.ignored_new)
         print_category(
             'Would ignore new moles:',
-            ignore_new - (to_uuids - from_uuids))
+            diff.would_ignore_new)
         print_category(
             'Ignored missing moles:',
-            (from_uuids - to_uuids) & ignore_missing)
+            diff.ignored_missing)
         print_category(
             'Would ignore missing moles:',
-            ignore_missing - (from_uuids - to_uuids))
+            diff.would_ignore_missing)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #
