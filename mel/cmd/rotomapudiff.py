@@ -45,10 +45,6 @@ import itertools
 import mel.rotomap.moles
 
 
-IGNORE_NEW_FILENAME = 'ignore-new'
-IGNORE_MISSING_FILENAME = 'ignore-missing'
-
-
 def setup_parser(parser):
     parser.add_argument(
         'OLD',
@@ -91,10 +87,10 @@ def process_args(args):
 
     from_uuids = set(uuid_to_fromdirs.keys())
 
-    ignore_new = load_potential_set_file(
-        args.NEW.path, IGNORE_NEW_FILENAME)
-    ignore_missing = load_potential_set_file(
-        args.NEW.path, IGNORE_MISSING_FILENAME)
+    ignore_new = mel.rotomap.moles.load_potential_set_file(
+        args.NEW.path, mel.rotomap.moles.IGNORE_NEW_FILENAME)
+    ignore_missing = mel.rotomap.moles.load_potential_set_file(
+        args.NEW.path, mel.rotomap.moles.IGNORE_MISSING_FILENAME)
 
     to_uuids = uuids_from_dir(args.NEW)
 
@@ -128,19 +124,6 @@ def process_args(args):
         print_category(
             'Would ignore missing moles:',
             ignore_missing - (from_uuids - to_uuids))
-
-
-def load_potential_set_file(path, filename):
-    ignore_set = set()
-    file_path = path / filename
-    if file_path.is_file():
-        with file_path.open() as f:
-            lines = f.read().splitlines()
-        for l in lines:
-            text = l.strip()
-            if text and not text.startswith('#'):
-                ignore_set.add(text)
-    return ignore_set
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

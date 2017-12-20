@@ -17,6 +17,9 @@ import mel.rotomap.mask
 
 KEY_IS_CONFIRMED = 'is_uuid_canonical'
 
+IGNORE_NEW_FILENAME = 'ignore-new'
+IGNORE_MISSING_FILENAME = 'ignore-missing'
+
 
 class RotomapDirectory():
     """RotomapFrame-s for all images in a single rotomap dir."""
@@ -441,6 +444,21 @@ def frames_to_uuid_frameposlist(frame_iterable):
                 (str(frame), elspace.to_space(pos)))
 
     return uuid_to_frameposlist
+
+
+def load_potential_set_file(path, filename):
+    ignore_set = set()
+    file_path = path / filename
+    if file_path.is_file():
+        with file_path.open() as f:
+            lines = f.read().splitlines()
+        for l in lines:
+            text = l.strip()
+            if text and not text.startswith('#'):
+                ignore_set.add(text)
+    return ignore_set
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #
