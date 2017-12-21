@@ -44,7 +44,6 @@ import mel.cmd.rotomaplist  # noqa: E402
 import mel.cmd.rotomapmontagesingle  # noqa: E402
 import mel.cmd.rotomaporganise  # noqa: E402
 import mel.cmd.rotomapoverview  # noqa: E402
-import mel.cmd.rotomapshow  # noqa: E402
 import mel.cmd.rotomapudiff  # noqa: E402
 import mel.cmd.rotomapuuid  # noqa: E402
 
@@ -96,7 +95,6 @@ def main():
         subparsers, mel.cmd.rotomaporganise, 'rotomap-organise')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapoverview, 'rotomap-overview')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapshow, 'rotomap-show')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapudiff, 'rotomap-udiff')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
 
