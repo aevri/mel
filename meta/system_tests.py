@@ -66,7 +66,6 @@ def run_mel_tests():
         'rotomap-list',
         'rotomap-organise',
         'rotomap-overview',
-        'rotomap-relate',
         'rotomap-show',
         'rotomap-udiff',
         'rotomap-uuid',
@@ -85,7 +84,6 @@ def run_mel_debug_tests():
 
     subcommands = [
         'bench-autopaste',
-        'bench-relate',
         'render-valuefield',
     ]
 
