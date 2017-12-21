@@ -58,7 +58,6 @@ def run_mel_tests():
         'micro-view',
         'rotomap-automark',
         'rotomap-automask',
-        'rotomap-automask-svm',
         'rotomap-compare',
         'rotomap-diff',
         'rotomap-edit',

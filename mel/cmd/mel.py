@@ -34,7 +34,6 @@ import mel.cmd.microcompare  # noqa: E402
 import mel.cmd.microview  # noqa: E402
 import mel.cmd.rotomapautomark  # noqa: E402
 import mel.cmd.rotomapautomask  # noqa: E402
-import mel.cmd.rotomapautomasksvm  # noqa: E402
 import mel.cmd.rotomapcheck  # noqa: E402
 import mel.cmd.rotomapcompare  # noqa: E402
 import mel.cmd.rotomapconfirm  # noqa: E402
@@ -80,8 +79,6 @@ def main():
         subparsers, mel.cmd.rotomapautomark, 'rotomap-automark')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapautomask, 'rotomap-automask')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapautomasksvm, 'rotomap-automask-svm')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapcheck, 'rotomap-check')
     _setup_parser_for_module(
