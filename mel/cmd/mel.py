@@ -37,7 +37,6 @@ import mel.cmd.rotomapautomask  # noqa: E402
 import mel.cmd.rotomapcheck  # noqa: E402
 import mel.cmd.rotomapcompare  # noqa: E402
 import mel.cmd.rotomapconfirm  # noqa: E402
-import mel.cmd.rotomapdiff  # noqa: E402
 import mel.cmd.rotomapedit  # noqa: E402
 import mel.cmd.rotomapfsck  # noqa: E402
 import mel.cmd.rotomapidentify  # noqa: E402
@@ -85,7 +84,6 @@ def main():
         subparsers, mel.cmd.rotomapcompare, 'rotomap-compare')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapconfirm, 'rotomap-confirm')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapdiff, 'rotomap-diff')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapfsck, 'rotomap-fsck')
     _setup_parser_for_module(

@@ -59,7 +59,6 @@ def run_mel_tests():
         'rotomap-automark',
         'rotomap-automask',
         'rotomap-compare',
-        'rotomap-diff',
         'rotomap-edit',
         'rotomap-fsck',
         'rotomap-list',
