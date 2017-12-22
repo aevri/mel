@@ -63,7 +63,6 @@ def run_mel_tests():
         'rotomap-fsck',
         'rotomap-list',
         'rotomap-organise',
-        'rotomap-overview',
         'rotomap-udiff',
         'rotomap-uuid',
     ]
