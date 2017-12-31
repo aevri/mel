@@ -17,8 +17,12 @@ def load(mole_image_path):
         cv2.IMREAD_UNCHANGED)
 
 
+def has_mask(mole_image_path):
+    return os.path.isfile(path(mole_image_path))
+
+
 def load_or_none(mole_image_path):
-    if os.path.isfile(path(mole_image_path)):
+    if has_mask(mole_image_path):
         return load(mole_image_path)
     return None
 

@@ -41,6 +41,9 @@ class Info(enum.Enum):
     NO_BASE_DIR = enum.auto()
     UNEXPECTED_FILE = enum.auto()
     MISSING_MOLE = enum.auto()
+    UNCONFIRMED_UUID = enum.auto()
+    NO_MOLE_FILE = enum.auto()
+    NO_MASK = enum.auto()
 
 
 def setup_parser(parser):
@@ -149,6 +152,9 @@ def check_rotomap_minor_part(path, notices):
     rotomap_list.sort(key=lambda x: x.path)
     check_rotomap_list(notices, rotomap_list)
 
+    for rotomap in rotomap_list:
+        check_rotomap(notices, rotomap)
+
 
 def uuids_from_dir(rotomap_dir):
     uuid_set = set()
@@ -190,6 +196,21 @@ def check_rotomap_list(notices, rotomap_list):
 
     for uuid_ in diff.missing:
         notices[Info.MISSING_MOLE].append(f'{newest.path} {uuid_}')
+
+
+def check_rotomap(notices, rotomap):
+
+    for imagepath, mole_list in rotomap.yield_mole_lists():
+        for mole in mole_list:
+            if not mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
+                notices[Info.UNCONFIRMED_UUID].append(
+                    f'{imagepath} {mole["uuid"]}')
+
+    for frame in rotomap.yield_frames():
+        if not frame.has_mole_file():
+            notices[Info.NO_MOLE_FILE].append(f'{frame.path}')
+        if not frame.has_mask():
+            notices[Info.NO_MASK].append(f'{frame.path}')
 
 
 # -----------------------------------------------------------------------------

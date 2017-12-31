@@ -87,6 +87,12 @@ class RotomapFrame():
     def load_mask(self):
         return mel.rotomap.mask.load_or_none(self.path)
 
+    def has_mole_file(self):
+        return pathlib.Path(str(self.path) + '.json').exists()
+
+    def has_mask(self):
+        return mel.rotomap.mask.has_mask(self.path)
+
     def __repr__(self):
         return f"RotomapFrame({self.path!r})"
 
