@@ -57,11 +57,6 @@ class RotomapNewMoleAlert(AlertNotification):
 
 
 @enum.unique
-class Alert(enum.Enum):
-    NEW_MOLE = enum.auto()
-
-
-@enum.unique
 class Error(enum.Enum):
     INVALID_DATE = enum.auto()
 
@@ -100,12 +95,21 @@ def process_args(args):
     for kind, name_list in notices.items():
         print()
         print(kind)
-        for name in name_list:
-            try:
+
+        is_notification_class = False
+        try:
+            if issubclass(kind, Notification):
+                is_notification_class = True
+        except TypeError:
+            pass
+
+        if is_notification_class:
+            for name in name_list:
                 print(textwrap.indent(
                     name.format(args.detail_level),
                     '  '))
-            except AttributeError:
+        else:
+            for name in name_list:
                 print(' ', name)
 
 
@@ -229,7 +233,7 @@ def check_rotomap_list(notices, rotomap_list):
     if diff.new:
         new_mole_alert = RotomapNewMoleAlert(newest.path)
         new_mole_alert.uuid_list.extend(diff.new)
-        notices[Alert.NEW_MOLE].append(new_mole_alert)
+        notices[RotomapNewMoleAlert].append(new_mole_alert)
 
     for uuid_ in diff.missing:
         notices[Info.MISSING_MOLE].append(f'{newest.path} {uuid_}')
