@@ -22,8 +22,38 @@ import datetime
 import enum
 import pathlib
 import sys
+import textwrap
 
 import mel.rotomap.moles
+
+
+class Notification():
+
+    def __init__(self, path):
+        self.path = path
+
+    def format(self, detail_level):
+        return str(self.path)
+
+
+class AlertNotification(Notification):
+    pass
+
+
+class RotomapNewMoleAlert(AlertNotification):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.uuid_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
+            output += '\n'
+
+        return output
 
 
 @enum.unique
@@ -47,7 +77,7 @@ class Info(enum.Enum):
 
 
 def setup_parser(parser):
-    pass
+    parser.add_argument('--detail-level', '-d', action='count', default=0)
 
 
 def process_args(args):
@@ -71,7 +101,12 @@ def process_args(args):
         print()
         print(kind)
         for name in name_list:
-            print(' ' * 2, name)
+            try:
+                print(textwrap.indent(
+                    name.format(args.detail_level),
+                    '  '))
+            except AttributeError:
+                print(' ', name)
 
 
 class NoMelrootError(Exception):
@@ -191,8 +226,10 @@ def check_rotomap_list(notices, rotomap_list):
     diff = mel.rotomap.moles.MoleListDiff(
         old_uuids, new_uuids, ignore_new, ignore_missing)
 
-    for uuid_ in diff.new:
-        notices[Alert.NEW_MOLE].append(f'{newest.path} {uuid_}')
+    if diff.new:
+        new_mole_alert = RotomapNewMoleAlert(newest.path)
+        new_mole_alert.uuid_list.extend(diff.new)
+        notices[Alert.NEW_MOLE].append(new_mole_alert)
 
     for uuid_ in diff.missing:
         notices[Info.MISSING_MOLE].append(f'{newest.path} {uuid_}')
