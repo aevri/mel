@@ -53,16 +53,6 @@ class RotomapDirectory():
         return f'RotomapDirectory({self.path!r})'
 
 
-def iter_all_frames(*search_paths):
-    for root in search_paths:
-        root = pathlib.Path(root)
-        for i in root.iterdir():
-            if i.is_dir():
-                yield from iter_all_frames(i)
-            elif i.suffix.lower() == '.jpg':
-                yield RotomapFrame(i)
-
-
 class RotomapFrame():
     """Image and mole data for a single image in a rotomap."""
 
