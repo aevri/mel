@@ -173,22 +173,10 @@ def process_args(args):
     for kind, name_list in notices.items():
         print()
         print(kind)
-
-        is_notification_class = False
-        try:
-            if issubclass(kind, Notification):
-                is_notification_class = True
-        except TypeError:
-            pass
-
-        if is_notification_class:
-            for name in name_list:
-                print(textwrap.indent(
-                    name.format(args.detail_level),
-                    '  '))
-        else:
-            for name in name_list:
-                print(' ', name)
+        for name in name_list:
+            print(textwrap.indent(
+                name.format(args.detail_level),
+                '  '))
 
 
 class NoMelrootError(Exception):
