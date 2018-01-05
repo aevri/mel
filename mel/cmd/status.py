@@ -175,12 +175,17 @@ def process_args(args):
     for notice in notice_list:
         klass_to_notices[notice.__class__].append(notice)
 
+    print_klass_to_notices(klass_to_notices, args.detail_level)
+
+
+def print_klass_to_notices(klass_to_notices, detail_level):
+
     for klass, notice_list in klass_to_notices.items():
         print()
         print(klass)
         for notice in notice_list:
             print(textwrap.indent(
-                notice.format(args.detail_level),
+                notice.format(detail_level),
                 '  '))
 
 
