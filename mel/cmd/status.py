@@ -151,6 +151,7 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 def setup_parser(parser):
     parser.add_argument('--detail', '-d', action='count', default=0)
+    parser.add_argument('--trivia', '-t', action='count', default=0)
 
 
 def process_args(args):
@@ -187,7 +188,8 @@ def process_args(args):
 
     print_klass_to_notices(alerts_to_notices, args.detail)
     print_klass_to_notices(errors_to_notices, args.detail)
-    print_klass_to_notices(info_to_notices, args.detail)
+    if args.trivia > 0:
+        print_klass_to_notices(info_to_notices, args.detail)
 
 
 def print_klass_to_notices(klass_to_notices, detail_level):
