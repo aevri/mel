@@ -373,7 +373,7 @@ def check_rotomap_list(notices, rotomap_list):
 
 def check_rotomap(notices, rotomap):
 
-    unconfirmed_notification = RotomapUnconfirmedMoleInfo(rotomap.path)
+    unconfirmed = RotomapUnconfirmedMoleInfo(rotomap.path)
     duplicates = RotomapDuplicateUuidError(rotomap.path)
 
     for imagepath, mole_list in rotomap.yield_mole_lists():
@@ -386,13 +386,12 @@ def check_rotomap(notices, rotomap):
             current_uuid_set.add(uuid_)
 
             if not mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
-                unconfirmed_notification.frame_to_uuid_list[imagepath].append(
-                    uuid_)
+                unconfirmed.frame_to_uuid_list[imagepath].append(uuid_)
 
     if duplicates.frame_to_uuid_list:
         notices.append(duplicates)
-    if unconfirmed_notification.frame_to_uuid_list:
-        notices.append(unconfirmed_notification)
+    if unconfirmed.frame_to_uuid_list:
+        notices.append(unconfirmed)
 
     missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
     missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
