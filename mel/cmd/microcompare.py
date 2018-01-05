@@ -35,6 +35,7 @@ def get_comparison_images(path):
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
     names = [x for x in os.listdir(micro_path) if x.lower().endswith('.jpg')]
+    names.sort()
     paths = [os.path.join(micro_path, x) for x in names]
     images = [cv2.imread(x) for x in paths]
 

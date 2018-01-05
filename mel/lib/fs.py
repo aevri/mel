@@ -7,7 +7,7 @@ def expand_dirs_to_jpegs(path_list):
     image_paths = []
     for path in path_list:
         if os.path.isdir(path):
-            image_paths.extend(list(yield_only_jpegs_from_dir(path)))
+            image_paths.extend(sorted(yield_only_jpegs_from_dir(path)))
         else:
             image_paths.append(path)
     return image_paths
