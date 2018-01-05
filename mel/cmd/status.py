@@ -68,6 +68,32 @@ class InvalidDateError(ErrorNotification):
     pass
 
 
+class RotomapDuplicateUuidError(ErrorNotification):
+
+    def __init__(self, rotomap_path):
+        super().__init__(rotomap_path)
+        self.frame_to_uuid_list = collections.defaultdict(list)
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            if detail_level == 1:
+                output += '\n\n'
+                output += '\n'.join(
+                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list))
+                output += '\n'
+            else:
+                f_to_ul = self.frame_to_uuid_list
+                for frame, uuid_list in sorted(f_to_ul.items()):
+                    output += '\n\n'
+                    output += f'  {frame}:\n'
+                    output += '\n'
+                    output += '\n'.join(
+                        ' ' * 4 + f'{u}' for u in uuid_list)
+
+        return output
+
+
 class NoBaseDirInfo(InfoNotification):
     pass
 
@@ -348,12 +374,23 @@ def check_rotomap_list(notices, rotomap_list):
 def check_rotomap(notices, rotomap):
 
     unconfirmed_notification = RotomapUnconfirmedMoleInfo(rotomap.path)
+    duplicates = RotomapDuplicateUuidError(rotomap.path)
+
     for imagepath, mole_list in rotomap.yield_mole_lists():
+        current_uuid_set = set()
         for mole in mole_list:
+            uuid_ = mole['uuid']
+
+            if uuid_ in current_uuid_set:
+                duplicates.frame_to_uuid_list[imagepath].append(uuid_)
+            current_uuid_set.add(uuid_)
+
             if not mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
                 unconfirmed_notification.frame_to_uuid_list[imagepath].append(
-                    mole['uuid'])
+                    uuid_)
 
+    if duplicates.frame_to_uuid_list:
+        notices.append(duplicates)
     if unconfirmed_notification.frame_to_uuid_list:
         notices.append(unconfirmed_notification)
 
