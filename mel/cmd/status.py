@@ -162,20 +162,25 @@ def process_args(args):
 
     print(f'melroot: {melroot}')
 
-    notices = collections.defaultdict(list)
+    notice_list = []
 
     rotomaps_path = melroot / 'rotomaps'
     if rotomaps_path.exists():
-        check_rotomaps(rotomaps_path, notices)
+        check_rotomaps(rotomaps_path, notice_list)
     else:
-        notices[NoBaseDirInfo].append(NoBaseDirInfo('rotomaps'))
+        notice_list.append(NoBaseDirInfo('rotomaps'))
 
-    for kind, name_list in notices.items():
+    klass_to_notices = collections.defaultdict(list)
+
+    for notice in notice_list:
+        klass_to_notices[notice.__class__].append(notice)
+
+    for klass, notice_list in klass_to_notices.items():
         print()
-        print(kind)
-        for name in name_list:
+        print(klass)
+        for notice in notice_list:
             print(textwrap.indent(
-                name.format(args.detail_level),
+                notice.format(args.detail_level),
                 '  '))
 
 
@@ -229,13 +234,13 @@ def check_rotomaps(path, notices):
                     if minor_part.is_dir():
                         check_rotomap_minor_part(minor_part, notices)
                     else:
-                        notices[UnexpectedFileInfo].append(
+                        notices.append(
                             UnexpectedFileInfo(minor_part))
             else:
-                notices[UnexpectedFileInfo].append(
+                notices.append(
                     UnexpectedFileInfo(major_part))
     else:
-        notices[NoBaseDirInfo].append(NoBaseDirInfo(parts_path))
+        notices.append(NoBaseDirInfo(parts_path))
 
 
 def check_rotomap_minor_part(path, notices):
@@ -248,14 +253,14 @@ def check_rotomap_minor_part(path, notices):
                     rotomap_path.name[:10],
                     '%Y_%m_%d')
             except ValueError:
-                notices[InvalidDateError].append(
+                notices.append(
                     InvalidDateError(rotomap_path))
             else:
                 rotomap_list.append(
                     mel.rotomap.moles.RotomapDirectory(
                         rotomap_path))
         else:
-            notices[UnexpectedFileInfo].append(
+            notices.append(
                 UnexpectedFileInfo(rotomap_path))
 
     rotomap_list.sort(key=lambda x: x.path)
@@ -303,12 +308,12 @@ def check_rotomap_list(notices, rotomap_list):
     if diff.new:
         new_mole_alert = RotomapNewMoleAlert(newest.path)
         new_mole_alert.uuid_list.extend(diff.new)
-        notices[RotomapNewMoleAlert].append(new_mole_alert)
+        notices.append(new_mole_alert)
 
     if diff.missing:
         missing_notification = RotomapMissingMoleInfo(newest.path)
         missing_notification.uuid_list.extend(diff.missing)
-        notices[RotomapMissingMoleInfo].append(missing_notification)
+        notices.append(missing_notification)
 
 
 def check_rotomap(notices, rotomap):
@@ -321,7 +326,7 @@ def check_rotomap(notices, rotomap):
                     mole['uuid'])
 
     if unconfirmed_notification.frame_to_uuid_list:
-        notices[RotomapUnconfirmedMoleInfo].append(unconfirmed_notification)
+        notices.append(unconfirmed_notification)
 
     missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
     missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
@@ -333,9 +338,9 @@ def check_rotomap(notices, rotomap):
             missing_mask_info.frame_list.append(frame.path)
 
     if missing_mole_file_info.frame_list:
-        notices[RotomapMissingMoleFileInfo].append(missing_mole_file_info)
+        notices.append(missing_mole_file_info)
     if missing_mask_info.frame_list:
-        notices[RotomapMissingMaskInfo].append(missing_mask_info)
+        notices.append(missing_mask_info)
 
 
 # -----------------------------------------------------------------------------
