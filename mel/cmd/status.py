@@ -150,7 +150,7 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 
 def setup_parser(parser):
-    parser.add_argument('--detail-level', '-d', action='count', default=0)
+    parser.add_argument('--detail', '-d', action='count', default=0)
 
 
 def process_args(args):
@@ -185,9 +185,9 @@ def process_args(args):
         else:
             raise RuntimeError(f'Unexpected notice type: {klass}')
 
-    print_klass_to_notices(alerts_to_notices, args.detail_level)
-    print_klass_to_notices(errors_to_notices, args.detail_level)
-    print_klass_to_notices(info_to_notices, args.detail_level)
+    print_klass_to_notices(alerts_to_notices, args.detail)
+    print_klass_to_notices(errors_to_notices, args.detail)
+    print_klass_to_notices(info_to_notices, args.detail)
 
 
 def print_klass_to_notices(klass_to_notices, detail_level):
