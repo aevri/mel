@@ -161,7 +161,8 @@ def process_args(args):
         print('Not in a mel repo, could not find melroot', file=sys.stderr)
         return 1
 
-    print(f'melroot: {melroot}')
+    if args.detail > 2:
+        print(f'melroot: {melroot}')
 
     notice_list = []
 
