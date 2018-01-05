@@ -170,12 +170,24 @@ def process_args(args):
     else:
         notice_list.append(NoBaseDirInfo('rotomaps'))
 
-    klass_to_notices = collections.defaultdict(list)
+    alerts_to_notices = collections.defaultdict(list)
+    errors_to_notices = collections.defaultdict(list)
+    info_to_notices = collections.defaultdict(list)
 
     for notice in notice_list:
-        klass_to_notices[notice.__class__].append(notice)
+        klass = notice.__class__
+        if issubclass(klass, AlertNotification):
+            alerts_to_notices[klass].append(notice)
+        elif issubclass(klass, ErrorNotification):
+            errors_to_notices[klass].append(notice)
+        elif issubclass(klass, InfoNotification):
+            info_to_notices[klass].append(notice)
+        else:
+            raise RuntimeError(f'Unexpected notice type: {klass}')
 
-    print_klass_to_notices(klass_to_notices, args.detail_level)
+    print_klass_to_notices(alerts_to_notices, args.detail_level)
+    print_klass_to_notices(errors_to_notices, args.detail_level)
+    print_klass_to_notices(info_to_notices, args.detail_level)
 
 
 def print_klass_to_notices(klass_to_notices, detail_level):
