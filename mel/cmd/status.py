@@ -19,7 +19,6 @@ the question 'What's happening here, and what shall I do next?'.
 
 import collections
 import datetime
-import enum
 import pathlib
 import sys
 import textwrap
@@ -40,6 +39,14 @@ class AlertNotification(Notification):
     pass
 
 
+class ErrorNotification(Notification):
+    pass
+
+
+class InfoNotification(Notification):
+    pass
+
+
 class RotomapNewMoleAlert(AlertNotification):
 
     def __init__(self, path):
@@ -56,19 +63,90 @@ class RotomapNewMoleAlert(AlertNotification):
         return output
 
 
-@enum.unique
-class Error(enum.Enum):
-    INVALID_DATE = enum.auto()
+class InvalidDateError(ErrorNotification):
+    pass
 
 
-@enum.unique
-class Info(enum.Enum):
-    NO_BASE_DIR = enum.auto()
-    UNEXPECTED_FILE = enum.auto()
-    MISSING_MOLE = enum.auto()
-    UNCONFIRMED_UUID = enum.auto()
-    NO_MOLE_FILE = enum.auto()
-    NO_MASK = enum.auto()
+class NoBaseDirInfo(InfoNotification):
+    pass
+
+
+class UnexpectedFileInfo(InfoNotification):
+    pass
+
+
+class RotomapMissingMoleInfo(InfoNotification):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.uuid_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
+            output += '\n'
+
+        return output
+
+
+class RotomapUnconfirmedMoleInfo(InfoNotification):
+
+    def __init__(self, rotomap_path):
+        super().__init__(rotomap_path)
+        self.frame_to_uuid_list = collections.defaultdict(list)
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            if detail_level == 1:
+                output += '\n\n'
+                output += '\n'.join(
+                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list))
+                output += '\n'
+            else:
+                f_to_ul = self.frame_to_uuid_list
+                for frame, uuid_list in sorted(f_to_ul.items()):
+                    output += '\n\n'
+                    output += f'  {frame}:\n'
+                    output += '\n'
+                    output += '\n'.join(
+                        ' ' * 4 + f'{u}' for u in uuid_list)
+
+        return output
+
+
+class RotomapMissingMoleFileInfo(InfoNotification):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.frame_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
+            output += '\n'
+
+        return output
+
+
+class RotomapMissingMaskInfo(InfoNotification):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.frame_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
+            output += '\n'
+
+        return output
 
 
 def setup_parser(parser):
@@ -90,7 +168,7 @@ def process_args(args):
     if rotomaps_path.exists():
         check_rotomaps(rotomaps_path, notices)
     else:
-        notices[Info.NO_BASE_DIR].append('rotomaps')
+        notices[NoBaseDirInfo].append(NoBaseDirInfo('rotomaps'))
 
     for kind, name_list in notices.items():
         print()
@@ -163,11 +241,13 @@ def check_rotomaps(path, notices):
                     if minor_part.is_dir():
                         check_rotomap_minor_part(minor_part, notices)
                     else:
-                        notices[Info.UNEXPECTED_FILE].append(minor_part)
+                        notices[UnexpectedFileInfo].append(
+                            UnexpectedFileInfo(minor_part))
             else:
-                notices[Info.UNEXPECTED_FILE].append(major_part)
+                notices[UnexpectedFileInfo].append(
+                    UnexpectedFileInfo(major_part))
     else:
-        notices[Info.NO_BASE_DIR].append(parts_path)
+        notices[NoBaseDirInfo].append(NoBaseDirInfo(parts_path))
 
 
 def check_rotomap_minor_part(path, notices):
@@ -180,13 +260,15 @@ def check_rotomap_minor_part(path, notices):
                     rotomap_path.name[:10],
                     '%Y_%m_%d')
             except ValueError:
-                notices[Error.INVALID_DATE].append(rotomap_path)
+                notices[InvalidDateError].append(
+                    InvalidDateError(rotomap_path))
             else:
                 rotomap_list.append(
                     mel.rotomap.moles.RotomapDirectory(
                         rotomap_path))
         else:
-            notices[Info.UNEXPECTED_FILE].append(rotomap_path)
+            notices[UnexpectedFileInfo].append(
+                UnexpectedFileInfo(rotomap_path))
 
     rotomap_list.sort(key=lambda x: x.path)
     check_rotomap_list(notices, rotomap_list)
@@ -235,23 +317,37 @@ def check_rotomap_list(notices, rotomap_list):
         new_mole_alert.uuid_list.extend(diff.new)
         notices[RotomapNewMoleAlert].append(new_mole_alert)
 
-    for uuid_ in diff.missing:
-        notices[Info.MISSING_MOLE].append(f'{newest.path} {uuid_}')
+    if diff.missing:
+        missing_notification = RotomapMissingMoleInfo(newest.path)
+        missing_notification.uuid_list.extend(diff.missing)
+        notices[RotomapMissingMoleInfo].append(missing_notification)
 
 
 def check_rotomap(notices, rotomap):
 
+    unconfirmed_notification = RotomapUnconfirmedMoleInfo(rotomap.path)
     for imagepath, mole_list in rotomap.yield_mole_lists():
         for mole in mole_list:
             if not mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
-                notices[Info.UNCONFIRMED_UUID].append(
-                    f'{imagepath} {mole["uuid"]}')
+                unconfirmed_notification.frame_to_uuid_list[imagepath].append(
+                    mole['uuid'])
+
+    if unconfirmed_notification.frame_to_uuid_list:
+        notices[RotomapUnconfirmedMoleInfo].append(unconfirmed_notification)
+
+    missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
+    missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
 
     for frame in rotomap.yield_frames():
         if not frame.has_mole_file():
-            notices[Info.NO_MOLE_FILE].append(f'{frame.path}')
+            missing_mole_file_info.frame_list.append(frame.path)
         if not frame.has_mask():
-            notices[Info.NO_MASK].append(f'{frame.path}')
+            missing_mask_info.frame_list.append(frame.path)
+
+    if missing_mole_file_info.frame_list:
+        notices[RotomapMissingMoleFileInfo].append(missing_mole_file_info)
+    if missing_mask_info.frame_list:
+        notices[RotomapMissingMaskInfo].append(missing_mask_info)
 
 
 # -----------------------------------------------------------------------------
