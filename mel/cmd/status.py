@@ -19,6 +19,7 @@ the question 'What's happening here, and what shall I do next?'.
 
 import collections
 import datetime
+import os
 import pathlib
 import sys
 import textwrap
@@ -150,6 +151,7 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 
 def setup_parser(parser):
+    parser.add_argument('PATH', nargs='?')
     parser.add_argument('--detail', '-d', action='count', default=0)
     parser.add_argument('--trivia', '-t', action='count', default=0)
 
@@ -176,7 +178,14 @@ def process_args(args):
     errors_to_notices = collections.defaultdict(list)
     info_to_notices = collections.defaultdict(list)
 
+    abspath = os.path.abspath(args.PATH) if args.PATH is not None else None
+
     for notice in notice_list:
+
+        if abspath is not None:
+            if not str(notice.path).startswith(abspath):
+                continue
+
         klass = notice.__class__
         if issubclass(klass, AlertNotification):
             alerts_to_notices[klass].append(notice)
