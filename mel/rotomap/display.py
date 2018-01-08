@@ -741,7 +741,7 @@ class MoleData:
         self._mask_path = mel.rotomap.mask.path(image_path)
         self.mask = mel.rotomap.mask.load_or_none(image_path)
         if self.mask is None:
-            self.mask = numpy.zeros((height, width, 1), numpy.uint8)
+            self.mask = numpy.zeros((height, width), numpy.uint8)
 
         self._loaded_index = self._list_index
 
