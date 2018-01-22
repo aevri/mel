@@ -19,7 +19,8 @@ import mel.rotomap.identify
 
 def setup_parser(parser):
     parser.add_argument(
-        'TARGET_IMAGE',
+        '--target',
+        '-t',
         nargs='+',
         help="Paths to images to identify.")
     parser.add_argument(
@@ -89,8 +90,13 @@ def process_args(args):
             save_frames_to_uuid_frameposlist(
                 uuid_to_frameposlist, args.cache)
 
+    if not args.target:
+        if not args.cache:
+            print('Nothing to do.')
+        return
+
     target_frames = [
-        mel.rotomap.moles.RotomapFrame(x) for x in args.TARGET_IMAGE
+        mel.rotomap.moles.RotomapFrame(x) for x in args.target
     ]
 
     if args.verbose:
