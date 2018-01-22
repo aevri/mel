@@ -81,7 +81,7 @@ def process_args(args):
             x.yield_frames() for x in args.source)
 
         uuid_to_frameposlist = mel.rotomap.moles.frames_to_uuid_frameposlist(
-            training_frames)
+            training_frames, canonical_only=True)
 
         if args.cache:
             if args.verbose:
@@ -95,8 +95,6 @@ def process_args(args):
 
     if args.verbose:
         print('Training ..')
-
-    # TODO: distinguish between canonical and non-canonical moles for training
 
     # yrad = 0.1
     # nrad = 1.2

@@ -94,6 +94,11 @@ class MoleData():
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m['uuid'] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
+        self.canonical_uuids = frozenset(
+            m['uuid']
+            for m in self.moles
+            if m[KEY_IS_CONFIRMED]
+        )
         # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
 
@@ -441,7 +446,7 @@ def mapped_pos(molepos, from_moles, to_moles):
     return molepos
 
 
-def frames_to_uuid_frameposlist(frame_iterable):
+def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
     uuid_to_frameposlist = collections.defaultdict(list)
 
     for frame in frame_iterable:
@@ -450,6 +455,8 @@ def frames_to_uuid_frameposlist(frame_iterable):
         ellipse = cv2.fitEllipse(contour)
         elspace = mel.lib.ellipsespace.Transform(ellipse)
         for uuid_, pos in frame.moledata.uuid_points.items():
+            if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
+                continue
             uuid_to_frameposlist[uuid_].append(
                 (str(frame), elspace.to_space(pos)))
 
