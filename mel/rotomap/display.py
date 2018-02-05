@@ -1,6 +1,7 @@
 """Display a rotomap."""
 
 import enum
+import functools
 
 import collections
 import cv2
@@ -713,6 +714,16 @@ class Editor:
 class MoleData:
 
     def __init__(self, path_list):
+
+        # Make an instance-specific cache of images. Note that this means that
+        # mel will need to be re-run in order to pick up changes to mole
+        # images. This seems to be fine for use-cases to date, only the mole
+        # data seems to change from underneath really.
+        @functools.lru_cache()
+        def load_image(image_path):
+            return mel.rotomap.moles.load_image(image_path)
+        self._load_image = load_image
+
         self.moles = []
         self.image = None
         self.mask = None
@@ -733,7 +744,7 @@ class MoleData:
             return
 
         image_path = self._path_list[self._list_index]
-        self.image = mel.rotomap.moles.load_image(image_path)
+        self.image = self._load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
