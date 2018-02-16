@@ -4,8 +4,9 @@ import copy
 import itertools
 import sys
 
-import mel.rotomap.moles
 import mel.rotomap.identify
+import mel.rotomap.lowerbound
+import mel.rotomap.moles
 
 
 # TODO: Determine a sensible upper-bound for early discard of hopeless avenues.
@@ -92,11 +93,21 @@ def process_args(args):
             positions, uuid_index_translator, warm_classifier)
         predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
 
-        bounder = mel.rotomap.identify.Bounder(
+        bounder1 = mel.rotomap.lowerbound.Bounder(
             tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,
             num_identities,
             num_canonicals)
+
+        # bounder2 = mel.rotomap.identify.Bounder(
+        #     tuple(predictor_loc for (_, predictor_loc) in predictors),
+        #     calc_guesses,
+        #     num_identities,
+        #     num_canonicals)
+
+        # bounder = mel.rotomap.identify.BounderComparer(bounder1, bounder2)
+        bounder = bounder1
+
         guesser = mel.rotomap.identify.PosGuesser(
             num_locations,
             predictors,

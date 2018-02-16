@@ -8,7 +8,7 @@ disable = missing-docstring
 
 # Pylint won't recognise a lot of members of numpy or cv2.ml and will generate
 # spurious errors. Ignore for now.
-ignored-modules = numpy, cv2
+ignored-modules = numpy, cv2, mel.rotomap.lowerbound
 
 # Avoid unexpected errors like this:
 #

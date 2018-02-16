@@ -1,5 +1,11 @@
 import setuptools
 
+lowerbound = setuptools.Extension(
+    'mel.rotomap.lowerbound',
+    sources=['lowerbound.cpp'],
+    extra_compile_args=['-std=c++11'],
+)
+
 setuptools.setup(
     name='mel',
     url='https://github.com/aevri/mel',
@@ -34,5 +40,6 @@ setuptools.setup(
             'pylint',
         ]
     },
+    ext_modules=[lowerbound],
     python_requires='>=3.6',
 )
