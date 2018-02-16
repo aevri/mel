@@ -176,6 +176,22 @@ class RotomapMissingMaskInfo(InfoNotification):
         return output
 
 
+class RotomapMissingSpaceInfo(InfoNotification):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.frame_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
+            output += '\n'
+
+        return output
+
+
 def setup_parser(parser):
     parser.add_argument('PATH', nargs='?')
     parser.add_argument('--detail', '-d', action='count', default=0)
@@ -395,17 +411,22 @@ def check_rotomap(notices, rotomap):
 
     missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
     missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
+    missing_space_info = RotomapMissingSpaceInfo(rotomap.path)
 
     for frame in rotomap.yield_frames():
         if not frame.has_mole_file():
             missing_mole_file_info.frame_list.append(frame.path)
         if not frame.has_mask():
             missing_mask_info.frame_list.append(frame.path)
+        if 'ellipse' not in frame.metadata:
+            missing_space_info.frame_list.append(frame.path)
 
     if missing_mole_file_info.frame_list:
         notices.append(missing_mole_file_info)
     if missing_mask_info.frame_list:
         notices.append(missing_mask_info)
+    if missing_space_info.frame_list:
+        notices.append(missing_space_info)
 
 
 # -----------------------------------------------------------------------------

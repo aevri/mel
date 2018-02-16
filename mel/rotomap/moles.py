@@ -466,12 +466,13 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
     uuid_to_frameposlist = collections.defaultdict(list)
 
     for frame in frame_iterable:
-        if 'ellipse' in frame.metadata:
-            ellipse = frame.metadata['ellipse']
-        else:
-            mask = frame.load_mask()
-            contour = mel.lib.moleimaging.biggest_contour(mask)
-            ellipse = cv2.fitEllipse(contour)
+
+        if 'ellipse' not in frame.metadata:
+            raise Exception(
+                f'{frame} has no ellipse metadata, '
+                'try running "rotomap-calc-space"')
+
+        ellipse = frame.metadata['ellipse']
         elspace = mel.lib.ellipsespace.Transform(ellipse)
         for uuid_, pos in frame.moledata.uuid_points.items():
             if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
