@@ -70,6 +70,7 @@ class RotomapFrame():
 
         self.moles = load_image_moles(self.path)
         self.moledata = MoleData(self.moles)
+        self.metadata = load_image_metadata(self.path)
 
     def load_image(self):
         return load_image(self.path)
@@ -132,6 +133,16 @@ def load_image(path):
     return image
 
 
+def load_image_metadata(image_path):
+    metadata_path = pathlib.Path(str(image_path) + '.meta.json')
+
+    metadata = {}
+    if metadata_path.exists():
+        metadata = load_json(metadata_path)
+
+    return metadata
+
+
 def load_image_moles(image_path):
     moles_path = pathlib.Path(str(image_path) + '.json')
 
@@ -154,6 +165,11 @@ def normalise_moles(moles):
     for m in moles:
         m['x'] = int(m['x'])
         m['y'] = int(m['y'])
+
+
+def save_image_metadata(metadata, image_path):
+    meta_path = image_path + '.meta.json'
+    save_json(meta_path, metadata)
 
 
 def save_image_moles(moles, image_path):
@@ -450,9 +466,12 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
     uuid_to_frameposlist = collections.defaultdict(list)
 
     for frame in frame_iterable:
-        mask = frame.load_mask()
-        contour = mel.lib.moleimaging.biggest_contour(mask)
-        ellipse = cv2.fitEllipse(contour)
+        if 'ellipse' in frame.metadata:
+            ellipse = frame.metadata['ellipse']
+        else:
+            mask = frame.load_mask()
+            contour = mel.lib.moleimaging.biggest_contour(mask)
+            ellipse = cv2.fitEllipse(contour)
         elspace = mel.lib.ellipsespace.Transform(ellipse)
         for uuid_, pos in frame.moledata.uuid_points.items():
             if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
