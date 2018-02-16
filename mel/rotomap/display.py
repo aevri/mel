@@ -103,6 +103,14 @@ class Display:
         self._zoom_pos = numpy.array((x, y))
         self._is_zoomed = True
 
+    def is_zoomed(self):
+        return self._is_zoomed
+
+    def get_zoom_pos(self):
+        if not self._is_zoomed:
+            raise Exception('Not zoomed')
+        return self._zoom_pos
+
     def set_mouse_callback(self, callback):
         cv2.setMouseCallback(self._name, callback)
 
@@ -629,24 +637,44 @@ class Editor:
         self.show_current()
 
     def show_prev_map(self):
-        self.moledata_index -= 1
-        self.moledata_index %= len(self.moledata_list)
-        self.moledata = self.moledata_list[self.moledata_index]
+        def transition():
+            self.moledata_index -= 1
+            self.moledata_index %= len(self.moledata_list)
+            self.moledata = self.moledata_list[self.moledata_index]
+        self._adjusted_transition(transition)
         self.show_current()
 
     def show_next_map(self):
-        self.moledata_index += 1
-        self.moledata_index %= len(self.moledata_list)
-        self.moledata = self.moledata_list[self.moledata_index]
+        def transition():
+            self.moledata_index += 1
+            self.moledata_index %= len(self.moledata_list)
+            self.moledata = self.moledata_list[self.moledata_index]
+        self._adjusted_transition(transition)
         self.show_current()
 
     def show_prev(self):
-        self.moledata.decrement()
+        self._adjusted_transition(self.moledata.decrement)
         self.show_current()
 
     def show_next(self):
-        self.moledata.increment()
+        self._adjusted_transition(self.moledata.increment)
         self.show_current()
+
+    def _adjusted_transition(self, transition_func):
+        if self.display.is_zoomed() and 'ellipse' in self.moledata.metadata:
+            pos = self.display.get_zoom_pos()
+            ellipse = self.moledata.metadata['ellipse']
+            pos = mel.lib.ellipsespace.Transform(ellipse).to_space(pos)
+
+            transition_func()
+            self.moledata.ensure_loaded()
+
+            if 'ellipse' in self.moledata.metadata:
+                ellipse = self.moledata.metadata['ellipse']
+                pos = mel.lib.ellipsespace.Transform(ellipse).from_space(pos)
+                self.display.set_zoomed(pos[0], pos[1])
+        else:
+            transition_func()
 
     def show_next_n(self, number_to_advance):
         for i in range(number_to_advance):
@@ -725,6 +753,7 @@ class MoleData:
         self._load_image = load_image
 
         self.moles = []
+        self.metadata = {}
         self.image = None
         self.mask = None
         self._mask_path = None
@@ -732,13 +761,13 @@ class MoleData:
         self._list_index = 0
         self._num_images = len(self._path_list)
         self._loaded_index = None
-        self._ensure_loaded()
+        self.ensure_loaded()
 
     def get_image(self):
-        self._ensure_loaded()
+        self.ensure_loaded()
         return self.image
 
-    def _ensure_loaded(self):
+    def ensure_loaded(self):
 
         if self._loaded_index == self._list_index:
             return
@@ -747,6 +776,7 @@ class MoleData:
         self.image = self._load_image(image_path)
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
+        self.metadata = mel.rotomap.moles.load_image_metadata(image_path)
 
         height, width = self.image.shape[:2]
         self._mask_path = mel.rotomap.mask.path(image_path)
