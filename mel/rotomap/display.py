@@ -694,6 +694,19 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
+    def confirm_mole(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        mole_uuid = mel.rotomap.moles.get_nearest_mole_uuid(
+            self.moledata.moles, image_x, image_y)
+        mel.rotomap.moles.set_nearest_mole_uuid(
+            self.moledata.moles,
+            image_x,
+            image_y,
+            mole_uuid,
+            is_canonical=True)
+        self.moledata.save_moles()
+        self.show_current()
+
     def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid, is_canonical=True):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(

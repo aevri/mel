@@ -25,6 +25,7 @@ In 'mole edit' mode:
     Shift-right-click on a point to randomize the uuid.
     Alt-Shift-click on a point to copy it's uuid.
     Also, press 'end' or '+' when over a point to copy it's uuid.
+    Alt-Shift-right-click over a point to make it canonical.
     Alt-click on a point to paste the copied uuid.
     Alt-right-click on a point to replace the uuid in the whole map.
     Press 'o' to toggle follow mode.
@@ -219,7 +220,7 @@ class MoleEditController():
     def on_rbutton_down(self, editor, mouse_x, mouse_y, flags):
         if flags & cv2.EVENT_FLAG_ALTKEY:
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                pass
+                editor.confirm_mole(mouse_x, mouse_y)
             else:
                 editor.remap_uuid(
                     editor.get_mole_uuid(mouse_x, mouse_y),
