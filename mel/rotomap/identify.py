@@ -19,8 +19,6 @@ _MAGIC_CLOSE_DISTANCE = 0.1
 
 MAX_MOLE_COST = 10 ** 4
 
-_DO_TRACE = False
-
 
 def p_to_cost(p):
     return int(10 / p) - 9
@@ -167,14 +165,6 @@ class PosGuesser():
             new_state[a] = b
             lower_bound = bounder.lower_bound(new_state)
             if lower_bound < total_cost[0]:
-                global _DO_TRACE
-                _DO_TRACE = True
-                print('----- old')
-                old_lower_bound = bounder.lower_bound(state)
-                print('----- new')
-                bounder.lower_bound(new_state)
-                if old_lower_bound != total_cost[0]:
-                    raise Exception('old lower_bound recalculated differently')
                 raise Exception('lower_bound lower than previous cost')
             yield (lower_bound, num_remaining - 1), new_state
 
@@ -214,18 +204,6 @@ class PosGuesser():
         return a
 
 
-def trace(func):
-    def wrapper(*args, **kwargs):
-        if _DO_TRACE:
-            print(func.__name__, '(', args, kwargs, ')', '...')
-        result = func(*args, **kwargs)
-        if _DO_TRACE:
-            print('...', func.__name__, '(', args, kwargs, ')')
-            print('...', '->', result)
-        return result
-    return wrapper
-
-
 class Bounder():
 
     def __init__(
@@ -240,7 +218,6 @@ class Bounder():
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
 
-    @trace
     def lower_bound(self, state):
         already_taken = frozenset(b for a, b in state.items() if b is not None)
 
@@ -269,44 +246,32 @@ class Bounder():
 
         return lb
 
-    @trace
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
         guesses = self.pos_guess_dict(uuid_for_history, uuid_for_position, a)
         return guesses.get(b, MAX_MOLE_COST)
 
-    @trace
     def lower_bound_unk_history(self, already_taken, uuid_for_position, a, b):
         possible_history = self.possible_uuid_set - already_taken
-        if _DO_TRACE:
-            print('possible_history', possible_history)
         costs = (
             self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
             for uuid_for_history in possible_history
         )
         return min(costs, default=MAX_MOLE_COST)
 
-    @trace
     def lower_bound_unk_mole(
             self, already_taken, uuid_for_history, uuid_for_position, a):
 
         guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
         valid_costs = [
             cost for uuid_, cost in guesses if uuid_ not in already_taken]
-        if _DO_TRACE:
-            import pprint
-            pprint.pprint('guesses:', guesses)
-            pprint.pprint('valid_costs:', valid_costs)
         # return next(valid_costs)
         if valid_costs:
             return valid_costs[0]
         else:
             return MAX_MOLE_COST
 
-    @trace
     def lower_bound_unk_unk(self, already_taken, uuid_for_position, a):
         possible_history = self.possible_uuid_set - already_taken
-        if _DO_TRACE:
-            print('possible_history', possible_history)
         costs = (
             self.lower_bound_unk_mole(
                 already_taken, uuid_for_history, uuid_for_position, a)
