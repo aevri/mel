@@ -76,9 +76,14 @@ def process_args(args):
         )
         helper = mel.rotomap.identify.PosGuesserHelper(
             uuid_to_pos, warm_classifier)
+        bounder = mel.rotomap.identify.Bounder(
+            helper,
+            possible_uuid_set,
+            canonical_uuid_set)
         guesser = mel.rotomap.identify.PosGuesser(
             tuple(uuid_to_pos.keys()),
             helper,
+            bounder,
             canonical_uuid_set,
             possible_uuid_set)
 

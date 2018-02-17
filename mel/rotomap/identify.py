@@ -150,12 +150,14 @@ class PosGuesser():
             self,
             pos_uuids,
             helper,
+            bounder,
             canonical_uuid_set,
             possible_uuid_set):
 
         self.pos_uuids = pos_uuids
 
         self.helper = helper
+        self.bounder = bounder
         self.pos_guess = helper.pos_guess
         self.pos_guess_dict = helper.pos_guess_dict
 
@@ -170,11 +172,6 @@ class PosGuesser():
 
     def yield_next_states(self, total_cost, state):
 
-        bounder = Bounder(
-            self.helper,
-            self.possible_uuid_set,
-            self.canonical_uuid_set)
-
         decided = {a: b for a, b in state.items() if b is not None}
         already_taken = set(decided.values())
         num_remaining = len(state) - len(already_taken)
@@ -184,7 +181,7 @@ class PosGuesser():
         for b in self.possible_uuid_set - already_taken:
             new_state = dict(state)
             new_state[a] = b
-            lower_bound = bounder.lower_bound(new_state)
+            lower_bound = self.bounder.lower_bound(new_state)
             if lower_bound < total_cost[0]:
                 raise Exception('lower_bound lower than previous cost')
             yield (lower_bound, num_remaining - 1), new_state
