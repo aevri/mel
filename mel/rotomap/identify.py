@@ -25,6 +25,27 @@ def p_to_cost(p):
     # return int(1 / p)
 
 
+# Note that there are two uses for uuids below, for 'location' and for
+# 'identity'.
+#
+# We are trying to contruct a mapping of 'supplied uuid' to
+# 'guessed uuid'.
+#
+# We use the term 'location' to mean a 'supplied uuid', as we will use it
+# mainly to map to an (x, y) co-ordinate. At the end we'll use it in the
+# supplied mapping of old->new as 'old', or supplied->guessed as 'supplied'.
+#
+# We use the term 'identity' to mean the uuid of a mole that has previously
+# been marked as 'canonical'. As in, "The name of a real mole".
+#
+# So we can restate our goal as trying to construct a mapping of
+# location->identity, where we're guessing at identity. Sometimes the identity
+# is already known, which makes the job a lot easier.
+#
+# We use 'loc' as an abbreviation for 'location'.
+# We use 'ident' as an abbreviation for 'identity'.
+
+
 class PosGuesserHelper():
 
     def __init__(self, uuid_to_pos, pos_classifier):
@@ -36,13 +57,13 @@ class PosGuesserHelper():
         # instance. Therefore we must create these dynamically.
 
         @functools.lru_cache(maxsize=1024)
-        def pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess):
-            ref_pos = uuid_to_pos[uuid_for_position]
-            pos = uuid_to_pos[uuid_to_guess]
+        def pos_guess(predictor_loc_ident, guess_location):
+            ref_pos = uuid_to_pos[predictor_loc_ident[0]]
+            pos = uuid_to_pos[guess_location]
             guesses = (
                 (b, p_to_cost(p * q))
                 for b, p, q in pos_classifier(
-                    uuid_for_history, ref_pos, pos)
+                    predictor_loc_ident[1], ref_pos, pos)
                 if _MAGIC_P_THRESHOLD < p * q  # and not numpy.isnan(p * q)
                 # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
             )
@@ -55,16 +76,16 @@ class PosGuesserHelper():
         self.pos_guess = pos_guess
 
         @functools.lru_cache(maxsize=1024)
-        def pos_guess_dict(uuid_for_history, uuid_for_position, uuid_to_guess):
+        def pos_guess_dict(predictor_loc_ident, uuid_to_guess):
             return dict(
-                pos_guess(uuid_for_history, uuid_for_position, uuid_to_guess))
+                pos_guess(predictor_loc_ident, uuid_to_guess))
         self.pos_guess_dict = pos_guess_dict
 
-    def best_sqdist_uuid(self, uuid_for_position):
-        return self.predictors[uuid_for_position]
+    def best_sqdist_uuid(self, guess_location):
+        return self.predictors[guess_location]
 
-    def best_predictor(self, uuid_for_position):
-        _, uuid_ = self.best_sqdist_uuid(uuid_for_position)
+    def best_predictor(self, guess_location):
+        _, uuid_ = self.best_sqdist_uuid(guess_location)
         return uuid_
 
 
@@ -247,7 +268,7 @@ class Bounder():
         return lb
 
     def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess_dict(uuid_for_history, uuid_for_position, a)
+        guesses = self.pos_guess_dict((uuid_for_position, uuid_for_history), a)
         return guesses.get(b, MAX_MOLE_COST)
 
     def lower_bound_unk_history(self, already_taken, uuid_for_position, a, b):
@@ -261,7 +282,7 @@ class Bounder():
     def lower_bound_unk_mole(
             self, already_taken, uuid_for_history, uuid_for_position, a):
 
-        guesses = self.pos_guess(uuid_for_history, uuid_for_position, a)
+        guesses = self.pos_guess((uuid_for_position, uuid_for_history), a)
         valid_costs = [
             cost for uuid_, cost in guesses if uuid_ not in already_taken]
         # return next(valid_costs)
