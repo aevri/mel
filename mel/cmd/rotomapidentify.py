@@ -101,10 +101,6 @@ def process_args(args):
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
             guesser, max_iterations=1 * 10**5)
 
-        import pprint
-        print('Cost', cost)
-        pprint.pprint(old_to_new)
-
         new_id_set = set(old_to_new.values())
         new_moles = copy.deepcopy(frame.moles)
         for mole in new_moles:
