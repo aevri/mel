@@ -89,17 +89,17 @@ class PosGuesserHelper():
         return uuid_
 
 
-def predictors(uuid_to_pos):
-    """Return a dictionary of uuid to (sqdist, predictor_uuid).
+def predictors(location_to_pos):
+    """Return a dictionary of uuid to (sqdist, predictor_location).
 
-    Ensure that all uuids are transitively connected to eachother by a
+    Ensure that all locations are transitively connected to eachother by a
     prediction link. This seems to result in better overall identification
     performance and correctness by increasing the number of constraints.
 
     Try to keep the distance of predictive links low, as accuracy does seem to
     dimish with distance.
 
-    If care were not taken to connect all the uuids, 'islands' could form.
+    If care were not taken to connect all the locations, 'islands' could form.
     These 'islands' would be identified completely independently of the others.
     This would mean in the case where a canonical mole is present, it would
     provide no benefit to the prediction of the islands it's not a part of.
@@ -111,37 +111,37 @@ def predictors(uuid_to_pos):
     """
 
     @functools.lru_cache(maxsize=128)
-    def closest_sqdist_uuids(uuid_for_position):
-        ref_pos = uuid_to_pos[uuid_for_position]
-        sqdist_uuid_list = sorted(
-            (mel.lib.math.distance_sq_2d(pos, ref_pos), uuid_)
-            for uuid_, pos in uuid_to_pos.items()
-            if uuid_ != uuid_for_position
+    def closest_sqdist_locs(location):
+        ref_pos = location_to_pos[location]
+        sqdist_location_list = sorted(
+            (mel.lib.math.distance_sq_2d(other_pos, ref_pos), other_loc)
+            for other_loc, other_pos in location_to_pos.items()
+            if other_loc != location
         )
-        return sqdist_uuid_list
+        return sqdist_location_list
 
-    remaining_uuid_set = set(uuid_to_pos.keys())
+    remaining_loc_set = set(location_to_pos.keys())
 
-    # Deterministically pick the initial_uuid. If we were to take_first()
+    # Deterministically pick the initial_loc. If we were to take_first()
     # instead of min(), then the value could be different between runs.
-    initial_uuid = min(remaining_uuid_set)
+    initial_loc = min(remaining_loc_set)
 
-    remaining_uuid_set.remove(initial_uuid)
-    uuid_to_predictor = {
-        initial_uuid: take_first(closest_sqdist_uuids(initial_uuid))
+    remaining_loc_set.remove(initial_loc)
+    guess_to_predictor = {
+        initial_loc: take_first(closest_sqdist_locs(initial_loc))
     }
 
-    while remaining_uuid_set:
-        sqdist, uuid_a, uuid_b = min(
-            (sqdist, uuid_a, uuid_b)
-            for uuid_a in remaining_uuid_set
-            for sqdist, uuid_b in closest_sqdist_uuids(uuid_a)
-            if uuid_b in uuid_to_predictor
+    while remaining_loc_set:
+        sqdist, loc_a, loc_b = min(
+            (sqdist, loc_a, loc_b)
+            for loc_a in remaining_loc_set
+            for sqdist, loc_b in closest_sqdist_locs(loc_a)
+            if loc_b in guess_to_predictor
         )
-        uuid_to_predictor[uuid_a] = (sqdist, uuid_b)
-        remaining_uuid_set.remove(uuid_a)
+        guess_to_predictor[loc_a] = (sqdist, loc_b)
+        remaining_loc_set.remove(loc_a)
 
-    return uuid_to_predictor
+    return guess_to_predictor
 
 
 class PosGuesser():
