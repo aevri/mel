@@ -70,13 +70,13 @@ def process_args(args):
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
         uuid_to_frameposlist, box_radius)
 
-    possible_uuid_set = set(uuid_to_frameposlist.keys())
+    possible_uuid_set = frozenset(uuid_to_frameposlist.keys())
     for frame in target_frames:
         if args.verbose:
             print('Processing', frame.path, '..')
 
         uuid_to_pos = mel.rotomap.identify.frame_to_uuid_to_pos(frame)
-        canonical_uuid_set = set(
+        canonical_uuid_set = frozenset(
             mole['uuid']
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
