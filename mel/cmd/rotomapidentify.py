@@ -74,10 +74,12 @@ def process_args(args):
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
-        helper = mel.rotomap.identify.PosGuesserHelper(
+        helper = mel.rotomap.identify.PosGuesserHelper(uuid_to_pos)
+        calc_guesses = mel.rotomap.identify.make_calc_guesses(
             uuid_to_pos, warm_classifier)
         bounder = mel.rotomap.identify.Bounder(
             helper,
+            calc_guesses,
             possible_uuid_set,
             canonical_uuid_set)
         guesser = mel.rotomap.identify.PosGuesser(

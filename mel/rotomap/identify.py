@@ -46,40 +46,32 @@ def p_to_cost(p):
 # We use 'ident' as an abbreviation for 'identity'.
 
 
+def make_calc_guesses(uuid_to_pos, pos_classifier):
+
+    def calc_guesses(predictor_loc_ident, guess_location):
+        ref_pos = uuid_to_pos[predictor_loc_ident[0]]
+        pos = uuid_to_pos[guess_location]
+        guesses = (
+            (b, p_to_cost(p * q))
+            for b, p, q in pos_classifier(
+                predictor_loc_ident[1], ref_pos, pos)
+            if _MAGIC_P_THRESHOLD < p * q  # and not numpy.isnan(p * q)
+            # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
+        )
+        guesses = (
+            (b, cost)
+            for b, cost in guesses
+            if cost < MAX_MOLE_COST
+        )
+        return tuple(sorted(guesses, key=lambda x: x[1]))
+
+    return calc_guesses
+
+
 class PosGuesserHelper():
 
-    def __init__(self, uuid_to_pos, pos_classifier):
+    def __init__(self, uuid_to_pos):
         self.predictors = predictors(uuid_to_pos)
-
-        # Note that we want one cache per instance of Guesser. This means that
-        # the values will be correct for the classifiers and positions
-        # provided. We also want the caches to be deleted along with the
-        # instance. Therefore we must create these dynamically.
-
-        @functools.lru_cache(maxsize=1024)
-        def pos_guess(predictor_loc_ident, guess_location):
-            ref_pos = uuid_to_pos[predictor_loc_ident[0]]
-            pos = uuid_to_pos[guess_location]
-            guesses = (
-                (b, p_to_cost(p * q))
-                for b, p, q in pos_classifier(
-                    predictor_loc_ident[1], ref_pos, pos)
-                if _MAGIC_P_THRESHOLD < p * q  # and not numpy.isnan(p * q)
-                # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
-            )
-            guesses = (
-                (b, cost)
-                for b, cost in guesses
-                if cost < MAX_MOLE_COST
-            )
-            return tuple(sorted(guesses, key=lambda x: x[1]))
-        self.pos_guess = pos_guess
-
-        @functools.lru_cache(maxsize=1024)
-        def pos_guess_dict(predictor_loc_ident, uuid_to_guess):
-            return dict(
-                pos_guess(predictor_loc_ident, uuid_to_guess))
-        self.pos_guess_dict = pos_guess_dict
 
     def best_sqdist_uuid(self, guess_location):
         return self.predictors[guess_location]
@@ -158,8 +150,6 @@ class PosGuesser():
 
         self.helper = helper
         self.bounder = bounder
-        self.pos_guess = helper.pos_guess
-        self.pos_guess_dict = helper.pos_guess_dict
 
         self.canonical_uuid_set = canonical_uuid_set
         self.possible_uuid_set = possible_uuid_set
@@ -227,14 +217,21 @@ class Bounder():
     def __init__(
             self,
             helper,
+            calc_guesses,
             possible_uuid_set,
             canonical_uuid_set):
 
-        self.pos_guess = helper.pos_guess
-        self.pos_guess_dict = helper.pos_guess_dict
+        @functools.lru_cache(maxsize=1024)
+        def calc_guesses_cached(predictor_loc_ident, guess_location):
+            return calc_guesses(predictor_loc_ident, guess_location)
+
+        self.pos_guess = calc_guesses_cached
         self.helper = helper
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
+
+    def pos_guess_dict(self, predictor_loc_ident, uuid_to_guess):
+        return dict(self.pos_guess(predictor_loc_ident, uuid_to_guess))
 
     def lower_bound(self, state):
         already_taken = frozenset(b for a, b in state.items() if b is not None)
