@@ -68,19 +68,6 @@ def make_calc_guesses(uuid_to_pos, pos_classifier):
     return calc_guesses
 
 
-class PosGuesserHelper():
-
-    def __init__(self, uuid_to_pos):
-        self.predictors = predictors(uuid_to_pos)
-
-    def best_sqdist_uuid(self, guess_location):
-        return self.predictors[guess_location]
-
-    def best_predictor(self, guess_location):
-        _, uuid_ = self.best_sqdist_uuid(guess_location)
-        return uuid_
-
-
 def predictors(location_to_pos):
     """Return a dictionary of uuid to (sqdist, predictor_location).
 
@@ -141,14 +128,14 @@ class PosGuesser():
     def __init__(
             self,
             pos_uuids,
-            helper,
+            best_sqdist_uuid,
             bounder,
             canonical_uuid_set,
             possible_uuid_set):
 
         self.pos_uuids = pos_uuids
 
-        self.helper = helper
+        self.best_sqdist_uuid = best_sqdist_uuid
         self.bounder = bounder
 
         self.canonical_uuid_set = canonical_uuid_set
@@ -180,7 +167,7 @@ class PosGuesser():
         remaining_positions = set(state.keys()) - set(decided.keys())
 
         sqdist_posuuid_remaineruuid = [
-            (*self.helper.best_sqdist_uuid(pos_uuid), pos_uuid)
+            (*self.best_sqdist_uuid[pos_uuid], pos_uuid)
             for pos_uuid in remaining_positions
         ]
         sqdist_posuuid_remaineruuid.sort()
@@ -216,7 +203,7 @@ class Bounder():
 
     def __init__(
             self,
-            helper,
+            location_to_predictor,
             calc_guesses,
             possible_uuid_set,
             canonical_uuid_set):
@@ -226,7 +213,7 @@ class Bounder():
             return calc_guesses(predictor_loc_ident, guess_location)
 
         self.pos_guess = calc_guesses_cached
-        self.helper = helper
+        self.location_to_predictor = location_to_predictor
         self.possible_uuid_set = possible_uuid_set
         self.canonical_uuid_set = canonical_uuid_set
 
@@ -241,7 +228,7 @@ class Bounder():
         for a, b in state.items():
             if a in self.canonical_uuid_set:
                 continue
-            uuid_for_position = self.helper.best_predictor(a)
+            uuid_for_position = self.location_to_predictor[a]
             uuid_for_history = state[uuid_for_position]
 
             if b is not None:
