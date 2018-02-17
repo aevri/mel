@@ -221,7 +221,7 @@ class Bounder():
             possible_uuid_set,
             canonical_uuid_set):
 
-        @functools.lru_cache(maxsize=1024)
+        @functools.lru_cache(maxsize=8192)
         def calc_guesses_cached(predictor_loc_ident, guess_location):
             return calc_guesses(predictor_loc_ident, guess_location)
 
