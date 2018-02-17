@@ -2,6 +2,7 @@
 
 import copy
 import itertools
+import sys
 
 import mel.rotomap.moles
 import mel.rotomap.identify
@@ -46,6 +47,12 @@ def process_args(args):
 
     uuid_to_frameposlist = mel.rotomap.moles.frames_to_uuid_frameposlist(
         training_frames, canonical_only=True)
+
+    # We're going to use these uuids a lot as keys in dicts. The docs for
+    # sys.intern say that it can speed things up in that case.
+    uuid_to_frameposlist = {
+        sys.intern(k): v for k, v in uuid_to_frameposlist.items()
+    }
 
     target_frames = [
         mel.rotomap.moles.RotomapFrame(x) for x in args.target
