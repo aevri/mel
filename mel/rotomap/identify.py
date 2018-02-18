@@ -87,8 +87,8 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
         predictor_ident_uuid = uuid_index_translator.uuid_(
             predictor_loc_ident[1])
         guesses = (
-            (b, p_to_cost(p * q))
-            for b, p, q in pos_classifier(
+            (guess_ident_uuid, p_to_cost(p * q))
+            for guess_ident_uuid, p, q in pos_classifier(
                 predictor_ident_uuid, ref_pos, pos)
             if _MAGIC_P_THRESHOLD < p * q
 
@@ -97,8 +97,8 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
         )
         guesses = (
-            (uuid_index_translator.index(b), cost)
-            for b, cost in guesses
+            (uuid_index_translator.index(guess_ident_uuid), cost)
+            for guess_ident_uuid, cost in guesses
             if cost < MAX_MOLE_COST
         )
         return tuple(sorted(guesses, key=lambda x: x[1]))
@@ -213,31 +213,31 @@ class PosGuesser():
         ]
         sqdist_posuuid_remaineruuid.sort()
 
-        canonical_a = take_first_or_none(
+        canonical_loc = take_first_or_none(
             pos_uuid
             for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
             if uuid_for_pos < self.num_canonicals
         )
 
-        decided_a = take_first_or_none(
+        decided_loc = take_first_or_none(
             pos_uuid
             for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
             if uuid_for_pos in decided.keys()
         )
 
-        remaining_a = take_first(
+        remaining_loc = take_first(
             pos_uuid
             for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
         )
 
-        if canonical_a is not None:
-            a = canonical_a
-        elif decided_a is not None:
-            a = decided_a
+        if canonical_loc is not None:
+            loc = canonical_loc
+        elif decided_loc is not None:
+            loc = decided_loc
         else:
-            a = remaining_a
+            loc = remaining_loc
 
-        return a
+        return loc
 
 
 class Bounder():
