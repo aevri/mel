@@ -262,42 +262,42 @@ class Bounder():
         for a, b in state.items():
             if a < self.num_canonicals:
                 continue
-            uuid_for_position = self.location_to_predictor[a]
-            uuid_for_history = state[uuid_for_position]
+            predictor_loc = self.location_to_predictor[a]
+            predictor_ident = state[predictor_loc]
 
             if b is not None:
-                if uuid_for_history is not None:
+                if predictor_ident is not None:
                     lb *= self.cost_for_guess(
-                        uuid_for_history, uuid_for_position, a, b)
+                        predictor_ident, predictor_loc, a, b)
                 else:
                     lb *= self.lower_bound_unk_history(
-                        already_taken, uuid_for_position, a, b)
+                        already_taken, predictor_loc, a, b)
             else:
-                if uuid_for_history is not None:
+                if predictor_ident is not None:
                     lb *= self.lower_bound_unk_mole(
-                        already_taken, uuid_for_history, uuid_for_position, a)
+                        already_taken, predictor_ident, predictor_loc, a)
                 else:
                     lb *= self.lower_bound_unk_unk(
-                        already_taken, uuid_for_position, a)
+                        already_taken, predictor_loc, a)
 
         return lb
 
-    def cost_for_guess(self, uuid_for_history, uuid_for_position, a, b):
-        guesses = self.pos_guess_dict((uuid_for_position, uuid_for_history), a)
+    def cost_for_guess(self, predictor_ident, predictor_loc, a, b):
+        guesses = self.pos_guess_dict((predictor_loc, predictor_ident), a)
         return guesses.get(b, MAX_MOLE_COST)
 
-    def lower_bound_unk_history(self, already_taken, uuid_for_position, a, b):
+    def lower_bound_unk_history(self, already_taken, predictor_loc, a, b):
         possible_history = self.possible_uuid_set - already_taken
         costs = (
-            self.cost_for_guess(uuid_for_history, uuid_for_position, a, b)
-            for uuid_for_history in possible_history
+            self.cost_for_guess(predictor_ident, predictor_loc, a, b)
+            for predictor_ident in possible_history
         )
         return min(costs, default=MAX_MOLE_COST)
 
     def lower_bound_unk_mole(
-            self, already_taken, uuid_for_history, uuid_for_position, a):
+            self, already_taken, predictor_ident, predictor_loc, a):
 
-        guesses = self.pos_guess((uuid_for_position, uuid_for_history), a)
+        guesses = self.pos_guess((predictor_loc, predictor_ident), a)
         valid_costs = [
             cost for uuid_, cost in guesses if uuid_ not in already_taken]
         # return next(valid_costs)
@@ -306,12 +306,12 @@ class Bounder():
         else:
             return MAX_MOLE_COST
 
-    def lower_bound_unk_unk(self, already_taken, uuid_for_position, a):
+    def lower_bound_unk_unk(self, already_taken, predictor_loc, a):
         possible_history = self.possible_uuid_set - already_taken
         costs = (
             self.lower_bound_unk_mole(
-                already_taken, uuid_for_history, uuid_for_position, a)
-            for uuid_for_history in possible_history
+                already_taken, predictor_ident, predictor_loc, a)
+            for predictor_ident in possible_history
         )
         return min(costs, default=MAX_MOLE_COST)
 
