@@ -82,11 +82,11 @@ class UuidToIndexTranslator():
         return self._index_to_uuid[index]
 
 
-def make_calc_guesses(index_to_pos, uuid_index_translator, pos_classifier):
+def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
 
     def calc_guesses(predictor_loc_ident, guess_location):
-        ref_pos = index_to_pos[predictor_loc_ident[0]]
-        pos = index_to_pos[guess_location]
+        ref_pos = positions[predictor_loc_ident[0]]
+        pos = positions[guess_location]
         predictor_ident_uuid = uuid_index_translator.uuid_(
             predictor_loc_ident[1])
         guesses = (

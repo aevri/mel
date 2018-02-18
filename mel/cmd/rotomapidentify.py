@@ -92,11 +92,13 @@ def process_args(args):
 
         index_to_pos = uuid_index_translator.uuid_dict_to_index_dict(
             uuid_to_pos)
+        positions = uuid_index_translator.uuid_dict_to_index_tuple(
+            uuid_to_pos, num_locations)
         possible_index_set = frozenset(range(num_identities))
         canonical_index_set = frozenset(range(num_canonicals))
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
-            index_to_pos, uuid_index_translator, warm_classifier)
+            positions, uuid_index_translator, warm_classifier)
         predictors = mel.rotomap.identify.predictors(index_to_pos)
         bounder = mel.rotomap.identify.Bounder(
             {loc: predictor for loc, (_, predictor) in predictors.items()},
