@@ -106,8 +106,8 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
     return calc_guesses
 
 
-def predictors(location_to_pos):
-    """Return a dictionary of uuid to (sqdist, predictor_location).
+def predictors(positions):
+    """Return a dictionary of index to (sqdist, predictor_location).
 
     Ensure that all locations are transitively connected to eachother by a
     prediction link. This seems to result in better overall identification
@@ -129,20 +129,20 @@ def predictors(location_to_pos):
 
     @functools.lru_cache(maxsize=128)
     def closest_sqdist_locs(location):
-        ref_pos = location_to_pos[location]
+        ref_pos = positions[location]
         sqdist_location_list = sorted(
             (mel.lib.math.distance_sq_2d(other_pos, ref_pos), other_loc)
-            for other_loc, other_pos in location_to_pos.items()
+            for other_loc, other_pos in enumerate(positions)
             if other_loc != location
         )
         return sqdist_location_list
 
-    remaining_loc_set = set(location_to_pos.keys())
+    remaining_loc_set = set(range(len(positions)))
 
     # Deterministically pick the initial_loc. If we were to take_first()
     # instead of min(), then the value could be different between runs.
     initial_loc = min(
-        (pos.tolist(), loc) for loc, pos in location_to_pos.items()
+        (pos.tolist(), loc) for loc, pos in enumerate(positions)
     )[1]
 
     remaining_loc_set.remove(initial_loc)

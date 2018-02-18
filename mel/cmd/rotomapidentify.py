@@ -99,7 +99,7 @@ def process_args(args):
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
             positions, uuid_index_translator, warm_classifier)
-        predictors = mel.rotomap.identify.predictors(index_to_pos)
+        predictors = mel.rotomap.identify.predictors(positions)
         bounder = mel.rotomap.identify.Bounder(
             {loc: predictor for loc, (_, predictor) in predictors.items()},
             calc_guesses,
