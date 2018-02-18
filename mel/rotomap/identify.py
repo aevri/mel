@@ -300,13 +300,9 @@ class Bounder():
 
     def lower_bound_unk_guess(self, already_taken, predictor, guess_loc):
         results = self.pos_guess(predictor, guess_loc)
-        valid_costs = [
-            cost for uuid_, cost in results if uuid_ not in already_taken]
-        # return next(valid_costs)
-        if valid_costs:
-            return valid_costs[0]
-        else:
-            return MAX_MOLE_COST
+        valid_costs = (
+            cost for uuid_, cost in results if uuid_ not in already_taken)
+        return take_first_or_default(valid_costs, MAX_MOLE_COST)
 
     def lower_bound_unk_unk(self, already_taken, predictor_loc, guess_loc):
         possible_predictor_idents = self.possible_uuid_set - already_taken
@@ -318,10 +314,14 @@ class Bounder():
         return min(costs, default=MAX_MOLE_COST)
 
 
-def take_first_or_none(iterable):
+def take_first_or_default(iterable, default):
     for item in iterable:
         return item
-    return None
+    return default
+
+
+def take_first_or_none(iterable):
+    return take_first_or_default(iterable, None)
 
 
 def take_first(iterable):
