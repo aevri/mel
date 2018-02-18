@@ -53,7 +53,10 @@ class UuidToIndexTranslator():
         self._uuid_to_index = {}
 
     def add_uuids(self, uuids):
-        for u in uuids:
+        # We sort the uuids so that we number them in a deterministic fashion,
+        # this means that multiple runs of the program should retain the same
+        # meaning of the indices.
+        for u in sorted(uuids):
             if u not in self._uuid_to_index:
                 self._uuid_to_index[u] = len(self._index_to_uuid)
                 self._index_to_uuid.append(u)
