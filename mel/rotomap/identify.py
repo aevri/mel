@@ -271,11 +271,11 @@ class Bounder():
                     lb *= self.cost_for_guess(
                         predictor_ident, predictor_loc, guess_loc, guess_ident)
                 else:
-                    lb *= self.lower_bound_unk_history(
+                    lb *= self.lower_bound_unk_predictor(
                         already_taken, predictor_loc, guess_loc, guess_ident)
             else:
                 if predictor_ident is not None:
-                    lb *= self.lower_bound_unk_mole(
+                    lb *= self.lower_bound_unk_guess(
                         already_taken,
                         predictor_ident,
                         predictor_loc,
@@ -292,7 +292,7 @@ class Bounder():
             (predictor_loc, predictor_ident), guess_loc)
         return guesses.get(guess_ident, MAX_MOLE_COST)
 
-    def lower_bound_unk_history(
+    def lower_bound_unk_predictor(
             self, already_taken, predictor_loc, guess_loc, guess_ident):
         possible_history = self.possible_uuid_set - already_taken
         costs = (
@@ -302,7 +302,7 @@ class Bounder():
         )
         return min(costs, default=MAX_MOLE_COST)
 
-    def lower_bound_unk_mole(
+    def lower_bound_unk_guess(
             self, already_taken, predictor_ident, predictor_loc, guess_loc):
 
         guesses = self.pos_guess((predictor_loc, predictor_ident), guess_loc)
@@ -317,7 +317,7 @@ class Bounder():
     def lower_bound_unk_unk(self, already_taken, predictor_loc, guess_loc):
         possible_history = self.possible_uuid_set - already_taken
         costs = (
-            self.lower_bound_unk_mole(
+            self.lower_bound_unk_guess(
                 already_taken, predictor_ident, predictor_loc, guess_loc)
             for predictor_ident in possible_history
         )
