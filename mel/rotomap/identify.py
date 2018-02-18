@@ -366,7 +366,6 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     best_cost = initial_cost
     best_state = initial_state
     deepest = 0
-    most_correct = 0
     count = 0
     while count != max_iterations:
 
@@ -378,13 +377,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         should_report = 0 == count % 1000
         # should_report = 0 == count % 1
         depth = sum(1 for x in state if x is not None)
-        # TODO: this 'correct' business doesn't look useful, revisit.
-        correct = sum(1 for a, b in enumerate(state) if a == b)
         if depth > deepest:
             deepest = depth
-            should_report = True
-        if correct > most_correct:
-            most_correct = correct
             best_cost = total_cost
             best_state = state
             should_report = True
