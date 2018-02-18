@@ -81,25 +81,44 @@ def process_args(args):
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
+
+        uuid_index_translator = mel.rotomap.identify.UuidToIndexTranslator()
+        uuid_index_translator.add_uuids(canonical_uuid_set)
+        num_canonicals = uuid_index_translator.num_uuids()
+        uuid_index_translator.add_uuids(uuid_to_pos.keys())
+        num_locations = uuid_index_translator.num_uuids()
+        uuid_index_translator.add_uuids(possible_uuid_set)
+        num_identities = uuid_index_translator.num_uuids()
+
+        index_to_pos = uuid_index_translator.uuid_dict_to_index_dict(
+            uuid_to_pos)
+        possible_index_set = frozenset(range(num_identities))
+        canonical_index_set = frozenset(range(num_canonicals))
+
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
-            uuid_to_pos, warm_classifier)
-        predictors = mel.rotomap.identify.predictors(uuid_to_pos)
+            index_to_pos, uuid_index_translator, warm_classifier)
+        predictors = mel.rotomap.identify.predictors(index_to_pos)
         bounder = mel.rotomap.identify.Bounder(
             {loc: predictor for loc, (_, predictor) in predictors.items()},
             calc_guesses,
-            possible_uuid_set,
-            canonical_uuid_set)
+            possible_index_set,
+            canonical_index_set)
         guesser = mel.rotomap.identify.PosGuesser(
-            tuple(uuid_to_pos.keys()),
+            tuple(index_to_pos.keys()),
             predictors,
             bounder,
-            canonical_uuid_set,
-            possible_uuid_set)
+            canonical_index_set,
+            possible_index_set)
 
         # cost, old_to_new = guess_old_to_new(
         # uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
             guesser, max_iterations=1 * 10**5)
+
+        old_to_new = {
+            uuid_index_translator.uuid_(old): uuid_index_translator.uuid_(new)
+            for old, new in old_to_new.items()
+        }
 
         new_id_set = set(old_to_new.values())
         new_moles = copy.deepcopy(frame.moles)

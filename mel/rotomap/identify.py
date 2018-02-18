@@ -46,20 +46,58 @@ def p_to_cost(p):
 # We use 'ident' as an abbreviation for 'identity'.
 
 
-def make_calc_guesses(uuid_to_pos, pos_classifier):
+class UuidToIndexTranslator():
+
+    def __init__(self):
+        self._index_to_uuid = []
+        self._uuid_to_index = {}
+
+    def add_uuids(self, uuids):
+        for u in uuids:
+            if u not in self._uuid_to_index:
+                self._uuid_to_index[u] = len(self._index_to_uuid)
+                self._index_to_uuid.append(u)
+
+    def num_uuids(self):
+        return len(self._index_to_uuid)
+
+    def uuid_dict_to_index_dict(self, uuid_dict):
+        return {
+            self._uuid_to_index[uuid_]: value
+            for uuid_, value in uuid_dict.items()
+        }
+
+    def uuid_dict_to_index_tuple(self, dict_in, tuple_len):
+        if len(dict_in) < tuple_len:
+            raise ValueError('Not enough entries in dict_in')
+        values_out = [None] * tuple_len
+        for uuid_, value in dict_in.items():
+            values_out[self._uuid_to_index[uuid_]] = value
+        return tuple(values_out)
+
+    def index(self, uuid_):
+        return self._uuid_to_index[uuid_]
+
+    def uuid_(self, index):
+        return self._index_to_uuid[index]
+
+
+def make_calc_guesses(index_to_pos, uuid_index_translator, pos_classifier):
 
     def calc_guesses(predictor_loc_ident, guess_location):
-        ref_pos = uuid_to_pos[predictor_loc_ident[0]]
-        pos = uuid_to_pos[guess_location]
+        ref_pos = index_to_pos[predictor_loc_ident[0]]
+        pos = index_to_pos[guess_location]
+        predictor_ident_uuid = uuid_index_translator.uuid_(
+            predictor_loc_ident[1])
         guesses = (
             (b, p_to_cost(p * q))
             for b, p, q in pos_classifier(
-                predictor_loc_ident[1], ref_pos, pos)
+                predictor_ident_uuid, ref_pos, pos)
             if _MAGIC_P_THRESHOLD < p * q  # and not numpy.isnan(p * q)
             # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
         )
         guesses = (
-            (b, cost)
+            (uuid_index_translator.index(b), cost)
             for b, cost in guesses
             if cost < MAX_MOLE_COST
         )
@@ -103,7 +141,9 @@ def predictors(location_to_pos):
 
     # Deterministically pick the initial_loc. If we were to take_first()
     # instead of min(), then the value could be different between runs.
-    initial_loc = min(remaining_loc_set)
+    initial_loc = min(
+        (pos.tolist(), loc) for loc, pos in location_to_pos.items()
+    )[1]
 
     remaining_loc_set.remove(initial_loc)
     guess_to_predictor = {
