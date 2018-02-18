@@ -101,7 +101,7 @@ def process_args(args):
             positions, uuid_index_translator, warm_classifier)
         predictors = mel.rotomap.identify.predictors(positions)
         bounder = mel.rotomap.identify.Bounder(
-            {loc: predictor for loc, (_, predictor) in predictors.items()},
+            tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,
             possible_index_set,
             canonical_index_set)

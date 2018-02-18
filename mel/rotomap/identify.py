@@ -107,7 +107,7 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
 
 
 def predictors(positions):
-    """Return a dictionary of index to (sqdist, predictor_location).
+    """Return a tuple of (sqdist, predictor_location), ordered by index.
 
     Ensure that all locations are transitively connected to eachother by a
     prediction link. This seems to result in better overall identification
@@ -146,21 +146,21 @@ def predictors(positions):
     )[1]
 
     remaining_loc_set.remove(initial_loc)
-    guess_to_predictor = {
-        initial_loc: take_first(closest_sqdist_locs(initial_loc))
-    }
+    guess_to_predictor = [None] * len(positions)
+    guess_to_predictor[initial_loc] = take_first(
+        closest_sqdist_locs(initial_loc))
 
     while remaining_loc_set:
         sqdist, loc_a, loc_b = min(
             (sqdist, loc_a, loc_b)
             for loc_a in remaining_loc_set
             for sqdist, loc_b in closest_sqdist_locs(loc_a)
-            if loc_b in guess_to_predictor
+            if guess_to_predictor[loc_b] is not None
         )
         guess_to_predictor[loc_a] = (sqdist, loc_b)
         remaining_loc_set.remove(loc_a)
 
-    return guess_to_predictor
+    return tuple(guess_to_predictor)
 
 
 class PosGuesser():
