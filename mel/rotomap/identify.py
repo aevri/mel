@@ -170,20 +170,20 @@ class PosGuesser():
             pos_uuids,
             best_sqdist_uuid,
             bounder,
-            canonical_uuid_set,
-            possible_uuid_set):
+            num_canonicals,
+            num_identities):
 
         self.pos_uuids = pos_uuids
 
         self.best_sqdist_uuid = best_sqdist_uuid
         self.bounder = bounder
 
-        self.canonical_uuid_set = canonical_uuid_set
-        self.possible_uuid_set = possible_uuid_set
+        self.num_canonicals = num_canonicals
+        self.possible_uuid_set = frozenset(range(num_identities))
 
     def initial_state(self):
-        return (1, len(self.pos_uuids) - len(self.canonical_uuid_set)), {
-            a: a if a in self.canonical_uuid_set else None
+        return (1, len(self.pos_uuids) - self.num_canonicals), {
+            a: a if a < self.num_canonicals else None
             for a in self.pos_uuids
         }
 
@@ -215,7 +215,7 @@ class PosGuesser():
         canonical_a = take_first_or_none(
             pos_uuid
             for sqdist, uuid_for_pos, pos_uuid in sqdist_posuuid_remaineruuid
-            if uuid_for_pos in self.canonical_uuid_set
+            if uuid_for_pos < self.num_canonicals
         )
 
         decided_a = take_first_or_none(
@@ -245,8 +245,8 @@ class Bounder():
             self,
             location_to_predictor,
             calc_guesses,
-            possible_uuid_set,
-            canonical_uuid_set):
+            num_identities,
+            num_canonicals):
 
         @functools.lru_cache(maxsize=8192)
         def calc_guesses_cached(predictor_loc_ident, guess_location):
@@ -254,8 +254,8 @@ class Bounder():
 
         self.pos_guess = calc_guesses_cached
         self.location_to_predictor = location_to_predictor
-        self.possible_uuid_set = possible_uuid_set
-        self.canonical_uuid_set = canonical_uuid_set
+        self.possible_uuid_set = frozenset(range(num_identities))
+        self.num_canonicals = num_canonicals
 
     def pos_guess_dict(self, predictor_loc_ident, uuid_to_guess):
         return dict(self.pos_guess(predictor_loc_ident, uuid_to_guess))
@@ -266,7 +266,7 @@ class Bounder():
         lb = 1
 
         for a, b in state.items():
-            if a in self.canonical_uuid_set:
+            if a < self.num_canonicals:
                 continue
             uuid_for_position = self.location_to_predictor[a]
             uuid_for_history = state[uuid_for_position]

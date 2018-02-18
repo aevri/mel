@@ -94,8 +94,6 @@ def process_args(args):
             uuid_to_pos)
         positions = uuid_index_translator.uuid_dict_to_index_tuple(
             uuid_to_pos, num_locations)
-        possible_index_set = frozenset(range(num_identities))
-        canonical_index_set = frozenset(range(num_canonicals))
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
             positions, uuid_index_translator, warm_classifier)
@@ -103,14 +101,14 @@ def process_args(args):
         bounder = mel.rotomap.identify.Bounder(
             tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,
-            possible_index_set,
-            canonical_index_set)
+            num_identities,
+            num_canonicals)
         guesser = mel.rotomap.identify.PosGuesser(
             tuple(index_to_pos.keys()),
             predictors,
             bounder,
-            canonical_index_set,
-            possible_index_set)
+            num_canonicals,
+            num_identities)
 
         # cost, old_to_new = guess_old_to_new(
         # uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
