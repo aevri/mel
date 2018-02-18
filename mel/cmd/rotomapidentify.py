@@ -61,11 +61,6 @@ def process_args(args):
     if args.verbose:
         print('Training ..')
 
-    # yrad = 0.1
-    # nrad = 1.2
-    # cold_classifier = mel.rotomap.identify.ColdGuessMoleClassifier(
-    #     uuid_to_frameposlist, yrad, nrad)
-
     box_radius = 0.1
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
         uuid_to_frameposlist, box_radius)
@@ -108,8 +103,6 @@ def process_args(args):
             num_canonicals,
             num_identities)
 
-        # cost, old_to_new = guess_old_to_new(
-        # uuid_to_pos, cold_classifier, warm_classifier, canonical_uuid_set)
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
             guesser, max_iterations=1 * 10**5)
 
@@ -129,6 +122,8 @@ def process_args(args):
                 raise Exception(f'{frame.path}: would duplicate {old_id}')
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

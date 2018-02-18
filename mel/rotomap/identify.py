@@ -87,7 +87,10 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             (b, p_to_cost(p * q))
             for b, p, q in pos_classifier(
                 predictor_ident_uuid, ref_pos, pos)
-            if _MAGIC_P_THRESHOLD < p * q  # and not numpy.isnan(p * q)
+            if _MAGIC_P_THRESHOLD < p * q
+
+            # These options were unacceptably slow (I seem to remember):
+            # if _MAGIC_P_THRESHOLD < p * q  and not numpy.isnan(p * q)
             # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
         )
         guesses = (
@@ -373,9 +376,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         total_cost, state = state_q.pop()
 
         count += 1
-        # should_report = 0 == count % 10000
         should_report = 0 == count % 1000
-        # should_report = 0 == count % 1
         depth = sum(1 for x in state if x is not None)
         if depth > deepest:
             deepest = depth
