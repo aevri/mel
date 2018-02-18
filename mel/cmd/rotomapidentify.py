@@ -90,8 +90,6 @@ def process_args(args):
         uuid_index_translator.add_uuids(possible_uuid_set)
         num_identities = uuid_index_translator.num_uuids()
 
-        index_to_pos = uuid_index_translator.uuid_dict_to_index_dict(
-            uuid_to_pos)
         positions = uuid_index_translator.uuid_dict_to_index_tuple(
             uuid_to_pos, num_locations)
 
@@ -104,7 +102,7 @@ def process_args(args):
             num_identities,
             num_canonicals)
         guesser = mel.rotomap.identify.PosGuesser(
-            tuple(index_to_pos.keys()),
+            num_locations,
             predictors,
             bounder,
             num_canonicals,

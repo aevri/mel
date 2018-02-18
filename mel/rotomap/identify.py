@@ -61,12 +61,6 @@ class UuidToIndexTranslator():
     def num_uuids(self):
         return len(self._index_to_uuid)
 
-    def uuid_dict_to_index_dict(self, uuid_dict):
-        return {
-            self._uuid_to_index[uuid_]: value
-            for uuid_, value in uuid_dict.items()
-        }
-
     def uuid_dict_to_index_tuple(self, dict_in, tuple_len):
         if len(dict_in) < tuple_len:
             raise ValueError('Not enough entries in dict_in')
@@ -167,13 +161,13 @@ class PosGuesser():
 
     def __init__(
             self,
-            pos_uuids,
+            num_locations,
             best_sqdist_uuid,
             bounder,
             num_canonicals,
             num_identities):
 
-        self.pos_uuids = pos_uuids
+        self.num_locations = num_locations
 
         self.best_sqdist_uuid = best_sqdist_uuid
         self.bounder = bounder
@@ -182,9 +176,9 @@ class PosGuesser():
         self.possible_uuid_set = frozenset(range(num_identities))
 
     def initial_state(self):
-        return (1, len(self.pos_uuids) - self.num_canonicals), {
+        return (1, self.num_locations - self.num_canonicals), {
             a: a if a < self.num_canonicals else None
-            for a in self.pos_uuids
+            for a in range(self.num_locations)
         }
 
     def yield_next_states(self, total_cost, state):
