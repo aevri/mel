@@ -115,7 +115,7 @@ def process_args(args):
 
         old_to_new = {
             uuid_index_translator.uuid_(old): uuid_index_translator.uuid_(new)
-            for old, new in old_to_new.items()
+            for old, new in enumerate(old_to_new)
         }
 
         new_id_set = set(old_to_new.values())

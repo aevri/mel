@@ -176,29 +176,30 @@ class PosGuesser():
         self.possible_uuid_set = frozenset(range(num_identities))
 
     def initial_state(self):
-        return (1, self.num_locations - self.num_canonicals), {
-            a: a if a < self.num_canonicals else None
-            for a in range(self.num_locations)
-        }
+        num_to_guess = self.num_locations - self.num_canonicals
+        state = list(range(self.num_canonicals)) + [None] * num_to_guess
+        return (1, num_to_guess), tuple(state)
 
     def yield_next_states(self, total_cost, state):
 
-        decided = {a: b for a, b in state.items() if b is not None}
+        decided = {
+            loc: ident for loc, ident in enumerate(state) if ident is not None
+        }
         already_taken = set(decided.values())
         num_remaining = len(state) - len(already_taken)
 
-        a = self._next_a(state, decided)
+        loc = self._next_loc(state, decided)
 
-        for b in self.possible_uuid_set - already_taken:
-            new_state = dict(state)
-            new_state[a] = b
+        for ident in self.possible_uuid_set - already_taken:
+            new_state = list(state)
+            new_state[loc] = ident
             lower_bound = self.bounder.lower_bound(new_state)
             if lower_bound < total_cost[0]:
                 raise Exception('lower_bound lower than previous cost')
-            yield (lower_bound, num_remaining - 1), new_state
+            yield (lower_bound, num_remaining - 1), tuple(new_state)
 
-    def _next_a(self, state, decided):
-        remaining_positions = set(state.keys()) - set(decided.keys())
+    def _next_loc(self, state, decided):
+        remaining_positions = set(range(len(state))) - set(decided.keys())
 
         sqdist_posuuid_remaineruuid = [
             (*self.best_sqdist_uuid[pos_uuid], pos_uuid)
@@ -256,11 +257,11 @@ class Bounder():
 
     def lower_bound(self, state):
         already_taken = frozenset(
-            ident for _, ident in state.items() if ident is not None)
+            ident for ident in state if ident is not None)
 
         lb = 1
 
-        for guess_loc, guess_ident in state.items():
+        for guess_loc, guess_ident in enumerate(state):
             if guess_loc < self.num_canonicals:
                 continue
             guess = (guess_loc, guess_ident)
@@ -342,36 +343,22 @@ class DuplicateDetector():
         self.seen.add(hash(args))
 
 
-class StateFormatter():
+def print_state(count, total_cost, state):
 
-    def __init__(self, initial_state):
-        unfilled_keys = set(
-            key for key, value in initial_state.items() if value is None
-        )
-        self.key_order = tuple(sorted(unfilled_keys))
-        self.value_names = {}
-        self.name_count = 0
-
-    def name(self, value):
-        if value is None:
+    def ident_to_str(ident):
+        if ident is None:
             return '__'
-        name = self.value_names.get(value, None)
-        if name is None:
-            name = '{:>2}'.format(self.name_count)
-            self.name_count += 1
-            self.value_names[value] = name
-        return name
+        else:
+            return f'{ident:>2}'
 
-    def __call__(self, count, total_cost, state):
-        s = ' '.join(self.name(state[key]) for key in self.key_order)
-        return f'{count:>6} ({s}) {total_cost}'
+    s = ' '.join(ident_to_str(x) for x in state)
+    print(f'{count:>6} ({s}) {total_cost}')
 
 
 def best_match_combination(guesser, *, max_iterations=10**5):
 
     state_q = mel.lib.priorityq.PriorityQueue()
     initial_cost, initial_state = guesser.initial_state()
-    formatter = StateFormatter(initial_state)
     state_q.push(initial_cost, initial_state)
 
     seen = DuplicateDetector()
@@ -390,8 +377,9 @@ def best_match_combination(guesser, *, max_iterations=10**5):
         # should_report = 0 == count % 10000
         should_report = 0 == count % 1000
         # should_report = 0 == count % 1
-        depth = sum(1 for a, b in state.items() if b is not None)
-        correct = sum(1 for a, b in state.items() if a == b)
+        depth = sum(1 for x in state if x is not None)
+        # TODO: this 'correct' business doesn't look useful, revisit.
+        correct = sum(1 for a, b in enumerate(state) if a == b)
         if depth > deepest:
             deepest = depth
             should_report = True
@@ -401,26 +389,25 @@ def best_match_combination(guesser, *, max_iterations=10**5):
             best_state = state
             should_report = True
         if should_report:
-            print(formatter(count, total_cost, state))
+            print_state(count, total_cost, state)
 
         # See if we're done.
-        if all(state.values()):
-            print(formatter(count, total_cost, state))
+        if all(x is not None for x in state):
+            print_state(count, total_cost, state)
             return total_cost, state
 
         # Nope, advance states.
         for new_cost, new_state in guesser.yield_next_states(
                 total_cost, state):
 
-            hashable_state = tuple(sorted(new_state.items()))
-            if not seen.has_seen(new_cost, hashable_state):
+            if not seen.has_seen(new_cost, new_state):
                 state_q.push(new_cost, new_state)
-                seen.see(new_cost, hashable_state)
+                seen.see(new_cost, new_state)
 
         if not state_q:
             # This is the last option, return the best.
             print('Final option')
-            print(formatter(count, total_cost, state))
+            print_state(count, total_cost, state)
             # TODO: mark new moles or update contract to say some can be None
             return best_cost, best_state
 
