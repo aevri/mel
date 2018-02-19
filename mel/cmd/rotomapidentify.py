@@ -90,7 +90,8 @@ def process_args(args):
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
             positions, uuid_index_translator, warm_classifier)
-        predictors = mel.rotomap.identify.predictors(positions)
+        predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
+
         bounder = mel.rotomap.identify.Bounder(
             tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,

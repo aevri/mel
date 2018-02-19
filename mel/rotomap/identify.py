@@ -106,7 +106,7 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
     return calc_guesses
 
 
-def predictors(positions):
+def predictors(positions, num_canonicals):
     """Return a tuple of (sqdist, predictor_location), ordered by index.
 
     Ensure that all locations are transitively connected to eachother by a
@@ -137,16 +137,21 @@ def predictors(positions):
         )
         return sqdist_location_list
 
-    remaining_loc_set = set(range(len(positions)))
+    guess_to_predictor = [None] * len(positions)
 
-    # Deterministically pick the initial_loc. If we were to take_first()
-    # instead of min(), then the value could be different between runs.
-    initial_loc = min(
-        (pos.tolist(), loc) for loc, pos in enumerate(positions)
-    )[1]
+    # Canonicals can just predict themselves, it's most important to connect
+    # things to them.
+    for loc in range(num_canonicals):
+        guess_to_predictor[loc] = (0, loc)
+
+    if len(positions) == num_canonicals:
+        return guess_to_predictor
+
+    remaining_loc_set = set(range(num_canonicals, len(positions)))
+
+    initial_loc = num_canonicals
 
     remaining_loc_set.remove(initial_loc)
-    guess_to_predictor = [None] * len(positions)
     guess_to_predictor[initial_loc] = take_first(
         closest_sqdist_locs(initial_loc))
 
