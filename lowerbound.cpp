@@ -3,6 +3,7 @@ extern "C" {
 #include "structmember.h"
 } // extern "C"
 
+#include <future>
 #include <set>
 #include <utility>
 #include <vector>
@@ -263,16 +264,16 @@ struct BounderCpp {
             }
         }
 
-        std::vector<int> lb(num_locations);
+        std::vector<std::future<int>> future_lb;
 
         /* printf("num_canonicals: %i\n", this->num_canonicals); */
 
-        for (MoleIndex guess_loc=0; guess_loc < num_locations; ++guess_loc) {
+        for (
+            MoleIndex guess_loc=this->num_canonicals;
+            guess_loc < num_locations;
+            ++guess_loc)
+        {
             /* printf("location: %i\n", guess_loc); */
-            if (guess_loc < this->num_canonicals) {
-                lb[guess_loc] = 1;
-                continue;
-            }
 
             const MoleIndex guess_ident = state[guess_loc];
             const Mole guess(guess_loc, guess_ident);
@@ -283,25 +284,55 @@ struct BounderCpp {
 
             if (guess_ident != -1) {
                 if (predictor_ident != -1) {
-                    lb[guess_loc] = this->cost_for_guess(predictor, guess);
+                    future_lb.push_back(
+                        std::async(
+                            std::launch::deferred,
+                            &BounderCpp::cost_for_guess,
+                            this,
+                            predictor,
+                            guess));
                 } else {
-                    lb[guess_loc] = this->lower_bound_unk_predictor(
-                        available_idents, predictor_loc, guess);
+                    future_lb.push_back(
+                        std::async(
+                            std::launch::deferred,
+                            &BounderCpp::lower_bound_unk_predictor,
+                            this,
+                            available_idents,
+                            predictor_loc,
+                            guess));
                 }
             } else {
                 if (predictor_ident != -1) {
-                    lb[guess_loc] = this->lower_bound_unk_guess(
-                        used_idents, predictor, guess_loc);
+                    future_lb.push_back(
+                        std::async(
+                            std::launch::deferred,
+                            &BounderCpp::lower_bound_unk_guess,
+                            this,
+                            used_idents,
+                            predictor,
+                            guess_loc));
                 } else {
-                    lb[guess_loc] = this->lower_bound_unk_unk(
-                        used_idents,
-                        available_idents,
-                        predictor_loc,
-                        guess_loc);
+                    future_lb.push_back(
+                        std::async(
+                            &BounderCpp::lower_bound_unk_unk,
+                            this,
+                            used_idents,
+                            available_idents,
+                            predictor_loc,
+                            guess_loc));
                 }
             }
         }
 
+        std::vector<int> lb(num_locations);
+        for (int i=0; i < this->num_canonicals; ++i) {
+            lb[i] = 1;
+        }
+        int j = 0;
+        for (int i=this->num_canonicals; i < num_locations; ++i) {
+            lb[i] = future_lb[j].get();
+            ++j;
+        }
         return lb;
     }
 
