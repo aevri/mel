@@ -99,14 +99,14 @@ def process_args(args):
             num_identities,
             num_canonicals)
 
-        # bounder2 = mel.rotomap.identify.Bounder(
-        #     tuple(predictor_loc for (_, predictor_loc) in predictors),
-        #     calc_guesses,
-        #     num_identities,
-        #     num_canonicals)
+        bounder2 = mel.rotomap.identify.Bounder(
+            tuple(predictor_loc for (_, predictor_loc) in predictors),
+            calc_guesses,
+            num_identities,
+            num_canonicals)
 
-        # bounder = mel.rotomap.identify.BounderComparer(bounder1, bounder2)
-        bounder = bounder1
+        bounder = mel.rotomap.identify.BounderComparer(bounder1, bounder2)
+        # bounder = bounder1
 
         guesser = mel.rotomap.identify.PosGuesser(
             num_locations,

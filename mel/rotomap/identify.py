@@ -246,112 +246,112 @@ class PosGuesser():
         return loc
 
 
-# class BounderComparer():
+class BounderComparer():
 
-#     def __init__(
-#             self,
-#             bounder_1,
-#             bounder_2):
+    def __init__(
+            self,
+            bounder_1,
+            bounder_2):
 
-#         self.bounder_1 = bounder_1
-#         self.bounder_2 = bounder_2
+        self.bounder_1 = bounder_1
+        self.bounder_2 = bounder_2
 
-#     def lower_bound(self, state):
-#         # print('-' * 5, 'bounder 1', '-' * 30)
-#         result_1 = self.bounder_1.lower_bound(state)
-#         # print('-' * 5, 'bounder 2', '-' * 30)
-#         result_2 = self.bounder_2.lower_bound(state)
-#         if result_1 != result_2:
-#             raise Exception(f'lb mismatch: {result_1} != {result_2}')
-#         # print('lb match')
-#         return result_1
+    def lower_bound(self, state):
+        # print('-' * 5, 'bounder 1', '-' * 30)
+        result_1 = self.bounder_1.lower_bound(state)
+        # print('-' * 5, 'bounder 2', '-' * 30)
+        result_2 = self.bounder_2.lower_bound(state)
+        if result_1 != result_2:
+            raise Exception(f'lb mismatch: {result_1} != {result_2}')
+        # print('lb match')
+        return result_1
 
 
-# class Bounder():
+class Bounder():
 
-#     def __init__(
-#             self,
-#             location_to_predictor,
-#             calc_guesses,
-#             num_identities,
-#             num_canonicals):
+    def __init__(
+            self,
+            location_to_predictor,
+            calc_guesses,
+            num_identities,
+            num_canonicals):
 
-#         # print("location_to_predictor:", location_to_predictor)
-#         # print()
+        # print("location_to_predictor:", location_to_predictor)
+        # print()
 
-#         @functools.lru_cache(maxsize=8192)
-#         def calc_guesses_cached(predictor_loc_ident, guess_location):
-#             result = calc_guesses(predictor_loc_ident, guess_location)
-#             # print(predictor_loc_ident, guess_location, '->', result)
-#             return result
+        @functools.lru_cache(maxsize=8192)
+        def calc_guesses_cached(predictor_loc_ident, guess_location):
+            result = calc_guesses(predictor_loc_ident, guess_location)
+            # print(predictor_loc_ident, guess_location, '->', result)
+            return result
 
-#         self.pos_guess = calc_guesses_cached
-#         self.location_to_predictor = location_to_predictor
-#         self.possible_uuid_set = frozenset(range(num_identities))
-#         self.num_canonicals = num_canonicals
+        self.pos_guess = calc_guesses_cached
+        self.location_to_predictor = location_to_predictor
+        self.possible_uuid_set = frozenset(range(num_identities))
+        self.num_canonicals = num_canonicals
 
-#     def pos_guess_dict(self, predictor_loc_ident, uuid_to_guess):
-#         return dict(self.pos_guess(predictor_loc_ident, uuid_to_guess))
+    def pos_guess_dict(self, predictor_loc_ident, uuid_to_guess):
+        return dict(self.pos_guess(predictor_loc_ident, uuid_to_guess))
 
-#     def lower_bound(self, state):
-#         # print('state:', state)
-#         already_taken = frozenset(
-#             ident for ident in state if ident is not None)
+    def lower_bound(self, state):
+        # print('state:', state)
+        already_taken = frozenset(
+            ident for ident in state if ident is not None)
 
-#         lb = 1
+        lb = 1
 
-#         for guess_loc, guess_ident in enumerate(state):
-#             if guess_loc < self.num_canonicals:
-#                 continue
-#             guess = (guess_loc, guess_ident)
+        for guess_loc, guess_ident in enumerate(state):
+            if guess_loc < self.num_canonicals:
+                continue
+            guess = (guess_loc, guess_ident)
 
-#             predictor_loc = self.location_to_predictor[guess_loc]
-#             predictor_ident = state[predictor_loc]
-#             predictor = (predictor_loc, predictor_ident)
+            predictor_loc = self.location_to_predictor[guess_loc]
+            predictor_ident = state[predictor_loc]
+            predictor = (predictor_loc, predictor_ident)
 
-#             if guess_ident is not None:
-#                 if predictor_ident is not None:
-#                     lb *= self.cost_for_guess(predictor, guess)
-#                 else:
-#                     lb *= self.lower_bound_unk_predictor(
-#                         already_taken, predictor_loc, guess)
-#             else:
-#                 if predictor_ident is not None:
-#                     lb *= self.lower_bound_unk_guess(
-#                         already_taken, predictor, guess_loc)
-#                 else:
-#                     lb *= self.lower_bound_unk_unk(
-#                         already_taken, predictor_loc, guess_loc)
+            if guess_ident is not None:
+                if predictor_ident is not None:
+                    lb *= self.cost_for_guess(predictor, guess)
+                else:
+                    lb *= self.lower_bound_unk_predictor(
+                        already_taken, predictor_loc, guess)
+            else:
+                if predictor_ident is not None:
+                    lb *= self.lower_bound_unk_guess(
+                        already_taken, predictor, guess_loc)
+                else:
+                    lb *= self.lower_bound_unk_unk(
+                        already_taken, predictor_loc, guess_loc)
 
-#         return lb
+        return lb
 
-#     def cost_for_guess(self, predictor, guess):
-#         guess_loc, guess_ident = guess
-#         results = self.pos_guess_dict(predictor, guess_loc)
-#         return results.get(guess_ident, MAX_MOLE_COST)
+    def cost_for_guess(self, predictor, guess):
+        guess_loc, guess_ident = guess
+        results = self.pos_guess_dict(predictor, guess_loc)
+        return results.get(guess_ident, MAX_MOLE_COST)
 
-#     def lower_bound_unk_predictor(self, already_taken, predictor_loc, guess):
-#         possible_predictor_idents = self.possible_uuid_set - already_taken
-#         costs = (
-#             self.cost_for_guess((predictor_loc, predictor_ident), guess)
-#             for predictor_ident in possible_predictor_idents
-#         )
-#         return min(costs, default=MAX_MOLE_COST)
+    def lower_bound_unk_predictor(self, already_taken, predictor_loc, guess):
+        possible_predictor_idents = self.possible_uuid_set - already_taken
+        costs = (
+            self.cost_for_guess((predictor_loc, predictor_ident), guess)
+            for predictor_ident in possible_predictor_idents
+        )
+        return min(costs, default=MAX_MOLE_COST)
 
-#     def lower_bound_unk_guess(self, already_taken, predictor, guess_loc):
-#         results = self.pos_guess(predictor, guess_loc)
-#         valid_costs = (
-#             cost for uuid_, cost in results if uuid_ not in already_taken)
-#         return take_first_or_default(valid_costs, MAX_MOLE_COST)
+    def lower_bound_unk_guess(self, already_taken, predictor, guess_loc):
+        results = self.pos_guess(predictor, guess_loc)
+        valid_costs = (
+            cost for uuid_, cost in results if uuid_ not in already_taken)
+        return take_first_or_default(valid_costs, MAX_MOLE_COST)
 
-#     def lower_bound_unk_unk(self, already_taken, predictor_loc, guess_loc):
-#         possible_predictor_idents = self.possible_uuid_set - already_taken
-#         costs = (
-#             self.lower_bound_unk_guess(
-#                 already_taken, (predictor_loc, predictor_ident), guess_loc)
-#             for predictor_ident in possible_predictor_idents
-#         )
-#         return min(costs, default=MAX_MOLE_COST)
+    def lower_bound_unk_unk(self, already_taken, predictor_loc, guess_loc):
+        possible_predictor_idents = self.possible_uuid_set - already_taken
+        costs = (
+            self.lower_bound_unk_guess(
+                already_taken, (predictor_loc, predictor_ident), guess_loc)
+            for predictor_ident in possible_predictor_idents
+        )
+        return min(costs, default=MAX_MOLE_COST)
 
 
 def take_first_or_default(iterable, default):
