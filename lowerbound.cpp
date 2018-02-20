@@ -94,6 +94,7 @@ bool pyobject_to_guessvector(PyObject *list, GuessVector& result) {
 
 struct CalcGuessesFunctor {
     CalcGuessesFunctor(
+        const MoleIndexVector& predictors,
         PyObject *callable,
         int num_canonical,
         int num_locations,
@@ -105,17 +106,25 @@ struct CalcGuessesFunctor {
         // TODO: Don't include canonical indices in the cache, they will never
         // be queried. Even if they were, the cost would always be 1.
 
-        const int cache_size = num_locations * num_identities;
-        this->guess_cache.resize(cache_size);
-        this->guess_cache_has_guess.resize(cache_size);
-
         this->num_locations = num_locations;
         this->num_identities = num_identities;
 
-        for (auto i : this->guess_cache_has_guess) {
-            if (i == true) {
-                printf("ERROR: guess_cache_has_guess non-zero to start.");
-                return;
+        const int cache_size = num_locations * num_identities;
+        this->guess_cache.resize(cache_size);
+
+        for (
+            MoleIndex predictor_ident=0;
+            predictor_ident<this->num_identities;
+            ++predictor_ident)
+        {
+            for (
+                MoleIndex guess_loc=0;
+                guess_loc < this->num_locations;
+                ++guess_loc)
+            {
+                this->cache_entry(
+                    Mole(predictors[guess_loc], predictor_ident),
+                    guess_loc);
             }
         }
     }
@@ -128,53 +137,45 @@ struct CalcGuessesFunctor {
     operator()(Mole predictor, MoleIndex guess_loc) const {
         const int cache_index = (
             guess_loc + (predictor.ident * this->num_locations));
+        return this->guess_cache[cache_index];
+    }
+
+private:
+
+    void
+    cache_entry(Mole predictor, MoleIndex guess_loc) {
+        const int cache_index = (
+            guess_loc + (predictor.ident * this->num_locations));
         GuessVector& guesses = this->guess_cache[cache_index];
-
-        /* printf( */
-        /*     "(%i, %i) %i ...\n", */
-        /*     predictor.loc, predictor.ident, guess_loc); */
-
-        if (this->guess_cache_has_guess[cache_index] == true) {
-            /* printf( */
-            /*     "Cached (%i, %i) %i\n", */
-            /*     predictor.loc, predictor.ident, guess_loc); */
-            return guesses;
-        }
 
         if (PyErr_Occurred()) {
             printf("Error before trying to get guesses.\n");
-            return guesses;
+            return;
         }
 
         PyObject *args = Py_BuildValue(
             "((ii)i)", predictor.loc, predictor.ident, guess_loc);
         if (NULL == args) {
             printf("Error encountered creating args for calc_guesses.\n");
-            return guesses;
+            return;
         }
 
         PyObject *result = PyObject_CallObject(this->calc_guesses_fn, args);
         Py_DECREF(args);
         if (NULL == result) {
             printf("Error encountered calling calc_guesses.\n");
-            return guesses;
+            return;
         }
 
-        /* printf("(%i, %i) %i -> ", predictor.loc, predictor.ident, guess_loc); */
         if (! pyobject_to_guessvector(result, guesses)) {
             printf("Error encountered converting guesses.\n");
+            return;
         }
-
-        this->guess_cache_has_guess[cache_index] = true;
-
-        return guesses;
     }
 
-private:
     PyObject *calc_guesses_fn;
 
-    mutable std::vector<GuessVector> guess_cache;
-    mutable std::vector<bool> guess_cache_has_guess;
+    std::vector<GuessVector> guess_cache;
 
     int num_locations;
     int num_identities;
@@ -455,7 +456,11 @@ BounderPy_init(BounderPy *self, PyObject *args, PyObject *kwds)
 
     const int num_locations = predictors.size();
     self->calc_guesses = new CalcGuessesFunctor(
-        calc_guesses, num_canonicals, num_locations, num_identities);
+        predictors,
+        calc_guesses,
+        num_canonicals,
+        num_locations,
+        num_identities);
     self->bounder = new BounderCpp(
         std::move(predictors),
         *(self->calc_guesses),
