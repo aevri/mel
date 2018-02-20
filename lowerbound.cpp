@@ -102,14 +102,10 @@ struct CalcGuessesFunctor {
         this->calc_guesses_fn = callable;
         Py_INCREF(this->calc_guesses_fn);
 
-        // TODO: Take advantage of the fact that (predictor_loc, guess_loc)
-        // pairs are always the same. There is only one predictor for each
-        // guess_loc.
-
         // TODO: Don't include canonical indices in the cache, they will never
         // be queried. Even if they were, the cost would always be 1.
 
-        const int cache_size = num_locations * num_identities * num_locations;
+        const int cache_size = num_locations * num_identities;
         this->guess_cache.resize(cache_size);
         this->guess_cache_has_guess.resize(cache_size);
 
@@ -131,9 +127,7 @@ struct CalcGuessesFunctor {
     const GuessVector&
     operator()(Mole predictor, MoleIndex guess_loc) const {
         const int cache_index = (
-            predictor.loc +
-            (predictor.ident * this->num_locations) +
-            (guess_loc * this->num_locations * this->num_identities));
+            guess_loc + (predictor.ident * this->num_locations));
         GuessVector& guesses = this->guess_cache[cache_index];
 
         /* printf( */
