@@ -106,7 +106,7 @@ def process_args(args):
             num_canonicals)
 
         bounder = mel.rotomap.identify.BounderComparer(bounder1, bounder2)
-        # bounder = bounder1
+        bounder = bounder1
 
         guesser = mel.rotomap.identify.PosGuesser(
             num_locations,
