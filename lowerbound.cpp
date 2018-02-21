@@ -498,8 +498,11 @@ BounderPy_lower_bound(BounderPy *self, PyObject *args)
         /* printf("%i ", i); */
         PyObject *item = PyLong_FromLong(i);
         PyObject *tmp = PyNumber_Multiply(total, item);
-        Py_DECREF(item);
-        Py_DECREF(total);
+        Py_XDECREF(item);
+        Py_XDECREF(total);
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
         if (NULL == tmp) {
             PyErr_SetString(
                 PyExc_TypeError,
