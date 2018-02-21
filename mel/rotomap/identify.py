@@ -200,10 +200,14 @@ class PosGuesser():
 
         loc = self._next_loc(state, decided)
 
+        state_list = []
         for ident in self.possible_uuid_set - already_taken:
             new_state = list(state)
             new_state[loc] = ident
-            lower_bound = self.bounder.lower_bound(new_state)
+            state_list.append(new_state)
+
+        lower_bound_list = self.bounder.lower_bound_list(state_list)
+        for lower_bound, new_state in zip(lower_bound_list, state_list):
             if lower_bound < total_cost[0]:
                 raise Exception(
                     f'lower_bound ({lower_bound}) lower than '
@@ -256,15 +260,17 @@ class BounderComparer():
         self.bounder_1 = bounder_1
         self.bounder_2 = bounder_2
 
-    def lower_bound(self, state):
+    def lower_bound_list(self, state_list):
         # print('-' * 5, 'bounder 1', '-' * 30)
-        result_1 = self.bounder_1.lower_bound(state)
+        result_list_1 = self.bounder_1.lower_bound_list(state_list)
         # print('-' * 5, 'bounder 2', '-' * 30)
-        result_2 = self.bounder_2.lower_bound(state)
-        if result_1 != result_2:
-            raise Exception(f'lb mismatch: {result_1} != {result_2}')
-        # print('lb match')
-        return result_1
+        result_list_2 = self.bounder_2.lower_bound_list(state_list)
+        for state, result_1, result_2 in zip(
+                state_list, result_list_1, result_list_2):
+
+            if result_1 != result_2:
+                raise Exception(f'lb mismatch: {result_1} != {result_2}')
+        return result_list_1
 
 
 class Bounder():
@@ -292,6 +298,9 @@ class Bounder():
 
     def pos_guess_dict(self, predictor_loc_ident, uuid_to_guess):
         return dict(self.pos_guess(predictor_loc_ident, uuid_to_guess))
+
+    def lower_bound_list(self, state_list):
+        return [self.lower_bound(s) for s in state_list]
 
     def lower_bound(self, state):
         # print('state:', state)

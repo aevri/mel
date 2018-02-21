@@ -11,6 +11,7 @@ const int MAX_MOLE_COST = 10000;
 
 typedef int MoleIndex;
 typedef std::vector<MoleIndex> MoleIndexVector;
+typedef std::vector<MoleIndexVector> MoleIndexVectorVector;
 typedef std::set<MoleIndex> MoleIndexSet;
 
 struct Mole {
@@ -214,6 +215,42 @@ bool pyobject_to_moleindexvector(PyObject *list, MoleIndexVector& result) {
 
         result[i] = PyLong_AsLong(item);
         if (PyErr_Occurred()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool pyobject_to_moleindexvectorvector(
+    PyObject *list, MoleIndexVectorVector& result)
+{
+    PyObject *fast_list = PySequence_Fast(
+        list,
+        "Must be a sequence.");
+
+    if (! fast_list) {
+        return false;
+    }
+
+    PyObject **fast_items = PySequence_Fast_ITEMS(fast_list);
+
+    Py_ssize_t fast_size = PySequence_Fast_GET_SIZE(fast_list);
+
+    result.resize(fast_size);
+
+    for (int i=0; i < fast_size; ++i) {
+        PyObject *item = fast_items[i];
+
+        if (! PySequence_Check(item)) {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "Items must be a sequence."
+            );
+            return false;
+        }
+
+        if (! pyobject_to_moleindexvector(item, result[i])) {
             return false;
         }
     }
@@ -445,7 +482,7 @@ BounderPy_init(BounderPy *self, PyObject *args, PyObject *kwds)
     }
 
     MoleIndexVector predictors;
-    if (!  pyobject_to_moleindexvector(location_to_predictor, predictors)) {
+    if (! pyobject_to_moleindexvector(location_to_predictor, predictors)) {
         return -1;
     }
 
@@ -474,28 +511,10 @@ static PyMemberDef BounderPy_members[] = {
     {NULL}  /* Sentinel */
 };
 
-static PyObject *
-BounderPy_lower_bound(BounderPy *self, PyObject *args)
-{
-    PyObject *state;
-    if (! PyArg_ParseTuple(
-            args,
-            "O:Bounder.lower_bound",
-            &state))
-    {
-        return NULL;
-    }
-
-    MoleIndexVector state_vector;
-    if (! pyobject_to_moleindexvector(state, state_vector)) {
-        return NULL;
-    }
-
-    std::vector<int> result = self->bounder->lower_bound(state_vector);
-
+PyObject *
+pylong_from_int_vector(const std::vector<int>& int_vector) {
     PyObject *total = PyLong_FromLong(1);
-    for (int i : result) {
-        /* printf("%i ", i); */
+    for (int i : int_vector) {
         PyObject *item = PyLong_FromLong(i);
         PyObject *tmp = PyNumber_Multiply(total, item);
         Py_XDECREF(item);
@@ -511,7 +530,6 @@ BounderPy_lower_bound(BounderPy *self, PyObject *args)
         }
         total = tmp;
     }
-    /* printf("\n"); */
 
     if (PyErr_Occurred()) {
         return NULL;
@@ -520,10 +538,67 @@ BounderPy_lower_bound(BounderPy *self, PyObject *args)
     return total;
 }
 
+static PyObject *
+BounderPy_lower_bound_list(BounderPy *self, PyObject *args)
+{
+    PyObject *state;
+    if (! PyArg_ParseTuple(
+            args,
+            "O:Bounder.lower_bound_list",
+            &state))
+    {
+        return NULL;
+    }
+
+    MoleIndexVectorVector state_vector_vector;
+    if (! pyobject_to_moleindexvectorvector(state, state_vector_vector)) {
+        return NULL;
+    }
+
+    std::vector<std::vector<int>> result_vector(state_vector_vector.size());
+    for (size_t i=0; i<state_vector_vector.size(); ++i) {
+        result_vector[i] = self->bounder->lower_bound(state_vector_vector[i]);
+    }
+
+    PyObject *result_list = PyList_New(result_vector.size());
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    if (NULL == result_list) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "Failed to create result list.");
+        return NULL;
+    }
+
+    for (size_t i=0; i<result_vector.size(); ++i) {
+        PyObject *total = pylong_from_int_vector(result_vector[i]);
+        if (PyErr_Occurred()) {
+            Py_XDECREF(result_list);
+            return NULL;
+        }
+        if (NULL == total) {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "Failed to multiply results together apparently.");
+            Py_XDECREF(result_list);
+            return NULL;
+        }
+        PyList_SET_ITEM(result_list, i, total);
+    }
+
+    if (PyErr_Occurred()) {
+        Py_XDECREF(result_list);
+        return NULL;
+    }
+
+    return result_list;
+}
+
 static PyMethodDef BounderPy_methods[] = {
     {
-        "lower_bound",
-        (PyCFunction)BounderPy_lower_bound,
+        "lower_bound_list",
+        (PyCFunction)BounderPy_lower_bound_list,
         METH_VARARGS,
         "<< Lowerbound >>."
     },
