@@ -3,6 +3,7 @@ extern "C" {
 #include "structmember.h"
 } // extern "C"
 
+#include <future>
 #include <set>
 #include <utility>
 #include <vector>
@@ -13,6 +14,10 @@ typedef int MoleIndex;
 typedef std::vector<MoleIndex> MoleIndexVector;
 typedef std::vector<MoleIndexVector> MoleIndexVectorVector;
 typedef std::set<MoleIndex> MoleIndexSet;
+
+typedef int Result;
+typedef std::vector<Result> ResultVector;
+typedef std::vector<ResultVector> ResultVectorVector;
 
 struct Mole {
     Mole() {
@@ -418,6 +423,18 @@ private:
     const int num_canonicals;
 };
 
+ResultVectorVector
+lower_bound_list(
+    const BounderCpp& bounder,
+    const MoleIndexVectorVector& state_list)
+{
+    ResultVectorVector result(state_list.size());
+    for (size_t i=0; i < state_list.size(); ++i) {
+        result[i] = bounder.lower_bound(state_list[i]);
+    }
+    return result;
+}
+
 extern "C" {
 
 typedef struct {
@@ -555,9 +572,34 @@ BounderPy_lower_bound_list(BounderPy *self, PyObject *args)
         return NULL;
     }
 
-    std::vector<std::vector<int>> result_vector(state_vector_vector.size());
-    for (size_t i=0; i<state_vector_vector.size(); ++i) {
-        result_vector[i] = self->bounder->lower_bound(state_vector_vector[i]);
+    std::vector<std::future<ResultVectorVector>> future_vector;
+
+    MoleIndexVectorVector front(
+        state_vector_vector.begin(),
+        state_vector_vector.begin() + state_vector_vector.size() / 2);
+    MoleIndexVectorVector back(
+        state_vector_vector.begin() + state_vector_vector.size() / 2,
+        state_vector_vector.end());
+    future_vector.push_back(
+        std::async(
+            std::launch::async,
+            lower_bound_list,
+            *self->bounder,
+            front));
+    future_vector.push_back(
+        std::async(
+            std::launch::async,
+            lower_bound_list,
+            *self->bounder,
+            back));
+
+    ResultVectorVector result_vector;
+    for (auto&& f : future_vector) {
+        const ResultVectorVector& part_result_vector(f.get());
+        for (auto&& result : part_result_vector) {
+            result_vector.push_back(
+                std::move(result));
+        }
     }
 
     PyObject *result_list = PyList_New(result_vector.size());
