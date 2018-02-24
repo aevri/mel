@@ -89,19 +89,24 @@ def process_args(args):
         positions = uuid_index_translator.uuid_dict_to_index_tuple(
             uuid_to_pos, num_locations)
 
-        calc_guesses = mel.rotomap.identify.make_calc_guesses(
-            positions, uuid_index_translator, warm_classifier)
         predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
+        predictor_locs = tuple(
+            predictor_loc for (_, predictor_loc) in predictors)
+
+        calc_guesses = mel.rotomap.identify.CalcGuesses(
+            positions, uuid_index_translator, warm_classifier)
+        guesses_cache = mel.rotomap.identify.CalcGuessesPrecalc(
+            calc_guesses, predictor_locs, num_identities)
 
         bounder1 = mel.rotomap.lowerbound.Bounder(
-            tuple(predictor_loc for (_, predictor_loc) in predictors),
-            calc_guesses,
+            predictor_locs,
+            guesses_cache,
             num_identities,
             num_canonicals)
 
         bounder2 = mel.rotomap.identify.Bounder(
-            tuple(predictor_loc for (_, predictor_loc) in predictors),
-            calc_guesses,
+            predictor_locs,
+            guesses_cache,
             num_identities,
             num_canonicals)
 

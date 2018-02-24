@@ -2,6 +2,8 @@
 
 import collections
 import functools
+import multiprocessing
+import random
 
 import cv2
 import numpy
@@ -79,16 +81,23 @@ class UuidToIndexTranslator():
         return self._index_to_uuid[index]
 
 
-def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
+class CalcGuesses():
+    # Write this as a module-level class, so that it can be pickled for
+    # multiprocessing. Otherwise it may as well be output as a nested function.
 
-    def calc_guesses(predictor_loc_ident, guess_location):
-        ref_pos = positions[predictor_loc_ident[0]]
-        pos = positions[guess_location]
-        predictor_ident_uuid = uuid_index_translator.uuid_(
+    def __init__(self, positions, uuid_index_translator, pos_classifier):
+        self._positions = positions
+        self._uuid_index_translator = uuid_index_translator
+        self._pos_classifier = pos_classifier
+
+    def __call__(self, predictor_loc_ident, guess_location):
+        ref_pos = self._positions[predictor_loc_ident[0]]
+        pos = self._positions[guess_location]
+        predictor_ident_uuid = self._uuid_index_translator.uuid_(
             predictor_loc_ident[1])
         guesses = (
             (guess_ident_uuid, p_to_cost(p * q))
-            for guess_ident_uuid, p, q in pos_classifier(
+            for guess_ident_uuid, p, q in self._pos_classifier(
                 predictor_ident_uuid, ref_pos, pos)
             if _MAGIC_P_THRESHOLD < p * q
 
@@ -97,13 +106,11 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
         )
         guesses = (
-            (uuid_index_translator.index(guess_ident_uuid), cost)
+            (self._uuid_index_translator.index(guess_ident_uuid), cost)
             for guess_ident_uuid, cost in guesses
             if cost < MAX_MOLE_COST
         )
         return tuple(sorted(guesses, key=lambda x: x[1]))
-
-    return calc_guesses
 
 
 def predictors(positions, num_canonicals):
@@ -453,6 +460,40 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
     (total_cost, _), state = state_q.pop()
     return best_cost, best_state
+
+
+class CalcGuessesPrecalc():
+
+    def __init__(self, guessfunc, predictors, num_identities):
+
+        num_locations = len(predictors)
+        guesses_to_make = [
+            ((predictors[guess_loc], predictor_ident), guess_loc)
+            for predictor_ident in range(num_identities)
+            for guess_loc in range(num_locations)
+        ]
+
+        print("Guessing", len(guesses_to_make))
+
+        # Some guesses are much cheaper than others and may be adjacent, e.g.
+        # for an impossible predictor. Mix it up to make the chunks more
+        # uniform.
+        random.shuffle(guesses_to_make)
+
+        # Based on the rough idea that 1000 entries takes approximately 4
+        # second on my laptop. 1 processes per second seems about reasonable.
+        chunk_size = 250
+
+        results = []
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(guessfunc, guesses_to_make, chunk_size)
+            pool.close()
+
+        self.args_to_results = dict(zip(guesses_to_make, results))
+        print("Done guessing")
+
+    def __call__(self, predictor_loc_ident, guess_loc):
+        return self.args_to_results[(predictor_loc_ident, guess_loc)]
 
 
 class MoleRelativeClassifier():
