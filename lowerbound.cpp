@@ -14,6 +14,10 @@ typedef std::vector<MoleIndex> MoleIndexVector;
 typedef std::vector<MoleIndexVector> MoleIndexVectorVector;
 typedef std::set<MoleIndex> MoleIndexSet;
 
+typedef int Result;
+typedef std::vector<Result> ResultVector;
+typedef std::vector<ResultVector> ResultVectorVector;
+
 struct Mole {
     Mole() {
         this->loc = -1;
@@ -269,6 +273,14 @@ struct BounderCpp {
         , num_identities(num_identities)
         , num_canonicals(num_canonicals)
     {
+    }
+
+    ResultVectorVector
+    lower_bount_list(const MoleIndexVectorVector& state_vector) const {
+        ResultVectorVector result_vector(state_vector.size());
+        for (size_t i=0; i<state_vector.size(); ++i) {
+            result_vector[i] = state
+        }
     }
 
     std::vector<int>
@@ -555,10 +567,8 @@ BounderPy_lower_bound_list(BounderPy *self, PyObject *args)
         return NULL;
     }
 
-    std::vector<std::vector<int>> result_vector(state_vector_vector.size());
-    for (size_t i=0; i<state_vector_vector.size(); ++i) {
-        result_vector[i] = self->bounder->lower_bound(state_vector_vector[i]);
-    }
+    const ResultVectorVector result_vector = self->bounder->lower_bound_list(
+        state_vector_vector);
 
     PyObject *result_list = PyList_New(result_vector.size());
     if (PyErr_Occurred()) {
