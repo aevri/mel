@@ -124,7 +124,6 @@ def predictors(positions, num_canonicals):
     There is a trade-off to be had with connecting islands that are far apart
     from each-other, as the prediction accuracy does decrease with distance.
     Anecdotally it seems to be most important to connect everything together.
-
     """
 
     @functools.lru_cache(maxsize=128)

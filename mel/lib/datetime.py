@@ -20,7 +20,6 @@ def guess_datetime_from_path(path):
 
     :path: path string to be converted
     :returns: datetime.date if successful, None otherwise
-
     """
     # TODO: try the file date if unable to determine from name
     filename = os.path.basename(path)
@@ -40,7 +39,6 @@ def guess_datetime_from_string(datetime_str):
 
     :datetime_str: string to be converted
     :returns: datetime.datetime if successful, None otherwise
-
     """
     format_list = [
         'Photo %d-%m-%Y %H %M %S',

@@ -131,7 +131,6 @@ def make_composite_overlay(*overlays):
 
     :*overlays: The overlay callables to composite.
     :returns: A function which will composite *overlays and return the image.
-
     """
     def do_overlay(image, transform):
         for o in overlays:

@@ -15,7 +15,6 @@ def calc_letterbox(width, height, fit_width, fit_height):
         (0, 0, 2, 1)
         >>> calc_letterbox(2, 1, 4, 2)
         (1, 0, 2, 1)
-
     """
     if width < fit_width and height < fit_height:
         scale = 1
@@ -52,7 +51,6 @@ def calc_montage_horizontal(border_size, *frames):
     Usage example:
         >>> calc_montage_horizontal(1, [2,1], [3,2])
         ([8, 4], [1, 1], [4, 1])
-
     """
     num_frames = len(frames)
     total_width = sum(f[0] for f in frames) + (border_size * num_frames + 1)
@@ -77,7 +75,6 @@ def calc_montage_vertical(border_size, *frames):
     Usage example:
         >>> calc_montage_vertical(1, [2,1], [3,2])
         ([5, 6], [1, 1], [1, 3])
-
     """
     geometry = calc_montage_horizontal(
         border_size,
@@ -118,7 +115,6 @@ def montage_horizontal_inner_border(divider_size, *image_list):
         Traceback (most recent call last):
             ...
         ValueError: Must provide image_list
-
     """
     if not image_list:
         raise ValueError('Must provide image_list')
@@ -226,7 +222,6 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect):
     required location:
 
         result[dst_slices] = image[src_slices]
-
     """
     dst_mid = dst_rect // 2
 
@@ -256,7 +251,6 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     :top_left_inclusive: a numpy.array of (top, left) co-ordinates
     :bottom_right_exclusive: a numpy.array of (bottom, right) co-ordinates
     :returns: A tuple (rows, columns) slices as a selection object
-
     """
     return (
         slice(top_left_inclusive[1], bottom_right_exclusive[1]),
@@ -271,7 +265,6 @@ def slice_square_or_none(image, lefttop, rightbottom):
     :lefttop: a NumPy array of xy co-ordinates, the inclusive top-left.
     :rightbottom: a NumPy array of xy co-ordinates, the exclusive bottom-right.
     :returns: a NumPy array representing an OpenCV image, stored in yx order.
-
     """
     height_width = image.shape[:2]
     width_height = (height_width[1], height_width[0])
@@ -301,7 +294,6 @@ def recentered_at(image, x, y):
     :x: The horizontal co-ordinate to put at the centre of the new image.
     :y: The vertical co-ordinate to put at the centre of the new image.
     :returns: A new OpenCV image.
-
     """
     return centered_at(
         image,
@@ -314,7 +306,6 @@ def get_image_rect(image):
 
     :image: A numpy.ndarray representing an image.
     :returns: A numpy.ndarray representing (width, height) of the image.
-
     """
     return numpy.flipud(image.shape[:2])
 
@@ -327,7 +318,6 @@ def rotated(image, degrees):
     :image: An OpenCV image.
     :degrees: The degrees of the rotation about the centre.
     :returns: A new OpenCV image.
-
     """
     height, width = image.shape[0:2]
 

@@ -35,7 +35,6 @@ def print_mole_errors(image_path, mole_list):
     :image_path: a printable reference to the image the moles belong to.
     :mole_list: a list of moles, which are dictionaries.
     :returns: True if any errors found, False otherwise.
-
     """
     any_problems = False
     uuids = set()

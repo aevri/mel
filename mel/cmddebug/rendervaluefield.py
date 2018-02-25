@@ -7,7 +7,6 @@ behaviour.
 In this image, there is a blue point in the top-left, and a green point in the
 bottom-right. Where the error gets high, you can see that redness is
 introduced.
-
 """
 
 import numpy

@@ -19,7 +19,6 @@ def distance_sq_2d(a, b):
 
         >>> distance_sq_2d((0, 0), (0, 2))
         4
-
     """
     x = a[0] - b[0]
     y = a[1] - b[1]
@@ -35,7 +34,6 @@ def distance_2d(a, b):
 
         >>> distance_2d((0, 0), (0, 2))
         2.0
-
     """
     return math.sqrt(distance_sq_2d(a, b))
 

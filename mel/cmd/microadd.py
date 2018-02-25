@@ -62,7 +62,6 @@ def get_dirs_to_path(path_in):
 
     :returns: list of strings, includes cwd and destination path
     :path: string path
-
     """
     cwd = os.getcwd()
     path_abs = os.path.abspath(path_in)

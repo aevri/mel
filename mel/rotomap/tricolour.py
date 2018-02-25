@@ -68,7 +68,6 @@ def _list_rotated_left(list_, n):
     :list_: a list.
     :n: the number of places to rotate left.
     :returns: a new list.
-
     """
     if n < 0:
         raise ValueError("n must be zero or greater, got {}.".format(n))

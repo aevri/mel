@@ -35,7 +35,6 @@ Example output:
     Old moles, also seen in NEW map:
 
             274224c9138c4d82a477402cb9c71490
-
 """
 
 

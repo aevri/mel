@@ -8,7 +8,6 @@ Controls:
     'p' or 'n' to change the mole being examined in both slots.
 
     'q' to quit.
-
 """
 
 import collections

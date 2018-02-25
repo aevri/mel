@@ -5,7 +5,6 @@ executable examples.
 
 This is meant to be similar in usage to 'git status', or perhaps 'ls'. Answers
 the question 'What's happening here, and what shall I do next?'.
-
 """
 
 # There are a few things to vary on in the future:

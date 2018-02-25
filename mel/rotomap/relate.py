@@ -209,7 +209,6 @@ def offset_theory_points(from_moles, to_moles):
     :from_moles: a list of mole dicts to map from
     :to_moles: a list of mole dicts to map to
     :returns: (from_uuid_points, to_uuid_points, point_offsets)
-
     """
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
         from_moles, to_moles)
@@ -281,7 +280,6 @@ def calc_right_angle_units(point_a, point_b):
         >>> b = numpy.array((0.0, 1.0))
         >>> calc_right_angle_units(a, b)
         (array([ 0.,  1.]), array([ 1., -0.]), 1.0)
-
     """
     a_to_b = point_b - point_a
     length = numpy.linalg.norm(a_to_b)
@@ -306,7 +304,6 @@ def calc_point_in_ab_space(target, point_a, point_b):
         >>> t = numpy.array((3.0, 4.0))
         >>> calc_point_in_ab_space(t, a, b)
         (1.0, 1.0)
-
     """
 
     forward, right, length = calc_right_angle_units(point_a, point_b)
@@ -367,7 +364,6 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
     :from_moles: a list of mole dicts to map from.
     :to_moles: a list of mole dicts to map to.
     :returns: a numpy.array of the guessed position, or None if no guess.
-
     """
     from_points, to_points, point_offsets, _ = offset_theory_points(
         from_moles, to_moles)
@@ -479,7 +475,6 @@ def pick_value_from_field(point, point_values):
     :point: a numpy.array representing a 2d point to take a sample from.
     :point_values: an array of (point, value) to sample at supplied 'point'.
     :returns: a tuple, (sampled_value, estimated_error).
-
     """
 
     # Note that the idea of passing in 'points' and 'values' as separate

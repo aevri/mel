@@ -60,7 +60,6 @@ In 'image relating' mode:
     Press 'a' to apply auto-relate results to image.
     Press 'g' to apply auto-relate results globally to rotomap.
     Press 't' to toggle target mode, which emphasises mole images.
-
 """
 
 

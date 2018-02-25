@@ -74,7 +74,6 @@ def bring_python_to_front():
     processes running.
 
     :returns: None
-
     """
     osascript = "/usr/bin/osascript"
 
@@ -94,7 +93,6 @@ def set_clipboard_contents(text):
     """Set the contents of the clipbaord, only works on Mac OSX.
 
     :returns: None
-
     """
     pbcopy = "/usr/bin/pbcopy"
 
