@@ -2,6 +2,7 @@
 
 import collections
 import functools
+import os
 import multiprocessing
 import random
 
@@ -462,6 +463,27 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     return best_cost, best_state
 
 
+def precalc_guesses(queue, guessfunc, guesses_to_make):
+    results = {
+        args: guessfunc(*args)
+        for args in guesses_to_make
+    }
+    queue.put(results)
+
+
+def take_n(iterable, n):
+    batch = []
+    next_break = n
+    for i, data in enumerate(iterable):
+        batch.append(data)
+        if i == next_break:
+            next_break += n
+            yield batch
+            batch = []
+    if batch:
+        yield batch
+
+
 class CalcGuessesPrecalc():
 
     def __init__(self, guessfunc, predictors, num_identities):
@@ -480,16 +502,28 @@ class CalcGuessesPrecalc():
         # uniform.
         random.shuffle(guesses_to_make)
 
-        # Based on the rough idea that 1000 entries takes approximately 4
-        # second on my laptop. 1 processes per second seems about reasonable.
-        chunk_size = 250
+        queue = multiprocessing.SimpleQueue()
 
-        results = []
-        with multiprocessing.Pool() as pool:
-            results = pool.starmap(guessfunc, guesses_to_make, chunk_size)
-            pool.close()
+        chunk_size = max(250, len(guesses_to_make) / os.cpu_count())
 
-        self.args_to_results = dict(zip(guesses_to_make, results))
+        workers = [
+            multiprocessing.Process(
+                target=precalc_guesses,
+                args=(queue, guessfunc, work))
+            for work in take_n(guesses_to_make, chunk_size)
+        ]
+
+        for w in workers:
+            w.start()
+
+        self.args_to_results = {}
+        for i in range(len(workers)):
+            results = queue.get()
+            self.args_to_results.update(results)
+
+        for w in workers:
+            w.join()
+
         print("Done guessing")
 
     def __call__(self, predictor_loc_ident, guess_loc):
