@@ -98,6 +98,8 @@ def process_args(args):
         guesses_cache = mel.rotomap.identify.CalcGuessesPrecalc(
             calc_guesses, predictor_locs, num_identities)
 
+        return
+
         bounder1 = mel.rotomap.lowerbound.Bounder(
             predictor_locs,
             guesses_cache,
