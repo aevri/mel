@@ -169,6 +169,17 @@ def predictors(positions, num_canonicals):
             for sqdist, loc_b in closest_sqdist_locs(loc_a)
             if guess_to_predictor[loc_b] is not None
         )
+        c_sqdist, c_loc_b = min(
+            (sqdist, loc_b)
+            for sqdist, loc_b in closest_sqdist_locs(loc_a)
+            if guess_to_predictor[loc_b] is not None
+                and guess_to_predictor[loc_b][1] < num_canonicals
+        )
+        if sqdist * 2.0 >= c_sqdist:
+            if loc_b != c_loc_b:
+                print('Subbed-in canonical')
+            sqdist = c_sqdist
+            loc_b = c_loc_b
         guess_to_predictor[loc_a] = (sqdist, loc_b)
         remaining_loc_set.remove(loc_a)
 
