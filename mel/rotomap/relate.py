@@ -276,10 +276,15 @@ def calc_right_angle_units(point_a, point_b):
 
     Usage example:
 
-        >>> a = numpy.array((0.0, 0.0))
-        >>> b = numpy.array((0.0, 1.0))
-        >>> calc_right_angle_units(a, b)
-        (array([ 0.,  1.]), array([ 1., -0.]), 1.0)
+        >>> origin = numpy.array((0.0, 0.0))
+        >>> forward = numpy.array((0.0, 1.0))
+        >>> new_forward, right, l = calc_right_angle_units(origin, forward)
+        >>> tuple(new_forward)
+        (0.0, 1.0)
+        >>> tuple(right)
+        (1.0, -0.0)
+        >>> l
+        1.0
     """
     a_to_b = point_b - point_a
     length = numpy.linalg.norm(a_to_b)
@@ -469,8 +474,8 @@ def pick_value_from_field(point, point_values):
 
         >>> pick_value_from_field(
         ...     numpy.array([0, 0]),
-        ...     [(numpy.array([0, 0]), (1,))])
-        (array([ 1.]), 0.0)
+        ...     [(numpy.array([0, 0]), (1,))]) == ((1.0,), 0.0)
+        True
 
     :point: a numpy.array representing a 2d point to take a sample from.
     :point_values: an array of (point, value) to sample at supplied 'point'.
