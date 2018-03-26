@@ -549,8 +549,6 @@ class Editor:
 
         if follow_mole is not None:
             self.show_zoomed_display(follow_mole['x'], follow_mole['y'])
-        else:
-            self.show_fitted()
 
     def skip_to_mole(self, uuid_to_skip_to):
         original_index = self.moledata.index()
