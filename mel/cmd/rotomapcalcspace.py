@@ -33,6 +33,13 @@ def process_args(args):
             return 1
         contour = mel.lib.moleimaging.biggest_contour(mask)
         ellipse = cv2.minAreaRect(contour)
+
+        try:
+            mel.rotomap.moles.validate_ellipse_mask(
+                ellipse, mask.shape[1], mask.shape[0])
+        except ValueError as e:
+            raise ValueError(f"Bad data from '{path}'.") from e
+
         metadata = {
             'ellipse': ellipse
         }

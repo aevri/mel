@@ -133,12 +133,31 @@ def load_image(path):
     return image
 
 
+def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
+
+    max_length = max(max_x, max_y) * 2
+
+    if ellipse[1][0] < 1 or ellipse[1][1] < 1:
+        raise ValueError(f"Ellipse too small: {ellipse}")
+    elif ellipse[1][0] > max_length or ellipse[1][1] > max_length:
+        raise ValueError(f"Ellipse too big: {ellipse}")
+    elif ellipse[0][0] < 0 or ellipse[0][1] < 0:
+        raise ValueError(f"Ellipse out of bounds: {ellipse}")
+    elif ellipse[0][0] > max_x or ellipse[0][1] > max_y:
+        raise ValueError(f"Ellipse out of bounds: {ellipse}")
+
+
 def load_image_metadata(image_path):
     metadata_path = pathlib.Path(str(image_path) + '.meta.json')
 
     metadata = {}
     if metadata_path.exists():
         metadata = load_json(metadata_path)
+        if 'ellipse' in metadata:
+            try:
+                validate_ellipse_mask(metadata['ellipse'])
+            except ValueError as e:
+                raise ValueError(f"Bad data from '{metadata_path}'.") from e
 
     return metadata
 
