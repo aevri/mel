@@ -33,7 +33,7 @@ def process_args(args):
             return 1
         mask = frame.load_mask()
         contour = mel.lib.moleimaging.biggest_contour(mask)
-        ellipse = cv2.fitEllipse(contour)
+        ellipse = cv2.minAreaRect(contour)
         metadata = {
             'ellipse': ellipse
         }
