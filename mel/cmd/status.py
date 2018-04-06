@@ -93,6 +93,34 @@ class RotomapDuplicateUuidError(ErrorNotification):
         return output
 
 
+class RotomapNotLoadable(ErrorNotification):
+
+    def __init__(self, path, error=None):
+        super().__init__(path)
+        self.error = error
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+
+        if detail_level > 0 and self.error is not None:
+            output += ':\n\n'
+            output += f'  {self.error}'
+            if isinstance(self.error, Exception):
+                error = self.error
+                while True:
+                    if error.__cause__:
+                        error = error.__cause__
+                        output += f"\n  caused by '{error}'."
+                    elif error.__context__ and not error.__suppress_context__:
+                        error = error.__context__
+                        output += f"\n  during '{error}'."
+                    else:
+                        break
+            output += '\n'
+
+        return output
+
+
 class NoBaseDirInfo(InfoNotification):
     pass
 
@@ -412,13 +440,16 @@ def check_rotomap(notices, rotomap):
     missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
     missing_space_info = RotomapMissingSpaceInfo(rotomap.path)
 
-    for frame in rotomap.yield_frames():
-        if not frame.has_mole_file():
-            missing_mole_file_info.frame_list.append(frame.path)
-        if not frame.has_mask():
-            missing_mask_info.frame_list.append(frame.path)
-        if 'ellipse' not in frame.metadata:
-            missing_space_info.frame_list.append(frame.path)
+    try:
+        for frame in rotomap.yield_frames():
+            if not frame.has_mole_file():
+                missing_mole_file_info.frame_list.append(frame.path)
+            if not frame.has_mask():
+                missing_mask_info.frame_list.append(frame.path)
+            if 'ellipse' not in frame.metadata:
+                missing_space_info.frame_list.append(frame.path)
+    except Exception as e:
+        notices.append(RotomapNotLoadable(rotomap.path, e))
 
     if missing_mole_file_info.frame_list:
         notices.append(missing_mole_file_info)
