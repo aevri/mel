@@ -418,6 +418,49 @@ class ImageRelateOverlay():
         return image
 
 
+class BoundingAreaOverlay():
+    """An overlay to show the bounding area, if any."""
+
+    def __init__(self):
+        self.bounding_box = None
+
+    def __call__(self, image, transform):
+
+        image //= 2
+        if self.bounding_box is not None:
+            color = (0, 0, 255)
+            size = 2
+            space = mel.lib.ellipsespace.Transform(self.bounding_box)
+
+            def toimage(point):
+                point = space.from_space((point))
+                point = transform.imagexy_to_transformedxy(*point)
+                return point
+
+            border = [
+                toimage((-1, -1)),
+                toimage((1, -1)),
+                toimage((1, 1)),
+                toimage((-1, 1)),
+                toimage((-1, -1)),
+            ]
+            border = numpy.array(border)
+            centre = [
+                toimage((0, 0.1)),
+                toimage((0, -0.1)),
+                toimage((0.05, 0)),
+                toimage((0.1, 0)),
+                toimage((-0.1, 0)),
+                toimage((0, 0)),
+                toimage((0, 0.1)),
+            ]
+            centre = numpy.array(centre)
+
+            cv2.drawContours(image, [border, centre], -1, color, size)
+
+        return image
+
+
 class ZoomedImageTransform():
 
     def __init__(self, image, pos, rect):
@@ -471,6 +514,7 @@ class EditorMode(enum.Enum):
     edit_mask = 2
     mole_mark = 3
     image_relate = 4
+    bounding_area = 5
     debug_automole = 0
     debug_autorelate = 9
 
@@ -490,6 +534,7 @@ class Editor:
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.marked_mole_overlay = MarkedMoleOverlay()
         self.image_relate_overlay = ImageRelateOverlay()
+        self.bounding_area_overlay = BoundingAreaOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
 
@@ -528,6 +573,10 @@ class Editor:
 
     def set_imagerelate_mode(self):
         self._mode = EditorMode.image_relate
+        self.show_current()
+
+    def set_boundingarea_mode(self):
+        self._mode = EditorMode.bounding_area
         self.show_current()
 
     def set_status(self, text):
@@ -612,6 +661,11 @@ class Editor:
             self.display.show_current(
                 image,
                 self.image_relate_overlay)
+        elif self._mode is EditorMode.bounding_area:
+            box = self.moledata.metadata.get('ellipse', None)
+            self.bounding_area_overlay.bounding_box = box
+            self.display.show_current(
+                image, self.bounding_area_overlay)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(

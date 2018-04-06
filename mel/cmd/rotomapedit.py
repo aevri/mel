@@ -15,6 +15,7 @@ Mode selection:
     Press '2' for mask edit mode.
     Press '3' for mole marking mode.
     Press '4' for image relating mode.
+    Press '5' for bounding area mode.
     Press '0' for auto-mole debug mode.
     Press '9' for auto-relate debug mode.
 
@@ -449,6 +450,21 @@ class ImageRelateController():
             editor.show_current()
 
 
+class BoundingAreaController():
+
+    def __init__(self):
+        pass
+
+    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+        pass
+
+    def pre_key(self, editor, key):
+        pass
+
+    def on_key(self, editor, key):
+        pass
+
+
 class AutomoleDebugController():
 
     def __init__(self):
@@ -488,6 +504,7 @@ class Controller():
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
         self.imagerelate_controller = ImageRelateController()
+        self.boundingarea_controller = BoundingAreaController()
         self.automoledebug_controller = AutomoleDebugController()
         self.autorelatedebug_controller = AutoRelateDebugController()
         self.current_controller = self.moleedit_controller
@@ -538,6 +555,10 @@ class Controller():
             # Switch to image relating mode
             self.current_controller = self.imagerelate_controller
             editor.set_imagerelate_mode()
+        elif key == ord('5'):
+            # Switch to image relating mode
+            self.current_controller = self.boundingarea_controller
+            editor.set_boundingarea_mode()
 
         self.current_controller.on_key(editor, key)
 
