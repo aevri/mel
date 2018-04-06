@@ -27,11 +27,10 @@ def process_args(args):
         if args.verbose:
             print('Target:', path)
 
-        frame = mel.rotomap.moles.RotomapFrame(path)
-        if not frame.has_mask():
+        mask = mel.rotomap.mask.load_or_none(path)
+        if mask is None:
             print(f'{path} has no mask.', file=sys.stderr)
             return 1
-        mask = frame.load_mask()
         contour = mel.lib.moleimaging.biggest_contour(mask)
         ellipse = cv2.minAreaRect(contour)
         metadata = {
