@@ -799,6 +799,7 @@ class Editor:
         self.show_current()
 
     def remap_uuid(self, from_uuid, to_uuid):
+        print(f'Remap globally {from_uuid} to {to_uuid}.')
         self.moledata.remap_uuid(from_uuid, to_uuid)
         self.show_current()
 
