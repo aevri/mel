@@ -68,6 +68,7 @@ def run_mel_tests():
         'rotomap-list',
         'rotomap-montage-single',
         'rotomap-organise',
+        'rotomap-rm',
         'rotomap-udiff',
         'rotomap-uuid',
         'status',
