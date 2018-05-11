@@ -81,19 +81,19 @@ def process_args(args):
         # Note that the order of adding UUIDs is important, in other places
         # we'll be relying on using '<' on ids to determine if an id refers to
         # a canonical mole.
-        uuid_index_translator = mel.rotomap.identify.UuidToIndexTranslator()
-        uuid_index_translator.add_uuids(canonical_uuid_set)
-        num_canonicals = uuid_index_translator.num_uuids()
-        uuid_index_translator.add_uuids(uuid_to_pos.keys())
-        num_locations = uuid_index_translator.num_uuids()
-        uuid_index_translator.add_uuids(possible_uuid_set)
-        num_identities = uuid_index_translator.num_uuids()
+        trans = mel.rotomap.identify.UuidToIndexTranslator()
+        trans.add_uuids(canonical_uuid_set)
+        num_canonicals = trans.num_uuids()
+        trans.add_uuids(uuid_to_pos.keys())
+        num_locations = trans.num_uuids()
+        trans.add_uuids(possible_uuid_set)
+        num_identities = trans.num_uuids()
 
-        positions = uuid_index_translator.uuid_dict_to_index_tuple(
+        positions = trans.uuid_dict_to_index_tuple(
             uuid_to_pos, num_locations)
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
-            positions, uuid_index_translator, warm_classifier)
+            positions, trans, warm_classifier)
         predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
 
         bounder = mel.rotomap.lowerbound.Bounder(
@@ -113,7 +113,7 @@ def process_args(args):
             guesser, max_iterations=1 * 10**5)
 
         old_to_new = {
-            uuid_index_translator.uuid_(old): uuid_index_translator.uuid_(new)
+            trans.uuid_(old): trans.uuid_(new)
             for old, new in enumerate(old_to_new)
         }
 
