@@ -78,6 +78,9 @@ def process_args(args):
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
 
+        # Note that the order of adding UUIDs is important, in other places
+        # we'll be relying on using '<' on ids to determine if an id refers to
+        # a canonical mole.
         uuid_index_translator = mel.rotomap.identify.UuidToIndexTranslator()
         uuid_index_translator.add_uuids(canonical_uuid_set)
         num_canonicals = uuid_index_translator.num_uuids()
