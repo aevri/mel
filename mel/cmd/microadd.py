@@ -16,6 +16,7 @@ import mel.lib.ui
 def setup_parser(parser):
     parser.add_argument(
         'PATH',
+        nargs='+',
         type=str,
         help="Path to the mole to add new microscope images to.")
     parser.add_argument(
@@ -134,27 +135,35 @@ def load_comparison_image(path, min_compare_age_days):
 
 
 def process_args(args):
-    print(args.PATH)
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
 
-    width = args.display_width
-    height = args.display_height
-
-    comparison_image_data = load_comparison_image(
-        args.PATH,
-        args.min_compare_age_days)
-
-    if comparison_image_data is not None:
-        comparison_path, comparison_image = comparison_image_data
-        display = mel.lib.ui.MultiImageDisplay(comparison_path, width, height)
-    else:
-        display = mel.lib.ui.MultiImageDisplay(args.PATH, width, height)
+    display = mel.lib.ui.MultiImageDisplay(
+        'mel micro-add',
+        args.display_width,
+        args.display_height)
 
     mel.lib.ui.bring_python_to_front()
 
-    context_images = load_context_images(args.PATH)
+    for mole_path in args.PATH:
+        print(mole_path)
+        display.reset()
+        process_path(mole_path, args.min_compare_age_days, display, cap)
+
+
+def process_path(mole_path, min_compare_age_days, display, cap):
+    comparison_image_data = load_comparison_image(
+        mole_path,
+        min_compare_age_days)
+
+    if comparison_image_data is not None:
+        comparison_path, comparison_image = comparison_image_data
+        display.set_title(comparison_path)
+    else:
+        display.set_title(mole_path)
+
+    context_images = load_context_images(mole_path)
     for image in context_images:
         display.add_image(image)
 
@@ -191,7 +200,7 @@ def process_args(args):
 
     # write the mole image
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
-    dirname = os.path.join(args.PATH, '__micro__')
+    dirname = os.path.join(mole_path, '__micro__')
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     file_path = os.path.join(dirname, filename)

@@ -116,10 +116,11 @@ class MultiImageDisplay():
 
     def __init__(self, name, width=None, height=None):
         self._display = ImageDisplay(name, width, height)
+        self.reset()
+
+    def reset(self):
         self._images_names = []
-
         self._border_width = 50
-
         self._layout = [[]]
 
     def add_image(self, image, name=None):
@@ -159,6 +160,9 @@ class MultiImageDisplay():
                 0, *row_image_list)
 
         self._display.show_image(montage_image)
+
+    def set_title(self, title):
+        self._display.set_title(title)
 
 
 class ImageDisplay():
