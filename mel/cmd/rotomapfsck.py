@@ -3,7 +3,8 @@
 
 import logging
 import pathlib
-import uuid
+
+import mel.rotomap.moles
 
 
 def setup_parser(parser):
@@ -51,7 +52,7 @@ def fsck(path, do_fix):
     elif has_images and not has_uuid:
         print(f'"{path}" looks like a rotomap, but has no uuid.')
         if do_fix:
-            uuid_ = uuid.uuid4().hex
+            uuid_ = mel.rotomap.moles.make_new_uuid()
             uuid_path.write_text(uuid_)
             print(f'Wrote {uuid_} to {uuid_path}')
         else:

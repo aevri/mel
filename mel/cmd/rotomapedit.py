@@ -65,7 +65,6 @@ In 'image relating' mode:
 
 
 import copy
-import uuid
 
 import cv2
 import numpy
@@ -229,7 +228,7 @@ class MoleEditController():
             editor.set_mole_uuid(
                 mouse_x,
                 mouse_y,
-                uuid.uuid4().hex,
+                mel.rotomap.moles.make_new_uuid(),
                 is_canonical=False)
 
     def pre_key(self, editor, key):
@@ -372,7 +371,7 @@ class ImageRelateController():
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.set_mole_uuid(
                     mouse_x, mouse_y,
-                    uuid.uuid4().hex,
+                    mel.rotomap.moles.make_new_uuid(),
                     is_canonical=False)
             else:
                 if self.copied_uuid:

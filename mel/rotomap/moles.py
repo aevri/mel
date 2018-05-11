@@ -214,10 +214,14 @@ def save_json(path, data):
         print(file=f)
 
 
+def make_new_uuid():
+    return uuid.uuid4().hex
+
+
 def add_mole(moles, x, y, mole_uuid=None):
     is_uuid_canonical = True
     if mole_uuid is None:
-        mole_uuid = uuid.uuid4().hex
+        mole_uuid = make_new_uuid()
         is_uuid_canonical = False
 
     moles.append({

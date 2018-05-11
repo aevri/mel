@@ -438,6 +438,8 @@ def frame_to_uuid_to_pos(frame):
     }
 
     return uuid_to_pos
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #
