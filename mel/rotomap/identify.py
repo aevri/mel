@@ -251,8 +251,10 @@ class PosGuesser():
         num_remaining = len(state) - len(already_taken)
 
         loc = self._next_loc(state, decided)
+        possibles = self.bounder.possible_guesses(
+            state, self.possible_uuid_set, already_taken, loc)
 
-        for ident in self.possible_uuid_set - already_taken:
+        for ident in possibles:
             new_state = list(state)
             new_state[loc] = ident
             lower_bound = self.bounder.lower_bound(new_state)

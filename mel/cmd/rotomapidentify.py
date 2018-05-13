@@ -96,7 +96,7 @@ def process_args(args):
             positions, trans, warm_classifier)
         predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
 
-        bounder = mel.rotomap.lowerbound.Bounder(
+        bounder = BounderWrapper(
             tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,
             num_identities,
@@ -128,6 +128,47 @@ def process_args(args):
                 raise Exception(f'{frame.path}: would duplicate {old_id}')
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+
+
+class BounderWrapper():
+    """Extend the capabilities of the C++ bounder, add 'possible_guesses'.
+
+    If this turns out to be enough of a bottleneck, we can move the
+    implementation to C++ too.
+    """
+
+    def __init__(
+            self, predictors, calc_guesses, num_identities, num_canonicals):
+        self._predictors = predictors
+        self._calc_guesses = calc_guesses
+        self._bounder = mel.rotomap.lowerbound.Bounder(
+            predictors,
+            calc_guesses,
+            num_identities,
+            num_canonicals)
+
+    def lower_bound(self, state):
+        return self._bounder.lower_bound(state)
+
+    def possible_guesses(
+            self, state, possible_ident_set, already_taken, guess_loc):
+        predictor_loc = self._predictors[guess_loc]
+        predictor_ident = state[predictor_loc]
+
+        possibles = []
+        if predictor_ident is not None:
+            possibles = self._calc_guesses(
+                (predictor_loc, predictor_ident),
+                guess_loc)
+        else:
+            for predictor_ident in possible_ident_set - already_taken:
+                if predictor_ident == guess_loc:
+                    continue
+                possibles.extend(self._calc_guesses(
+                    (predictor_loc, predictor_ident),
+                    guess_loc))
+
+        return set([ident for ident, _ in possibles]) - already_taken
 
 
 # -----------------------------------------------------------------------------
