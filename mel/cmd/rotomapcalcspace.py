@@ -33,6 +33,7 @@ def process_args(args):
             return 1
         contour = mel.lib.moleimaging.biggest_contour(mask)
         ellipse = cv2.minAreaRect(contour)
+        ellipse = mel.rotomap.moles.normalised_ellipse_mask(ellipse)
 
         try:
             mel.rotomap.moles.validate_ellipse_mask(

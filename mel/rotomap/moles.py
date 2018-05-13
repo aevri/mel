@@ -133,6 +133,33 @@ def load_image(path):
     return image
 
 
+def normalised_ellipse_mask(ellipse):
+    """Return a normalized copy of the supplied ellipse.
+
+    Here 'normalised' means that the rotation is as close to zero as possible.
+
+    Examples:
+        >>> normalised_ellipse_mask(
+        ...     ((1, 2), (100, 200), 90)
+        ... )
+        ((1, 2), (200, 100), 0)
+    """
+    # Don't overwrite the original, we'll return a new ellipse.
+    centre, extents, rotation = ellipse
+    centre = list(centre[:])
+    extents = list(extents[:])
+
+    # Get the rotation as close to zero as possible.
+    while rotation > 45:
+        extents[0], extents[1] = extents[1], extents[0]
+        rotation -= 90
+    while rotation < -45:
+        extents[0], extents[1] = extents[1], extents[0]
+        rotation += 90
+
+    return tuple(centre), tuple(extents), rotation
+
+
 def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
 
     max_length = max(max_x, max_y) * 2
