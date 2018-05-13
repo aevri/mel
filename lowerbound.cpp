@@ -103,22 +103,25 @@ struct CalcGuessesFunctor {
         this->calc_guesses_fn = callable;
         Py_INCREF(this->calc_guesses_fn);
 
-        // TODO: Don't include canonical indices in the cache, they will never
-        // be queried. Even if they were, the cost would always be 1.
-
+        this->num_canonical = num_canonical;
         this->num_locations = num_locations;
         this->num_identities = num_identities;
 
-        const int cache_size = num_locations * num_identities;
+        // TODO: Separate out locations whose predictors are canonical, there
+        // is no doubt as to the identity of their predictor.
+
+        const int cache_size = (
+            (num_locations - num_canonical) * num_identities
+        );
         this->guess_cache.resize(cache_size);
 
         for (
             MoleIndex predictor_ident=0;
-            predictor_ident<this->num_identities;
+            predictor_ident < this->num_identities;
             ++predictor_ident)
         {
             for (
-                MoleIndex guess_loc=0;
+                MoleIndex guess_loc=num_canonical;
                 guess_loc < this->num_locations;
                 ++guess_loc)
             {
@@ -147,14 +150,27 @@ private:
     {
         if (guess_loc > this->num_locations) {
             PyErr_SetString(
-                PyExc_RuntimeError, "Invalid cache_index, guess_loc OOB.");
+                PyExc_RuntimeError, "Invalid cache_index, guess_loc high.");
+            return 0;
+        } else if (guess_loc < this->num_canonical) {
+            PyErr_SetString(
+                PyExc_RuntimeError, "Invalid cache_index, guess_loc canon.");
+            return 0;
+        } else if (guess_loc < 0) {
+            PyErr_SetString(
+                PyExc_RuntimeError, "Invalid cache_index, guess_loc low.");
+            return 0;
+        } else if (predictor_ident < 0) {
+            PyErr_SetString(
+                PyExc_RuntimeError, "Invalid cache_index, predictor low.");
             return 0;
         } else if (predictor_ident > this->num_identities) {
             PyErr_SetString(
-                PyExc_RuntimeError, "Invalid cache_index, predictor OOB.");
+                PyExc_RuntimeError, "Invalid cache_index, predictor high.");
             return 0;
         }
-        return guess_loc + (predictor_ident * this->num_locations);
+        const int adjusted_loc = guess_loc - this->num_canonical;
+        return predictor_ident + adjusted_loc * this->num_identities;
     }
 
     void
@@ -191,6 +207,7 @@ private:
 
     std::vector<GuessVector> guess_cache;
 
+    int num_canonical;
     int num_locations;
     int num_identities;
 };
