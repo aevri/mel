@@ -120,6 +120,7 @@ class UuidToIndexTranslator():
 
 def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
 
+    @functools.lru_cache(maxsize=2048)
     def calc_guesses(predictor_loc_ident, guess_location):
         ref_pos = positions[predictor_loc_ident[0]]
         pos = positions[guess_location]
