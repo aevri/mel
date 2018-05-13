@@ -135,18 +135,32 @@ struct CalcGuessesFunctor {
 
     const GuessVector&
     operator()(Mole predictor, MoleIndex guess_loc) const {
-        const int cache_index = (
-            guess_loc + (predictor.ident * this->num_locations));
-        return this->guess_cache[cache_index];
+        return this->guess_cache[
+            this->cache_index(predictor.ident, guess_loc)];
     }
 
 private:
 
+    int
+    cache_index(
+        const MoleIndex predictor_ident, const MoleIndex guess_loc) const
+    {
+        if (guess_loc > this->num_locations) {
+            PyErr_SetString(
+                PyExc_RuntimeError, "Invalid cache_index, guess_loc OOB.");
+            return 0;
+        } else if (predictor_ident > this->num_identities) {
+            PyErr_SetString(
+                PyExc_RuntimeError, "Invalid cache_index, predictor OOB.");
+            return 0;
+        }
+        return guess_loc + (predictor_ident * this->num_locations);
+    }
+
     void
     cache_entry(Mole predictor, MoleIndex guess_loc) {
-        const int cache_index = (
-            guess_loc + (predictor.ident * this->num_locations));
-        GuessVector& guesses = this->guess_cache[cache_index];
+        GuessVector& guesses = this->guess_cache[
+            this->cache_index(predictor.ident, guess_loc)];
 
         if (PyErr_Occurred()) {
             printf("Error before trying to get guesses.\n");
