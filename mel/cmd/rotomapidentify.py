@@ -84,8 +84,8 @@ def process_args(args):
         trans = mel.rotomap.identify.UuidToIndexTranslator()
         trans.add_uuids(canonical_uuid_set)
         num_canonicals = trans.num_uuids()
-        trans.add_uuids(uuid_to_pos.keys())
-        num_locations = trans.num_uuids()
+        trans.add_uuids_with_imposters(uuid_to_pos.keys())
+        num_locations = trans.num_uuids() - trans.num_imposters()
         trans.add_uuids(possible_uuid_set)
         num_identities = trans.num_uuids()
 

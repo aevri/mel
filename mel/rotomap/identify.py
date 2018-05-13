@@ -1,6 +1,7 @@
 """Identify moles."""
 
 import collections
+import itertools
 import functools
 
 import cv2
@@ -10,6 +11,8 @@ import mel.lib.ellipsespace
 import mel.lib.kde
 import mel.lib.moleimaging
 import mel.lib.priorityq
+
+import mel.rotomap.moles
 
 
 # Individual probabilities less than this are out of consideration.
@@ -51,18 +54,51 @@ class UuidToIndexTranslator():
     def __init__(self):
         self._index_to_uuid = []
         self._uuid_to_index = {}
+        self._id_to_imposter_id = {}
 
     def add_uuids(self, uuids):
+        for u in self._yield_uuids_to_add(uuids):
+            self._append_uuid(u)
+
+    def add_uuids_with_imposters(self, uuids):
+        # When dealing with moles that cannot be identified, it's useful to be
+        # able to supply an 'imposter' mole with a unique UUID. This imposter
+        # then signifies that no existing mole could be identified for it.
+        #
+        # This also means that the unknown mole won't accidentally collide with
+        # a known mole.
+        #
+        num_uuids_before = self.num_uuids()
+        for u in self._yield_uuids_to_add(uuids):
+            self._append_uuid(u)
+
+        # It's important to add the imposters after the originals, as ordering
+        # has meaning, and we've decided that imposters mean something other
+        # than the originals.
+        for original_index in range(num_uuids_before, self.num_uuids()):
+            imposter_index = self._append_uuid(
+                mel.rotomap.moles.make_new_uuid())
+            self._id_to_imposter_id[original_index] = imposter_index
+
+    def _append_uuid(self, u):
+        i = len(self._index_to_uuid)
+        self._uuid_to_index[u] = i
+        self._index_to_uuid.append(u)
+        return i
+
+    def _yield_uuids_to_add(self, uuids):
         # We sort the uuids so that we number them in a deterministic fashion,
         # this means that multiple runs of the program should retain the same
         # meaning of the indices.
         for u in sorted(uuids):
             if u not in self._uuid_to_index:
-                self._uuid_to_index[u] = len(self._index_to_uuid)
-                self._index_to_uuid.append(u)
+                yield u
 
     def num_uuids(self):
         return len(self._index_to_uuid)
+
+    def num_imposters(self):
+        return len(self._id_to_imposter_id)
 
     def uuid_dict_to_index_tuple(self, dict_in, tuple_len):
         if len(dict_in) < tuple_len:
@@ -77,6 +113,9 @@ class UuidToIndexTranslator():
 
     def uuid_(self, index):
         return self._index_to_uuid[index]
+
+    def index_to_imposter(self, index):
+        return self._id_to_imposter_id[index]
 
 
 def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
@@ -101,7 +140,19 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             for guess_ident_uuid, cost in guesses
             if cost < MAX_MOLE_COST
         )
-        return tuple(sorted(guesses, key=lambda x: x[1]))
+        try:
+            guess_unknown_mole = (
+                (
+                    uuid_index_translator.index_to_imposter(guess_location),
+                    MAX_MOLE_COST - 1
+                ),)
+        except KeyError:
+            guess_unknown_mole = ()
+        return tuple(
+            sorted(
+                itertools.chain(guesses, guess_unknown_mole),
+                key=lambda x: x[1])
+        )
 
     return calc_guesses
 
