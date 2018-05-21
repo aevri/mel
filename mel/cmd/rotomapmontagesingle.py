@@ -70,7 +70,7 @@ def make_montage_image(rotomap, uuid_, rot90=0):
     mole_dict = {m['uuid']: m for m in mole_list}
     mole = mole_dict[uuid_]
 
-    context_image = cv2.imread(path)
+    context_image = mel.rotomap.moles.load_image(path)
     x = mole['x']
     y = mole['y']
 
