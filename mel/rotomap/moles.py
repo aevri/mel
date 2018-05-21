@@ -111,6 +111,18 @@ def make_argparse_rotomap_directory(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
+def make_argparse_image_moles(path):
+    """Use in the 'type=' parameter to add_argument()."""
+    try:
+        path = pathlib.Path(path)
+        if path.is_file():
+            yield path, load_image_moles(path)
+        else:
+            yield from RotomapDirectory(path).yield_mole_lists()
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+
+
 class MoleListDiff():
 
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):

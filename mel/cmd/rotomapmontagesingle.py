@@ -11,9 +11,9 @@ import mel.cmd.error
 def setup_parser(parser):
 
     parser.add_argument(
-        'ROTOMAP',
-        type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        help="Path to the rotomap to copy from.")
+        'FRAMES',
+        type=mel.rotomap.moles.make_argparse_image_moles,
+        help="Path to the rotomap or image to copy from.")
 
     parser.add_argument(
         'UUID',
@@ -35,25 +35,24 @@ def setup_parser(parser):
 def process_args(args):
     mel.lib.common.write_image(
         args.OUTPUT,
-        make_montage_image(args.ROTOMAP, args.UUID, args.rot90))
+        make_montage_image(args.FRAMES, args.UUID, args.rot90))
 
 
-def make_montage_image(rotomap, uuid_, rot90=0):
+def make_montage_image(images_moles, uuid_, rot90=0):
 
     path_moles_list = []
 
     radius = 10
     montage_height = 1024
 
-    for imagepath, moles in rotomap.yield_mole_lists():
+    for imagepath, moles in images_moles:
         for m in moles:
             if m['uuid'] == uuid_:
                 path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
         raise mel.cmd.error.UsageError(
-            'UUID "{}" not found in rotomap "{}".'.format(
-                uuid_, rotomap.path))
+            'UUID "{}" not found.'.format(uuid_))
 
     # Pick 'best' image for this particular mole, assuming that the middle
     # image is where the mole is most prominent. This assumption is based on
