@@ -1,5 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
+import mel.lib.image
+
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
@@ -21,7 +23,7 @@ def process_args(args):
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        image = mel.rotomap.moles.load_image(path)
+        image = mel.lib.image.load_image(path)
         mask = mel.rotomap.mask.load(path)
         moles = mel.rotomap.detectmoles.moles(image, mask)
         mel.rotomap.moles.save_image_moles(moles, path)

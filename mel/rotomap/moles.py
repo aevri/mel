@@ -11,9 +11,11 @@ import uuid
 import cv2
 import numpy
 
+import mel.lib.image
 import mel.lib.math
 
 import mel.rotomap.mask
+
 
 KEY_IS_CONFIRMED = 'is_uuid_canonical'
 
@@ -73,7 +75,7 @@ class RotomapFrame():
         self.metadata = load_image_metadata(self.path)
 
     def load_image(self):
-        return load_image(self.path)
+        return mel.lib.image.load_image(self.path)
 
     def load_mask(self):
         return mel.rotomap.mask.load_or_none(self.path)
@@ -135,14 +137,6 @@ class MoleListDiff():
         self.ignored_missing = (old_uuids - new_uuids) & ignore_missing
         self.would_ignore_new = ignore_new - (new_uuids - old_uuids)
         self.would_ignore_missing = ignore_missing - (old_uuids - new_uuids)
-
-
-def load_image(path):
-    image = cv2.imread(str(path))
-    if image is None:
-        raise Exception(f'Failed to load image: "{path}"')
-
-    return image
 
 
 def normalised_ellipse_mask(ellipse):

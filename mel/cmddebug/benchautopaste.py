@@ -2,8 +2,10 @@
 
 import numpy
 
+import mel.lib.image
 import mel.lib.math
 import mel.lib.moleimaging
+
 import mel.rotomap.detectmoles
 import mel.rotomap.moles
 import mel.rotomap.relate
@@ -72,7 +74,7 @@ def process_combinations(from_path, to_path, args):
     if not from_moles or not to_moles:
         return 0, 0
 
-    to_image = mel.rotomap.moles.load_image(to_path)
+    to_image = mel.lib.image.load_image(to_path)
 
     num_tests = 0
     num_hits = 0

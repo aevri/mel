@@ -7,6 +7,14 @@ import numpy
 import mel.lib.common
 
 
+def load_image(path):
+    image = cv2.imread(str(path))
+    if image is None:
+        raise Exception(f'Failed to load image: "{path}"')
+
+    return image
+
+
 def calc_letterbox(width, height, fit_width, fit_height):
     """Return (x, y, width, height) to fit image into.
 

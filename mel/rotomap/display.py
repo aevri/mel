@@ -814,7 +814,7 @@ class MoleData:
         # data seems to change from underneath really.
         @functools.lru_cache()
         def load_image(image_path):
-            return mel.rotomap.moles.load_image(image_path)
+            return mel.lib.image.load_image(image_path)
         self._load_image = load_image
 
         self.moles = []

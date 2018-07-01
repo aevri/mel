@@ -184,7 +184,7 @@ def captioned_mole_image(path, pos, size):
 
 @functools.lru_cache()
 def _cached_captioned_mole_image(path, pos, size):
-    image = mel.rotomap.moles.load_image(path)
+    image = mel.lib.image.load_image(path)
     image_crosshairs = image.copy()
     mel.rotomap.display.draw_crosshair(image_crosshairs, *pos)
     image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
