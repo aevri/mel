@@ -234,7 +234,7 @@ class LeftRightDisplay():
         self.show()
 
     def _get_image(self, path):
-        return cv2.imread(path)
+        return mel.lib.image.load_image(path)
 
     def show(self):
         if self._image_list:
@@ -248,6 +248,8 @@ class LeftRightDisplay():
                     self.display.height,
                     self.display.width))
             self.display.set_title(self._original_title)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

@@ -2,8 +2,6 @@
 
 import os
 
-import cv2
-
 import mel.lib.common
 import mel.lib.datetime
 import mel.lib.image
@@ -37,7 +35,7 @@ def get_comparison_images(path):
     names = [x for x in os.listdir(micro_path) if x.lower().endswith('.jpg')]
     names.sort()
     paths = [os.path.join(micro_path, x) for x in names]
-    images = [cv2.imread(x) for x in paths]
+    images = [mel.lib.image.load_image(x) for x in paths]
 
     for i, (path, img) in enumerate(zip(paths, images)):
         if img is None:

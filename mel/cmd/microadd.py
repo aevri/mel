@@ -83,7 +83,7 @@ def load_context_images(path):
     for path in path_list:
         name = get_context_image_name(path)
         if name:
-            image_list.append(cv2.imread(name))
+            image_list.append(mel.lib.image.load_image(name))
     return image_list
 
 
@@ -131,7 +131,7 @@ def load_comparison_image(path, min_compare_age_days):
     micro_path = get_comparison_image_path(path, min_compare_age_days)
     if micro_path is None:
         return None
-    return micro_path, cv2.imread(micro_path)
+    return micro_path, mel.lib.image.load_image(micro_path)
 
 
 def process_args(args):

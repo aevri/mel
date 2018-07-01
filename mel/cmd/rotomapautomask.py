@@ -1,9 +1,8 @@
 """Automatically mask rotomap images."""
 
-import cv2
-
 import mel.lib.common
 import mel.lib.fs
+import mel.lib.image
 import mel.lib.ui
 import mel.rotomap.mask
 
@@ -24,7 +23,7 @@ def process_args(args):
     for path in args.TARGET:
         if args.verbose:
             print('Target:', path)
-        image = cv2.imread(path)
+        image = mel.lib.image.load_image(path)
         mask = mel.rotomap.mask.guess_mask_otsu(image)
         mel.lib.common.write_image(path + '.mask.png', mask)
 # -----------------------------------------------------------------------------

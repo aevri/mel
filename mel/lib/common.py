@@ -6,6 +6,7 @@ import cv2
 import numpy
 
 import mel.lib.datetime
+import mel.lib.image
 
 
 def determine_filename_for_ident(*source_filenames):
@@ -287,8 +288,8 @@ def process_context_detail_args(args):
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
-    context_image = cv2.imread(args.context)
-    detail_image = cv2.imread(args.detail)
+    context_image = mel.lib.image.load_image(args.context)
+    detail_image = mel.lib.image.load_image(args.detail)
 
     if args.rot90:
         context_image = rotated90(context_image, args.rot90)
