@@ -12,9 +12,12 @@ def path(mole_image_path):
 
 
 def load(mole_image_path):
-    return cv2.imread(
+    mask = cv2.imread(
         path(mole_image_path),
         cv2.IMREAD_UNCHANGED)
+    if mask is None:
+        raise Exception(f'Failed to load mask: "{path}"')
+    return mask
 
 
 def has_mask(mole_image_path):
