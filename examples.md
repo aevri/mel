@@ -75,4 +75,14 @@ Example output:
 26   LeftLeg/UpperLeg/RightSidePair/SmallDark
 ```
 
+### Fix the orientation of images captured with an iPhone
+
+You may find that if you try to use image captured from an iPhone in a rotomap,
+if they are portrait then the orientation may be incorrect. Here the excellent
+ImageMagick 'mogrify' tool can help:
+
+```bash
+find . -iname '*.jpg' | xargs -P 6 -n 1 mogrify -auto-orient
+```
+
 [1]: http://www.nhs.uk/Conditions/Malignant-melanoma/Pages/Symptoms.aspx
