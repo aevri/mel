@@ -28,7 +28,6 @@ In 'mole edit' mode:
     Also, press 'end' or '+' when over a point to copy it's uuid.
     Alt-Shift-right-click over a point to make it canonical.
     Alt-click on a point to paste the copied uuid.
-    Alt-right-click on a point to replace the uuid in the whole map.
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
     Press 'c' to copy the moles in the displayed image.
@@ -220,10 +219,6 @@ class MoleEditController():
         if flags & cv2.EVENT_FLAG_ALTKEY:
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.confirm_mole(mouse_x, mouse_y)
-            else:
-                editor.remap_uuid(
-                    editor.get_mole_uuid(mouse_x, mouse_y),
-                    self.mole_uuid_list[0])
         elif flags & cv2.EVENT_FLAG_SHIFTKEY:
             editor.set_mole_uuid(
                 mouse_x,
