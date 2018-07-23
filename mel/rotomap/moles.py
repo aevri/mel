@@ -505,9 +505,11 @@ def mapped_pos(molepos, from_moles, to_moles):
         # we want this to be a perspective transformation then we'd need an
         # additional point.
         #
+        # pylint: disable=assignment-from-no-return
         transform = numpy.matrix(cv2.getAffineTransform(
             numpy.float32(from_pos_list),
             numpy.float32(to_pos_list))).transpose()
+        # pylint: enable=assignment-from-no-return
         pos = numpy.array([molepos[0], molepos[1], 1.0]) * transform
         pos = numpy.array(pos)
         molepos = pos[0]
