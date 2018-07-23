@@ -216,6 +216,10 @@ def load_image_moles(image_path):
         m['x'] = int(m['x'])
         m['y'] = int(m['y'])
 
+    for m in moles:
+        if m['uuid'] is None:
+            raise Exception(f'Mole UUID cannot be None: {moles_path} {m}')
+
     return moles
 
 
