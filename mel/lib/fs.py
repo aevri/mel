@@ -1,6 +1,7 @@
 """FileSystem helpers."""
 
 import os
+import pathlib
 
 
 def expand_dirs_to_jpegs(path_list):
@@ -22,8 +23,29 @@ def yield_only_jpegs_from_dir(path):
 def is_jpeg_name(filename):
     lower_ext = os.path.splitext(filename)[1].lower()
     return lower_ext in ('.jpg', '.jpeg')
+
+
+class NoMelrootError(Exception):
+    pass
+
+
+def find_melroot():
+    original_path = pathlib.Path.cwd()
+
+    path = original_path
+    while True:
+        melroot = path / 'melroot'
+        if melroot.exists():
+            return path
+
+        parent = path.parent
+        if parent == path:
+            raise NoMelrootError(original_path)
+        path = parent
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2017 Angelos Evripiotis.
+# Copyright (C) 2018 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

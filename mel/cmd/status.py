@@ -19,10 +19,10 @@ the question 'What's happening here, and what shall I do next?'.
 import collections
 import datetime
 import os
-import pathlib
 import sys
 import textwrap
 
+import mel.lib.fs
 import mel.rotomap.moles
 
 
@@ -227,8 +227,8 @@ def setup_parser(parser):
 
 def process_args(args):
     try:
-        melroot = find_melroot()
-    except NoMelrootError:
+        melroot = mel.lib.fs.find_melroot()
+    except mel.lib.fs.NoMelrootError:
         print('Not in a mel repo, could not find melroot', file=sys.stderr)
         return 1
 
@@ -280,25 +280,6 @@ def print_klass_to_notices(klass_to_notices, detail_level):
             print(textwrap.indent(
                 notice.format(detail_level),
                 '  '))
-
-
-class NoMelrootError(Exception):
-    pass
-
-
-def find_melroot():
-    original_path = pathlib.Path.cwd()
-
-    path = original_path
-    while True:
-        melroot = path / 'melroot'
-        if melroot.exists():
-            return path
-
-        parent = path.parent
-        if parent == path:
-            raise NoMelrootError(original_path)
-        path = parent
 
 
 def check_rotomaps(path, notices):
@@ -460,7 +441,7 @@ def check_rotomap(notices, rotomap):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2017 Angelos Evripiotis.
+# Copyright (C) 2018 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
