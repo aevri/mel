@@ -229,7 +229,9 @@ def save_image_metadata(metadata, image_path):
 
 
 def save_image_moles(moles, image_path):
-    moles_path = image_path + '.json'
+    # Explicitly convert 'image_path' to str. It might be a pathlib.Path, which
+    # doesn't support addition in this way.
+    moles_path = str(image_path) + '.json'
     save_json(moles_path, moles)
 
 
