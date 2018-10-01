@@ -4,6 +4,9 @@ import os
 import pathlib
 
 
+DEFAULT_MOLE_MARK_MODEL_PATH = "classifiers/mole_mark_model.h5"
+
+
 def expand_dirs_to_jpegs(path_list):
     image_paths = []
     for path in path_list:

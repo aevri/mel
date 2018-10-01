@@ -63,6 +63,7 @@ def run_mel_tests():
         'rotomap-compare',
         'rotomap-confirm',
         'rotomap-edit',
+        'rotomap-filter-marks',
         'rotomap-fsck',
         'rotomap-identify',
         'rotomap-list',
