@@ -190,7 +190,7 @@ def snap_to_mole_findellipse(image, guess_pos, radius=50):
 #         mole['y'] = mole['y'] + lefttop[1]
 #     return guessed_moles
 # -----------------------------------------------------------------------------
-# Copyright (C) 2017 Angelos Evripiotis.
+# Copyright (C) 2018 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

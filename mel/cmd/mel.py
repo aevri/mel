@@ -154,7 +154,7 @@ def _setup_parser_for_module(subparsers, module, name):
 if __name__ == '__main__':
     sys.exit(main())
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2017 Angelos Evripiotis.
+# Copyright (C) 2015-2018 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
