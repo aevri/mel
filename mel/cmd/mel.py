@@ -42,6 +42,7 @@ import mel.cmd.rotomapedit  # noqa: E402
 import mel.cmd.rotomapfsck  # noqa: E402
 import mel.cmd.rotomapidentify  # noqa: E402
 import mel.cmd.rotomaplist  # noqa: E402
+import mel.cmd.rotomaploadsave  # noqa: E402
 import mel.cmd.rotomapmontagesingle  # noqa: E402
 import mel.cmd.rotomaporganise  # noqa: E402
 import mel.cmd.rotomaprm  # noqa: E402
@@ -93,6 +94,8 @@ def main():
         subparsers, mel.cmd.rotomapidentify, 'rotomap-identify')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomaplist, 'rotomap-list')
+    _setup_parser_for_module(
+        subparsers, mel.cmd.rotomaploadsave, 'rotomap-loadsave')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapmontagesingle, 'rotomap-montage-single')
     _setup_parser_for_module(
