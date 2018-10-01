@@ -15,17 +15,20 @@ def setup_parser(parser):
     parser.add_argument(
         'FROM_FRAMES',
         type=mel.rotomap.moles.make_argparse_image_moles,
-        help="Path of the 'reference' rotomap or image.")
+        help="Path of the 'reference' rotomap or image.",
+    )
     parser.add_argument(
         'TO_FRAMES',
         type=mel.rotomap.moles.make_argparse_image_moles,
-        help="Path of the directory of rotomap or image.")
+        help="Path of the directory of rotomap or image.",
+    )
     parser.add_argument(
         '--error-distance',
         default=5,
         type=int,
         help='Consider guesses this far from their target to be misses / '
-             'errors.')
+        'errors.',
+    )
     parser.add_argument('--verbose', '-v', action='count', default=0)
 
 
@@ -33,7 +36,8 @@ def process_args(args):
     from_to_pairs = _pair_off_inputs(args.FROM_FRAMES, args.TO_FRAMES)
     for common_path, from_moles, to_moles in from_to_pairs:
         matches, missing, added = match_moles(
-            from_moles, to_moles, args.error_distance)
+            from_moles, to_moles, args.error_distance
+        )
         print_items(common_path, matches, 'MATCH')
         print_items(common_path, missing, 'MISSING')
         print_items(common_path, added, 'ADDED')
@@ -134,10 +138,9 @@ def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         nextmin = sqdistmat[from_i, to_i]
         if nextmin > max_sqdist:
             break
-        matches.append((
-            matindex_to_fromindex[from_i],
-            matindex_to_toindex[to_i],
-        ))
+        matches.append(
+            (matindex_to_fromindex[from_i], matindex_to_toindex[to_i])
+        )
         del matindex_to_fromindex[from_i]
         del matindex_to_toindex[to_i]
         sqdistmat = numpy.delete(sqdistmat, from_i, axis=0)

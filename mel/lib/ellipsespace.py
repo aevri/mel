@@ -6,18 +6,17 @@ import numpy
 import mel.lib.moleimaging
 
 
-class Transform():
-
+class Transform:
     def __init__(self, ellipse):
         self.ellipse = ellipse
 
-#         center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
+    #         center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
 
-#         self.center, self.up, self.right = (
-#             numpy.array(x) for x in (center, up, right))
+    #         self.center, self.up, self.right = (
+    #             numpy.array(x) for x in (center, up, right))
 
-#         self.mag = numpy.array((rmag, umag))
-#         self.inv_mag = 1 / self.mag
+    #         self.mag = numpy.array((rmag, umag))
+    #         self.inv_mag = 1 / self.mag
 
     def to_space(self, pos):
         return to_ellipse_space(self.ellipse, pos)
@@ -77,12 +76,12 @@ def ellipse_center_up_right(ellipse):
         angle_degs -= 180
 
     up = (0, -1)
-    up = mel.lib.moleimaging.rotate_point_around_pivot(
-        up, (0, 0), angle_degs)
+    up = mel.lib.moleimaging.rotate_point_around_pivot(up, (0, 0), angle_degs)
 
     right = (1, 0)
     right = mel.lib.moleimaging.rotate_point_around_pivot(
-        right, (0, 0), angle_degs)
+        right, (0, 0), angle_degs
+    )
 
     umag = ellipse[1][1] / 2
     rmag = ellipse[1][0] / 2

@@ -13,24 +13,23 @@ import mel.rotomap.relate
 
 def setup_parser(parser):
     parser.add_argument(
-        'FROM',
-        type=str,
-        help="Path of the 'from' rotomap json file.")
+        'FROM', type=str, help="Path of the 'from' rotomap json file."
+    )
     parser.add_argument(
-        'TO',
-        type=str,
-        nargs='+',
-        help="Paths of the 'to' rotomap json files.")
+        'TO', type=str, nargs='+', help="Paths of the 'to' rotomap json files."
+    )
     parser.add_argument(
         '--loop',
         action='store_true',
-        help="Apply the relation as if the files specify a complete loop.")
+        help="Apply the relation as if the files specify a complete loop.",
+    )
     parser.add_argument(
         '--error-distance',
         default=5,
         type=int,
         help='Consider guesses this far from their target to be misses / '
-             'errors.')
+        'errors.',
+    )
     parser.add_argument('--verbose', '-v', action='count', default=0)
 
 
@@ -95,30 +94,43 @@ def process_combinations(from_path, to_path, args):
         to_moles_without_target = list(to_moles_without_target.values())
 
         guess_pos = guess_mole_pos(
-            target_uuid, from_moles, to_moles_without_target, to_image)
+            target_uuid, from_moles, to_moles_without_target, to_image
+        )
 
         if guess_pos is not None:
             distance = mel.lib.math.distance_2d(guess_pos, target_pos)
             if distance < args.error_distance:
                 num_hits += 1
                 if args.verbose >= 2:
-                    print('Hit: ({} -> {}) for {}, distance {}.'.format(
-                        from_path, to_path, target_uuid, distance))
+                    print(
+                        'Hit: ({} -> {}) for {}, distance {}.'.format(
+                            from_path, to_path, target_uuid, distance
+                        )
+                    )
             else:
                 if args.verbose >= 2:
-                    print('Miss: ({} -> {}) for {}, distance {}.'.format(
-                        from_path, to_path, target_uuid, distance))
+                    print(
+                        'Miss: ({} -> {}) for {}, distance {}.'.format(
+                            from_path, to_path, target_uuid, distance
+                        )
+                    )
         else:
             if args.verbose >= 2:
-                print('Could not guess: ({} -> {}) for {}.'.format(
-                    from_path, to_path, target_uuid))
+                print(
+                    'Could not guess: ({} -> {}) for {}.'.format(
+                        from_path, to_path, target_uuid
+                    )
+                )
 
     num_misses = num_tests - num_hits
 
     if args.verbose >= 1:
         if num_misses:
-            print('Flawed mapping: ({} -> {}); {} hits, {} misses.'.format(
-                from_path, to_path, num_hits, num_misses))
+            print(
+                'Flawed mapping: ({} -> {}); {} hits, {} misses.'.format(
+                    from_path, to_path, num_hits, num_misses
+                )
+            )
         else:
             print('Flawless mapping: ({} -> {})'.format(from_path, to_path))
 
@@ -131,7 +143,8 @@ def guess_mole_pos(target_uuid, from_moles, to_moles, to_image):
     #     target_uuid, from_moles, to_moles)
 
     guess_pos = mel.rotomap.relate.guess_mole_pos_pair_method(
-        target_uuid, from_moles, to_moles)
+        target_uuid, from_moles, to_moles
+    )
 
     if guess_pos is not None:
         guess_pos = snap_to_mole_findellipse(to_image, guess_pos)
@@ -144,9 +157,8 @@ def guess_mole_pos(target_uuid, from_moles, to_moles, to_image):
 def snap_to_mole_findellipse(image, guess_pos, radius=50):
     _MAGIC_MOLE_FINDER_RADIUS = radius
     ellipse = mel.lib.moleimaging.find_mole_ellipse(
-        image,
-        guess_pos,
-        _MAGIC_MOLE_FINDER_RADIUS)
+        image, guess_pos, _MAGIC_MOLE_FINDER_RADIUS
+    )
     if ellipse is not None:
         guess_pos = numpy.array(ellipse[0], dtype=int)
     return guess_pos

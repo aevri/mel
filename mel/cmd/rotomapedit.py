@@ -89,37 +89,42 @@ def setup_parser(parser):
         'ROTOMAP',
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
-        help="A list of paths to rotomaps.")
+        help="A list of paths to rotomaps.",
+    )
     parser.add_argument(
         '--display-width',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--display-height',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--follow',
         type=str,
         default=None,
-        help="UUID of a mole to follow, try to jump to it in the first set.")
+        help="UUID of a mole to follow, try to jump to it in the first set.",
+    )
     parser.add_argument(
         '--copy-to-clipboard',
         action='store_true',
-        help='Copy UUID to the clipboard, as well as printing. Mac OSX only.')
+        help='Copy UUID to the clipboard, as well as printing. Mac OSX only.',
+    )
     parser.add_argument(
         '--advance-n-frames',
         '--skip',
         type=int,
         metavar='N',
         default=None,
-        help="Start with the image with the specified index, instead of 0.")
+        help="Start with the image with the specified index, instead of 0.",
+    )
 
 
-class MoveController():
-
+class MoveController:
     def __init__(self):
         self.status = 'Move mode'
 
@@ -131,8 +136,7 @@ class MoveController():
         pass
 
 
-class FollowController():
-
+class FollowController:
     def __init__(self, editor, follow, mole_uuid_list):
         self.mole_uuid_list = mole_uuid_list
         if follow:
@@ -157,7 +161,8 @@ class FollowController():
                 editor,
                 self.mole_uuid_list[0],
                 self._prev_moles,
-                self.is_paste_mode)
+                self.is_paste_mode,
+            )
         elif key == ord('p'):
             self.is_paste_mode = not self.is_paste_mode
             self.update_status()
@@ -171,13 +176,13 @@ class FollowController():
             self.status = 'follow mode'
 
 
-class MoleEditController():
-
+class MoleEditController:
     def __init__(self, editor, follow, copy_to_clipboard):
         self.mole_uuid_list = [None]
 
         self.follow_controller = FollowController(
-            editor, follow, self.mole_uuid_list)
+            editor, follow, self.mole_uuid_list
+        )
         self.move_controller = MoveController()
         self.sub_controller = None
 
@@ -211,7 +216,8 @@ class MoleEditController():
         else:
             if self.sub_controller:
                 if self.sub_controller.on_lbutton_down_noflags(
-                        editor, mouse_x, mouse_y):
+                    editor, mouse_x, mouse_y
+                ):
                     return
             editor.add_mole(mouse_x, mouse_y)
 
@@ -224,7 +230,8 @@ class MoleEditController():
                 mouse_x,
                 mouse_y,
                 mel.rotomap.moles.make_new_uuid(),
-                is_canonical=False)
+                is_canonical=False,
+            )
 
     def pre_key(self, editor, key):
         if key in mel.lib.ui.WAITKEY_ARROWS:
@@ -260,7 +267,8 @@ class MoleEditController():
             guessed_moles = guess_mole_positions(
                 self.copied_moles,
                 editor.moledata.moles,
-                editor.moledata.get_image())
+                editor.moledata.get_image(),
+            )
             editor.set_moles(guessed_moles)
         elif key == ord('r'):
             guessed_moles = mel.rotomap.detectmoles.moles(
@@ -288,7 +296,8 @@ class MoleEditController():
             editor.toggle_markers()
         elif key == ord('+'):
             self.mole_uuid_list[0] = editor.get_mole_uuid(
-                self.mouse_x, self.mouse_y)
+                self.mouse_x, self.mouse_y
+            )
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
                 mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
@@ -302,13 +311,12 @@ class MoleEditController():
                 sub_controller_onkey(editor, key)
 
 
-class MaskEditController():
-
+class MaskEditController:
     def __init__(self):
         pass
 
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        enable = not(flags & cv2.EVENT_FLAG_SHIFTKEY)
+        enable = not (flags & cv2.EVENT_FLAG_SHIFTKEY)
         if event == cv2.EVENT_MOUSEMOVE:
             if flags & cv2.EVENT_FLAG_LBUTTON:
                 editor.set_mask(mouse_x, mouse_y, enable)
@@ -334,8 +342,7 @@ class MaskEditController():
             editor.set_default_masker()
 
 
-class MoleMarkController():
-
+class MoleMarkController:
     def __init__(self):
         pass
 
@@ -356,8 +363,7 @@ class MoleMarkController():
             editor.show_current()
 
 
-class ImageRelateController():
-
+class ImageRelateController:
     def __init__(self):
         self.copied_uuid = None
 
@@ -365,26 +371,29 @@ class ImageRelateController():
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
                 editor.set_mole_uuid(
-                    mouse_x, mouse_y,
+                    mouse_x,
+                    mouse_y,
                     mel.rotomap.moles.make_new_uuid(),
-                    is_canonical=False)
+                    is_canonical=False,
+                )
             else:
                 if self.copied_uuid:
                     if flags & cv2.EVENT_FLAG_ALTKEY:
                         editor.remap_uuid(
                             editor.get_mole_uuid(mouse_x, mouse_y),
-                            self.copied_uuid)
+                            self.copied_uuid,
+                        )
                     else:
                         editor.set_mole_uuid(
-                            mouse_x, mouse_y,
-                            self.copied_uuid)
+                            mouse_x, mouse_y, self.copied_uuid)
         elif event == cv2.EVENT_RBUTTONDOWN:
             image_pos = editor.display.windowxy_to_imagexy(mouse_x, mouse_y)
             nearest = mel.rotomap.moles.nearest_mole_index_distance
             from_index = from_distance = None
             if editor.from_moles is not None:
                 from_index, from_distance = nearest(
-                    editor.from_moles, *image_pos)
+                    editor.from_moles, *image_pos
+                )
 
             to_index, to_distance = nearest(editor.moledata.moles, *image_pos)
 
@@ -408,9 +417,8 @@ class ImageRelateController():
         if key == ord('a'):
             if editor.from_moles is not None:
                 theory = mel.rotomap.relate.best_theory(
-                    editor.from_moles,
-                    editor.moledata.moles,
-                    iterate=False)
+                    editor.from_moles, editor.moledata.moles, iterate=False
+                )
 
                 if theory:
                     guessed_moles = copy.deepcopy(editor.moledata.moles)
@@ -427,9 +435,8 @@ class ImageRelateController():
         elif key == ord('g'):
             if editor.from_moles is not None:
                 theory = mel.rotomap.relate.best_theory(
-                    editor.from_moles,
-                    editor.moledata.moles,
-                    iterate=False)
+                    editor.from_moles, editor.moledata.moles, iterate=False
+                )
 
                 if theory:
                     for from_uuid, to_uuid in theory:
@@ -444,8 +451,7 @@ class ImageRelateController():
             editor.show_current()
 
 
-class BoundingAreaController():
-
+class BoundingAreaController:
     def __init__(self):
         pass
 
@@ -459,8 +465,7 @@ class BoundingAreaController():
         pass
 
 
-class AutomoleDebugController():
-
+class AutomoleDebugController:
     def __init__(self):
         pass
 
@@ -474,8 +479,7 @@ class AutomoleDebugController():
         pass
 
 
-class AutoRelateDebugController():
-
+class AutoRelateDebugController:
     def __init__(self):
         pass
 
@@ -490,11 +494,11 @@ class AutoRelateDebugController():
         pass
 
 
-class Controller():
-
+class Controller:
     def __init__(self, editor, follow, copy_to_clipboard):
         self.moleedit_controller = MoleEditController(
-            editor, follow, copy_to_clipboard)
+            editor, follow, copy_to_clipboard
+        )
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
         self.imagerelate_controller = ImageRelateController()
@@ -510,7 +514,8 @@ class Controller():
                 return
 
         self.current_controller.on_mouse_event(
-            editor, event, mouse_x, mouse_y, flags, param)
+            editor, event, mouse_x, mouse_y, flags, param
+        )
 
     def on_key(self, editor, key):
         self.current_controller.pre_key(editor, key)
@@ -560,7 +565,8 @@ class Controller():
 def process_args(args):
 
     editor = mel.rotomap.display.Editor(
-        args.ROTOMAP, args.display_width, args.display_height)
+        args.ROTOMAP, args.display_width, args.display_height
+    )
 
     mel.lib.ui.bring_python_to_front()
 
@@ -572,8 +578,7 @@ def process_args(args):
     def mouse_callback(*args):
         controller.on_mouse_event(editor, *args)
 
-    editor.display.set_mouse_callback(
-        mouse_callback)
+    editor.display.set_mouse_callback(mouse_callback)
 
     try:
         for key in mel.lib.ui.yield_keys_until_quitkey(error_key='Q'):
@@ -588,25 +593,26 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
     guess_pos = None
     editor.follow(follow_uuid)
 
-    if mel.rotomap.moles.uuid_mole_index(
-            editor.moledata.moles, follow_uuid) is None:
+    if (
+        mel.rotomap.moles.uuid_mole_index(editor.moledata.moles, follow_uuid)
+        is None
+    ):
 
         guess_pos = mel.rotomap.relate.guess_mole_pos(
-            follow_uuid,
-            prev_moles,
-            editor.moledata.moles)
+            follow_uuid, prev_moles, editor.moledata.moles
+        )
 
         if guess_pos is not None:
             ellipse = mel.lib.moleimaging.find_mole_ellipse(
                 editor.moledata.get_image().copy(),
                 guess_pos,
-                _MAGIC_MOLE_FINDER_RADIUS)
+                _MAGIC_MOLE_FINDER_RADIUS,
+            )
 
             if ellipse is not None:
                 guess_pos = numpy.array(ellipse[0], dtype=int)
 
-            editor.show_zoomed_display(
-                guess_pos[0], guess_pos[1])
+            editor.show_zoomed_display(guess_pos[0], guess_pos[1])
 
             if is_paste_mode:
                 editor.add_mole_display(
@@ -636,21 +642,26 @@ def guess_mole_positions(previous_moles, current_moles, current_image):
             # XXX: assume that current_image and prev_image have the same
             #      dimensions
             moles_for_mapping = mel.rotomap.moles.get_best_moles_for_mapping(
-                pos, prev_moles_for_mapping, image_rect)
+                pos, prev_moles_for_mapping, image_rect
+            )
 
             if moles_for_mapping:
                 pos = mel.rotomap.moles.mapped_pos(
-                    pos, moles_for_mapping, current_moles)
+                    pos, moles_for_mapping, current_moles
+                )
                 mel.rotomap.moles.set_molepos_to_nparray(new_m, pos)
 
             ellipse = mel.lib.moleimaging.find_mole_ellipse(
-                current_image, pos, _MAGIC_MOLE_FINDER_RADIUS)
+                current_image, pos, _MAGIC_MOLE_FINDER_RADIUS
+            )
             if ellipse is not None:
                 mel.rotomap.moles.set_molepos_to_nparray(new_m, ellipse[0])
 
             new_moles.append(new_m)
 
     return new_moles
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

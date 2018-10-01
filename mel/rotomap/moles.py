@@ -23,14 +23,15 @@ IGNORE_NEW_FILENAME = 'ignore-new'
 IGNORE_MISSING_FILENAME = 'ignore-missing'
 
 
-class RotomapDirectory():
+class RotomapDirectory:
     """RotomapFrame-s for all images in a single rotomap dir."""
 
     def __init__(self, path):
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
             raise ValueError(
-                '"{}" is not a directory, so not a rotomap.'.format(self.path))
+                '"{}" is not a directory, so not a rotomap.'.format(self.path)
+            )
 
         self.image_paths = [
             str(f) for f in self.path.iterdir()
@@ -40,7 +41,8 @@ class RotomapDirectory():
 
         if not self.image_paths:
             raise ValueError(
-                '"{}" has no images, so not a rotomap.'.format(self.path))
+                '"{}" has no images, so not a rotomap.'.format(self.path)
+            )
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""
@@ -55,20 +57,17 @@ class RotomapDirectory():
         return f'RotomapDirectory({self.path!r})'
 
 
-class RotomapFrame():
+class RotomapFrame:
     """Image and mole data for a single image in a rotomap."""
 
     def __init__(self, path):
         self.path = pathlib.Path(path)
         if self.path.is_dir():
-            raise ValueError(
-                f'Expected file, not directory: {path}')
+            raise ValueError(f'Expected file, not directory: {path}')
         if not self.path.exists():
-            raise ValueError(
-                f'Path does not exist: {path}')
+            raise ValueError(f'Path does not exist: {path}')
         if self.path.suffix.lower() != '.jpg':
-            raise ValueError(
-                f'Unrecognised suffix for rotomap frame: {path}')
+            raise ValueError(f'Unrecognised suffix for rotomap frame: {path}')
 
         self.moles = load_image_moles(self.path)
         self.moledata = MoleData(self.moles)
@@ -90,7 +89,7 @@ class RotomapFrame():
         return f"RotomapFrame({self.path!r})"
 
 
-class MoleData():
+class MoleData:
     """Iterables of UUIDs, locations, and other data on moles in an image."""
 
     def __init__(self, mole_iter):
@@ -98,9 +97,7 @@ class MoleData():
         self.uuids = frozenset(m['uuid'] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
         self.canonical_uuids = frozenset(
-            m['uuid']
-            for m in self.moles
-            if m[KEY_IS_CONFIRMED]
+            m['uuid'] for m in self.moles if m[KEY_IS_CONFIRMED]
         )
         # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
@@ -125,8 +122,7 @@ def make_argparse_image_moles(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
-class MoleListDiff():
-
+class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
 
         self.new = (new_uuids - old_uuids) - ignore_new
@@ -242,12 +238,7 @@ def load_json(path):
 
 def save_json(path, data):
     with open(path, 'w') as f:
-        json.dump(
-            data,
-            f,
-            indent=4,
-            separators=(',', ': '),
-            sort_keys=True)
+        json.dump(data, f, indent=4, separators=(',', ': '), sort_keys=True)
 
         # There's no newline after dump(), add one here for happier viewing
         print(file=f)
@@ -263,16 +254,17 @@ def add_mole(moles, x, y, mole_uuid=None):
         mole_uuid = make_new_uuid()
         is_uuid_canonical = False
 
-    moles.append({
-        'x': x,
-        'y': y,
-        'uuid': mole_uuid,
-        KEY_IS_CONFIRMED: is_uuid_canonical,
-    })
+    moles.append(
+        {
+            'x': x,
+            'y': y,
+            'uuid': mole_uuid,
+            KEY_IS_CONFIRMED: is_uuid_canonical,
+        }
+    )
 
 
 def sorted_by_distances(mole_list, x, y):
-
     def sqdist(mole):
         dist_x = x - mole['x']
         dist_y = y - mole['y']
@@ -376,7 +368,7 @@ def triangle_to_points(triangle):
     return (
         (triangle[0], triangle[1]),
         (triangle[2], triangle[3]),
-        (triangle[4], triangle[5])
+        (triangle[4], triangle[5]),
     )
 
 
@@ -428,8 +420,9 @@ def get_moles_from_points(mole_list, point_list):
                 output_moles.append(mole)
 
     if len(point_list) != len(output_moles):
-        raise ValueError('Not all points match moles: {}, {}'.format(
-            point_list, mole_list))
+        raise ValueError(
+            'Not all points match moles: {}, {}'.format(point_list, mole_list)
+        )
 
     return output_moles
 
@@ -465,11 +458,11 @@ def get_best_moles_for_mapping(molepoint, mole_list, image_rect):
     moles_for_mapping = None
     if best_triangle is not None:
         moles_for_mapping = get_moles_from_points(
-            mole_list, triangle_to_points(best_triangle))
+            mole_list, triangle_to_points(best_triangle)
+        )
     else:
         # Two nearest moles to map with is better than none
-        return sorted_by_distances(
-            mole_list, molepoint[0], molepoint[1])[:2]
+        return sorted_by_distances(mole_list, molepoint[0], molepoint[1])[:2]
 
     return moles_for_mapping
 
@@ -508,9 +501,11 @@ def mapped_pos(molepos, from_moles, to_moles):
         # additional point.
         #
         # pylint: disable=assignment-from-no-return
-        transform = numpy.matrix(cv2.getAffineTransform(
-            numpy.float32(from_pos_list),
-            numpy.float32(to_pos_list))).transpose()
+        transform = numpy.matrix(
+            cv2.getAffineTransform(
+                numpy.float32(from_pos_list), numpy.float32(to_pos_list)
+            )
+        ).transpose()
         # pylint: enable=assignment-from-no-return
         pos = numpy.array([molepos[0], molepos[1], 1.0]) * transform
         pos = numpy.array(pos)
@@ -521,13 +516,13 @@ def mapped_pos(molepos, from_moles, to_moles):
         translation = to_pos_list[0] - from_pos_list[0]
         molepos += translation
     # elif num_pairs > 2:
-        # In later work, to take advantage of 2 pairs of points, we'll handle
-        # it like so:
-        #
-        # Here we'll assume that the line through the supplied points is
-        # roughly perpendicular to the axis of rotation. This means that we'd
-        # expect the distance of the point from the line to be constant across
-        # the transformation.
+    #   In later work, to take advantage of 2 pairs of points, we'll handle
+    #   it like so:
+    #
+    #   Here we'll assume that the line through the supplied points is
+    #   roughly perpendicular to the axis of rotation. This means that we'd
+    #   expect the distance of the point from the line to be constant across
+    #   the transformation.
 
     return molepos
 
@@ -540,7 +535,8 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
         if 'ellipse' not in frame.metadata:
             raise Exception(
                 f'{frame} has no ellipse metadata, '
-                'try running "rotomap-calc-space"')
+                'try running "rotomap-calc-space"'
+            )
 
         ellipse = frame.metadata['ellipse']
         elspace = mel.lib.ellipsespace.Transform(ellipse)
@@ -548,7 +544,8 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
             if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
                 continue
             uuid_to_frameposlist[uuid_].append(
-                (str(frame), elspace.to_space(pos)))
+                (str(frame), elspace.to_space(pos))
+            )
 
     return uuid_to_frameposlist
 

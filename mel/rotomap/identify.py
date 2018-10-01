@@ -49,8 +49,7 @@ def p_to_cost(p):
 # We use 'ident' as an abbreviation for 'identity'.
 
 
-class UuidToIndexTranslator():
-
+class UuidToIndexTranslator:
     def __init__(self):
         self._index_to_uuid = []
         self._uuid_to_index = {}
@@ -77,7 +76,8 @@ class UuidToIndexTranslator():
         # than the originals.
         for original_index in range(num_uuids_before, self.num_uuids()):
             imposter_index = self._append_uuid(
-                mel.rotomap.moles.make_new_uuid())
+                mel.rotomap.moles.make_new_uuid()
+            )
             self._id_to_imposter_id[original_index] = imposter_index
 
     def _append_uuid(self, u):
@@ -119,19 +119,19 @@ class UuidToIndexTranslator():
 
 
 def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
-
     @functools.lru_cache(maxsize=2048)
     def calc_guesses(predictor_loc_ident, guess_location):
         ref_pos = positions[predictor_loc_ident[0]]
         pos = positions[guess_location]
         predictor_ident_uuid = uuid_index_translator.uuid_(
-            predictor_loc_ident[1])
+            predictor_loc_ident[1]
+        )
         guesses = (
             (guess_ident_uuid, p_to_cost(p * q))
             for guess_ident_uuid, p, q in pos_classifier(
-                predictor_ident_uuid, ref_pos, pos)
+                predictor_ident_uuid, ref_pos, pos
+            )
             if _MAGIC_P_THRESHOLD < p * q
-
             # These options were unacceptably slow (I seem to remember):
             # if _MAGIC_P_THRESHOLD < p * q  and not numpy.isnan(p * q)
             # if not numpy.isclose(0, p * q) and not numpy.isnan(p * q)
@@ -145,8 +145,9 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             guess_unknown_mole = (
                 (
                     uuid_index_translator.index_to_imposter(guess_location),
-                    MAX_MOLE_COST - 1
-                ),)
+                    MAX_MOLE_COST - 1,
+                ),
+            )
         except KeyError:
             guess_unknown_mole = ()
         return tuple(
@@ -204,7 +205,8 @@ def predictors(positions, num_canonicals):
 
     remaining_loc_set.remove(initial_loc)
     guess_to_predictor[initial_loc] = take_first(
-        closest_sqdist_locs(initial_loc))
+        closest_sqdist_locs(initial_loc)
+    )
 
     while remaining_loc_set:
         sqdist, loc_a, loc_b = min(
@@ -219,15 +221,15 @@ def predictors(positions, num_canonicals):
     return tuple(guess_to_predictor)
 
 
-class PosGuesser():
-
+class PosGuesser:
     def __init__(
-            self,
-            num_locations,
-            best_sqdist_uuid,
-            bounder,
-            num_canonicals,
-            num_identities):
+        self,
+        num_locations,
+        best_sqdist_uuid,
+        bounder,
+        num_canonicals,
+        num_identities,
+    ):
 
         self.num_locations = num_locations
 
@@ -252,7 +254,8 @@ class PosGuesser():
 
         loc = self._next_loc(state, decided)
         possibles = self.bounder.possible_guesses(
-            state, self.possible_uuid_set, already_taken, loc)
+            state, self.possible_uuid_set, already_taken, loc
+        )
 
         for ident in possibles:
             new_state = list(state)
@@ -261,7 +264,8 @@ class PosGuesser():
             if lower_bound < total_cost[0]:
                 raise Exception(
                     f'lower_bound ({lower_bound}) lower than '
-                    f'previous cost ({total_cost[0]})')
+                    f'previous cost ({total_cost[0]})'
+                )
             yield (lower_bound, num_remaining - 1), tuple(new_state)
 
     def _next_loc(self, state, decided):
@@ -316,8 +320,7 @@ def take_first(iterable):
     raise IndexError('No first item to take')
 
 
-class DuplicateDetector():
-
+class DuplicateDetector:
     def __init__(self):
         self.seen = set()
 
@@ -329,7 +332,6 @@ class DuplicateDetector():
 
 
 def print_state(count, total_cost, state):
-
     def ident_to_str(ident):
         if ident is None:
             return '__'
@@ -340,7 +342,7 @@ def print_state(count, total_cost, state):
     print(f'{count:>6} ({s}) {total_cost}')
 
 
-def best_match_combination(guesser, *, max_iterations=10**5):
+def best_match_combination(guesser, *, max_iterations=10 ** 5):
 
     state_q = mel.lib.priorityq.PriorityQueue()
     initial_cost, initial_state = guesser.initial_state()
@@ -375,8 +377,8 @@ def best_match_combination(guesser, *, max_iterations=10**5):
 
         # Nope, advance states.
         for new_cost, new_state in guesser.yield_next_states(
-                total_cost, state):
-
+            total_cost, state
+        ):
             if not seen.has_seen(new_cost, new_state):
                 state_q.push(new_cost, new_state)
                 seen.see(new_cost, new_state)
@@ -392,8 +394,7 @@ def best_match_combination(guesser, *, max_iterations=10**5):
     return best_cost, best_state
 
 
-class MoleRelativeClassifier():
-
+class MoleRelativeClassifier:
     def __init__(self, uuid_to_frameposlist, box_radius):
 
         uuid_to_poslist = {
@@ -435,10 +436,12 @@ class MoleRelativeClassifier():
 
         return tuple(
             mel.lib.kde.Kde(
-                numpy.vstack([
-                    numpy.array(uuid_to_xoffsetlist[uuid_]),
-                    numpy.array(uuid_to_yoffsetlist[uuid_])
-                ])
+                numpy.vstack(
+                    [
+                        numpy.array(uuid_to_xoffsetlist[uuid_]),
+                        numpy.array(uuid_to_yoffsetlist[uuid_]),
+                    ]
+                )
             )
             for uuid_ in self.uuids
         )
@@ -447,24 +450,21 @@ class MoleRelativeClassifier():
 
         # TODO: check that known_uuid looks like a uuid
         if known_pos.shape != (2,):
-            raise ValueError(
-                f'known_pos must be 2d, not {known_pos.shape}')
+            raise ValueError(f'known_pos must be 2d, not {known_pos.shape}')
         if pos.shape != (2,):
             raise ValueError(f'pos must be 2d, not {pos.shape}')
 
         if known_uuid not in self.molepos_kernels:
             self.molepos_kernels[known_uuid] = self.calc_uuid_offset_kernels(
-                known_uuid)
+                known_uuid
+            )
 
         kernels = self.molepos_kernels[known_uuid]
 
         rpos = pos - known_pos
 
         densities = numpy.array(
-            tuple(
-                k(rpos + self.lower, rpos + self.upper)
-                for k in kernels
-            )
+            tuple(k(rpos + self.lower, rpos + self.upper) for k in kernels)
         )
 
         total_density = numpy.sum(densities)

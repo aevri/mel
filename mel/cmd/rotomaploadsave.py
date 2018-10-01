@@ -16,7 +16,8 @@ def setup_parser(parser):
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):

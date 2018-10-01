@@ -12,8 +12,8 @@ import mel.lib.image
 def determine_filename_for_ident(*source_filenames):
     if not source_filenames:
         raise ValueError(
-            '{} is not a valid list of filenames'.format(
-                source_filenames))
+            '{} is not a valid list of filenames'.format(source_filenames)
+        )
 
     dates = [
         mel.lib.datetime.guess_datetime_from_path(x)
@@ -57,10 +57,9 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
     cv2.setMouseCallback(
         window_name,
         make_mole_capture_callback(
-            window_name,
-            display_image,
-            circle_radius,
-            context_mole_positions))
+            window_name, display_image, circle_radius, context_mole_positions
+        ),
+    )
 
     # main loop
     print('Please mark all specified moles, double-click to mark.')
@@ -83,7 +82,9 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
                         window_name,
                         display_image,
                         circle_radius,
-                        detail_mole_positions))
+                        detail_mole_positions,
+                    ),
+                )
                 cv2.imshow(window_name, display_image)
             else:
                 print("context positions:")
@@ -99,7 +100,6 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
 
 
 def make_mole_capture_callback(window_name, image, radius, mole_positions):
-
     def draw_circle(event, x, y, _flags, _param):
         del _flags, _param
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -111,7 +111,6 @@ def make_mole_capture_callback(window_name, image, radius, mole_positions):
 
 
 def make_null_mouse_callback():
-
     def null_callback(_event, _x, _y, _flags, _param):
         del _event, _x, _y, _flags, _param
 
@@ -196,18 +195,15 @@ def indicate_mole(image, mole):
     pos = mole[:2]
     radius = mole[2]
 
-    draw_radial_line(
-        image, pos, radius * 4, radius * 6, (-1, 0), radius)
-    draw_radial_line(
-        image, pos, radius * 4, radius * 6, (1, 0), radius)
-    draw_radial_line(
-        image, pos, radius * 4, radius * 6, (0, 1), radius)
-    draw_radial_line(
-        image, pos, radius * 4, radius * 6, (0, -1), radius)
+    draw_radial_line(image, pos, radius * 4, radius * 6, (-1, 0), radius)
+    draw_radial_line(image, pos, radius * 4, radius * 6, (1, 0), radius)
+    draw_radial_line(image, pos, radius * 4, radius * 6, (0, 1), radius)
+    draw_radial_line(image, pos, radius * 4, radius * 6, (0, -1), radius)
 
 
 def draw_radial_line(
-        image, origin, inner_radius, outer_radius, direction, thickness):
+    image, origin, inner_radius, outer_radius, direction, thickness
+):
     origin = numpy.array(origin)
     direction = numpy.array(direction)
     line_start = origin + direction * inner_radius
@@ -242,46 +238,54 @@ def add_context_detail_arguments(parser):
         'context',
         type=str,
         default=None,
-        help="Path to the context image to add.")
+        help="Path to the context image to add.",
+    )
 
     parser.add_argument(
         'detail',
         type=str,
         default=None,
-        help="Path to the detail image to add.")
+        help="Path to the detail image to add.",
+    )
 
     parser.add_argument(
         '--rot90',
         type=int,
         default=None,
-        help="Rotate images 90 degrees clockwise this number of times.")
+        help="Rotate images 90 degrees clockwise this number of times.",
+    )
 
     parser.add_argument(
         '--rot90-context',
         type=int,
         default=None,
-        help="Rotate context image 90 degrees clockwise this number of times.")
+        help="Rotate context image 90 degrees clockwise this number of times.",
+    )
 
     parser.add_argument(
         '--rot90-detail',
         type=int,
         default=None,
-        help="Rotate detail image 90 degrees clockwise this number of times.")
+        help="Rotate detail image 90 degrees clockwise this number of times.",
+    )
 
     parser.add_argument(
         '--h-mirror',
         action="store_true",
-        help="Mirror both images horizontally.")
+        help="Mirror both images horizontally.",
+    )
 
     parser.add_argument(
         '--h-mirror-context',
         action="store_true",
-        help="Mirror context image horizontally.")
+        help="Mirror context image horizontally.",
+    )
 
     parser.add_argument(
         '--h-mirror-detail',
         action="store_true",
-        help="Mirror detail image horizontally.")
+        help="Mirror detail image horizontally.",
+    )
 
 
 def process_context_detail_args(args):
@@ -296,12 +300,10 @@ def process_context_detail_args(args):
         detail_image = rotated90(detail_image, args.rot90)
 
     if args.rot90_context:
-        context_image = rotated90(
-            context_image, args.rot90_context)
+        context_image = rotated90(context_image, args.rot90_context)
 
     if args.rot90_detail:
-        context_image = rotated90(
-            detail_image, args.rot90_detail)
+        context_image = rotated90(detail_image, args.rot90_detail)
 
     if args.h_mirror:
         context_image = cv2.flip(context_image, 1)
@@ -314,6 +316,8 @@ def process_context_detail_args(args):
         detail_image = cv2.flip(detail_image, 1)
 
     return context_image, detail_image
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

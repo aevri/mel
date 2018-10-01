@@ -55,7 +55,8 @@ import mel.cmd.status  # noqa: E402
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=__doc__)
+        description=__doc__,
+    )
 
     subparsers = parser.add_subparsers()
 
@@ -78,31 +79,39 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmd.microcompare, 'micro-compare')
     _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapautomark, 'rotomap-automark')
+        subparsers, mel.cmd.rotomapautomark, 'rotomap-automark'
+    )
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapautomask, 'rotomap-automask')
+        subparsers, mel.cmd.rotomapautomask, 'rotomap-automask'
+    )
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapcalcspace, 'rotomap-calc-space')
+        subparsers, mel.cmd.rotomapcalcspace, 'rotomap-calc-space'
+    )
+    _setup_parser_for_module(subparsers, mel.cmd.rotomapcheck, 'rotomap-check')
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapcheck, 'rotomap-check')
+        subparsers, mel.cmd.rotomapcompare, 'rotomap-compare'
+    )
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapcompare, 'rotomap-compare')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapconfirm, 'rotomap-confirm')
+        subparsers, mel.cmd.rotomapconfirm, 'rotomap-confirm'
+    )
     _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapfiltermarks, 'rotomap-filter-marks')
+        subparsers, mel.cmd.rotomapfiltermarks, 'rotomap-filter-marks'
+    )
     _setup_parser_for_module(subparsers, mel.cmd.rotomapfsck, 'rotomap-fsck')
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapidentify, 'rotomap-identify')
+        subparsers, mel.cmd.rotomapidentify, 'rotomap-identify'
+    )
+    _setup_parser_for_module(subparsers, mel.cmd.rotomaplist, 'rotomap-list')
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomaplist, 'rotomap-list')
+        subparsers, mel.cmd.rotomaploadsave, 'rotomap-loadsave'
+    )
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomaploadsave, 'rotomap-loadsave')
+        subparsers, mel.cmd.rotomapmontagesingle, 'rotomap-montage-single'
+    )
     _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapmontagesingle, 'rotomap-montage-single')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomaporganise, 'rotomap-organise')
+        subparsers, mel.cmd.rotomaporganise, 'rotomap-organise'
+    )
     _setup_parser_for_module(subparsers, mel.cmd.rotomaprm, 'rotomap-rm')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapudiff, 'rotomap-udiff')
     _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
@@ -136,7 +145,8 @@ def _setup_parser_for_module(subparsers, module, name):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         help=doc_subject,
         description=doc_subject,
-        epilog=doc_epilog)
+        epilog=doc_epilog,
+    )
     module.setup_parser(parser)
     parser.set_defaults(func=module.process_args)
 

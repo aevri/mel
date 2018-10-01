@@ -58,6 +58,8 @@ def make_now_datetime_string():
 
 def make_datetime_string(datetime_):
     return datetime_.strftime("%Y%m%dT%H%M%S")
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

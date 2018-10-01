@@ -29,19 +29,22 @@ def setup_parser(parser):
         'FRAMES',
         type=mel.rotomap.moles.make_argparse_image_moles,
         nargs='+',
-        help="Path to rotomap or image to filter.")
+        help="Path to rotomap or image to filter.",
+    )
 
     parser.add_argument(
         '--model-path',
         help="Path to the model to use, relative to the root of the mel repo. "
-             f"Defaults to {mel.lib.fs.DEFAULT_MOLE_MARK_MODEL_PATH}.",
-        default=mel.lib.fs.DEFAULT_MOLE_MARK_MODEL_PATH)
+        f"Defaults to {mel.lib.fs.DEFAULT_MOLE_MARK_MODEL_PATH}.",
+        default=mel.lib.fs.DEFAULT_MOLE_MARK_MODEL_PATH,
+    )
 
     parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):
@@ -64,7 +67,8 @@ def process_args(args):
             image = open_image_for_classifier(image_path)
             try:
                 filtered_moles = filter_marks(
-                    is_mole, image, moles, args.verbose)
+                    is_mole, image, moles, args.verbose
+                )
             except Exception:
                 raise Exception('Error while processing {}'.format(image_path))
 
@@ -93,6 +97,7 @@ def make_is_mole_func(model_path):
     import fastai.dataloader
     import fastai.model
     import fastai.transforms
+
     # pylint: enable=import-error
 
     architecture = fastai.model.resnet34
@@ -102,10 +107,7 @@ def make_is_mole_func(model_path):
     is_regression = False
 
     models = fastai.conv_learner.ConvnetBuilder(
-        architecture,
-        num_classes,
-        is_multiclass,
-        is_regression
+        architecture, num_classes, is_multiclass, is_regression
     )
 
     fastai.model.load_model(models.model, model_path)
@@ -114,8 +116,7 @@ def make_is_mole_func(model_path):
 
     # Returns 'validation' transforms and 'training' transforms. We want the
     # validation ones, as they're closest to what we want in production.
-    _, transforms = fastai.transforms.tfms_from_model(
-        architecture, size)
+    _, transforms = fastai.transforms.tfms_from_model(architecture, size)
 
     def is_mole(image):
 
@@ -189,14 +190,14 @@ def filter_marks(is_mole, image, moles, verbose):
 
 
 def open_image_for_classifier(fn):
-    flags = cv2.IMREAD_UNCHANGED+cv2.IMREAD_ANYDEPTH+cv2.IMREAD_ANYCOLOR
+    flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     if not os.path.exists(fn):
         raise OSError('No such file or directory: {}'.format(fn))
     elif os.path.isdir(fn):
         raise OSError('Is a directory: {}'.format(fn))
 
     try:
-        im = cv2.imread(str(fn), flags).astype(numpy.float32)/255
+        im = cv2.imread(str(fn), flags).astype(numpy.float32) / 255
         if im is None:
             raise OSError(f'File not recognized by opencv: {fn}')
         return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)

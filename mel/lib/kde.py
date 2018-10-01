@@ -3,8 +3,7 @@
 import numpy
 
 
-class Kde():
-
+class Kde:
     def __init__(self, training_data):
 
         # These imports take quite a long time. At the time of writing this is
@@ -34,6 +33,8 @@ class Kde():
             return self.kde.integrate_box(lower, upper)
         else:
             return 0
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

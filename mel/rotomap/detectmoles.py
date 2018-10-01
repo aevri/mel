@@ -19,7 +19,8 @@ def draw_debug(image, mask):
         keypoints_,
         numpy.array([]),
         (0, 0, 255),
-        cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
+    )
 
     return image
 
@@ -32,7 +33,8 @@ def moles(image, mask):
         # Exclude points that are near mask boundaries
         if mask is not None:
             if not _is_mask_region_all_set(
-                    mask, xy, _MASK_EXCLUSION_SQUARE_SIZE):
+                mask, xy, _MASK_EXCLUSION_SQUARE_SIZE
+            ):
                 continue
 
         mel.rotomap.moles.add_mole(moles_, int(xy[0]), int(xy[1]))

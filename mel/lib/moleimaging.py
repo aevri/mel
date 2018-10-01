@@ -21,8 +21,7 @@ def find_mole(frame):
 
 
 def calc_hist(image, channel, mask):
-    hist = cv2.calcHist(
-        [image], [channel], mask, [8], [0, 256])
+    hist = cv2.calcHist([image], [channel], mask, [8], [0, 256])
     hist = [int(x) for x in hist]
     hist_sum = sum(hist)
     hist = [100 * x / hist_sum for x in hist]
@@ -39,9 +38,8 @@ def log10_zero(x):
 
 def biggest_contour(image):
     _, contours, _ = cv2.findContours(
-        image,
-        cv2.RETR_LIST,
-        cv2.CHAIN_APPROX_SIMPLE)
+        image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     max_area = 0
     max_index = None
@@ -61,12 +59,12 @@ def process_contours(mole_regions, original):
     stats = None
 
     _, contours, _ = cv2.findContours(
-        mole_regions.copy(),
-        cv2.RETR_LIST,
-        cv2.CHAIN_APPROX_NONE)
+        mole_regions.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
+    )
 
     mole_contour, mole_area = find_mole_contour(
-        contours, mole_regions.shape[0:2])
+        contours, mole_regions.shape[0:2]
+    )
 
     ellipse = None
 
@@ -95,11 +93,7 @@ def process_contours(mole_regions, original):
             else:
                 coverage_percent = 0
 
-            stats = (
-                sqrt_area,
-                aspect_ratio,
-                coverage_percent,
-            )
+            stats = (sqrt_area, aspect_ratio, coverage_percent)
             stats += tuple(hist)
             stats += tuple(hist_surrounding)
             stats += tuple(hu_moments)
@@ -125,8 +119,8 @@ def find_mole_contour(contours, width_height):
             if moments['m00'] != 0:
                 cx = int(moments['m10'] / moments['m00'])
                 cy = int(moments['m01'] / moments['m00'])
-                dx = (centre[0] - cx)
-                dy = (centre[1] - cy)
+                dx = centre[0] - cx
+                dy = centre[1] - cy
                 distance = (dx ** 2 + dy ** 2) ** 0.5
                 if mole_area and area > 10 * mole_area:
                     mole_contour = contour
@@ -141,7 +135,6 @@ def find_mole_contour(contours, width_height):
 
 
 class MoleAcquirer(object):
-
     def __init__(self):
         super(MoleAcquirer, self).__init__()
         self._is_locked = False
@@ -246,7 +239,8 @@ def annotate_image(original, is_rot_sensitive):
 
             top_xy = (center_xy[0], center_xy[1] - int(ellipse[1][1] / 2))
             ellipse_top_xy = rotate_point_around_pivot(
-                top_xy, center_xy, angle_degs)
+                top_xy, center_xy, angle_degs
+            )
             ellipse_top_xy = point_to_int_point(ellipse_top_xy)
 
             yellow = (0, 255, 255)
@@ -259,12 +253,12 @@ def annotate_image(original, is_rot_sensitive):
             color = yellow
             thickness = 10
             if is_rot_sensitive:
-                if (angle_degs <= 20 or angle_degs >= 160):
+                if angle_degs <= 20 or angle_degs >= 160:
                     is_rotation_aligned = True
                     color = green
                     thickness = 2
                 else:
-                    if (angle_degs >= 45 and angle_degs <= 135):
+                    if angle_degs >= 45 and angle_degs <= 135:
                         color = red
                     cv2.ellipse(final, guide_ellipse, green, 10)
                     cv2.line(final, center_xy, top_xy, green, 10)
@@ -296,7 +290,8 @@ def annotate_image(original, is_rot_sensitive):
                     bounds_right,
                     bounds_bottom,
                     blue,
-                    10)
+                    10,
+                )
                 cv2.rectangle(final, center_xy, center_xy, blue, 10)
 
             if center_xy[1] < bounds_top or center_xy[1] > bounds_bottom:
@@ -309,7 +304,8 @@ def annotate_image(original, is_rot_sensitive):
                     bounds_right,
                     bounds_bottom,
                     blue,
-                    10)
+                    10,
+                )
                 cv2.rectangle(final, center_xy, center_xy, blue, 10)
 
             if is_rotation_aligned and is_position_aligned:
@@ -325,7 +321,8 @@ def find_mole_ellipse(original, centre, radius):
     rightbottom = centre + (radius + 1, radius + 1)
 
     original = mel.lib.image.slice_square_or_none(
-        original, lefttop, rightbottom)
+        original, lefttop, rightbottom
+    )
 
     if original is None:
         return None
@@ -335,8 +332,7 @@ def find_mole_ellipse(original, centre, radius):
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
     image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
-    image, _, ellipse = mel.lib.moleimaging.process_contours(
-        image, original)
+    image, _, ellipse = mel.lib.moleimaging.process_contours(image, original)
 
     if ellipse:
         ellipse = (
@@ -346,6 +342,8 @@ def find_mole_ellipse(original, centre, radius):
         )
 
     return ellipse
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

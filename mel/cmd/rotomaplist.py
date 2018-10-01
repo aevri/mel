@@ -10,7 +10,8 @@ def setup_parser(parser):
         'FILE',
         type=argparse.FileType(),
         nargs='+',
-        help="Path to the rotomap json file.")
+        help="Path to the rotomap json file.",
+    )
 
 
 def process_args(args):
@@ -18,6 +19,8 @@ def process_args(args):
     for path, data in path_data_list:
         for mole in data:
             print(mole["uuid"], path)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

@@ -17,14 +17,16 @@ def setup_parser(parser):
         'destination',
         type=str,
         default=None,
-        help="New path to create and store the constellation to.")
+        help="New path to create and store the constellation to.",
+    )
 
     parser.add_argument(
         'moles',
         type=str,
         default=None,
         nargs='+',
-        help="Names of the moles to store.")
+        help="Names of the moles to store.",
+    )
 
 
 def process_args(args):
@@ -32,7 +34,8 @@ def process_args(args):
     # TODO: validate mole names up-front
 
     context_image, detail_image = mel.lib.common.process_context_detail_args(
-        args)
+        args
+    )
 
     montage_size = 1024
     mole_size = 512
@@ -50,7 +53,8 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_pos, detail_mole_pos = mel.lib.common.user_mark_moles(
-        window_name, context_image, detail_image, len(args.moles))
+        window_name, context_image, detail_image, len(args.moles)
+    )
 
     # Put a box around moles on context image
     mel.lib.common.box_moles(
@@ -64,9 +68,11 @@ def process_args(args):
 
     # Combine context image with cluster detail image to make montage
     cluster_monatage_image = mel.lib.image.montage_horizontal(
-        50, context_image, cluster_detail_image)
+        50, context_image, cluster_detail_image
+    )
     cluster_monatage_image = mel.lib.common.shrink_to_max_dimension(
-        cluster_monatage_image, montage_size)
+        cluster_monatage_image, montage_size
+    )
 
     # Let user review montage
     mel.lib.common.user_review_image(window_name, cluster_monatage_image)
@@ -77,7 +83,8 @@ def process_args(args):
         indicated_image = numpy.copy(detail_image)
         mel.lib.common.indicate_mole(indicated_image, mole)
         indicated_image = mel.lib.common.shrink_to_max_dimension(
-            indicated_image, mole_size)
+            indicated_image, mole_size
+        )
         mel.lib.common.user_review_image(window_name, indicated_image)
         mole_images.append(indicated_image)
 
@@ -92,15 +99,19 @@ def process_args(args):
     mel.lib.common.overwrite_image(
         args.destination,
         mel.lib.common.determine_filename_for_ident(args.context, args.detail),
-        cluster_monatage_image)
+        cluster_monatage_image,
+    )
     for index, mole in enumerate(args.moles):
         mole_dir = os.path.join(args.destination, mole)
         mel.lib.common.overwrite_image(
             mole_dir,
             mel.lib.common.determine_filename_for_ident(args.detail),
-            mole_images[index])
+            mole_images[index],
+        )
 
     # TODO: optionally remove the original images
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

@@ -20,16 +20,19 @@ def setup_parser(parser):
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
     parser.add_argument(
         '--only-merge',
         action='store_true',
-        help="Don't add new moles, only merge in updates to existing ones.")
+        help="Don't add new moles, only merge in updates to existing ones.",
+    )
     parser.add_argument(
         '--error-distance',
         default=0,
         type=int,
-        help="Radius to merge moles within.")
+        help="Radius to merge moles within.",
+    )
 
 
 def process_args(args):
@@ -45,7 +48,8 @@ def process_args(args):
             loaded_moles,
             radii_sources=guessed_moles,
             error_distance=args.error_distance,
-            only_merge=args.only_merge)
+            only_merge=args.only_merge,
+        )
 
         mel.rotomap.moles.save_image_moles(moles, path)
 
@@ -53,15 +57,13 @@ def process_args(args):
 def _merge_in_radiuses(targets, radii_sources, error_distance, only_merge):
 
     match_uuids, _, added_uuids = _match_moles_by_pos(
-        targets, radii_sources, error_distance)
+        targets, radii_sources, error_distance
+    )
 
     target_to_radii_src = {
-        from_uuid: to_uuid
-        for from_uuid, to_uuid in match_uuids
+        from_uuid: to_uuid for from_uuid, to_uuid in match_uuids
     }
-    radii_src_radius = {
-        s['uuid']: s['radius'] for s in radii_sources
-    }
+    radii_src_radius = {s['uuid']: s['radius'] for s in radii_sources}
     target_uuid_radius = {
         t_uuid: radii_src_radius[target_to_radii_src[t_uuid]]
         for t_uuid in (t['uuid'] for t in targets)
@@ -98,7 +100,8 @@ def _match_moles_by_pos(from_moles, to_moles, error_distance):
     to_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(to_moles)
 
     vec_matches, vec_missing, vec_added = _match_pos_vecs(
-        from_pos_vec, to_pos_vec, error_distance)
+        from_pos_vec, to_pos_vec, error_distance
+    )
 
     matches = [
         (from_moles[from_i]['uuid'], to_moles[to_i]['uuid'])

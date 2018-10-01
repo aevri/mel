@@ -3,6 +3,8 @@
 
 class UsageError(Exception):
     pass
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

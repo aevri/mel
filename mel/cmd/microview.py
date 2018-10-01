@@ -46,6 +46,8 @@ def process_args(args):
         else:
             # show the output from the microscope
             cv2.imshow(window_name, frame)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

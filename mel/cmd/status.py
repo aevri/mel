@@ -26,8 +26,7 @@ import mel.lib.fs
 import mel.rotomap.moles
 
 
-class Notification():
-
+class Notification:
     def __init__(self, path):
         self.path = path
 
@@ -48,7 +47,6 @@ class InfoNotification(Notification):
 
 
 class RotomapNewMoleAlert(AlertNotification):
-
     def __init__(self, path):
         super().__init__(path)
         self.uuid_list = []
@@ -68,7 +66,6 @@ class InvalidDateError(ErrorNotification):
 
 
 class RotomapDuplicateUuidError(ErrorNotification):
-
     def __init__(self, rotomap_path):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
@@ -79,7 +76,8 @@ class RotomapDuplicateUuidError(ErrorNotification):
             if detail_level == 1:
                 output += '\n\n'
                 output += '\n'.join(
-                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list))
+                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list)
+                )
                 output += '\n'
             else:
                 f_to_ul = self.frame_to_uuid_list
@@ -87,14 +85,12 @@ class RotomapDuplicateUuidError(ErrorNotification):
                     output += '\n\n'
                     output += f'  {frame}:\n'
                     output += '\n'
-                    output += '\n'.join(
-                        ' ' * 4 + f'{u}' for u in uuid_list)
+                    output += '\n'.join(' ' * 4 + f'{u}' for u in uuid_list)
 
         return output
 
 
 class RotomapNotLoadable(ErrorNotification):
-
     def __init__(self, path, error=None):
         super().__init__(path)
         self.error = error
@@ -130,7 +126,6 @@ class UnexpectedFileInfo(InfoNotification):
 
 
 class RotomapMissingMoleInfo(InfoNotification):
-
     def __init__(self, path):
         super().__init__(path)
         self.uuid_list = []
@@ -146,7 +141,6 @@ class RotomapMissingMoleInfo(InfoNotification):
 
 
 class RotomapUnconfirmedMoleInfo(InfoNotification):
-
     def __init__(self, rotomap_path):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
@@ -157,7 +151,8 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
             if detail_level == 1:
                 output += '\n\n'
                 output += '\n'.join(
-                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list))
+                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list)
+                )
                 output += '\n'
             else:
                 f_to_ul = self.frame_to_uuid_list
@@ -165,14 +160,12 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
                     output += '\n\n'
                     output += f'  {frame}:\n'
                     output += '\n'
-                    output += '\n'.join(
-                        ' ' * 4 + f'{u}' for u in uuid_list)
+                    output += '\n'.join(' ' * 4 + f'{u}' for u in uuid_list)
 
         return output
 
 
 class RotomapMissingMoleFileInfo(InfoNotification):
-
     def __init__(self, path):
         super().__init__(path)
         self.frame_list = []
@@ -188,7 +181,6 @@ class RotomapMissingMoleFileInfo(InfoNotification):
 
 
 class RotomapMissingMaskInfo(InfoNotification):
-
     def __init__(self, path):
         super().__init__(path)
         self.frame_list = []
@@ -204,7 +196,6 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 
 class RotomapMissingSpaceInfo(InfoNotification):
-
     def __init__(self, path):
         super().__init__(path)
         self.frame_list = []
@@ -277,9 +268,7 @@ def print_klass_to_notices(klass_to_notices, detail_level):
         print()
         print(klass)
         for notice in notice_list:
-            print(textwrap.indent(
-                notice.format(detail_level),
-                '  '))
+            print(textwrap.indent(notice.format(detail_level), '  '))
 
 
 def check_rotomaps(path, notices):
@@ -313,11 +302,9 @@ def check_rotomaps(path, notices):
                     if minor_part.is_dir():
                         check_rotomap_minor_part(minor_part, notices)
                     else:
-                        notices.append(
-                            UnexpectedFileInfo(minor_part))
+                        notices.append(UnexpectedFileInfo(minor_part))
             else:
-                notices.append(
-                    UnexpectedFileInfo(major_part))
+                notices.append(UnexpectedFileInfo(major_part))
     else:
         notices.append(NoBaseDirInfo(parts_path))
 
@@ -328,19 +315,15 @@ def check_rotomap_minor_part(path, notices):
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
             try:
-                datetime.datetime.strptime(
-                    rotomap_path.name[:10],
-                    '%Y_%m_%d')
+                datetime.datetime.strptime(rotomap_path.name[:10], '%Y_%m_%d')
             except ValueError:
-                notices.append(
-                    InvalidDateError(rotomap_path))
+                notices.append(InvalidDateError(rotomap_path))
             else:
                 rotomap_list.append(
-                    mel.rotomap.moles.RotomapDirectory(
-                        rotomap_path))
+                    mel.rotomap.moles.RotomapDirectory(rotomap_path)
+                )
         else:
-            notices.append(
-                UnexpectedFileInfo(rotomap_path))
+            notices.append(UnexpectedFileInfo(rotomap_path))
 
     rotomap_list.sort(key=lambda x: x.path)
     check_rotomap_list(notices, rotomap_list)
@@ -377,12 +360,15 @@ def check_rotomap_list(notices, rotomap_list):
     new_uuids = uuids_from_dir(newest)
 
     ignore_new = mel.rotomap.moles.load_potential_set_file(
-        newest.path, mel.rotomap.moles.IGNORE_NEW_FILENAME)
+        newest.path, mel.rotomap.moles.IGNORE_NEW_FILENAME
+    )
     ignore_missing = mel.rotomap.moles.load_potential_set_file(
-        newest.path, mel.rotomap.moles.IGNORE_MISSING_FILENAME)
+        newest.path, mel.rotomap.moles.IGNORE_MISSING_FILENAME
+    )
 
     diff = mel.rotomap.moles.MoleListDiff(
-        old_uuids, new_uuids, ignore_new, ignore_missing)
+        old_uuids, new_uuids, ignore_new, ignore_missing
+    )
 
     if diff.new:
         new_mole_alert = RotomapNewMoleAlert(newest.path)

@@ -19,7 +19,8 @@ def setup_parser(parser):
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):
@@ -37,15 +38,13 @@ def process_args(args):
 
         try:
             mel.rotomap.moles.validate_ellipse_mask(
-                ellipse, mask.shape[1], mask.shape[0])
+                ellipse, mask.shape[1], mask.shape[0]
+            )
         except ValueError as e:
             raise ValueError(f"Bad data from '{path}'.") from e
 
-        metadata = {
-            'ellipse': ellipse
-        }
-        mel.rotomap.moles.save_image_metadata(
-            metadata, path)
+        metadata = {'ellipse': ellipse}
+        mel.rotomap.moles.save_image_metadata(metadata, path)
 
 
 # -----------------------------------------------------------------------------

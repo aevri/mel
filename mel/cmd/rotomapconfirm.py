@@ -22,6 +22,8 @@ def process_args(args):
         mel.rotomap.moles.save_json(path, moles)
 
     print(f'Confirmed {changed_count} moles.')
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

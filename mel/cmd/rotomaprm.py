@@ -5,17 +5,21 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        '--uuids', '-u',
+        '--uuids',
+        '-u',
         metavar='UUID',
         nargs='+',
         required=True,
-        help="A list of UUIDs to remove.")
+        help="A list of UUIDs to remove.",
+    )
     parser.add_argument(
-        '--files', '-f',
+        '--files',
+        '-f',
         metavar='JSON_FILE',
         nargs='+',
         required=True,
-        help="A list of paths to image json files.")
+        help="A list of paths to image json files.",
+    )
 
 
 def process_args(args):

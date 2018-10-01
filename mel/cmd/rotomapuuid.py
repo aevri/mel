@@ -6,14 +6,13 @@ import json
 
 
 def setup_parser(parser):
-    parser.add_argument(
-        'PREFIX',
-        help="Prefix to find the full id of.")
+    parser.add_argument('PREFIX', help="Prefix to find the full id of.")
     parser.add_argument(
         'FILE',
         type=argparse.FileType(),
         nargs='+',
-        help="Path to the rotomap json file.")
+        help="Path to the rotomap json file.",
+    )
 
 
 def process_args(args):
@@ -38,6 +37,8 @@ def mole_uuid_set_from_map_list(mole_map_list):
         for mole in mole_map:
             uuid_set.add(mole['uuid'])
     return uuid_set
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

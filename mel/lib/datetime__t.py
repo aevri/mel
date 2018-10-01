@@ -19,7 +19,6 @@ import mel.lib.datetime
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -32,6 +31,8 @@ class Test(unittest.TestCase):
         datetimestring = mel.lib.datetime.make_now_datetime_string()
         datetime_ = mel.lib.datetime.guess_datetime_from_string(datetimestring)
         assert datetime_ is not None
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

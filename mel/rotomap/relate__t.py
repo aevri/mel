@@ -21,7 +21,6 @@ import mel.rotomap.relate
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         pass
 

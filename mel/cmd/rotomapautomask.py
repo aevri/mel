@@ -16,7 +16,8 @@ def setup_parser(parser):
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):
@@ -26,6 +27,8 @@ def process_args(args):
         image = mel.lib.image.load_image(path)
         mask = mel.rotomap.mask.guess_mask_otsu(image)
         mel.lib.common.write_image(path + '.mask.png', mask)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

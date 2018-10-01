@@ -18,22 +18,26 @@ def setup_parser(parser):
         'PATH',
         nargs='+',
         type=str,
-        help="Path to the mole to add new microscope images to.")
+        help="Path to the mole to add new microscope images to.",
+    )
     parser.add_argument(
         '--display-width',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--display-height',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--min-compare-age-days',
         type=int,
         default=None,
-        help="Minimum age of the micro image to compare with, if possible.")
+        help="Minimum age of the micro image to compare with, if possible.",
+    )
 
     # From NHS 'Moles' page:
     # http://www.nhs.uk/Conditions/Moles/Pages/Introduction.aspx
@@ -154,8 +158,8 @@ def process_args(args):
 
 def process_path(mole_path, min_compare_age_days, display, cap):
     comparison_image_data = load_comparison_image(
-        mole_path,
-        min_compare_age_days)
+        mole_path, min_compare_age_days
+    )
 
     if comparison_image_data is not None:
         comparison_path, comparison_image = comparison_image_data
@@ -187,7 +191,8 @@ def process_path(mole_path, min_compare_age_days, display, cap):
 
         is_finished = True
         for key in mel.lib.ui.yield_keys_until_quitkey(
-                quit_key=' ', error_key='a'):
+            quit_key=' ', error_key='a'
+        ):
 
             if key == ord('r'):
                 print("Retry capture")
@@ -226,8 +231,8 @@ def capture(cap, display, capindex, mole_acquirer):
         _, stats = mel.lib.moleimaging.find_mole(frame)
         asys_image = numpy.copy(frame)
         is_aligned, centre, rotation = mel.lib.moleimaging.annotate_image(
-            asys_image,
-            is_rot_sensitive=False)
+            asys_image, is_rot_sensitive=False
+        )
 
         mole_acquirer.update(stats)
 
@@ -246,6 +251,8 @@ def capture(cap, display, capindex, mole_acquirer):
     print("locked and aligned")
 
     return normal_image
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

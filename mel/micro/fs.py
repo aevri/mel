@@ -17,17 +17,16 @@ Mole = collections.namedtuple(
         'micro_image_details',
         'last_micro',
         'last_micro_age_days',
-    ]
+    ],
 )
 
 
 MicroImageDetail = collections.namedtuple(
-    'mel_micro_fs__MicroImageDetail',
-    ['name', 'datetime']
+    'mel_micro_fs__MicroImageDetail', ['name', 'datetime']
 )
 
 
-class Names():
+class Names:
     MICRO = '__micro__'
     ID = '__id__'
     NEED_ASSISTANCE = '__need_assistance__'
@@ -35,21 +34,13 @@ class Names():
     NOT_CHANGED = '__not_changed__'
 
 
-FILES_TO_IGNORE = {
-    '.DS_Store',
-}
+FILES_TO_IGNORE = {'.DS_Store'}
 
 
-DIRS_TO_IGNORE = {
-    '.git',
-}
+DIRS_TO_IGNORE = {'.git'}
 
 
-IMAGE_SUFFIXES = {
-    '.jpg',
-    '.jpeg',
-    '.png',
-}
+IMAGE_SUFFIXES = {'.jpg', '.jpeg', '.png'}
 
 
 MOLE_DIR_ENTRIES = {
@@ -74,7 +65,8 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
             break
 
     context_image_name_tuple_tuple = _extend_context_image_name_tuple_tuple(
-        path, context_image_name_tuple_tuple)
+        path, context_image_name_tuple_tuple
+    )
 
     if should_be_mole_dir:
         _validate_mole_dir(path)
@@ -94,7 +86,8 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
         for sub in path.iterdir():
             if sub.is_dir():
                 yield from _yield_moles_imp(
-                    sub, refrelpath, context_image_name_tuple_tuple)
+                    sub, refrelpath, context_image_name_tuple_tuple
+                )
 
 
 def _validate_mole_dir(path):
@@ -114,7 +107,8 @@ def _validate_mole_dir(path):
 
 
 def _extend_context_image_name_tuple_tuple(
-        path, context_image_name_tuple_tuple):
+    path, context_image_name_tuple_tuple
+):
 
     image_names = []
     for sub in path.iterdir():
@@ -123,7 +117,7 @@ def _extend_context_image_name_tuple_tuple(
 
     if image_names:
         image_names.sort()
-        return context_image_name_tuple_tuple + (tuple(image_names), )
+        return context_image_name_tuple_tuple + (tuple(image_names),)
     else:
         return context_image_name_tuple_tuple
 
@@ -143,13 +137,13 @@ def _list_micro_dir_if_exists(path):
 
         if sub.is_dir():
             raise Exception(
-                'Sub-directory found in micro dir: {}'.format(
-                    sub.resolve()))
+                'Sub-directory found in micro dir: {}'.format(sub.resolve())
+            )
 
         if sub.suffix.lower() not in IMAGE_SUFFIXES:
             raise Exception(
-                'Non-image found in micro dir: {}'.format(
-                    sub.resolve()))
+                'Non-image found in micro dir: {}'.format(sub.resolve())
+            )
 
         image_names.append(sub.name)
 
@@ -189,6 +183,8 @@ def _read_stripped_text_file_if_exists(path):
     if path.exists():
         return path.read_text().strip()
     return None
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

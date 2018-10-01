@@ -8,12 +8,14 @@ def setup_parser(parser):
         'ROTOMAP',
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
-        help="Paths to the rotomap directories to check.")
+        help="Paths to the rotomap directories to check.",
+    )
     parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):
@@ -46,6 +48,8 @@ def print_mole_errors(image_path, mole_list):
         uuids.add(u)
 
     return any_problems
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

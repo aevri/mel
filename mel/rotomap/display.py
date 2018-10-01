@@ -55,11 +55,11 @@ def draw_crosshair(image, x, y):
                 (x + (inner_radius * d[0]), y + (inner_radius * d[1])),
                 (x + (outer_radius * d[0]), y + (outer_radius * d[1])),
                 color,
-                size)
+                size,
+            )
 
 
 class Display:
-
     def __init__(self, width, height):
         self._name = str(id(self))
 
@@ -84,11 +84,11 @@ class Display:
     def show_current(self, image, overlay):
 
         if not self._is_zoomed:
-            self._transform = FittedImageTransform(
-                image, self._rect)
+            self._transform = FittedImageTransform(image, self._rect)
         else:
             self._transform = ZoomedImageTransform(
-                image, self._zoom_pos, self._rect)
+                image, self._zoom_pos, self._rect
+            )
 
         image = self._transform.render()
         if overlay is not None:
@@ -116,8 +116,8 @@ class Display:
 
     def clear_mouse_callback(self):
         cv2.setMouseCallback(
-            self._name,
-            mel.lib.common.make_null_mouse_callback())
+            self._name, mel.lib.common.make_null_mouse_callback()
+        )
 
     def windowxy_to_imagexy(self, window_x, window_y):
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
@@ -132,6 +132,7 @@ def make_composite_overlay(*overlays):
     :*overlays: The overlay callables to composite.
     :returns: A function which will composite *overlays and return the image.
     """
+
     def do_overlay(image, transform):
         for o in overlays:
             image = o(image, transform)
@@ -140,8 +141,7 @@ def make_composite_overlay(*overlays):
     return do_overlay
 
 
-class StatusOverlay():
-
+class StatusOverlay:
     def __init__(self):
         self.text = ""
 
@@ -149,14 +149,12 @@ class StatusOverlay():
 
         if self.text:
             text_image = mel.lib.image.render_text_as_image(self.text)
-            mel.lib.common.copy_image_into_image(
-                text_image, image, 0, 0)
+            mel.lib.common.copy_image_into_image(text_image, image, 0, 0)
 
         return image
 
 
-class MoleMarkerOverlay():
-
+class MoleMarkerOverlay:
     def __init__(self, uuid_to_tricolour):
         self._is_showing_markers = True
         self._is_faded_markers = True
@@ -165,7 +163,8 @@ class MoleMarkerOverlay():
         self._uuid_to_tricolour = uuid_to_tricolour
         if self._uuid_to_tricolour is None:
             self._uuid_to_tricolour = (
-                mel.rotomap.tricolour.uuid_to_tricolour_first_digits)
+                mel.rotomap.tricolour.uuid_to_tricolour_first_digits
+            )
 
         self.moles = None
 
@@ -194,8 +193,7 @@ class MoleMarkerOverlay():
         if self._is_faded_markers:
             marker_image = image.copy()
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(
-                mole['x'], mole['y'])
+            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
             colours = self._uuid_to_tricolour(mole['uuid'])
@@ -209,7 +207,7 @@ class MoleMarkerOverlay():
         return image
 
 
-class MarkedMoleOverlay():
+class MarkedMoleOverlay:
     """An overlay to make marked moles obvious, for checking mark positions."""
 
     def __init__(self):
@@ -262,7 +260,7 @@ class MarkedMoleOverlay():
         return image
 
 
-class ImageRelateOverlay():
+class ImageRelateOverlay:
     """An overlay to make image-to-image mappings obvious."""
 
     def __init__(self):
@@ -283,7 +281,8 @@ class ImageRelateOverlay():
         if self.prev_moles:
             make_info = mel.rotomap.relate.mole_list_overlap_info
             _, _, _, _, default_theory_uuids = make_info(
-                self.prev_moles, self.moles)
+                self.prev_moles, self.moles
+            )
 
             from_counts = collections.Counter(x['uuid'] for x in from_moles)
             to_counts = collections.Counter(x['uuid'] for x in to_moles)
@@ -292,14 +291,16 @@ class ImageRelateOverlay():
 
             if self.moles:
                 best_theory = mel.rotomap.relate.best_theory(
-                    self.prev_moles, self.moles, iterate=False)
+                    self.prev_moles, self.moles, iterate=False
+                )
 
         green = [[0, 255, 0], [128, 255, 128], [0, 255, 0]]
         red = [[0, 0, 255], [128, 128, 255], [0, 0, 255]]
 
         if self.is_target_mode:
             image = self._draw_accentuated(
-                image, transform, default_theory_uuids)
+                image, transform, default_theory_uuids
+            )
 
         if self.is_target_mode:
             saved_image = image.copy()
@@ -311,7 +312,8 @@ class ImageRelateOverlay():
                 self.prev_moles,
                 red,
                 default_theory_uuids,
-                from_duplicates)
+                from_duplicates,
+            )
 
         if not self.is_target_mode:
             image //= 2
@@ -321,7 +323,8 @@ class ImageRelateOverlay():
                 self.moles,
                 green,
                 default_theory_uuids,
-                to_duplicates)
+                to_duplicates,
+            )
 
         if self.prev_moles:
             from_uuid_points = mel.rotomap.moles.to_uuid_points(
@@ -353,13 +356,13 @@ class ImageRelateOverlay():
                     self._arrow(image, from_pos, to_pos, colour)
 
         if self.is_target_mode:
-            image = cv2.addWeighted(
-                image, 0.25, saved_image, 0.75, 0.0)
+            image = cv2.addWeighted(image, 0.25, saved_image, 0.75, 0.0)
 
         return image
 
     def _draw_moles(
-            self, image, transform, moles, colour, defaults, duplicates):
+        self, image, transform, moles, colour, defaults, duplicates
+    ):
         blue = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
         alert = [[0, 255, 255], [0, 0, 255], [0, 255, 255]]
         for m in moles:
@@ -381,7 +384,8 @@ class ImageRelateOverlay():
             colour,
             10,
             cv2.LINE_AA,
-            tipLength=0.25)
+            tipLength=0.25,
+        )
 
         cv2.arrowedLine(
             image,
@@ -390,7 +394,8 @@ class ImageRelateOverlay():
             (0, 0, 0),
             3,
             cv2.LINE_AA,
-            tipLength=0.25)
+            tipLength=0.25,
+        )
 
     def _draw_accentuated(self, image, transform, in_both):
         # Reveal the moles that have been marked, whilst still showing
@@ -418,7 +423,7 @@ class ImageRelateOverlay():
         return image
 
 
-class BoundingAreaOverlay():
+class BoundingAreaOverlay:
     """An overlay to show the bounding area, if any."""
 
     def __init__(self):
@@ -461,8 +466,7 @@ class BoundingAreaOverlay():
         return image
 
 
-class ZoomedImageTransform():
-
+class ZoomedImageTransform:
     def __init__(self, image, pos, rect):
         self._pos = pos
         self._rect = rect
@@ -472,10 +476,7 @@ class ZoomedImageTransform():
 
     def render(self):
 
-        return mel.lib.image.centered_at(
-            self._image,
-            self._pos,
-            self._rect)
+        return mel.lib.image.centered_at(self._image, self._pos, self._rect)
 
     def imagexy_to_transformedxy(self, x, y):
         return numpy.array((x, y)) + self._offset
@@ -484,14 +485,12 @@ class ZoomedImageTransform():
         return numpy.array((x, y)) - self._offset
 
 
-class FittedImageTransform():
-
+class FittedImageTransform:
     def __init__(self, image, fit_rect):
         self._fit_rect = fit_rect
         image_rect = mel.lib.image.get_image_rect(image)
 
-        letterbox = mel.lib.image.calc_letterbox(
-            *image_rect, *self._fit_rect)
+        letterbox = mel.lib.image.calc_letterbox(*image_rect, *self._fit_rect)
 
         self._offset = numpy.array(letterbox[:2])
         self._scale = image.shape[1] / letterbox[2]
@@ -499,8 +498,7 @@ class FittedImageTransform():
         self._image = image
 
     def render(self):
-        return mel.lib.image.letterbox(
-            self._image, *self._fit_rect)
+        return mel.lib.image.letterbox(self._image, *self._fit_rect)
 
     def imagexy_to_transformedxy(self, x, y):
         return (numpy.array((x, y)) / self._scale + self._offset).astype(int)
@@ -520,7 +518,6 @@ class EditorMode(enum.Enum):
 
 
 class Editor:
-
     def __init__(self, directory_list, width, height):
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
         self.display = Display(width, height)
@@ -637,12 +634,14 @@ class Editor:
         if self._mode is EditorMode.debug_automole:
             image = image[:]
             image = mel.rotomap.detectmoles.draw_debug(
-                image, self.moledata.mask)
+                image, self.moledata.mask
+            )
             self.display.show_current(image, None)
         elif self._mode is EditorMode.debug_autorelate:
             image = numpy.copy(image)
             image = mel.rotomap.relate.draw_debug(
-                image, self.moledata.moles, self.from_moles)
+                image, self.moledata.moles, self.from_moles
+            )
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             mask = self.moledata.mask
@@ -652,27 +651,23 @@ class Editor:
             self.display.show_current(gray_image, None)
         elif self._mode is EditorMode.mole_mark:
             self.marked_mole_overlay.moles = self.moledata.moles
-            self.display.show_current(
-                image,
-                self.marked_mole_overlay)
+            self.display.show_current(image, self.marked_mole_overlay)
         elif self._mode is EditorMode.image_relate:
             self.image_relate_overlay.moles = self.moledata.moles
             self.image_relate_overlay.prev_moles = self.from_moles
-            self.display.show_current(
-                image,
-                self.image_relate_overlay)
+            self.display.show_current(image, self.image_relate_overlay)
         elif self._mode is EditorMode.bounding_area:
             box = self.moledata.metadata.get('ellipse', None)
             self.bounding_area_overlay.bounding_box = box
-            self.display.show_current(
-                image, self.bounding_area_overlay)
+            self.display.show_current(image, self.bounding_area_overlay)
         else:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(
                 image,
                 make_composite_overlay(
-                    self._mole_overlay,
-                    self._status_overlay))
+                    self._mole_overlay, self._status_overlay
+                ),
+            )
 
     def show_fitted(self):
         self.display.set_fitted()
@@ -692,6 +687,7 @@ class Editor:
             self.moledata_index -= 1
             self.moledata_index %= len(self.moledata_list)
             self.moledata = self.moledata_list[self.moledata_index]
+
         self._adjusted_transition(transition)
         self.show_current()
 
@@ -700,6 +696,7 @@ class Editor:
             self.moledata_index += 1
             self.moledata_index %= len(self.moledata_list)
             self.moledata = self.moledata_list[self.moledata_index]
+
         self._adjusted_transition(transition)
         self.show_current()
 
@@ -741,46 +738,49 @@ class Editor:
 
     def add_mole_display(self, image_x, image_y, mole_uuid=None):
         mel.rotomap.moles.add_mole(
-            self.moledata.moles, image_x, image_y, mole_uuid)
+            self.moledata.moles, image_x, image_y, mole_uuid
+        )
         self.moledata.save_moles()
         self.show_current()
 
     def confirm_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mole_uuid = mel.rotomap.moles.get_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y)
+            self.moledata.moles, image_x, image_y
+        )
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles,
-            image_x,
-            image_y,
-            mole_uuid,
-            is_canonical=True)
+            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical=True
+        )
         self.moledata.save_moles()
         self.show_current()
 
     def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid, is_canonical=True):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical)
+            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical
+        )
         self.moledata.save_moles()
         self.show_current()
 
     def get_mole_uuid(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         return mel.rotomap.moles.get_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y)
+            self.moledata.moles, image_x, image_y
+        )
 
     def move_nearest_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.move_nearest_mole(
-            self.moledata.moles, image_x, image_y)
+            self.moledata.moles, image_x, image_y
+        )
         self.moledata.save_moles()
         self.show_current()
 
     def remove_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.remove_nearest_mole(
-            self.moledata.moles, image_x, image_y)
+            self.moledata.moles, image_x, image_y
+        )
         self.moledata.save_moles()
         self.show_current()
 
@@ -793,7 +793,8 @@ class Editor:
             self.moledata.moles[i]['y'] = image_y
         else:
             mel.rotomap.moles.add_mole(
-                self.moledata.moles, image_x, image_y, mole_uuid)
+                self.moledata.moles, image_x, image_y, mole_uuid
+            )
 
         self.moledata.save_moles()
         self.show_current()
@@ -805,7 +806,6 @@ class Editor:
 
 
 class MoleData:
-
     def __init__(self, path_list):
 
         # Make an instance-specific cache of images. Note that this means that
@@ -815,6 +815,7 @@ class MoleData:
         @functools.lru_cache()
         def load_image(image_path):
             return mel.lib.image.load_image(image_path)
+
         self._load_image = load_image
 
         self.moles = []
@@ -883,6 +884,8 @@ class MoleData:
 
     def current_image_path(self):
         return self._path_list[self._list_index]
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

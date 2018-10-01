@@ -7,7 +7,6 @@ import mel.rotomap.tricolour
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -39,12 +38,16 @@ class Test(unittest.TestCase):
         num_colours = 9
         mapping = list(
             mel.rotomap.tricolour.yield_triband_mapping_in_distinctive_order(
-                num_colours))
+                num_colours
+            )
+        )
 
         self.assertEqual(len(mapping), num_colours ** 3)
 
         mapping_set = set(mapping)
         self.assertEqual(len(mapping_set), len(mapping))
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

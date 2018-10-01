@@ -13,29 +13,26 @@ def setup_parser(parser):
     parser.add_argument(
         'FRAMES',
         type=mel.rotomap.moles.make_argparse_image_moles,
-        help="Path to the rotomap or image to copy from.")
+        help="Path to the rotomap or image to copy from.",
+    )
 
     parser.add_argument(
-        'UUID',
-        type=str,
-        help="Unique id of the mole to copy.")
+        'UUID', type=str, help="Unique id of the mole to copy.")
 
-    parser.add_argument(
-        'OUTPUT',
-        type=str,
-        help="Name of the image to write.")
+    parser.add_argument('OUTPUT', type=str, help="Name of the image to write.")
 
     parser.add_argument(
         '--rot90',
         type=int,
         default=0,
-        help="Rotate images 90 degrees clockwise this number of times.")
+        help="Rotate images 90 degrees clockwise this number of times.",
+    )
 
 
 def process_args(args):
     mel.lib.common.write_image(
-        args.OUTPUT,
-        make_montage_image(args.FRAMES, args.UUID, args.rot90))
+        args.OUTPUT, make_montage_image(args.FRAMES, args.UUID, args.rot90)
+    )
 
 
 def make_montage_image(images_moles, uuid_, rot90=0):
@@ -51,8 +48,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
                 path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
-        raise mel.cmd.error.UsageError(
-            'UUID "{}" not found.'.format(uuid_))
+        raise mel.cmd.error.UsageError('UUID "{}" not found.'.format(uuid_))
 
     # Pick 'best' image for this particular mole, assuming that the middle
     # image is where the mole is most prominent. This assumption is based on
@@ -78,7 +74,8 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     unmarked_context_image = context_image.copy()
     mel.lib.common.indicate_mole(context_image, (x, y, radius))
     context_image = cv2.addWeighted(
-        unmarked_context_image, 0.75, context_image, 0.25, 0.0)
+        unmarked_context_image, 0.75, context_image, 0.25, 0.0
+    )
 
     context_image = mel.lib.common.rotated90(context_image, rot90)
     for _ in range(rot90 % 4):
@@ -93,11 +90,12 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     context_scale = montage_height / context_image.shape[0]
     context_scaled_width = int(context_image.shape[1] * context_scale)
     context_image = cv2.resize(
-        context_image,
-        (context_scaled_width, montage_height))
+        context_image, (context_scaled_width, montage_height)
+    )
 
     return mel.lib.image.montage_horizontal_inner_border(
-        25, context_image, detail_image)
+        25, context_image, detail_image
+    )
 
 
 def make_detail_image(context_image, x, y, size):
@@ -107,6 +105,8 @@ def make_detail_image(context_image, x, y, size):
     right = left + half_size * 2
     bottom = top + half_size * 2
     return context_image[top:bottom, left:right]
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

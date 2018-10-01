@@ -31,29 +31,34 @@ def setup_parser(parser):
         'ROTOMAP',
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
-        help="A list of paths to rotomaps.")
+        help="A list of paths to rotomaps.",
+    )
     parser.add_argument(
         '--display-width',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--display-height',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
 
 
 def process_args(args):
 
     uuid_to_rotomaps_imagepos_list = collections.defaultdict(
-        lambda: collections.defaultdict(list))
+        lambda: collections.defaultdict(list)
+    )
 
     for rotomap in args.ROTOMAP:
         for frame in rotomap.yield_frames():
             for uuid_, point in frame.moledata.uuid_points.items():
                 uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
-                    (frame.path, point))
+                    (frame.path, point)
+                )
 
     # We can't compare moles that are only in one rotomap, cull these.
     uuid_to_rotomaps_imagepos_list = {
@@ -74,7 +79,8 @@ def process_args(args):
     uuid_ = uuid_order[index]
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
     display = ImageCompareDisplay(
-        '.', path_images_tuple, args.display_width, args.display_height)
+        '.', path_images_tuple, args.display_width, args.display_height
+    )
 
     mel.lib.ui.bring_python_to_front()
 
@@ -93,7 +99,8 @@ def process_args(args):
             index %= num_uuids
             uuid_ = uuid_order[index]
             path_images_tuple = tuple(
-                uuid_to_rotomaps_imagepos_list[uuid_].values())
+                uuid_to_rotomaps_imagepos_list[uuid_].values()
+            )
             display.reset(path_images_tuple)
         elif key == ord('p'):
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
@@ -101,13 +108,14 @@ def process_args(args):
             index %= num_uuids
             uuid_ = uuid_order[index]
             path_images_tuple = tuple(
-                uuid_to_rotomaps_imagepos_list[uuid_].values())
+                uuid_to_rotomaps_imagepos_list[uuid_].values()
+            )
             display.reset(path_images_tuple)
         elif key == ord(' '):
             display.swap_images()
 
 
-class ImageCompareDisplay():
+class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
     def __init__(self, name, path_images_tuple, width=None, height=None):
@@ -117,12 +125,12 @@ class ImageCompareDisplay():
     def reset(self, path_images_tuple):
         if not path_images_tuple:
             raise ValueError(
-                "path_images_tuple must be a tuple with at least one thing.")
+                "path_images_tuple must be a tuple with at least one thing."
+            )
 
         for group in path_images_tuple:
             if not group:
-                raise ValueError(
-                    "path_images_tuple not have empty groups.")
+                raise ValueError("path_images_tuple not have empty groups.")
 
         self._rotomaps = path_images_tuple
 
@@ -192,6 +200,8 @@ def _cached_captioned_mole_image(path, pos, size):
     image = mel.lib.image.centered_at(image, pos, size)
     caption = mel.lib.image.render_text_as_image(str(path))
     return mel.lib.image.montage_vertical(10, image, caption)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

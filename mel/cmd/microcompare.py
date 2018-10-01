@@ -18,12 +18,14 @@ def setup_parser(parser):
         '--display-width',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--display-height',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
 
 
 def get_comparison_images(path):
@@ -42,7 +44,8 @@ def get_comparison_images(path):
             raise ValueError("Failed to load file: {}".format(path))
         else:
             images[i] = mel.lib.image.montage_vertical(
-                10, img, mel.lib.image.render_text_as_image(names[i]))[:]
+                10, img, mel.lib.image.render_text_as_image(names[i])
+            )[:]
 
     return images
 
@@ -53,7 +56,8 @@ def process_args(args):
         raise Exception("No microscope images at {}".format(args.PATH))
 
     display = ImageCompareDisplay(
-        args.PATH, images, args.display_width, args.display_height)
+        args.PATH, images, args.display_width, args.display_height
+    )
 
     mel.lib.ui.bring_python_to_front()
 
@@ -70,13 +74,14 @@ def process_args(args):
             display.swap_images()
 
 
-class ImageCompareDisplay():
+class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
     def __init__(self, name, image_list, width=None, height=None):
         if not image_list:
             raise ValueError(
-                "image_list must be a list with at least one image.")
+                "image_list must be a list with at least one image."
+            )
 
         self._display = mel.lib.ui.ImageDisplay(name, width, height)
         self._image_list = image_list
@@ -102,6 +107,8 @@ class ImageCompareDisplay():
     def _show_display_list(self):
         montage = mel.lib.image.montage_horizontal(10, *self._display_list)
         self._display.show_image(montage)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

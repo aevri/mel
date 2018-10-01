@@ -12,18 +12,16 @@ def setup_parser(parser):
         '--path',
         type=pathlib.PosixPath,
         default=pathlib.Path('.'),
-        help="Path to check.")
+        help="Path to check.",
+    )
 
     parser.add_argument(
         '--fix',
         action='store_true',
-        help='Automatically fix encountered problems, where possible.')
+        help='Automatically fix encountered problems, where possible.',
+    )
 
-    parser.add_argument(
-        '--verbose',
-        '-v',
-        action='count',
-        default=0)
+    parser.add_argument('--verbose', '-v', action='count', default=0)
 
 
 def process_args(args):
@@ -44,7 +42,8 @@ def fsck(path, do_fix):
 
     logging.debug(
         f'{path}: has uuid: {has_uuid}, has images: {has_images}, '
-        f'has subdirs: {has_subdirs}')
+        f'has subdirs: {has_subdirs}'
+    )
 
     if has_subdirs and (has_uuid or has_images):
         print(f'"{path}" looks like a rotomap, but it has subdirs.')
@@ -70,8 +69,10 @@ def setup_logging(verbosity):
     logtypes = [logging.WARNING, logging.INFO, logging.DEBUG]
     level = min(len(logtypes) - 1, verbosity)
     logging.basicConfig(
-        level=logtypes[level],
-        format='%(levelname)s: %(message)s')
+        level=logtypes[level], format='%(levelname)s: %(message)s'
+    )
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

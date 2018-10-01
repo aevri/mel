@@ -16,13 +16,15 @@ import mel.rotomap.moles
 # across these groups so that they may cross-check eachother and provide extra
 # constraints to satisfy. This should increase the quality of the results.
 
+
 def setup_parser(parser):
     parser.add_argument(
         '--target',
         '-t',
         nargs='+',
         required=True,
-        help="Paths to images to identify.")
+        help="Paths to images to identify.",
+    )
     parser.add_argument(
         '--source',
         '-s',
@@ -30,12 +32,14 @@ def setup_parser(parser):
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
         default=[],
-        help="Paths to rotomaps to read for reference.")
+        help="Paths to rotomaps to read for reference.",
+    )
     parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
-        help="Print information about the processing.")
+        help="Print information about the processing.",
+    )
 
 
 def process_args(args):
@@ -44,10 +48,12 @@ def process_args(args):
         print('Loading from sources ..')
 
     training_frames = itertools.chain.from_iterable(
-        x.yield_frames() for x in args.source)
+        x.yield_frames() for x in args.source
+    )
 
     uuid_to_frameposlist = mel.rotomap.moles.frames_to_uuid_frameposlist(
-        training_frames, canonical_only=True)
+        training_frames, canonical_only=True
+    )
 
     # We're going to use these uuids a lot as keys in dicts. The docs for
     # sys.intern say that it can speed things up in that case.
@@ -55,16 +61,15 @@ def process_args(args):
         sys.intern(k): v for k, v in uuid_to_frameposlist.items()
     }
 
-    target_frames = [
-        mel.rotomap.moles.RotomapFrame(x) for x in args.target
-    ]
+    target_frames = [mel.rotomap.moles.RotomapFrame(x) for x in args.target]
 
     if args.verbose:
         print('Training ..')
 
     box_radius = 0.1
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
-        uuid_to_frameposlist, box_radius)
+        uuid_to_frameposlist, box_radius
+    )
 
     possible_uuid_set = frozenset(uuid_to_frameposlist.keys())
     for frame in target_frames:
@@ -89,28 +94,27 @@ def process_args(args):
         trans.add_uuids(possible_uuid_set)
         num_identities = trans.num_uuids()
 
-        positions = trans.uuid_dict_to_index_tuple(
-            uuid_to_pos, num_locations)
+        positions = trans.uuid_dict_to_index_tuple(uuid_to_pos, num_locations)
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
-            positions, trans, warm_classifier)
+            positions, trans, warm_classifier
+        )
         predictors = mel.rotomap.identify.predictors(positions, num_canonicals)
 
         bounder = BounderWrapper(
             tuple(predictor_loc for (_, predictor_loc) in predictors),
             calc_guesses,
             num_identities,
-            num_canonicals)
+            num_canonicals,
+        )
 
         guesser = mel.rotomap.identify.PosGuesser(
-            num_locations,
-            predictors,
-            bounder,
-            num_canonicals,
-            num_identities)
+            num_locations, predictors, bounder, num_canonicals, num_identities
+        )
 
         cost, old_to_new = mel.rotomap.identify.best_match_combination(
-            guesser, max_iterations=1 * 10**5)
+            guesser, max_iterations=1 * 10 ** 5
+        )
 
         old_to_new = {
             trans.uuid_(old): trans.uuid_(new)
@@ -130,7 +134,7 @@ def process_args(args):
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
 
 
-class BounderWrapper():
+class BounderWrapper:
     """Extend the capabilities of the C++ bounder, add 'possible_guesses'.
 
     If this turns out to be enough of a bottleneck, we can move the
@@ -138,35 +142,37 @@ class BounderWrapper():
     """
 
     def __init__(
-            self, predictors, calc_guesses, num_identities, num_canonicals):
+        self, predictors, calc_guesses, num_identities, num_canonicals
+    ):
         self._predictors = predictors
         self._calc_guesses = calc_guesses
         self._bounder = mel.rotomap.lowerbound.Bounder(
-            predictors,
-            calc_guesses,
-            num_identities,
-            num_canonicals)
+            predictors, calc_guesses, num_identities, num_canonicals
+        )
 
     def lower_bound(self, state):
         return self._bounder.lower_bound(state)
 
     def possible_guesses(
-            self, state, possible_ident_set, already_taken, guess_loc):
+        self, state, possible_ident_set, already_taken, guess_loc
+    ):
         predictor_loc = self._predictors[guess_loc]
         predictor_ident = state[predictor_loc]
 
         possibles = []
         if predictor_ident is not None:
             possibles = self._calc_guesses(
-                (predictor_loc, predictor_ident),
-                guess_loc)
+                (predictor_loc, predictor_ident), guess_loc
+            )
         else:
             for predictor_ident in possible_ident_set - already_taken:
                 if predictor_ident == guess_loc:
                     continue
-                possibles.extend(self._calc_guesses(
-                    (predictor_loc, predictor_ident),
-                    guess_loc))
+                possibles.extend(
+                    self._calc_guesses(
+                        (predictor_loc, predictor_ident), guess_loc
+                    )
+                )
 
         return set([ident for ident, _ in possibles]) - already_taken
 

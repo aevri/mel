@@ -72,8 +72,9 @@ def _list_rotated_left(list_, n):
     if n < 0:
         raise ValueError("n must be zero or greater, got {}.".format(n))
     if n > len(list_):
-        raise ValueError("n must be less than list len ({}), got {}.".format(
-            len(list_), n))
+        raise ValueError(
+            "n must be less than list len ({}), got {}.".format(len(list_), n)
+        )
     return list_[n:] + list_[:n]
 
 
@@ -92,8 +93,8 @@ def yield_triband_mapping_in_distinctive_order(num_colours):
                 continue
             for band in range(3):
                 yield tuple(
-                    _list_rotated_left(
-                        [colour1, colour2, colour2], band))
+                    _list_rotated_left([colour1, colour2, colour2], band)
+                )
 
     yield from _yield_tricolours_no_repeats(num_colours)
 
@@ -110,24 +111,24 @@ def _yield_tricolours_no_repeats(num_colours):
 
 
 class UuidTriColourPicker:
-
     def __init__(self):
         self._uuid_to_colours = {}
         self._palette = _NINE_CLASS_SET1
         self._triband_mapping = yield_triband_mapping_in_distinctive_order(
-            len(self._palette))
+            len(self._palette)
+        )
 
     def _ensure_uuid(self, uuid_):
         if uuid_ in self._uuid_to_colours:
             return
         indices = next(self._triband_mapping)
-        self._uuid_to_colours[uuid_] = tuple(
-            self._palette[x] for x in indices
-        )
+        self._uuid_to_colours[uuid_] = tuple(self._palette[x] for x in indices)
 
     def __call__(self, uuid_):
         self._ensure_uuid(uuid_)
         return self._uuid_to_colours[uuid_]
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2017 Angelos Evripiotis.
 #

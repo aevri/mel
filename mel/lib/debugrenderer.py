@@ -5,8 +5,7 @@ import contextlib
 import cv2
 
 
-class GlobalContext():
-
+class GlobalContext:
     def __init__(self):
         self._image = None
 
@@ -29,7 +28,8 @@ class GlobalContext():
             tuple(to.astype(int)),
             (255, 255, 255),
             2,
-            cv2.LINE_AA)
+            cv2.LINE_AA,
+        )
 
     def circle(self, point, radius):
         if self._image is None:
@@ -39,7 +39,10 @@ class GlobalContext():
             tuple(point.astype(int)),
             int(radius),
             (255, 255, 255),
-            2)
+            2,
+        )
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

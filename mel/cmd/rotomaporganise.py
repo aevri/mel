@@ -10,19 +10,20 @@ import mel.lib.ui
 
 def setup_parser(parser):
     parser.add_argument(
-        'IMAGES',
-        nargs='+',
-        help="A list of paths to images sets or images.")
+        'IMAGES', nargs='+', help="A list of paths to images sets or images."
+    )
     parser.add_argument(
         '--display-width',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
     parser.add_argument(
         '--display-height',
         type=int,
         default=None,
-        help="Width of the preview display window.")
+        help="Width of the preview display window.",
+    )
 
 
 def process_args(args):
@@ -31,7 +32,8 @@ def process_args(args):
         "rotomap-organise",
         mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES),
         args.display_width,
-        args.display_height)
+        args.display_height,
+    )
 
     mel.lib.ui.bring_python_to_front()
 

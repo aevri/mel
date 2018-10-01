@@ -42,14 +42,11 @@ def calc_letterbox(width, height, fit_width, fit_height):
 
 def letterbox(image, width, height):
     x, y, new_width, new_height = calc_letterbox(
-        image.shape[1], image.shape[0], width, height)
-    resized_image = cv2.resize(
-        image,
-        (new_width, new_height))
-    letterboxed = mel.lib.common.new_image(
-        height, width)
-    mel.lib.common.copy_image_into_image(
-        resized_image, letterboxed, y, x)
+        image.shape[1], image.shape[0], width, height
+    )
+    resized_image = cv2.resize(image, (new_width, new_height))
+    letterboxed = mel.lib.common.new_image(height, width)
+    mel.lib.common.copy_image_into_image(resized_image, letterboxed, y, x)
     return letterboxed
 
 
@@ -85,8 +82,8 @@ def calc_montage_vertical(border_size, *frames):
         ([5, 6], [1, 1], [1, 3])
     """
     geometry = calc_montage_horizontal(
-        border_size,
-        *[list(reversed(f)) for f in frames])
+        border_size, *[list(reversed(f)) for f in frames]
+    )
 
     return tuple([g[1], g[0]] for g in geometry)
 
@@ -96,8 +93,7 @@ def arrange_images(total_width, total_height, *images_positions):
     result = mel.lib.common.new_image(total_height, total_width)
 
     for image, pos in images_positions:
-        mel.lib.common.copy_image_into_image(
-            image, result, pos[1], pos[0])
+        mel.lib.common.copy_image_into_image(image, result, pos[1], pos[0])
 
     return result
 
@@ -148,38 +144,33 @@ def montage_horizontal_inner_border(divider_size, *image_list):
 
 def montage_horizontal(border_size, *image_list):
     geometry = calc_montage_horizontal(
-        border_size,
-        *[list(reversed(i.shape[:2])) for i in image_list])
+        border_size, *[list(reversed(i.shape[:2])) for i in image_list]
+    )
 
     size_xy = geometry[0]
     geometry = geometry[1:]
 
     return arrange_images(
-        size_xy[0],
-        size_xy[1],
-        *list(zip(image_list, geometry)))
+        size_xy[0], size_xy[1], *list(zip(image_list, geometry))
+    )
 
 
 def montage_vertical(border_size, *image_list):
     geometry = calc_montage_vertical(
-        border_size,
-        *[list(reversed(i.shape[:2])) for i in image_list])
+        border_size, *[list(reversed(i.shape[:2])) for i in image_list]
+    )
 
     size_xy = geometry[0]
     geometry = geometry[1:]
 
     return arrange_images(
-        size_xy[0],
-        size_xy[1],
-        *list(zip(image_list, geometry)))
+        size_xy[0], size_xy[1], *list(zip(image_list, geometry))
+    )
 
 
 def render_text_as_image(
-        text,
-        font_face=None,
-        font_scale=None,
-        thickness=None,
-        color=None):
+    text, font_face=None, font_scale=None, thickness=None, color=None
+):
 
     if font_face is None:
         font_face = cv2.FONT_HERSHEY_DUPLEX
@@ -191,7 +182,8 @@ def render_text_as_image(
         color = (255, 255, 255)
 
     (width, height), baseline = cv2.getTextSize(
-        text, font_face, font_scale, thickness)
+        text, font_face, font_scale, thickness
+    )
 
     baseline += thickness
 
@@ -210,7 +202,8 @@ def calc_centering_offset(centre_xy, dst_size_xy):
 def centered_at(image, src_pos, dst_rect):
 
     dst_selection, src_selection = calc_centered_at_selections(
-        get_image_rect(image), src_pos, dst_rect)
+        get_image_rect(image), src_pos, dst_rect
+    )
 
     result = mel.lib.common.new_image(*numpy.flipud(dst_rect))
     result[dst_selection] = image[src_selection]
@@ -262,7 +255,7 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     """
     return (
         slice(top_left_inclusive[1], bottom_right_exclusive[1]),
-        slice(top_left_inclusive[0], bottom_right_exclusive[0])
+        slice(top_left_inclusive[0], bottom_right_exclusive[0]),
     )
 
 
@@ -303,10 +296,7 @@ def recentered_at(image, x, y):
     :y: The vertical co-ordinate to put at the centre of the new image.
     :returns: A new OpenCV image.
     """
-    return centered_at(
-        image,
-        numpy.array((x, y)),
-        get_image_rect(image))
+    return centered_at(image, numpy.array((x, y)), get_image_rect(image))
 
 
 def get_image_rect(image):
@@ -336,6 +326,8 @@ def rotated(image, degrees):
 
 def rotated180(image):
     return cv2.flip(image, -1)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

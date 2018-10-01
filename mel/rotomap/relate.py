@@ -81,7 +81,8 @@ def draw_from_to_mole(image, from_mole, to_mole, colour):
         tuple(mel.rotomap.moles.mole_to_point(to_mole)),
         (255, 255, 255),
         2,
-        cv2.LINE_AA)
+        cv2.LINE_AA,
+    )
 
 
 def draw_debug(image, to_moles, from_moles):
@@ -91,7 +92,8 @@ def draw_debug(image, to_moles, from_moles):
         from_moles = []
 
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
-        from_moles, to_moles)
+        from_moles, to_moles
+    )
 
     from_only = from_set - to_set
     to_only = to_set - from_set
@@ -124,11 +126,7 @@ def overlay_theory(image, theory, from_dict, to_dict):
             colour = colour_mapped
             if from_ == to:
                 colour = colour_known
-            draw_from_to_mole(
-                image,
-                from_dict[from_],
-                to_dict[to],
-                colour)
+            draw_from_to_mole(image, from_dict[from_], to_dict[to], colour)
 
     return image
 
@@ -170,8 +168,8 @@ def best_theory(from_moles, to_moles, iterate):
     theory_to_original = {}
     while not done:
         new_theory = reverse_theory(
-            best_offset_theory(from_moles, to_moles),
-            theory_to_original)
+            best_offset_theory(from_moles, to_moles), theory_to_original
+        )
         done = new_theory == theory
         theory = new_theory
         if not done:
@@ -194,13 +192,15 @@ def best_offset_theory(from_moles, to_moles):
 
 def best_offset_field_theory(from_moles, to_moles):
     from_points, to_points, point_offsets, theory = offset_theory_points(
-        from_moles, to_moles)
+        from_moles, to_moles
+    )
 
     if not point_offsets:
         return None
 
     return make_offset_field_theory(
-        from_points, to_points, point_offsets, theory)
+        from_points, to_points, point_offsets, theory
+    )
 
 
 def offset_theory_points(from_moles, to_moles):
@@ -211,12 +211,14 @@ def offset_theory_points(from_moles, to_moles):
     :returns: (from_uuid_points, to_uuid_points, point_offsets)
     """
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
-        from_moles, to_moles)
+        from_moles, to_moles
+    )
 
     theory = []
     theory.extend((u, u) for u in in_both)
     point_offsets = to_point_offsets(
-        [(from_dict[m], to_dict[m]) for m in in_both])
+        [(from_dict[m], to_dict[m]) for m in in_both]
+    )
     new_from_moles = [from_dict[m] for m in from_set - in_both]
     new_to_moles = [to_dict[m] for m in to_set - in_both]
     from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
@@ -353,11 +355,12 @@ def guess_mole_pos_pair_method(from_uuid, from_moles, to_moles):
         return None
 
     ((from_a, from_b), (to_a, to_b)) = best_pair_to_guess_target(
-        from_target,
-        pairs_of_pairs)
+        from_target, pairs_of_pairs
+    )
 
     guess_pos = guess_mole_pos_from_pair(
-        from_target, from_a, from_b, to_a, to_b)
+        from_target, from_a, from_b, to_a, to_b
+    )
 
     return guess_pos
 
@@ -371,7 +374,8 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
     :returns: a numpy.array of the guessed position, or None if no guess.
     """
     from_points, to_points, point_offsets, _ = offset_theory_points(
-        from_moles, to_moles)
+        from_moles, to_moles
+    )
 
     if not point_offsets:
         return None
@@ -394,7 +398,8 @@ def to_point_offsets(mole_pairs):
 
 
 def make_offset_field_theory(
-        from_uuid_points, to_uuid_points, point_offsets, theory):
+    from_uuid_points, to_uuid_points, point_offsets, theory
+):
 
     to_uuid_points = dict(to_uuid_points)
     inv_point_offsets = invert_point_offsets(point_offsets)
@@ -417,9 +422,11 @@ def make_offset_field_theory(
             # 'from' mole.
             to_point = to_uuid_points[to_uuid]
             inv_offset, inv_error = pick_value_from_field(
-                to_point, inv_point_offsets)
+                to_point, inv_point_offsets
+            )
             from_uuid, from_distance = nearest_uuid_point(
-                to_point + inv_offset, from_uuid_points)
+                to_point + inv_offset, from_uuid_points
+            )
 
             if from_uuid == uuid_:
                 theory.append((uuid_, to_uuid))
@@ -440,10 +447,7 @@ def make_offset_field_theory(
 
 
 def invert_point_offsets(point_offsets):
-    return [
-        (point + offset, -offset)
-        for point, offset in point_offsets
-    ]
+    return [(point + offset, -offset) for point, offset in point_offsets]
 
 
 def nearest_uuid_point(point, uuid_points):
@@ -525,7 +529,8 @@ def best_baseless_offset_theory(from_moles, to_moles):
             offset_dist_sq = to_x * to_x + to_y * to_y
 
             theory, dist_sq = make_offset_theory(
-                from_moles, to_moles, (to_x, to_y), cutoff_sq)
+                from_moles, to_moles, (to_x, to_y), cutoff_sq
+            )
 
             new_best = best_theory is None
             if not new_best and len(theory) < len(best_theory):
@@ -571,8 +576,7 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
         best_index, best_dist_sq = _nearest_mole_index_to_point(
             point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
-            r_point = mel.rotomap.moles.mole_to_point(
-                to_moles[best_index])
+            r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
             r_point -= offset
             r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)
             if i == r_index:
@@ -595,8 +599,8 @@ def _nearest_mole_index_to_point(point, mole_list):
     best_dist_sq = None
     for i, mole in enumerate(mole_list):
         dist_sq = mel.lib.math.distance_sq_2d(
-            point,
-            mel.rotomap.moles.mole_to_point(mole))
+            point, mel.rotomap.moles.mole_to_point(mole)
+        )
         if best_index is None or dist_sq < best_dist_sq:
             best_index = i
             best_dist_sq = dist_sq
@@ -606,7 +610,10 @@ def _nearest_mole_index_to_point(point, mole_list):
 def _mole_distance_sq(from_mole, to_mole):
     return mel.lib.math.distance_sq_2d(
         mel.rotomap.moles.mole_to_point(from_mole),
-        mel.rotomap.moles.mole_to_point(to_mole))
+        mel.rotomap.moles.mole_to_point(to_mole),
+    )
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

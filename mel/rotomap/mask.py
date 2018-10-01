@@ -12,9 +12,7 @@ def path(mole_image_path):
 
 
 def load(mole_image_path):
-    mask = cv2.imread(
-        path(mole_image_path),
-        cv2.IMREAD_UNCHANGED)
+    mask = cv2.imread(path(mole_image_path), cv2.IMREAD_UNCHANGED)
     if mask is None:
         raise Exception(f'Failed to load mask: "{path}"')
     return mask
@@ -51,9 +49,8 @@ def mask_biggest_region(mask):
     # is the area that we're interested in.
 
     _, contours, _ = cv2.findContours(
-        mask,
-        cv2.RETR_LIST,
-        cv2.CHAIN_APPROX_NONE)
+        mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
+    )
 
     max_area = 0
     max_index = None
@@ -119,6 +116,8 @@ def guess_mask(image, skin_hist):
         cv2.drawContours(mask, [c], -1, (255), -1)
 
     return mask
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2017 Angelos Evripiotis.
 #

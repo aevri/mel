@@ -15,7 +15,8 @@ def setup_parser(parser):
         'destination',
         type=str,
         default=None,
-        help="New path to create and store the mole to.")
+        help="New path to create and store the mole to.",
+    )
 
 
 def process_args(args):
@@ -23,7 +24,8 @@ def process_args(args):
     # TODO: validate mole names up-front
 
     context_image, detail_image = mel.lib.common.process_context_detail_args(
-        args)
+        args
+    )
 
     # TODO: extract this choice to a common place
     montage_size = 1024
@@ -38,7 +40,8 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_pos, detail_mole_pos = mel.lib.common.user_mark_moles(
-        window_name, context_image, detail_image, 1)
+        window_name, context_image, detail_image, 1
+    )
 
     # Put a box around mole on context image
     # TODO: extract the thickness choice to a common place
@@ -52,9 +55,11 @@ def process_args(args):
 
     # Combine context image with detail image to make montage
     monatage_image = mel.lib.image.montage_horizontal(
-        50, context_image, detail_image)
+        50, context_image, detail_image
+    )
     monatage_image = mel.lib.common.shrink_to_max_dimension(
-        monatage_image, montage_size)
+        monatage_image, montage_size
+    )
 
     # Let user review montage
     mel.lib.common.user_review_image(window_name, monatage_image)
@@ -66,9 +71,12 @@ def process_args(args):
     mel.lib.common.overwrite_image(
         args.destination,
         mel.lib.common.determine_filename_for_ident(args.context, args.detail),
-        monatage_image)
+        monatage_image,
+    )
 
     # TODO: optionally remove the original images
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #

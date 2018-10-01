@@ -51,7 +51,8 @@ def yield_frames_keys(video_capture, delay=50, error_key='a'):
 
 
 def yield_keys_until_quitkey(
-        delay=50, quit_key='q', error_key=None, quit_func=None):
+    delay=50, quit_key='q', error_key=None, quit_func=None
+):
 
     while True:
         key = cv2.waitKey(delay) % 256
@@ -82,11 +83,13 @@ def bring_python_to_front():
         logging.warning("Could not find 'osascript', unsupported platform?")
         return
 
-    subprocess.call([
-        osascript,
-        '-e',
-        'tell app "Finder" to set frontmost of process "Python" to true',
-    ])
+    subprocess.call(
+        [
+            osascript,
+            '-e',
+            'tell app "Finder" to set frontmost of process "Python" to true',
+        ]
+    )
 
 
 def set_clipboard_contents(text):
@@ -98,10 +101,12 @@ def set_clipboard_contents(text):
 
     if not os.path.isfile(pbcopy):
         raise NotImplementedError(
-            '{} was not found, cannot write clipboard'.format(pbcopy))
+            '{} was not found, cannot write clipboard'.format(pbcopy)
+        )
 
     p = subprocess.Popen(
-        [pbcopy], stdin=subprocess.PIPE, universal_newlines=True)
+        [pbcopy], stdin=subprocess.PIPE, universal_newlines=True
+    )
     p.communicate(input=text)
 
 
@@ -112,8 +117,7 @@ def guess_fullscreen_width_height():
     return width, height
 
 
-class MultiImageDisplay():
-
+class MultiImageDisplay:
     def __init__(self, name, width=None, height=None):
         self._display = ImageDisplay(name, width, height)
         self.reset()
@@ -150,14 +154,14 @@ class MultiImageDisplay():
                     row_image = image
                 else:
                     row_image = mel.lib.image.montage_horizontal(
-                        self._border_width, row_image, image)
+                        self._border_width, row_image, image
+                    )
             row_image_list.append(row_image)
 
         if len(row_image_list) == 1:
             montage_image = row_image_list[0]
         else:
-            montage_image = mel.lib.image.montage_vertical(
-                0, *row_image_list)
+            montage_image = mel.lib.image.montage_vertical(0, *row_image_list)
 
         self._display.show_image(montage_image)
 
@@ -165,7 +169,7 @@ class MultiImageDisplay():
         self._display.set_title(title)
 
 
-class ImageDisplay():
+class ImageDisplay:
     """Display an image, centered in a new window."""
 
     def __init__(self, name, width=None, height=None):
@@ -207,13 +211,14 @@ class ImageDisplay():
         cv2.setWindowTitle(self.name, title)
 
 
-class LeftRightDisplay():
+class LeftRightDisplay:
     """Display images in a window, supply controls for navigating."""
 
     def __init__(self, name, image_list, width=None, height=None):
         if not image_list:
             raise ValueError(
-                "image_list must be a list with at least one image.")
+                "image_list must be a list with at least one image."
+            )
 
         self._original_title = name
         self.display = ImageDisplay(name, width, height)
@@ -239,14 +244,14 @@ class LeftRightDisplay():
     def show(self):
         if self._image_list:
             path = self._image_list[self._index]
-            self.display.show_image(
-                self._get_image(path))
+            self.display.show_image(self._get_image(path))
             self.display.set_title(path)
         else:
             self.display.show_image(
                 mel.lib.common.new_image(
-                    self.display.height,
-                    self.display.width))
+                    self.display.height, self.display.width
+                )
+            )
             self.display.set_title(self._original_title)
 
 

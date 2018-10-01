@@ -20,7 +20,6 @@ import mel.lib.image
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -34,6 +33,8 @@ class Test(unittest.TestCase):
         montage = mel.lib.image.montage_horizontal(50, image1, image2)
         letterbox_montage = mel.lib.image.letterbox(montage, 200, 200)
         mel.lib.image.montage_vertical(50, montage, letterbox_montage)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2017 Angelos Evripiotis.
 #
