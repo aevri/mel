@@ -30,7 +30,6 @@ In 'mole edit' mode:
     Alt-click on a point to paste the copied uuid.
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
-    Press 't' to auto-relate moles from the previously viewed image.
     Press enter to toggle mole markers.
 
 In 'mask edit' mode:
@@ -183,8 +182,6 @@ class MoleEditController:
         self.move_controller = MoveController()
         self.sub_controller = None
 
-        self.previous_moles = None
-
         self.mouse_x = 0
         self.mouse_y = 0
 
@@ -230,9 +227,6 @@ class MoleEditController:
             )
 
     def pre_key(self, editor, key):
-        if key in mel.lib.ui.WAITKEY_ARROWS:
-            self.previous_moles = copy.deepcopy(editor.moledata.moles)
-
         if self.sub_controller:
             try:
                 self.sub_controller.pre_key(editor, key)
@@ -257,20 +251,6 @@ class MoleEditController:
                 self.sub_controller = None
                 editor.set_status('')
             editor.show_current()
-        elif key == ord('t'):
-            theory = mel.rotomap.relate.best_offset_theory(
-                self.previous_moles,
-                editor.moledata.moles)
-            if theory:
-                guessed_moles = copy.deepcopy(editor.moledata.moles)
-                for mole in guessed_moles:
-                    for p in theory:
-                        if p[0] and p[1]:
-                            if mole['uuid'] == p[1]:
-                                mole['uuid'] = p[0]
-                                break
-                editor.set_moles(guessed_moles)
-                editor.moledata.save_moles()
         elif key == ord('f'):
             editor.toggle_faded_markers()
         elif key == 13:
