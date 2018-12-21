@@ -69,7 +69,7 @@ setuptools.setup(
             'autopep8',
             'docformatter',
             'flake8',
-            'pycodestyle==2.3.*',
+            'pycodestyle==2.4.*',
             'nose',
             'vulture',
             'pylint',
