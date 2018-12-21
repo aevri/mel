@@ -30,7 +30,6 @@ In 'mole edit' mode:
     Alt-click on a point to paste the copied uuid.
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
-    Press 'r' to auto-mark moles visible in the current mask.
     Press 't' to auto-relate moles from the previously viewed image.
     Press enter to toggle mole markers.
 
@@ -258,12 +257,6 @@ class MoleEditController:
                 self.sub_controller = None
                 editor.set_status('')
             editor.show_current()
-        elif key == ord('r'):
-            guessed_moles = mel.rotomap.detectmoles.moles(
-                editor.moledata.get_image(),
-                editor.moledata.mask)
-            editor.set_moles(guessed_moles)
-            editor.moledata.save_moles()
         elif key == ord('t'):
             theory = mel.rotomap.relate.best_offset_theory(
                 self.previous_moles,
