@@ -30,8 +30,6 @@ In 'mole edit' mode:
     Alt-click on a point to paste the copied uuid.
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
-    Press 'c' to copy the moles in the displayed image.
-    Press 'a' to auto-paste the copied moles in the displayed image.
     Press 'r' to auto-mark moles visible in the current mask.
     Press 't' to auto-relate moles from the previously viewed image.
     Press enter to toggle mole markers.
@@ -186,7 +184,6 @@ class MoleEditController:
         self.move_controller = MoveController()
         self.sub_controller = None
 
-        self.copied_moles = None
         self.previous_moles = None
 
         self.mouse_x = 0
@@ -244,9 +241,7 @@ class MoleEditController:
                 pass
 
     def on_key(self, editor, key):
-        if key == ord('c'):
-            self.copied_moles = editor.moledata.moles
-        elif key == ord('o'):
+        if key == ord('o'):
             is_follow = self.sub_controller is self.follow_controller
             if not is_follow and self.mole_uuid_list[0]:
                 self.sub_controller = self.follow_controller
@@ -263,13 +258,6 @@ class MoleEditController:
                 self.sub_controller = None
                 editor.set_status('')
             editor.show_current()
-        elif key == ord('a'):
-            guessed_moles = guess_mole_positions(
-                self.copied_moles,
-                editor.moledata.moles,
-                editor.moledata.get_image(),
-            )
-            editor.set_moles(guessed_moles)
         elif key == ord('r'):
             guessed_moles = mel.rotomap.detectmoles.moles(
                 editor.moledata.get_image(),
@@ -619,47 +607,6 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
                     guess_pos[0], guess_pos[1], follow_uuid)
 
     return guess_pos
-
-
-def guess_mole_positions(previous_moles, current_moles, current_image):
-    prev_uuids = set(m['uuid'] for m in previous_moles)
-    curr_uuids = set(m['uuid'] for m in current_moles)
-    matched_uuids = prev_uuids.intersection(curr_uuids)
-
-    prev_moles_for_mapping = [
-        m for m in previous_moles
-        if m['uuid'] in matched_uuids
-    ]
-
-    image_rect = (0, 0, current_image.shape[1], current_image.shape[0])
-
-    new_moles = copy.deepcopy(current_moles)
-    for mole in previous_moles:
-        if mole['uuid'] not in matched_uuids:
-            new_m = copy.deepcopy(mole)
-            pos = mel.rotomap.moles.mole_to_point(new_m)
-
-            # XXX: assume that current_image and prev_image have the same
-            #      dimensions
-            moles_for_mapping = mel.rotomap.moles.get_best_moles_for_mapping(
-                pos, prev_moles_for_mapping, image_rect
-            )
-
-            if moles_for_mapping:
-                pos = mel.rotomap.moles.mapped_pos(
-                    pos, moles_for_mapping, current_moles
-                )
-                mel.rotomap.moles.set_molepos_to_nparray(new_m, pos)
-
-            ellipse = mel.lib.moleimaging.find_mole_ellipse(
-                current_image, pos, _MAGIC_MOLE_FINDER_RADIUS
-            )
-            if ellipse is not None:
-                mel.rotomap.moles.set_molepos_to_nparray(new_m, ellipse[0])
-
-            new_moles.append(new_m)
-
-    return new_moles
 
 
 # -----------------------------------------------------------------------------
