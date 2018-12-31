@@ -13,8 +13,8 @@ Mode selection:
 
     Press '1' for mole edit mode (the starting mode).
     Press '2' for mask edit mode.
-    Press '3' for mole marking mode.
-    Press '4' for bounding area mode.
+    Press '3' for bounding area mode.
+    Press '4' for mole marking mode.
     Press '0' for auto-mole debug mode.
 
 In 'mole edit' mode:
@@ -385,13 +385,13 @@ class Controller:
             self.current_controller = self.maskedit_controller
             editor.set_editmask_mode()
         elif key == ord('3'):
-            # Switch to mole marking mode
-            self.current_controller = self.molemark_controller
-            editor.set_molemark_mode()
-        elif key == ord('4'):
             # Switch to bounding area mode
             self.current_controller = self.boundingarea_controller
             editor.set_boundingarea_mode()
+        elif key == ord('4'):
+            # Switch to mole marking mode
+            self.current_controller = self.molemark_controller
+            editor.set_molemark_mode()
 
         self.current_controller.on_key(editor, key)
 

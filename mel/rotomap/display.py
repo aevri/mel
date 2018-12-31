@@ -346,8 +346,8 @@ class FittedImageTransform:
 class EditorMode(enum.Enum):
     edit_mole = 1
     edit_mask = 2
-    mole_mark = 3
-    bounding_area = 5
+    bounding_area = 3
+    mole_mark = 4
     debug_automole = 0
 
 
@@ -391,12 +391,12 @@ class Editor:
         self._mode = EditorMode.edit_mask
         self.show_current()
 
-    def set_molemark_mode(self):
-        self._mode = EditorMode.mole_mark
-        self.show_current()
-
     def set_boundingarea_mode(self):
         self._mode = EditorMode.bounding_area
+        self.show_current()
+
+    def set_molemark_mode(self):
+        self._mode = EditorMode.mole_mark
         self.show_current()
 
     def set_status(self, text):
@@ -447,7 +447,15 @@ class Editor:
         self.display.set_title(self.moledata.current_image_path())
         image = self.moledata.get_image()
 
-        if self._mode is EditorMode.debug_automole:
+        if self._mode is EditorMode.edit_mole:
+            self._mole_overlay.moles = self.moledata.moles
+            self.display.show_current(
+                image,
+                make_composite_overlay(
+                    self._mole_overlay, self._status_overlay
+                ),
+            )
+        elif self._mode is EditorMode.debug_automole:
             image = image[:]
             image = mel.rotomap.detectmoles.draw_debug(
                 image, self.moledata.mask
@@ -459,21 +467,15 @@ class Editor:
             gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
             gray_image[:, :, 2] = mask
             self.display.show_current(gray_image, None)
-        elif self._mode is EditorMode.mole_mark:
-            self.marked_mole_overlay.moles = self.moledata.moles
-            self.display.show_current(image, self.marked_mole_overlay)
         elif self._mode is EditorMode.bounding_area:
             box = self.moledata.metadata.get('ellipse', None)
             self.bounding_area_overlay.bounding_box = box
             self.display.show_current(image, self.bounding_area_overlay)
+        elif self._mode is EditorMode.mole_mark:
+            self.marked_mole_overlay.moles = self.moledata.moles
+            self.display.show_current(image, self.marked_mole_overlay)
         else:
-            self._mole_overlay.moles = self.moledata.moles
-            self.display.show_current(
-                image,
-                make_composite_overlay(
-                    self._mole_overlay, self._status_overlay
-                ),
-            )
+            raise Exception("Unknown mode", self._mode)
 
     def show_fitted(self):
         self.display.set_fitted()
