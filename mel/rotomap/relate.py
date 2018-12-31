@@ -72,65 +72,6 @@ def draw_mole(image, mole, colour):
         draw_non_canonical_mole(image, x, y, colour)
 
 
-def draw_from_to_mole(image, from_mole, to_mole, colour):
-    draw_mole(image, from_mole, colour)
-    draw_mole(image, to_mole, colour)
-    cv2.arrowedLine(
-        image,
-        tuple(mel.rotomap.moles.mole_to_point(from_mole)),
-        tuple(mel.rotomap.moles.mole_to_point(to_mole)),
-        (255, 255, 255),
-        2,
-        cv2.LINE_AA,
-    )
-
-
-def draw_debug(image, to_moles, from_moles):
-    image = numpy.zeros(image.shape)
-
-    if from_moles is None:
-        from_moles = []
-
-    from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
-        from_moles, to_moles
-    )
-
-    from_only = from_set - to_set
-    to_only = to_set - from_set
-
-    theory = []
-    theory.extend((u, None) for u in from_only)
-    theory.extend((None, u) for u in to_only)
-    theory.extend((u, u) for u in in_both)
-
-    if from_moles and to_moles:
-        with _DEBUG_RENDERER.image_context(image):
-            theory = best_offset_theory(from_moles, to_moles)
-
-    overlay_theory(image, theory, from_dict, to_dict)
-    return image
-
-
-def overlay_theory(image, theory, from_dict, to_dict):
-    colour_removed = (0, 0, 255)
-    colour_added = (0, 255, 0)
-    colour_mapped = (255, 0, 0)
-    colour_known = (255, 255, 0)
-    for from_, to in theory:
-        assert (from_ is not None) or (to is not None)
-        if to is None:
-            draw_mole(image, from_dict[from_], colour_removed)
-        elif from_ is None:
-            draw_mole(image, to_dict[to], colour_added)
-        else:
-            colour = colour_mapped
-            if from_ == to:
-                colour = colour_known
-            draw_from_to_mole(image, from_dict[from_], to_dict[to], colour)
-
-    return image
-
-
 def mole_list_to_uuid_dict(mole_list):
     return {m['uuid']: m for m in mole_list}
 

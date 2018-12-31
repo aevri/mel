@@ -349,7 +349,6 @@ class EditorMode(enum.Enum):
     mole_mark = 3
     bounding_area = 5
     debug_automole = 0
-    debug_autorelate = 9
 
 
 class Editor:
@@ -371,8 +370,6 @@ class Editor:
 
         self.masker_radius = DEFAULT_MASKER_RADIUS
 
-        self.from_moles = None
-
     def set_smaller_masker(self):
         self.masker_radius //= 2
 
@@ -384,10 +381,6 @@ class Editor:
 
     def set_automoledebug_mode(self):
         self._mode = EditorMode.debug_automole
-        self.show_current()
-
-    def set_autorelatedebug_mode(self):
-        self._mode = EditorMode.debug_autorelate
         self.show_current()
 
     def set_editmole_mode(self):
@@ -442,9 +435,6 @@ class Editor:
         self._mole_overlay.toggle_faded_markers()
         self.show_current()
 
-    def set_from_moles(self, moles):
-        self.from_moles = moles
-
     def set_mask(self, mouse_x, mouse_y, enable):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         value = 255 if enable else 0
@@ -461,12 +451,6 @@ class Editor:
             image = image[:]
             image = mel.rotomap.detectmoles.draw_debug(
                 image, self.moledata.mask
-            )
-            self.display.show_current(image, None)
-        elif self._mode is EditorMode.debug_autorelate:
-            image = numpy.copy(image)
-            image = mel.rotomap.relate.draw_debug(
-                image, self.moledata.moles, self.from_moles
             )
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:

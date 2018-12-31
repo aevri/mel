@@ -1,23 +1,11 @@
 """A global object for debug rendering into images without around."""
 
-import contextlib
-
 import cv2
 
 
 class GlobalContext:
     def __init__(self):
         self._image = None
-
-    @contextlib.contextmanager
-    def image_context(self, image):
-        if self._image is not None:
-            raise Exception('Nested image context not yet supported')
-        try:
-            self._image = image
-            yield
-        finally:
-            self._image = None
 
     def arrow(self, from_, to):
         if self._image is None:
