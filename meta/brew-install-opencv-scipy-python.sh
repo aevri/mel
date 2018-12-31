@@ -11,3 +11,16 @@ echo 'Try "import cv2" ..'
 python3 -c 'import cv2'
 echo OK
 trap - EXIT
+
+# For using opencv within a Pipenv this way, see this issue raised on pipenv:
+# https://github.com/pypa/pipenv/issues/1313
+#
+# $ brew install opencv
+# $ pipenv --python 3.6
+# $ pipenv install numpy
+# $ ln -s "$(brew --prefix)"/lib/python3.6/site-packages/cv2*.so "$(pipenv --venv)"/lib/python3.6/site-packages
+# $ pipenv run python -c "import cv2; print(cv2.__version__)"
+# 3.4.0
+
+# Also probably want to do this when developing:
+# $ pipenv install -e .[dev]
