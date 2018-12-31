@@ -4,6 +4,10 @@
 import argparse
 import sys
 
+import mel.lib.ui
+
+import mel.cmd.error
+
 import mel.cmddebug.benchautomark
 import mel.cmddebug.rendervaluefield
 
@@ -36,7 +40,22 @@ def main():
     )
 
     args = parser.parse_args()
-    return args.func(args)
+    try:
+        return args.func(args)
+    except mel.cmd.error.UsageError as e:
+        print('Usage error:', e, file=sys.stderr)
+        return 2
+    except BrokenPipeError:
+        # Silently exit on broken pipes, e.g. when our output is piped to head.
+
+        # Explicitly close stderr before exiting, to avoid an additional
+        # message from Python on stderr about the pipe break being ignored.
+        # http://bugs.python.org/issue11380,#msg153320
+        sys.stderr.close()
+    except mel.lib.ui.AbortKeyInterruptError:
+        # Using this return code may also break us out of an outer loop, e.g.
+        # 'xargs' will stop processing if the program it calls exists with 255.
+        return 255
 
 
 def _setup_parser_for_module(subparsers, module, name):
@@ -56,6 +75,8 @@ def _setup_parser_for_module(subparsers, module, name):
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2016-2018 Angelos Evripiotis.
 #
