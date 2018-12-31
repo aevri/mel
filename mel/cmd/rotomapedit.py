@@ -34,7 +34,6 @@ In 'mask edit' mode:
 
     Click on a point to draw masking there.
     Shift-click on a point to remove masking there.
-    Press 'a' to auto-mask based on the current mask.
     Press '<' to decrease the size of the mask tool.
     Press '>' to increase the size of the mask tool.
     Press '.' to reset the size of the mask tool to the default.
@@ -274,14 +273,7 @@ class MaskEditController:
         pass
 
     def on_key(self, editor, key):
-        if key == ord('a'):
-            image = editor.moledata.image
-            mask = editor.moledata.mask
-            hist = mel.rotomap.mask.histogram_from_image_mask(image, mask)
-            editor.moledata.mask = mel.rotomap.mask.guess_mask(image, hist)
-            editor.moledata.save_mask()
-            editor.show_current()
-        elif key == ord('<'):
+        if key == ord('<'):
             editor.set_smaller_masker()
         elif key == ord('>'):
             editor.set_larger_masker()
