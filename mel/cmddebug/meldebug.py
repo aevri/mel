@@ -9,6 +9,7 @@ import mel.lib.ui
 import mel.cmd.error
 
 import mel.cmddebug.benchautomark
+import mel.cmddebug.genrepo
 import mel.cmddebug.rendervaluefield
 
 
@@ -34,6 +35,9 @@ def main():
 
     _setup_parser_for_module(
         subparsers, mel.cmddebug.benchautomark, 'bench-automark'
+    )
+    _setup_parser_for_module(
+        subparsers, mel.cmddebug.genrepo, 'gen-repo'
     )
     _setup_parser_for_module(
         subparsers, mel.cmddebug.rendervaluefield, 'render-valuefield'

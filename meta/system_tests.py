@@ -88,6 +88,7 @@ def run_mel_debug_tests():
 
     subcommands = [
         'bench-automark',
+        'gen-repo',
         'render-valuefield',
     ]
 
