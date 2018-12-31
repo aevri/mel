@@ -260,10 +260,16 @@ def process_args(args):
         else:
             raise RuntimeError(f'Unexpected notice type: {klass}')
 
+    any_notices = bool(alerts_to_notices or errors_to_notices)
+
     print_klass_to_notices(alerts_to_notices, args.detail)
     print_klass_to_notices(errors_to_notices, args.detail)
     if args.trivia > 0:
         print_klass_to_notices(info_to_notices, args.detail)
+        if not any_notices and info_to_notices:
+            any_notices = True
+
+    return any_notices
 
 
 def print_klass_to_notices(klass_to_notices, detail_level):
