@@ -3,7 +3,6 @@
 import enum
 import functools
 
-import collections
 import cv2
 import numpy
 
@@ -260,169 +259,6 @@ class MarkedMoleOverlay:
         return image
 
 
-class ImageRelateOverlay:
-    """An overlay to make image-to-image mappings obvious."""
-
-    def __init__(self):
-        self.prev_moles = None
-        self.moles = None
-        self.is_target_mode = False
-
-    def __call__(self, image, transform):
-
-        from_moles = self.prev_moles
-        to_moles = self.moles
-
-        default_theory_uuids = set()
-        best_theory = []
-        from_duplicates = set()
-        to_duplicates = set()
-
-        if self.prev_moles:
-            make_info = mel.rotomap.relate.mole_list_overlap_info
-            _, _, _, _, default_theory_uuids = make_info(
-                self.prev_moles, self.moles
-            )
-
-            from_counts = collections.Counter(x['uuid'] for x in from_moles)
-            to_counts = collections.Counter(x['uuid'] for x in to_moles)
-            from_duplicates = {u for u, c in from_counts.items() if c > 1}
-            to_duplicates = {u for u, c in to_counts.items() if c > 1}
-
-            if self.moles:
-                best_theory = mel.rotomap.relate.best_theory(
-                    self.prev_moles, self.moles, iterate=False
-                )
-
-        green = [[0, 255, 0], [128, 255, 128], [0, 255, 0]]
-        red = [[0, 0, 255], [128, 128, 255], [0, 0, 255]]
-
-        if self.is_target_mode:
-            image = self._draw_accentuated(
-                image, transform, default_theory_uuids
-            )
-
-        if self.is_target_mode:
-            saved_image = image.copy()
-
-        if self.prev_moles:
-            self._draw_moles(
-                image,
-                transform,
-                self.prev_moles,
-                red,
-                default_theory_uuids,
-                from_duplicates,
-            )
-
-        if not self.is_target_mode:
-            image //= 2
-            self._draw_moles(
-                image,
-                transform,
-                self.moles,
-                green,
-                default_theory_uuids,
-                to_duplicates,
-            )
-
-        if self.prev_moles:
-            from_uuid_points = mel.rotomap.moles.to_uuid_points(
-                self.prev_moles)
-            to_uuid_points = mel.rotomap.moles.to_uuid_points(self.moles)
-            for from_uuid, to_uuid in best_theory:
-                if from_uuid and to_uuid:
-                    from_pos = from_uuid_points[from_uuid]
-                    to_pos = to_uuid_points[to_uuid]
-
-                    from_pos = transform.imagexy_to_transformedxy(*from_pos)
-                    to_pos = transform.imagexy_to_transformedxy(*to_pos)
-
-                    radius = 25
-
-                    if self.is_target_mode:
-                        offset = to_pos - from_pos
-                        magnitude = numpy.linalg.norm(offset)
-                        radius = min(radius, magnitude / 2)
-                        if radius < magnitude:
-                            direction = offset / magnitude
-                            adjustment = (direction * radius).astype(int)
-                            to_pos -= adjustment
-
-                    colour = (255, 255, 255)
-                    if from_uuid == to_uuid:
-                        colour = (255, 0, 0)
-
-                    self._arrow(image, from_pos, to_pos, colour)
-
-        if self.is_target_mode:
-            image = cv2.addWeighted(image, 0.25, saved_image, 0.75, 0.0)
-
-        return image
-
-    def _draw_moles(
-        self, image, transform, moles, colour, defaults, duplicates
-    ):
-        blue = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
-        alert = [[0, 255, 255], [0, 0, 255], [0, 255, 255]]
-        for m in moles:
-            x, y = transform.imagexy_to_transformedxy(m['x'], m['y'])
-
-            c = colour
-            if m['uuid'] in defaults:
-                c = blue
-            if m['uuid'] in duplicates:
-                c = alert
-
-            draw_mole(image, x, y, c)
-
-    def _arrow(self, image, from_pos, to_pos, colour):
-        cv2.arrowedLine(
-            image,
-            tuple(from_pos),
-            tuple(to_pos),
-            colour,
-            10,
-            cv2.LINE_AA,
-            tipLength=0.25,
-        )
-
-        cv2.arrowedLine(
-            image,
-            tuple(from_pos),
-            tuple(to_pos),
-            (0, 0, 0),
-            3,
-            cv2.LINE_AA,
-            tipLength=0.25,
-        )
-
-    def _draw_accentuated(self, image, transform, in_both):
-        # Reveal the moles that have been marked, whilst still showing
-        # markers. This is good for verifying that markers are actually
-        # positioned on moles.
-
-        mask_radius = 50
-
-        image = image.copy() // 2
-        mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
-
-        for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_mole(mask, x, y, [[255] * 3] * 3)
-            cv2.circle(mask, (x, y), mask_radius, 255, -1)
-
-        masked_faded = cv2.bitwise_and(image, image, mask=mask)
-        image = cv2.add(masked_faded, image)
-
-        for mole in self.moles:
-            if mole['uuid'] not in in_both:
-                x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-                draw_crosshair(image, x, y)
-
-        return image
-
-
 class BoundingAreaOverlay:
     """An overlay to show the bounding area, if any."""
 
@@ -511,7 +347,6 @@ class EditorMode(enum.Enum):
     edit_mole = 1
     edit_mask = 2
     mole_mark = 3
-    image_relate = 4
     bounding_area = 5
     debug_automole = 0
     debug_autorelate = 9
@@ -530,7 +365,6 @@ class Editor:
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.marked_mole_overlay = MarkedMoleOverlay()
-        self.image_relate_overlay = ImageRelateOverlay()
         self.bounding_area_overlay = BoundingAreaOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
@@ -568,20 +402,12 @@ class Editor:
         self._mode = EditorMode.mole_mark
         self.show_current()
 
-    def set_imagerelate_mode(self):
-        self._mode = EditorMode.image_relate
-        self.show_current()
-
     def set_boundingarea_mode(self):
         self._mode = EditorMode.bounding_area
         self.show_current()
 
     def set_status(self, text):
         self._status_overlay.text = text
-
-    def set_moles(self, moles):
-        self.moledata.moles = moles
-        self.show_current()
 
     def follow(self, uuid_to_follow):
         self._follow = uuid_to_follow
@@ -652,10 +478,6 @@ class Editor:
         elif self._mode is EditorMode.mole_mark:
             self.marked_mole_overlay.moles = self.moledata.moles
             self.display.show_current(image, self.marked_mole_overlay)
-        elif self._mode is EditorMode.image_relate:
-            self.image_relate_overlay.moles = self.moledata.moles
-            self.image_relate_overlay.prev_moles = self.from_moles
-            self.display.show_current(image, self.image_relate_overlay)
         elif self._mode is EditorMode.bounding_area:
             box = self.moledata.metadata.get('ellipse', None)
             self.bounding_area_overlay.bounding_box = box

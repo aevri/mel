@@ -424,7 +424,7 @@ def make_offset_field_theory(
             inv_offset, inv_error = pick_value_from_field(
                 to_point, inv_point_offsets
             )
-            from_uuid, from_distance = nearest_uuid_point(
+            from_uuid, _ = nearest_uuid_point(
                 to_point + inv_offset, from_uuid_points
             )
 
