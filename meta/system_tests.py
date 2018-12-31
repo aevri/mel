@@ -66,7 +66,6 @@ def run_mel_help_tests():
         'rotomap-confirm',
         'rotomap-edit',
         'rotomap-filter-marks',
-        'rotomap-fsck',
         'rotomap-identify',
         'rotomap-list',
         'rotomap-montage-single',
