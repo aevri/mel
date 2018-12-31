@@ -62,7 +62,6 @@ def run_mel_help_tests():
         'rotomap-automark',
         'rotomap-automask',
         'rotomap-calc-space',
-        'rotomap-check',
         'rotomap-compare',
         'rotomap-confirm',
         'rotomap-edit',

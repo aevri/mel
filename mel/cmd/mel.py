@@ -35,7 +35,6 @@ import mel.cmd.microview  # noqa: E402
 import mel.cmd.rotomapautomark  # noqa: E402
 import mel.cmd.rotomapautomask  # noqa: E402
 import mel.cmd.rotomapcalcspace  # noqa: E402
-import mel.cmd.rotomapcheck  # noqa: E402
 import mel.cmd.rotomapcompare  # noqa: E402
 import mel.cmd.rotomapconfirm  # noqa: E402
 import mel.cmd.rotomapedit  # noqa: E402
@@ -87,7 +86,6 @@ def main():
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapcalcspace, 'rotomap-calc-space'
     )
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapcheck, 'rotomap-check')
     _setup_parser_for_module(
         subparsers, mel.cmd.rotomapcompare, 'rotomap-compare'
     )
