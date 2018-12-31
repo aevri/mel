@@ -2,9 +2,11 @@
 """Test mel from a user's perspective."""
 
 import argparse
+import contextlib
 import os
 import subprocess
 import sys
+import tempfile
 
 
 class ExpectationError(Exception):
@@ -38,11 +40,12 @@ def main():
 
 
 def run_tests():
-    run_mel_tests()
-    run_mel_debug_tests()
+    run_mel_help_tests()
+    run_mel_debug_help_tests()
+    run_smoke_test()
 
 
-def run_mel_tests():
+def run_mel_help_tests():
 
     mel_cmd = 'mel'
 
@@ -79,7 +82,7 @@ def run_mel_tests():
         expect_ok(mel_cmd, s, '-h')
 
 
-def run_mel_debug_tests():
+def run_mel_debug_help_tests():
 
     mel_cmd = 'mel-debug'
 
@@ -94,6 +97,33 @@ def run_mel_debug_tests():
 
     for s in subcommands:
         expect_ok(mel_cmd, s, '-h')
+
+
+def run_smoke_test():
+    with chtempdir_context():
+        expect_ok('mel-debug', 'gen-repo', '.')
+        target_rotomap = 'rotomaps/parts/LeftLeg/Lower/2018_01_01'
+        target_image = target_rotomap + '/0.jpg'
+        target_json = target_image + '.json'
+        expect_ok('mel', 'rotomap-automask', target_image)
+        expect_ok('mel', 'rotomap-calc-space', target_image)
+        expect_ok('mel', 'rotomap-automark', target_image)
+        expect_ok('mel', 'rotomap-confirm', target_json)
+        expect_ok('mel', 'rotomap-list', target_json)
+        expect_ok('mel', 'rotomap-loadsave', target_json)
+        expect_ok('mel', 'status', '-ttdd')
+        expect_ok('mel', 'list')
+
+
+@contextlib.contextmanager
+def chtempdir_context():
+    with tempfile.TemporaryDirectory() as tempdir:
+        saved_path = os.getcwd()
+        os.chdir(tempdir)
+        try:
+            yield
+        finally:
+            os.chdir(saved_path)
 
 
 def expect_ok(*args):
