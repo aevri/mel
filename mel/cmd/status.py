@@ -125,6 +125,10 @@ class UnexpectedFileInfo(InfoNotification):
     pass
 
 
+class UnexpectedDirInfo(InfoNotification):
+    pass
+
+
 class RotomapMissingMoleInfo(InfoNotification):
     def __init__(self, path):
         super().__init__(path)
@@ -417,6 +421,10 @@ def check_rotomap(notices, rotomap):
                 missing_space_info.frame_list.append(frame.path)
     except Exception as e:
         notices.append(RotomapNotLoadable(rotomap.path, e))
+
+    for i in rotomap.path.iterdir():
+        if i.is_dir():
+            notices.append(UnexpectedDirInfo(i))
 
     if missing_mole_file_info.frame_list:
         notices.append(missing_mole_file_info)
