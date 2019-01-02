@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+import mel.cmd.mel
+
 
 class ExpectationError(Exception):
 
@@ -52,32 +54,14 @@ def run_mel_help_tests():
     expect_returncode(2, mel_cmd)
     expect_ok(mel_cmd, '-h')
 
-    subcommands = [
-        'add-cluster',
-        'add-single',
-        'list',
-        'micro-add',
-        'micro-compare',
-        'micro-view',
-        'rotomap-automark',
-        'rotomap-automask',
-        'rotomap-calc-space',
-        'rotomap-compare',
-        'rotomap-confirm',
-        'rotomap-edit',
-        'rotomap-filter-marks',
-        'rotomap-identify',
-        'rotomap-list',
-        'rotomap-montage-single',
-        'rotomap-organise',
-        'rotomap-rm',
-        'rotomap-udiff',
-        'rotomap-uuid',
-        'status',
-    ]
+    for subcommand in mel.cmd.mel.COMMANDS['root'].keys():
+        expect_ok(mel_cmd, subcommand, '-h')
 
-    for s in subcommands:
-        expect_ok(mel_cmd, s, '-h')
+    for subcommand in mel.cmd.mel.COMMANDS['micro'].keys():
+        expect_ok(mel_cmd, 'micro', subcommand, '-h')
+
+    for subcommand in mel.cmd.mel.COMMANDS['rotomap'].keys():
+        expect_ok(mel_cmd, 'rotomap', subcommand, '-h')
 
 
 def run_mel_debug_help_tests():
@@ -103,14 +87,14 @@ def run_smoke_test():
         target_rotomap = 'rotomaps/parts/LeftLeg/Lower/2018_01_01'
         target_image = target_rotomap + '/0.jpg'
         target_json = target_image + '.json'
-        expect_ok('mel', 'rotomap-automask', target_image)
-        expect_ok('mel', 'rotomap-calc-space', target_image)
-        expect_ok('mel', 'rotomap-automark', target_image)
-        expect_ok('mel', 'rotomap-confirm', target_json)
-        expect_ok('mel', 'rotomap-list', target_json)
-        expect_ok('mel', 'rotomap-loadsave', target_json)
+        expect_ok('mel', 'rotomap', 'automask', target_image)
+        expect_ok('mel', 'rotomap', 'calc-space', target_image)
+        expect_ok('mel', 'rotomap', 'automark', target_image)
+        expect_ok('mel', 'rotomap', 'confirm', target_json)
+        expect_ok('mel', 'rotomap', 'list', target_json)
+        expect_ok('mel', 'rotomap', 'loadsave', target_json)
         expect_ok('mel', 'status', '-ttdd')
-        expect_ok('mel', 'list')
+        expect_ok('mel', 'micro', 'list')
 
 
 @contextlib.contextmanager
@@ -145,3 +129,20 @@ def expect_returncode(expected_code, command):
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+# -----------------------------------------------------------------------------
+# Copyright (C) 2015-2019 Angelos Evripiotis.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------ END-OF-FILE ----------------------------------

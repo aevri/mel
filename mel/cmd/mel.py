@@ -50,13 +50,60 @@ import mel.cmd.rotomapuuid  # noqa: E402
 import mel.cmd.status  # noqa: E402
 
 
+COMMANDS = {
+    'root': {
+        'status': mel.cmd.status,
+    },
+    'micro': {
+        'add-cluster': mel.cmd.addcluster,
+        'add-single': mel.cmd.addsingle,
+        'list': mel.cmd.list,
+        'add': mel.cmd.microadd,
+        'compare': mel.cmd.microcompare,
+        'view': mel.cmd.microview,
+    },
+    'rotomap': {
+        'automark': mel.cmd.rotomapautomark,
+        'automask': mel.cmd.rotomapautomask,
+        'calc-space': mel.cmd.rotomapcalcspace,
+        'compare': mel.cmd.rotomapcompare,
+        'confirm': mel.cmd.rotomapconfirm,
+        'edit': mel.cmd.rotomapedit,
+        'filter-marks': mel.cmd.rotomapfiltermarks,
+        'identify': mel.cmd.rotomapidentify,
+        'list': mel.cmd.rotomaplist,
+        'loadsave': mel.cmd.rotomaploadsave,
+        'montage-single': mel.cmd.rotomapmontagesingle,
+        'organise': mel.cmd.rotomaporganise,
+        'rm': mel.cmd.rotomaprm,
+        'udiff': mel.cmd.rotomapudiff,
+        'uuid': mel.cmd.rotomapuuid,
+    },
+}
+
+
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
     )
 
-    subparsers = parser.add_subparsers()
+    top_subparsers = parser.add_subparsers()
+
+    micro_parser = top_subparsers.add_parser(
+        'micro',
+        help='Work with microscope images.',
+        aliases=['m'])
+
+    rotomap_parser = top_subparsers.add_parser(
+        'rotomap',
+        help='Work with rotomap images.',
+        aliases=['r', 'roto'])
+
+    micro_subparsers = micro_parser.add_subparsers()
+    rotomap_subparsers = rotomap_parser.add_subparsers()
+
+    subparsers = top_subparsers
 
     # Work around a bug in argparse with subparsers no longer being required:
     # http://bugs.python.org/issue9253#msg186387
@@ -70,48 +117,15 @@ def main():
     subparsers.dest
     # pylint: enable=pointless-statement
 
-    _setup_parser_for_module(subparsers, mel.cmd.addcluster, 'add-cluster')
-    _setup_parser_for_module(subparsers, mel.cmd.addsingle, 'add-single')
-    _setup_parser_for_module(subparsers, mel.cmd.list, 'list')
-    _setup_parser_for_module(subparsers, mel.cmd.microadd, 'micro-add')
-    _setup_parser_for_module(subparsers, mel.cmd.microcompare, 'micro-compare')
-    _setup_parser_for_module(subparsers, mel.cmd.microview, 'micro-view')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapautomark, 'rotomap-automark'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapautomask, 'rotomap-automask'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapcalcspace, 'rotomap-calc-space'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapcompare, 'rotomap-compare'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapconfirm, 'rotomap-confirm'
-    )
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapedit, 'rotomap-edit')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapfiltermarks, 'rotomap-filter-marks'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapidentify, 'rotomap-identify'
-    )
-    _setup_parser_for_module(subparsers, mel.cmd.rotomaplist, 'rotomap-list')
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomaploadsave, 'rotomap-loadsave'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomapmontagesingle, 'rotomap-montage-single'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmd.rotomaporganise, 'rotomap-organise'
-    )
-    _setup_parser_for_module(subparsers, mel.cmd.rotomaprm, 'rotomap-rm')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapudiff, 'rotomap-udiff')
-    _setup_parser_for_module(subparsers, mel.cmd.rotomapuuid, 'rotomap-uuid')
-    _setup_parser_for_module(subparsers, mel.cmd.status, 'status')
+    parser_map = {
+        'root': subparsers,
+        'micro': micro_subparsers,
+        'rotomap': rotomap_subparsers,
+    }
+
+    for pname, parser2 in parser_map.items():
+        for name, module in COMMANDS[pname].items():
+            _setup_parser_for_module(parser2, module, name)
 
     args = parser.parse_args()
     try:
@@ -149,8 +163,10 @@ def _setup_parser_for_module(subparsers, module, name):
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

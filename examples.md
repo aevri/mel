@@ -8,7 +8,7 @@ Provide some usage examples to get people started quickly.
 Compares against the oldest image taken of the same mole.
 
 ```
-$ mel list --sort lastmicro | head -1 | xargs mel micro-add
+$ mel micro list --sort lastmicro | head -1 | xargs mel micro add
 ```
 
 ### Capture a new image of the least-recently-updated mole, compare recent
@@ -43,7 +43,7 @@ Setting the compare age to '365 days' means that:
   year, then it is possible that the changes will not be noticed.
 
 ```
-$ mel list --sort lastmicro | head -1 | xargs mel micro-add --min-compare-age-days 365
+$ mel micro list --sort lastmicro | head -1 | xargs mel micro add --min-compare-age-days 365
 ```
 
 ### Edit the '__changed__' file for the most recently updated mole
@@ -53,7 +53,7 @@ appears to be different. If you're managing the files with a version tracker
 like 'git' then you'll be able to keep a useful history.
 
 ```
-bash$ mel list --sort lastmicro | tail -1
+bash$ mel micro list --sort lastmicro | tail -1
 bash$ $EDITOR $(!!)/__changed__
 ```
 
@@ -63,7 +63,7 @@ Quickly get an idea of when you last took a microscope image of a mole by
 outputting the moles in columns, sorted by the last capture date.
 
 ```
-$ mel list --format '{lastmicro_age_days} {relpath}' | sort -n | column -t | column
+$ mel micro list --format '{lastmicro_age_days} {relpath}' | sort -n | column -t | column
 ```
 
 Example output:

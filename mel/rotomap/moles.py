@@ -346,7 +346,7 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
         if 'ellipse' not in frame.metadata:
             raise Exception(
                 f'{frame} has no ellipse metadata, '
-                'try running "rotomap-calc-space"'
+                'try running "rotomap calc-space"'
             )
 
         ellipse = frame.metadata['ellipse']
@@ -375,7 +375,7 @@ def load_potential_set_file(path, filename):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

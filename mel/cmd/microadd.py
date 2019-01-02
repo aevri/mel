@@ -144,7 +144,7 @@ def process_args(args):
         raise Exception("Could not open video capture device.")
 
     display = mel.lib.ui.MultiImageDisplay(
-        'mel micro-add',
+        'mel micro add',
         args.display_width,
         args.display_height)
 

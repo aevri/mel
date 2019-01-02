@@ -29,7 +29,7 @@ def setup_parser(parser):
 def process_args(args):
 
     display = OrganiserDisplay(
-        "rotomap-organise",
+        "rotomap organise",
         mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES),
         args.display_width,
         args.display_height,
@@ -73,8 +73,10 @@ class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
             del self._image_list[:self._index + 1]
             self._index = -1
             self.next_image()
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

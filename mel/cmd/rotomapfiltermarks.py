@@ -4,7 +4,7 @@ This is experimental functionality and results may be variable.
 
 In order to create the 'model file' required by this command, you will need to
 have tagged a large number of moles by hand. You can then create a dataset with
-the 'rotomap-photoset' command. The first lesson in the fast ai deep learning
+the 'rotomap photoset' command. The first lesson in the fast ai deep learning
 course will teach you to generate the file: "http://course.fast.ai/".
 
 Please install the 'fastai' python library and its dependencies in order for
@@ -206,7 +206,7 @@ def open_image_for_classifier(fn):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
