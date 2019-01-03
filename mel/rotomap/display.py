@@ -21,9 +21,18 @@ DEFAULT_MASKER_RADIUS = 200
 
 def draw_mole(image, x, y, colours):
 
+    def circle(radius, col):
+        cv2.circle(image, (x, y), radius, col, -1)
+
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+
+    circle(20, white)
+    circle(18, black)
+
     radius = 16
     for index in range(3):
-        cv2.circle(image, (x, y), radius, colours[index], -1)
+        circle(radius, colours[index])
         radius -= 4
 
 
