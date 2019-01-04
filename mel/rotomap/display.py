@@ -18,17 +18,17 @@ import mel.rotomap.tricolour
 
 DEFAULT_MASKER_RADIUS = 200
 
+_WHITE = (255, 255, 255)
+_BLACK = (0, 0, 0)
+
 
 def draw_mole(image, x, y, colours):
 
     def circle(radius, col):
         cv2.circle(image, (x, y), radius, col, -1)
 
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-
-    circle(20, white)
-    circle(18, black)
+    circle(20, _WHITE)
+    circle(18, _BLACK)
 
     radius = 16
     for index in range(3):
@@ -37,24 +37,25 @@ def draw_mole(image, x, y, colours):
 
 
 def draw_non_canonical_mole(image, x, y, colours):
-    radius = 16
-    thickness = 4
-    for index in range(3):
-        top_left = (x - radius, y - radius)
-        bottom_right = (x + radius, y + radius)
-        cv2.rectangle(image, top_left, bottom_right, colours[index], thickness)
-        radius -= thickness
+
+    def rect(size, col):
+        top_left = (x - size, y - size)
+        bottom_right = (x + size, y + size)
+        cv2.rectangle(image, top_left, bottom_right, col, -1)
+
+    rect(20, _WHITE)
+    rect(18, _BLACK)
+
+    draw_mole(image, x, y, colours)
 
 
 def draw_crosshair(image, x, y):
     inner_radius = 16
     outer_radius = 24
-    white = (255, 255, 255)
-    black = (0, 0, 0)
 
     directions = [(1, 0), (0, -1), (-1, 0), (0, 1)]  # Right, down, left, up
 
-    size_color_list = [(3, white), (2, black)]
+    size_color_list = [(3, _WHITE), (2, _BLACK)]
 
     for size, color in size_color_list:
         for d in directions:
