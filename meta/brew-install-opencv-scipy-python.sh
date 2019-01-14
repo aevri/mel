@@ -24,3 +24,10 @@ trap - EXIT
 
 # Also probably want to do this when developing:
 # $ pipenv install -e .[dev]
+
+# To get mel to install under Conda, it appears we need to install the Mac SDK
+# headers, or "limits.h" won't be found:
+#
+#     conda install gcc opencv
+#     sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+#
