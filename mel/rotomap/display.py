@@ -260,10 +260,30 @@ class MarkedMoleOverlay:
 
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            kind = mole.get('kind', None)
+            looks_like = mole.get('looks_like', None)
 
             colour = (128, 0, 0)
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
                 colour = (255, 0, 0)
+            if kind == 'mole':
+                if looks_like == 'mole':
+                    colour = (255, 255, 255)
+                elif looks_like == 'non-mole':
+                    colour = (255, 255, 0)
+                elif looks_like == 'unsure':
+                    colour = (255, 0, 128)
+                else:
+                    raise Exception(f"Mole looks_like is invalid: {mole}")
+            elif kind == 'non-mole':
+                if looks_like == 'mole':
+                    colour = (0, 255, 255)
+                elif looks_like == 'non-mole':
+                    colour = (0, 0, 255)
+                elif looks_like == 'unsure':
+                    colour = (128, 0, 255)
+                else:
+                    raise Exception(f"Mole looks_like is invalid: {mole}")
 
             cv2.circle(image, (x, y), mask_radius, colour, 2)
             if mole is highlight_mole:

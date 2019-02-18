@@ -298,9 +298,44 @@ class MoleMarkController:
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                editor.remove_mole(mouse_x, mouse_y)
+                if flags & cv2.EVENT_FLAG_ALTKEY:
+                    nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
+                    if nearest_mole is not None:
+                        nearest_mole['kind'] = 'non-mole'
+                        nearest_mole['looks_like'] = 'mole'
+                        editor.moledata.save_moles()
+                        editor.show_current()
+                else:
+                    editor.remove_mole(mouse_x, mouse_y)
             else:
-                editor.add_mole(mouse_x, mouse_y)
+                if flags & cv2.EVENT_FLAG_ALTKEY:
+                    nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
+                    if nearest_mole is not None:
+                        nearest_mole['kind'] = 'mole'
+                        nearest_mole['looks_like'] = 'non-mole'
+                        editor.moledata.save_moles()
+                        editor.show_current()
+                else:
+                    editor.add_mole(mouse_x, mouse_y)
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
+            if nearest_mole is not None:
+                if flags & cv2.EVENT_FLAG_ALTKEY:
+                    if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                        nearest_mole['kind'] = 'non-mole'
+                        nearest_mole['looks_like'] = 'unsure'
+                    else:
+                        nearest_mole['kind'] = 'mole'
+                        nearest_mole['looks_like'] = 'unsure'
+                else:
+                    if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                        nearest_mole['kind'] = 'non-mole'
+                        nearest_mole['looks_like'] = 'non-mole'
+                    else:
+                        nearest_mole['kind'] = 'mole'
+                        nearest_mole['looks_like'] = 'mole'
+                editor.moledata.save_moles()
+                editor.show_current()
 
     def pre_key(self, editor, key):
         pass
