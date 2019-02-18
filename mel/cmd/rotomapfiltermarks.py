@@ -40,6 +40,13 @@ def setup_parser(parser):
     )
 
     parser.add_argument(
+        '--dry-run',
+        '-n',
+        action='store_true',
+        help="Don't save results of processing, just print.",
+    )
+
+    parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
@@ -76,7 +83,7 @@ def process_args(args):
             if args.verbose:
                 print(f"Filtered {num_filtered} unlikely moles.")
 
-            if num_filtered:
+            if not args.dry_run and num_filtered:
                 mel.rotomap.moles.save_image_moles(filtered_moles, image_path)
 
 
