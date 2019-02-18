@@ -215,6 +215,16 @@ def load_image_moles(image_path):
     return moles
 
 
+def load_image_untracked(image_path):
+    untracked_path = pathlib.Path(str(image_path) + '.untracked.json')
+
+    untracked = []
+    if untracked_path.exists():
+        untracked = load_json(untracked_path)
+
+    return untracked
+
+
 def normalise_moles(moles):
     for m in moles:
         m['x'] = int(m['x'])
@@ -233,6 +243,13 @@ def save_image_moles(moles, image_path):
     save_json(moles_path, moles)
 
 
+def save_image_untracked(untracked, image_path):
+    # Explicitly convert 'image_path' to str. It might be a pathlib.Path, which
+    # doesn't support addition in this way.
+    untracked_path = str(image_path) + '.untracked.json'
+    save_compact_json(untracked_path, untracked)
+
+
 def load_json(path):
     with open(path) as f:
         return json.load(f)
@@ -241,6 +258,14 @@ def load_json(path):
 def save_json(path, data):
     with open(path, 'w') as f:
         json.dump(data, f, indent=4, separators=(',', ': '), sort_keys=True)
+
+        # There's no newline after dump(), add one here for happier viewing
+        print(file=f)
+
+
+def save_compact_json(path, data):
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=0, sort_keys=True)
 
         # There's no newline after dump(), add one here for happier viewing
         print(file=f)

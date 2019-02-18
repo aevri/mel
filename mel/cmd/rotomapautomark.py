@@ -44,14 +44,15 @@ def process_args(args):
         guessed_moles = mel.rotomap.detectmoles.moles(image, mask)
         loaded_moles = mel.rotomap.moles.load_image_moles(path)
 
-        moles = _merge_in_radiuses(
+        tracked, untracked = _merge_in_radiuses(
             loaded_moles,
             radii_sources=guessed_moles,
             error_distance=args.error_distance,
             only_merge=args.only_merge,
         )
 
-        mel.rotomap.moles.save_image_moles(moles, path)
+        mel.rotomap.moles.save_image_moles(tracked + untracked, path)
+        # mel.rotomap.moles.save_image_untracked(untracked, path)
 
 
 def _merge_in_radiuses(targets, radii_sources, error_distance, only_merge):
@@ -70,21 +71,22 @@ def _merge_in_radiuses(targets, radii_sources, error_distance, only_merge):
         if t_uuid in target_to_radii_src
     }
 
-    results = []
+    tracked = []
     for t in targets:
         t_copy = copy.deepcopy(t)
-        results.append(t_copy)
+        tracked.append(t_copy)
         if 'radius' not in t_copy:
             radius = target_uuid_radius.get(t_copy['uuid'], None)
             if radius is not None:
                 t_copy['radius'] = radius
 
+    untracked = []
     if not only_merge:
         for r in radii_sources:
             if r['uuid'] in added_uuids:
-                results.append(r)
+                untracked.append(r)
 
-    return results
+    return tracked, untracked
 
 
 def _match_moles_by_pos(from_moles, to_moles, error_distance):
