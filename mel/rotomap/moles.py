@@ -191,6 +191,9 @@ def load_image_metadata(image_path):
 
 
 def load_image_moles(image_path):
+    if not pathlib.Path(image_path).exists():
+        raise ValueError(f"Mole image does not exist: '{image_path}'.")
+
     moles_path = pathlib.Path(str(image_path) + '.json')
 
     moles = []
