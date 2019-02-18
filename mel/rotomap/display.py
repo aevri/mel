@@ -2,6 +2,7 @@
 
 import enum
 import functools
+import sys
 
 import cv2
 import numpy
@@ -221,7 +222,11 @@ class MarkedMoleOverlay:
 
     def __init__(self):
         self.moles = None
+        self._highlight_uuid = None
         self.is_accentuate_marked_mode = False
+
+    def set_highlight_uuid(self, highlight_uuid):
+        self._highlight_uuid = highlight_uuid
 
     def __call__(self, image, transform):
         if self.is_accentuate_marked_mode:
@@ -247,9 +252,23 @@ class MarkedMoleOverlay:
         masked_faded = cv2.bitwise_and(image, image, mask=mask)
         image = cv2.add(masked_faded, image)
 
+        highlight_mole = None
+        if self._highlight_uuid is not None:
+            for m in self.moles:
+                if m['uuid'] == self._highlight_uuid:
+                    highlight_mole = m
+                    break
+
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_crosshair(image, x, y)
+
+            colour = (128, 0, 0)
+            if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
+                colour = (255, 0, 0)
+
+            cv2.circle(image, (x, y), mask_radius, colour, 2)
+            if mole is highlight_mole:
+                draw_crosshair(image, x, y)
 
         return image
 
@@ -412,9 +431,43 @@ class Editor:
     def set_status(self, text):
         self._status_overlay.text = text
 
+    def visit(self, visit_target_str):
+        # Expect a string formatted like this:
+        #
+        #   path/to/jpg:uuid
+        #
+        # Anything after the expected bits is ignored.
+        #
+        path, visit_uuid, *_ = visit_target_str.split(':')
+        print(path, visit_uuid)
+
+        for _ in range(len(self.moledata_list)):
+            if self.moledata.try_jump_to_path(str(path)):
+                for m in self.moledata.moles:
+                    if m['uuid'] == visit_uuid:
+                        self.moledata.get_image()
+                        self._follow = visit_uuid
+                        self._mole_overlay.set_highlight_uuid(
+                            self._follow)
+                        self.marked_mole_overlay.set_highlight_uuid(
+                            self._follow)
+                        self.show_zoomed_display(
+                            m['x'], m['y'])
+                        return
+                self.show_current()
+                return
+
+            self.moledata_index += 1
+            self.moledata_index %= len(self.moledata_list)
+            self.moledata = self.moledata_list[self.moledata_index]
+
+        print("Could not find:", path, ":", visit_uuid, file=sys.stderr)
+        self.show_current()
+
     def follow(self, uuid_to_follow):
         self._follow = uuid_to_follow
         self._mole_overlay.set_highlight_uuid(self._follow)
+        self.marked_mole_overlay.set_highlight_uuid(self._follow)
 
         follow_mole = None
         for m in self.moledata.moles:
@@ -586,6 +639,15 @@ class Editor:
             self.moledata.moles, image_x, image_y
         )
 
+    def get_nearest_mole(self, mouse_x, mouse_y):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        nearest_index = mel.rotomap.moles.nearest_mole_index(
+            self.moledata.moles, image_x, image_y)
+        mole = None
+        if nearest_index is not None:
+            mole = self.moledata.moles[nearest_index]
+        return mole
+
     def move_nearest_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.move_nearest_mole(
@@ -702,6 +764,15 @@ class MoleData:
 
     def current_image_path(self):
         return self._path_list[self._list_index]
+
+    def try_jump_to_path(self, path):
+        for i, image_path in enumerate(self._path_list):
+            if str(path) == str(image_path):
+                if self._list_index != i:
+                    self._list_index = i
+                    self.ensure_loaded()
+                return True
+        return False
 
 
 # -----------------------------------------------------------------------------

@@ -45,6 +45,7 @@ In 'mole marking' mode:
     Press 'a' to accentuate marked moles, for considering removal.
 """
 
+import argparse
 
 import cv2
 import numpy
@@ -102,6 +103,15 @@ def setup_parser(parser):
         metavar='N',
         default=None,
         help="Start with the image with the specified index, instead of 0.",
+    )
+    parser.add_argument(
+        '--visit-list-file',
+        type=argparse.FileType(),
+        metavar='PATH',
+        help=(
+            "Use keys to jump through this list of this form: "
+            "'path/to/jpg:hash:optional co-ords'."
+        ),
     )
 
 
@@ -330,8 +340,31 @@ class AutomoleDebugController:
         pass
 
 
+class VisitList:
+
+    def __init__(self, items):
+        self._items = items
+        self._index = 0
+
+    def back(self):
+        self._index = (self._index + len(self._items) - 1) % len(self._items)
+        return self.current()
+
+    def forward(self):
+        self._index = (self._index + 1) % len(self._items)
+        return self.current()
+
+    def current(self):
+        return self._items[self._index]
+
+    def __bool__(self):
+        return bool(self._items)
+
+
 class Controller:
-    def __init__(self, editor, follow, copy_to_clipboard):
+    def __init__(self, editor, follow, copy_to_clipboard, visit_list):
+        self._visit_list = VisitList(visit_list)
+
         self.moleedit_controller = MoleEditController(
             editor, follow, copy_to_clipboard
         )
@@ -384,6 +417,16 @@ class Controller:
             # Switch to mole marking mode
             self.current_controller = self.molemark_controller
             editor.set_molemark_mode()
+        elif key == ord('b'):
+            # Go back in the visit list
+            if self._visit_list:
+                to_visit = self._visit_list.back()
+                editor.visit(to_visit)
+        elif key == ord('n'):
+            # Go to the next in the visit list
+            if self._visit_list:
+                to_visit = self._visit_list.forward()
+                editor.visit(to_visit)
 
         self.current_controller.on_key(editor, key)
 
@@ -394,12 +437,17 @@ def process_args(args):
         args.ROTOMAP, args.display_width, args.display_height
     )
 
+    visit_list = []
+    if args.visit_list_file:
+        visit_list = args.visit_list_file.read().splitlines()
+
     mel.lib.ui.bring_python_to_front()
 
     if args.advance_n_frames:
         editor.show_next_n(args.advance_n_frames)
 
-    controller = Controller(editor, args.follow, args.copy_to_clipboard)
+    controller = Controller(
+        editor, args.follow, args.copy_to_clipboard, visit_list)
 
     def mouse_callback(*args):
         controller.on_mouse_event(editor, *args)
