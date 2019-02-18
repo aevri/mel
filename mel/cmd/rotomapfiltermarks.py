@@ -62,15 +62,15 @@ def process_args(args):
         return 1
 
     if args.verbose:
-        print("Initialising classifier .. ", end='')
+        print("Initialising classifier .. ", end='', file=sys.stderr)
     model_path = melroot / args.model_path
     is_mole = make_is_mole_func(model_path)
     if args.verbose:
-        print("done")
+        print("done", file=sys.stderr)
     for image_mole_iter in args.FRAMES:
         for image_path, moles in image_mole_iter:
             if args.verbose:
-                print(image_path)
+                print(image_path, file=sys.stderr)
             image = open_image_for_classifier(image_path)
             try:
                 filtered_moles = filter_marks(
@@ -81,7 +81,9 @@ def process_args(args):
 
             num_filtered = len(moles) - len(filtered_moles)
             if args.verbose:
-                print(f"Filtered {num_filtered} unlikely moles.")
+                print(
+                    f"Filtered {num_filtered} unlikely moles.",
+                    file=sys.stderr)
 
             if not args.dry_run and num_filtered:
                 mel.rotomap.moles.save_image_moles(filtered_moles, image_path)
