@@ -13,7 +13,7 @@ dist: xenial
 
 install:
   - pip3 install -e .[dev]
-  - pip3 install opencv-python
+  - pip3 install opencv-python==3.*
   - pip3 check
 
 script:
