@@ -121,8 +121,17 @@ class UuidTriColourPicker:
     def _ensure_uuid(self, uuid_):
         if uuid_ in self._uuid_to_colours:
             return
-        indices = next(self._triband_mapping)
-        self._uuid_to_colours[uuid_] = tuple(self._palette[x] for x in indices)
+        try:
+            indices = next(self._triband_mapping)
+        except StopIteration:
+            # We have run out of colours, just paint everything in danger
+            # colours.
+            red = (0, 0, 255)
+            yellow = (0, 255, 255)
+            self._uuid_to_colours[uuid_] = (red, yellow, red)
+        else:
+            self._uuid_to_colours[uuid_] = tuple(
+                self._palette[x] for x in indices)
 
     def __call__(self, uuid_):
         self._ensure_uuid(uuid_)
