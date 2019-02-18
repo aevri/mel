@@ -246,7 +246,6 @@ class MarkedMoleOverlay:
 
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_mole(mask, x, y, [[255] * 3] * 3)
             cv2.circle(mask, (x, y), mask_radius, 255, -1)
 
         masked_faded = cv2.bitwise_and(image, image, mask=mask)
