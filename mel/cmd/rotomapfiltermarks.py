@@ -53,6 +53,12 @@ def setup_parser(parser):
         help="Print information about the processing.",
     )
 
+    parser.add_argument(
+        '--include-canonical',
+        action='store_true',
+        help="Don't excluded canonical moles from processing.",
+    )
+
 
 def process_args(args):
     try:
@@ -74,7 +80,11 @@ def process_args(args):
             image = open_image_for_classifier(image_path)
             try:
                 filtered_moles = filter_marks(
-                    is_mole, image, moles, args.verbose
+                    is_mole,
+                    image,
+                    moles,
+                    args.include_canonical,
+                    args.verbose
                 )
             except Exception:
                 raise Exception('Error while processing {}'.format(image_path))
@@ -147,30 +157,26 @@ def make_is_mole_func(model_path):
     return is_mole
 
 
-def filter_marks(is_mole, image, moles, verbose):
-    """Return a list of moles with the unlikely ones filtered out.
-
-    :image: A numpy array representing an RGB image.
-    :moles: A list of mel.rotomap.moles.
-    :returns: The filtered list of mel.rotomap.moles.
-    """
+def filter_marks(
+        is_mole, image, moles, include_canonical, verbose):
+    """Return a list of moles with the unlikely ones filtered out."""
 
     filtered_moles = []
     for m in moles:
         if verbose:
             print(m['uuid'], '..', end=' ')
 
-        # Don't touch canonical moles.
-        if m[mel.rotomap.moles.KEY_IS_CONFIRMED]:
-            if verbose:
-                print('skipped because canonical')
-            continue
-
         r = int(m['radius'])
 
         r2 = r * 2
         x = m['x']
         y = m['y']
+
+        # Don't touch canonical moles.
+        if not include_canonical and m[mel.rotomap.moles.KEY_IS_CONFIRMED]:
+            print('SKIP:skipped because canonical')
+            filtered_moles.append(m)
+            continue
 
         image_fragment = image[
             y-r2:y+r2,
