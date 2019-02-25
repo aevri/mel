@@ -33,7 +33,7 @@ def mask_biggest_region(mask):
     # image which have a similar colour profile. Assume that the biggest region
     # is the area that we're interested in.
 
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
     )
 
