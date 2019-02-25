@@ -37,7 +37,7 @@ def log10_zero(x):
 
 
 def biggest_contour(image):
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
     )
 
@@ -73,7 +73,7 @@ def process_contours(mole_regions, original):
     final = original.copy()
     stats = None
 
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         mole_regions.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
     )
 
@@ -238,7 +238,7 @@ def annotate_image(original, is_rot_sensitive):
     img = cv2.split(img)[1]
     _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
 
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     mole_contour, _ = find_mole_contour(contours, img.shape[0:2])
