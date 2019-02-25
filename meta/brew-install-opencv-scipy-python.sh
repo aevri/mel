@@ -22,6 +22,9 @@ trap - EXIT
 # $ pipenv run python -c "import cv2; print(cv2.__version__)"
 # 3.4.0
 
+# When invoking from a virtual env:
+# ln -s "$(brew --prefix)"/lib/python3.7/site-packages/cv2 "${VIRTUAL_ENV}"/lib/python3.7/site-packages/
+
 # Also probably want to do this when developing:
 # $ pipenv install -e .[dev]
 
