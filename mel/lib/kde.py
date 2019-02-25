@@ -12,14 +12,11 @@ class Kde:
         import scipy.linalg
         import scipy.stats
 
-        self.len = training_data.shape[-1]
+        _len = training_data.shape[-1]
 
-        if self.len < 3:
-            self.attenuation = 0.0
-            self.kde = lambda x: numpy.array((0.0,))
+        if _len < 3:
+            self.kde = None
             return
-        else:
-            self.attenuation = 1
 
         try:
             self.kde = scipy.stats.gaussian_kde(training_data)
@@ -29,7 +26,7 @@ class Kde:
             raise
 
     def __call__(self, lower, upper):
-        if self.attenuation:
+        if self.kde is not None:
             return self.kde.integrate_box(lower, upper)
         else:
             return 0
