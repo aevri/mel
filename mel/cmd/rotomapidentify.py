@@ -64,10 +64,9 @@ def process_args(args):
     target_frames = [mel.rotomap.moles.RotomapFrame(x) for x in args.target]
 
     if args.verbose:
-        print(f"Got {len(target_frames)} sources.")
         print('Training ..')
 
-    box_radius = 0.2
+    box_radius = 0.1
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
         uuid_to_frameposlist, box_radius
     )
@@ -108,10 +107,6 @@ def process_args(args):
             num_identities,
             num_canonicals,
         )
-
-        if args.verbose:
-            print(f"Got {num_identities} identities.")
-            print(f"Got {num_canonicals} canonicals.")
 
         guesser = mel.rotomap.identify.PosGuesser(
             num_locations, predictors, bounder, num_canonicals, num_identities

@@ -34,94 +34,43 @@ def process_args(args):
 
     width = 3042
     height = 4032
-
-    skin_rect = Rect(
-        left=width // 10,
-        width=int(width * 0.8),
-        top=height // 10,
-        height=int(height * 0.8)
-    )
     num_moles = 10
-    min_radius = 20
-    max_radius = 50
-    moles = gen_moles(num_moles, skin_rect, min_radius, max_radius)
-    jitter = 10
-
-    num_images = 20
-
-    for i in range(num_images):
-        write_fake_image(
-            dir1 / (str(i) + '.jpg'),
-            width=width,
-            height=height,
-            skin_rect=skin_rect,
-            moles=moles,
-            jitter=jitter)
+    write_fake_image(
+        dir1 / '0.jpg', width=width, height=height, num_moles=num_moles)
 
 
-def gen_moles(num_moles, skin_rect, min_radius, max_radius):
-    moles = []
-    for _ in range(num_moles):
-        x = random.randrange(skin_rect.width) + skin_rect.left
-        y = random.randrange(skin_rect.height) + skin_rect.top
-        radius = random.randrange(min_radius, max_radius)
-        moles.append(Mole(x, y, radius))
-    return moles
-
-
-class Mole:
-
-    def __init__(self, x, y, radius):
-        self.x, self.y, self.radius = x, y, radius
-
-
-class Rect:
-
-    def __init__(self, left, width, top, height):
-        self.left = left
-        self.right = left + width
-        self.top = top
-        self.bottom = top + height
-        self.width = width
-        self.height = height
-
-
-def write_fake_image(path, width, height, skin_rect, moles, jitter):
+def write_fake_image(path, width, height, num_moles):
     image = mel.lib.common.new_image(height, width)
 
     # Set the background to a non-organic green colour.
     image[:, :] = [0, 255, 0]
-
-    s = skin_rect
 
     # Draw some 'skin'.
     left = width // 10
     right = left * 9
     top = height // 10
     bottom = top * 9
-    image[s.top:s.bottom, s.left:s.right, :] = 255
+    image[top:bottom, left:right, :] = 255
 
     # Create a slightly irregular border, so that e.g. calc-space doesn't get
     # tripped up by the unnaturally small number of vertices.
-    image[s.top-1:s.top, s.left-1:s.right+1, :] = 255
-    image[s.bottom:s.bottom+1, s.left-1:s.right+1, :] = 255
-    image[s.top+1:s.bottom-1, s.left-1:s.left, :] = 255
-    image[s.top+1:s.bottom-1, s.right:s.right+1, :] = 255
+    image[top-1:top, left-1:right+1, :] = 255
+    image[bottom:bottom+1, left-1:right+1, :] = 255
+    image[top+1:bottom-1, left-1:left, :] = 255
+    image[top+1:bottom-1, right:right+1, :] = 255
 
     # Draw the 'moles'.
+    skin_width = left * 8
+    skin_height = top * 8
     # Note that it's important that the 'moles' have some saturation, or
     # automark won't pick them up.
     brown = (0, 150, 100)
-    for m in moles:
-        j_x = random.randrange(jitter)
-        j_y = random.randrange(jitter)
-        j_radius = random.randrange(jitter)
-        cv2.circle(
-            image,
-            (m.x + j_x, m.y + j_y),
-            m.radius + j_radius,
-            brown,
-            -1)
+    max_radius = 50
+    for _ in range(num_moles):
+        x = random.randrange(skin_width) + left
+        y = random.randrange(skin_height) + top
+        radius = random.randrange(max_radius)
+        cv2.circle(image, (x, y), radius, brown, -1)
 
     mel.lib.common.write_image(path, image)
 
