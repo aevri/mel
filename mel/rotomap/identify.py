@@ -409,11 +409,7 @@ class MoleRelativeClassifier:
             for frame, pos in frameposlist:
                 self.frames[frame][uuid_] = pos
 
-        self.lower = numpy.array((box_radius, box_radius))
-
-        # pylint: disable=invalid-unary-operand-type
-        self.upper = -self.lower
-        # pylint: enable=invalid-unary-operand-type
+        self._box_radius = box_radius
 
         self.molepos_kernels = {}
 
@@ -441,7 +437,8 @@ class MoleRelativeClassifier:
                         numpy.array(uuid_to_xoffsetlist[uuid_]),
                         numpy.array(uuid_to_yoffsetlist[uuid_]),
                     ]
-                )
+                ),
+                self._box_radius,
             )
             for uuid_ in self.uuids
         )
@@ -463,9 +460,20 @@ class MoleRelativeClassifier:
 
         rpos = pos - known_pos
 
-        densities = numpy.array(
-            tuple(k(rpos + self.lower, rpos + self.upper) for k in kernels)
-        )
+        # densities = numpy.array(
+        #     tuple(k(rpos) for k in kernels)
+        # )
+        # if known_uuid in self.uuids:
+        #     print(f'{self.uuids.index(known_uuid)}')
+        # else:
+        #     print('unk', known_uuid)
+        #     # breakpoint()
+        densities = []
+        for i, k in enumerate(kernels):
+            r = k(rpos)
+            # print(f'  {i} {r}')
+            densities.append(r)
+        densities = numpy.array(densities)
 
         total_density = numpy.sum(densities)
         if numpy.isclose(total_density, 0):
@@ -476,6 +484,8 @@ class MoleRelativeClassifier:
             p = densities[i]
             q = p / total_density
             matches.append((m_uuid, p, q))
+
+        # print(known_uuid, known_pos, pos, matches)
 
         return matches
 

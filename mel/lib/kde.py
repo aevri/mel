@@ -4,7 +4,7 @@ import numpy
 
 
 class Kde:
-    def __init__(self, training_data):
+    def __init__(self, training_data, box_radius):
 
         # These imports take quite a long time. At the time of writing this is
         # the only place we need them, so avoid paying the cost if we can by
@@ -12,22 +12,39 @@ class Kde:
         import scipy.linalg
         import scipy.stats
 
-        _len = training_data.shape[-1]
+        self._box_radius = box_radius * 1
+        self._lower = numpy.array((self._box_radius, self._box_radius))
+        self._upper = numpy.array((-self._box_radius, -self._box_radius))
+        self._kde = None
+        self._mid = None
 
-        if _len < 3:
-            self.kde = None
+        _len = training_data.shape[-1]
+        if _len < 1:
+            return
+        elif _len < 3:
+            self._mid = numpy.array([training_data[0][0], training_data[1][0]])
             return
 
         try:
-            self.kde = scipy.stats.gaussian_kde(training_data)
+            self._kde = scipy.stats.gaussian_kde(training_data)
         except scipy.linalg.LinAlgError as e:
             print(e)
             print(training_data)
             raise
 
-    def __call__(self, lower, upper):
-        if self.kde is not None:
-            return self.kde.integrate_box(lower, upper)
+    def __call__(self, pos):
+        if self._kde is not None:
+            return self._kde.integrate_box(pos + self._lower, pos + self.upper)
+        elif self._mid is not None:
+            adj_pos = pos - self._mid
+            mag = numpy.linalg.norm(adj_pos) / self._box_radius
+            print(mag)
+            if mag <= 1:
+                mag *= mag
+                mag = 1 - mag
+                print('mag', mag)
+                return mag
+            return 0
         else:
             return 0
 
