@@ -40,6 +40,8 @@ import mel.cmd.rotomapconfirm  # noqa: E402
 import mel.cmd.rotomapedit  # noqa: E402
 import mel.cmd.rotomapfiltermarks  # noqa: E402
 import mel.cmd.rotomapidentify  # noqa: E402
+import mel.cmd.rotomapidentify2  # noqa: E402
+import mel.cmd.rotomapidentify2train  # noqa: E402
 import mel.cmd.rotomaplist  # noqa: E402
 import mel.cmd.rotomaploadsave  # noqa: E402
 import mel.cmd.rotomapmarkunchanged  # noqa: E402
@@ -72,6 +74,8 @@ COMMANDS = {
         'edit': mel.cmd.rotomapedit,
         'filter-marks': mel.cmd.rotomapfiltermarks,
         'identify': mel.cmd.rotomapidentify,
+        'identify2': mel.cmd.rotomapidentify2,
+        'identify2-train': mel.cmd.rotomapidentify2train,
         'list': mel.cmd.rotomaplist,
         'loadsave': mel.cmd.rotomaploadsave,
         'mark-unchanged': mel.cmd.rotomapmarkunchanged,

@@ -14,6 +14,13 @@ def setup_parser(parser):
     parser.add_argument(
         "PATH", help="Where to create this generated repo.", type=pathlib.Path
     )
+    parser.add_argument(
+        "--num-rotomaps",
+        "-n",
+        help="How many rotomaps to make.",
+        type=int,
+        default=3,
+    )
 
 
 def process_args(args):
@@ -28,17 +35,15 @@ def process_args(args):
 
     leftleg_lower = melroot / "rotomaps" / "parts" / "LeftLeg" / "Lower"
     leftleg_lower.mkdir(parents=True)
-    dir0 = leftleg_lower / "2017_01_01"
-    dir1 = leftleg_lower / "2018_01_01"
-    dir0.mkdir()
-    dir1.mkdir()
 
     width = 300
     height = 400
     num_moles = 10
     moles = mel.rotomap.fake.random_moles(num_moles)
 
-    for dir_path in (dir0, dir1):
+    for dirnum in range(args.num_rotomaps):
+        dir_path = leftleg_lower / f"{2018 - dirnum}_01_01"
+        dir_path.mkdir()
         num_images = random.randint(10, 20)
         for i in range(num_images):
             rot_0_to_1 = i / num_images
