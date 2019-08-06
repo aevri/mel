@@ -262,11 +262,11 @@ def process_args(args):
 
     notice_list = []
 
-    rotomaps_path = melroot / 'rotomaps'
+    rotomaps_path = melroot / mel.lib.fs.ROTOMAPS_PATH
     if rotomaps_path.exists():
         check_rotomaps(rotomaps_path, notice_list)
     else:
-        notice_list.append(NoBaseDirInfo('rotomaps'))
+        notice_list.append(NoBaseDirInfo(mel.lib.fs.ROTOMAPS_PATH))
 
     alerts_to_notices = collections.defaultdict(list)
     errors_to_notices = collections.defaultdict(list)
