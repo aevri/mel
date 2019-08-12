@@ -6,6 +6,7 @@ Controls:
     'up arrow' or 'down arrow' to change rotomap in the left slot.
     'space' to swap left slot and right slot.
     'p' or 'n' to change the mole being examined in both slots.
+    'a' to toggle crosshairs on/off.
 
     'q' to quit.
 """
@@ -113,12 +114,15 @@ def process_args(args):
             display.reset(path_images_tuple)
         elif key == ord(' '):
             display.swap_images()
+        elif key == ord('a'):
+            display.toggle_crosshairs()
 
 
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
     def __init__(self, name, path_images_tuple, width=None, height=None):
+        self._should_draw_crosshairs = True
         self._display = mel.lib.ui.ImageDisplay(name, width, height)
         self.reset(path_images_tuple)
 
@@ -170,6 +174,10 @@ class ImageCompareDisplay:
         self._indices.reverse()
         self._show()
 
+    def toggle_crosshairs(self):
+        self._should_draw_crosshairs = not self._should_draw_crosshairs
+        self._show()
+
     def _path_pos(self, index):
         image_index = self._rotomap_cursors[index]
         return self._rotomaps[index][image_index]
@@ -179,27 +187,30 @@ class ImageCompareDisplay:
         image_height = self._display.height
         image_size = numpy.array((image_width, image_height))
         images = [
-            captioned_mole_image(*self._path_pos(i), image_size)
+            captioned_mole_image(
+                *self._path_pos(i), image_size, self._should_draw_crosshairs
+            )
             for i in self._indices
         ]
         montage = mel.lib.image.montage_horizontal(10, *images)
         self._display.show_image(montage)
 
 
-def captioned_mole_image(path, pos, size):
+def captioned_mole_image(path, pos, size, should_draw_crosshairs):
 
     image, caption_shape = _cached_captioned_mole_image(
         str(path), tuple(pos), tuple(size)
     )
 
-    image_crosshairs = image.copy()
-    xpos = image.shape[1] // 2
-    ypos = (image.shape[0] - caption_shape[0]) // 2
+    if should_draw_crosshairs:
+        image_crosshairs = image.copy()
+        xpos = image.shape[1] // 2
+        ypos = (image.shape[0] - caption_shape[0]) // 2
 
-    mel.rotomap.display.draw_crosshair(image_crosshairs, xpos, ypos)
-    new_image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
+        mel.rotomap.display.draw_crosshair(image_crosshairs, xpos, ypos)
+        image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
 
-    return new_image
+    return image
 
 
 @functools.lru_cache()
