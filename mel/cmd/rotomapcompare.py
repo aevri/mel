@@ -32,7 +32,10 @@ def setup_parser(parser):
         'ROTOMAP',
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs='+',
-        help="A list of paths to rotomaps.",
+        help=(
+            "A list of paths to rotomaps. The last rotomap is considered "
+            "'the target', and only UUIDs from that one will be compared."
+        )
     )
     parser.add_argument(
         '--display-width',
@@ -49,6 +52,12 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    target_rotomap = args.ROTOMAP[-1]
+    target_uuids = {
+        uuid_
+        for frame in target_rotomap.yield_frames()
+        for uuid_ in frame.moledata.uuids
+    }
 
     uuid_to_rotomaps_imagepos_list = collections.defaultdict(
         lambda: collections.defaultdict(list)
@@ -57,6 +66,8 @@ def process_args(args):
     for rotomap in args.ROTOMAP:
         for frame in rotomap.yield_frames():
             for uuid_, point in frame.moledata.uuid_points.items():
+                if uuid_ not in target_uuids:
+                    continue
                 uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
                     (frame.path, point)
                 )
@@ -226,7 +237,7 @@ def _cached_captioned_mole_image(path, pos, size):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
