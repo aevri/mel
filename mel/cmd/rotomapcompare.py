@@ -197,6 +197,9 @@ class ImageCompareDisplay:
         self._rotomaps = path_images_tuple
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
+        for i, rotomap in enumerate(self._rotomaps):
+            num_images = len(self._rotomaps[i])
+            self._rotomap_cursors[i] = num_images // 2
 
         self._indices = [0, -1]
 
