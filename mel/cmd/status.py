@@ -61,6 +61,21 @@ class RotomapNewMoleAlert(AlertNotification):
         return output
 
 
+class RotomapLesionChangedAlert(AlertNotification):
+    def __init__(self, path):
+        super().__init__(path)
+        self.uuid_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
+            output += '\n'
+
+        return output
+
+
 class InvalidDateError(ErrorNotification):
     pass
 
@@ -130,6 +145,21 @@ class UnexpectedDirInfo(InfoNotification):
 
 
 class RotomapMissingMoleInfo(InfoNotification):
+    def __init__(self, path):
+        super().__init__(path)
+        self.uuid_list = []
+
+    def format(self, detail_level):
+        output = f'{self.path}'
+        if detail_level > 0:
+            output += '\n\n'
+            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
+            output += '\n'
+
+        return output
+
+
+class RotomapMissingLesionUnchangedStatus(InfoNotification):
     def __init__(self, path):
         super().__init__(path)
         self.uuid_list = []
@@ -341,6 +371,9 @@ def check_rotomap_minor_part(path, notices):
     for rotomap in rotomap_list:
         check_rotomap(notices, rotomap)
 
+    if rotomap_list:
+        check_newest_rotomap(notices, rotomap_list[-1])
+
 
 def uuids_from_dir(rotomap_dir):
     uuid_set = set()
@@ -440,8 +473,49 @@ def check_rotomap(notices, rotomap):
         notices.append(missing_space_info)
 
 
+def check_newest_rotomap(notices, rotomap):
+
+    missing_unchanged_status = RotomapMissingLesionUnchangedStatus(
+        rotomap.path
+    )
+
+    changed = RotomapLesionChangedAlert(rotomap.path)
+
+    ignore_new = mel.rotomap.moles.load_potential_set_file(
+        rotomap.path, mel.rotomap.moles.IGNORE_NEW_FILENAME
+    )
+
+    uuids = rotomap.calc_uuids()
+
+    uuid_to_unchanged_status = {
+        lesion["uuid"]: lesion[mel.rotomap.moles.KEY_IS_UNCHANGED]
+        for lesion in rotomap.lesions
+    }
+
+    for u in uuids:
+        if u not in uuid_to_unchanged_status:
+            if u in ignore_new:
+                continue
+            missing_unchanged_status.uuid_list.append(u)
+            continue
+        unchanged_status = uuid_to_unchanged_status[u]
+        if unchanged_status is None:
+            if u in ignore_new:
+                continue
+            missing_unchanged_status.uuid_list.append(u)
+            continue
+        elif not unchanged_status:
+            changed.uuid_list.append(u)
+            continue
+
+    if missing_unchanged_status.uuid_list:
+        notices.append(missing_unchanged_status)
+    if changed.uuid_list:
+        notices.append(changed)
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018-2019 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
