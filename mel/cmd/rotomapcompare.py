@@ -187,19 +187,31 @@ class ImageCompareDisplay:
 
 
 def captioned_mole_image(path, pos, size):
-    return _cached_captioned_mole_image(str(path), tuple(pos), tuple(size))
+
+    image, caption_shape = _cached_captioned_mole_image(
+        str(path), tuple(pos), tuple(size)
+    )
+
+    image_crosshairs = image.copy()
+    xpos = image.shape[1] // 2
+    ypos = (image.shape[0] - caption_shape[0]) // 2
+
+    mel.rotomap.display.draw_crosshair(image_crosshairs, xpos, ypos)
+    new_image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
+
+    return new_image
 
 
 @functools.lru_cache()
 def _cached_captioned_mole_image(path, pos, size):
     image = mel.lib.image.load_image(path)
-    image_crosshairs = image.copy()
-    mel.rotomap.display.draw_crosshair(image_crosshairs, *pos)
-    image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
     size = numpy.array(size)
     image = mel.lib.image.centered_at(image, pos, size)
     caption = mel.lib.image.render_text_as_image(str(path))
-    return mel.lib.image.montage_vertical(10, image, caption)
+    return (
+        mel.lib.image.montage_vertical(10, image, caption),
+        caption.shape,
+    )
 
 
 # -----------------------------------------------------------------------------
