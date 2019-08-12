@@ -17,9 +17,11 @@ import mel.rotomap.mask
 
 
 KEY_IS_CONFIRMED = 'is_uuid_canonical'
+KEY_IS_UNCHANGED = 'is_unchanged'
 
 IGNORE_NEW_FILENAME = 'ignore-new'
 IGNORE_MISSING_FILENAME = 'ignore-missing'
+ROTOMAP_DIR_LESIONS_FILENAME = 'lesions.json'
 
 
 class RotomapDirectory:
@@ -38,6 +40,8 @@ class RotomapDirectory:
         ]
         self.image_paths.sort()
 
+        self.lesions = load_rotomap_dir_lesions_file(self.path)
+
         if not self.image_paths:
             raise ValueError(
                 '"{}" has no images, so not a rotomap.'.format(self.path)
@@ -51,6 +55,13 @@ class RotomapDirectory:
     def yield_frames(self):
         for imagepath in self.image_paths:
             yield RotomapFrame(imagepath)
+
+    def calc_uuids(self):
+        return {
+            uuid_
+            for frame in self.yield_frames()
+            for uuid_ in frame.moledata.uuids
+        }
 
     def __repr__(self):
         return f'RotomapDirectory({self.path!r})'
@@ -190,6 +201,43 @@ def load_image_metadata(image_path):
     return metadata
 
 
+def load_rotomap_dir_lesions_file(rotomap_dir_path):
+    rotomap_dir_path = pathlib.Path(rotomap_dir_path)
+    if not rotomap_dir_path.exists():
+        raise ValueError(
+            f"Rotomap directory does not exist: '{rotomap_dir_path}'."
+        )
+
+    lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
+
+    lesions = []
+    if lesions_path.exists():
+        lesions = load_json(lesions_path)
+
+    for l in lesions:
+        if KEY_IS_UNCHANGED not in l:
+            raise Exception(
+                f'Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {l}'
+            )
+
+    for l in lesions:
+        if l['uuid'] is None:
+            raise Exception(f'Lesion UUID cannot be None: {lesions_path} {l}')
+
+    return lesions
+
+
+def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions):
+    rotomap_dir_path = pathlib.Path(rotomap_dir_path)
+    if not rotomap_dir_path.exists():
+        raise ValueError(
+            f"Rotomap directory does not exist: '{rotomap_dir_path}'."
+        )
+
+    lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
+    save_json(lesions_path, lesions)
+
+
 def load_image_moles(image_path):
     if not pathlib.Path(image_path).exists():
         raise ValueError(f"Mole image does not exist: '{image_path}'.")
@@ -202,7 +250,9 @@ def load_image_moles(image_path):
 
     for m in moles:
         if KEY_IS_CONFIRMED not in m:
-            m[KEY_IS_CONFIRMED] = True
+            raise Exception(
+                f'Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}'
+            )
 
     for m in moles:
         m['x'] = int(m['x'])
