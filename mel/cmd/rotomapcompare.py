@@ -7,6 +7,8 @@ Controls:
     'space' to swap left slot and right slot.
     'p' or 'n' to change the mole being examined in both slots.
     'a' to toggle crosshairs on/off.
+    'c' to mark the moles as changed in the newest rotomap.
+    'u' to mark the moles as unchanged in the newest rotomap.
 
     'q' to quit.
 """
@@ -93,6 +95,9 @@ def process_args(args):
     display = ImageCompareDisplay(
         '.', path_images_tuple, args.display_width, args.display_height
     )
+    is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
+    if is_unchanged is not None:
+        display.indicate_changed(not is_unchanged)
 
     mel.lib.ui.bring_python_to_front()
 
@@ -114,6 +119,9 @@ def process_args(args):
                 uuid_to_rotomaps_imagepos_list[uuid_].values()
             )
             display.reset(path_images_tuple)
+            is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
+            if is_unchanged is not None:
+                display.indicate_changed(not is_unchanged)
         elif key == ord('p'):
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index -= 1
@@ -123,10 +131,44 @@ def process_args(args):
                 uuid_to_rotomaps_imagepos_list[uuid_].values()
             )
             display.reset(path_images_tuple)
+            is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
+            if is_unchanged is not None:
+                display.indicate_changed(not is_unchanged)
         elif key == ord(' '):
             display.swap_images()
         elif key == ord('a'):
             display.toggle_crosshairs()
+        elif key == ord('c'):
+            is_unchanged = False
+            mark_lesion(target_rotomap, uuid_, is_unchanged=False)
+            display.indicate_changed()
+        elif key == ord('u'):
+            is_unchanged = True
+            mark_lesion(target_rotomap, uuid_, is_unchanged=True)
+            display.indicate_changed(False)
+
+
+def is_lesion_unchanged(rotomap, uuid_):
+    """Mark the provided uuid changed status in the lesions datafile."""
+    for l in rotomap.lesions:
+        if l["uuid"] == uuid_:
+            return l[mel.rotomap.moles.KEY_IS_UNCHANGED]
+    return None
+
+
+def mark_lesion(rotomap, uuid_, *, is_unchanged):
+    """Mark the provided uuid changed status in the lesions datafile."""
+    target_lesion = None
+    for l in rotomap.lesions:
+        if l["uuid"] == uuid_:
+            target_lesion = l
+    if target_lesion is None:
+        target_lesion = {"uuid": uuid_}
+        rotomap.lesions.append(target_lesion)
+    target_lesion[mel.rotomap.moles.KEY_IS_UNCHANGED] = is_unchanged
+    mel.rotomap.moles.save_rotomap_dir_lesions_file(
+        rotomap.path, rotomap.lesions
+    )
 
 
 class ImageCompareDisplay:
@@ -152,6 +194,8 @@ class ImageCompareDisplay:
         self._rotomap_cursors = [0] * len(self._rotomaps)
 
         self._indices = [0, -1]
+
+        self._should_indicate_changed = None
 
         self._show()
 
@@ -189,6 +233,10 @@ class ImageCompareDisplay:
         self._should_draw_crosshairs = not self._should_draw_crosshairs
         self._show()
 
+    def indicate_changed(self, should_indicate_changed=True):
+        self._should_indicate_changed = should_indicate_changed
+        self._show()
+
     def _path_pos(self, index):
         image_index = self._rotomap_cursors[index]
         return self._rotomaps[index][image_index]
@@ -197,9 +245,19 @@ class ImageCompareDisplay:
         image_width = self._display.width // 2
         image_height = self._display.height
         image_size = numpy.array((image_width, image_height))
+        border_colour = None
+        if self._should_indicate_changed is not None:
+            if self._should_indicate_changed:
+                border_colour = (0, 0, 255)
+            else:
+                border_colour = (0, 255, 0)
+
         images = [
             captioned_mole_image(
-                *self._path_pos(i), image_size, self._should_draw_crosshairs
+                *self._path_pos(i),
+                image_size,
+                self._should_draw_crosshairs,
+                border_colour,
             )
             for i in self._indices
         ]
@@ -207,7 +265,9 @@ class ImageCompareDisplay:
         self._display.show_image(montage)
 
 
-def captioned_mole_image(path, pos, size, should_draw_crosshairs):
+def captioned_mole_image(
+    path, pos, size, should_draw_crosshairs, border_colour=None
+):
 
     image, caption_shape = _cached_captioned_mole_image(
         str(path), tuple(pos), tuple(size)
@@ -220,6 +280,9 @@ def captioned_mole_image(path, pos, size, should_draw_crosshairs):
 
         mel.rotomap.display.draw_crosshair(image_crosshairs, xpos, ypos)
         image = cv2.addWeighted(image, 0.75, image_crosshairs, 0.25, 0.0)
+
+    if border_colour is not None:
+        cv2.rectangle(image, (0, 0), (image.shape[1], 10), border_colour, -1)
 
     return image
 
