@@ -55,11 +55,7 @@ def setup_parser(parser):
 
 def process_args(args):
     target_rotomap = args.ROTOMAP[-1]
-    target_uuids = {
-        uuid_
-        for frame in target_rotomap.yield_frames()
-        for uuid_ in frame.moledata.uuids
-    }
+    target_uuids = target_rotomap.calc_uuids()
 
     uuid_to_rotomaps_imagepos_list = collections.defaultdict(
         lambda: collections.defaultdict(list)
@@ -87,7 +83,16 @@ def process_args(args):
     # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)
 
-    uuid_order = tuple(sorted(iter(uuid_to_rotomaps_imagepos_list)))
+    def unchanged_status_keyfunc(uuid_):
+        is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
+        if is_unchanged is None:
+            return 1
+        if not is_unchanged:
+            return 0
+        return 2
+
+    uuid_order = list(uuid_to_rotomaps_imagepos_list)
+    uuid_order.sort(key=unchanged_status_keyfunc)
 
     index = 0
     uuid_ = uuid_order[index]
