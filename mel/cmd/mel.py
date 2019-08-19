@@ -42,6 +42,7 @@ import mel.cmd.rotomapfiltermarks  # noqa: E402
 import mel.cmd.rotomapidentify  # noqa: E402
 import mel.cmd.rotomaplist  # noqa: E402
 import mel.cmd.rotomaploadsave  # noqa: E402
+import mel.cmd.rotomapmarkunchanged  # noqa: E402
 import mel.cmd.rotomapmontagesingle  # noqa: E402
 import mel.cmd.rotomaporganise  # noqa: E402
 import mel.cmd.rotomaprm  # noqa: E402
@@ -73,6 +74,7 @@ COMMANDS = {
         'identify': mel.cmd.rotomapidentify,
         'list': mel.cmd.rotomaplist,
         'loadsave': mel.cmd.rotomaploadsave,
+        'mark-unchanged': mel.cmd.rotomapmarkunchanged,
         'montage-single': mel.cmd.rotomapmontagesingle,
         'organise': mel.cmd.rotomaporganise,
         'rm': mel.cmd.rotomaprm,

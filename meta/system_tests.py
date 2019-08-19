@@ -91,6 +91,7 @@ def run_smoke_test():
         expect_ok('mel', 'rotomap', 'calc-space', target_image)
         expect_ok('mel', 'rotomap', 'automark', target_image)
         expect_ok('mel', 'rotomap', 'confirm', target_json)
+        expect_ok('mel', 'rotomap', 'mark-unchanged', target_rotomap)
         expect_ok('mel', 'rotomap', 'list', target_json)
         expect_ok('mel', 'rotomap', 'loadsave', target_json)
         expect_ok('mel', 'status', '-ttdd')
