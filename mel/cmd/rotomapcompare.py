@@ -29,6 +29,9 @@ import mel.rotomap.display
 import mel.rotomap.moles
 
 
+_PosInfo = collections.namedtuple('_PosInfo', 'path pos ellipse_xpos')
+
+
 def setup_parser(parser):
     parser.add_argument(
         'ROTOMAP',
@@ -63,11 +66,23 @@ def process_args(args):
 
     for rotomap in args.ROTOMAP:
         for frame in rotomap.yield_frames():
+            if 'ellipse' not in frame.metadata:
+                raise Exception(
+                    f'{frame} has no ellipse metadata, '
+                    'try running "rotomap calc-space"'
+                )
+            ellipse = frame.metadata['ellipse']
+            elspace = mel.lib.ellipsespace.Transform(ellipse)
             for uuid_, point in frame.moledata.uuid_points.items():
                 if uuid_ not in target_uuids:
                     continue
+                posinfo = _PosInfo(
+                    path=frame.path,
+                    pos=point,
+                    ellipse_xpos=elspace.to_space(point)[0],
+                )
                 uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
-                    (frame.path, point)
+                    posinfo
                 )
 
     # We can't compare moles that are only in one rotomap, cull these.
@@ -198,8 +213,11 @@ class ImageCompareDisplay:
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
         for i, rotomap in enumerate(self._rotomaps):
-            num_images = len(self._rotomaps[i])
-            self._rotomap_cursors[i] = num_images // 2
+            centre_index, _ = min(
+                enumerate(self._rotomaps[i]),
+                key=lambda x: x[1].ellipse_xpos * x[1].ellipse_xpos,
+            )
+            self._rotomap_cursors[i] = centre_index
 
         self._indices = [0, -1]
 
@@ -247,7 +265,8 @@ class ImageCompareDisplay:
 
     def _path_pos(self, index):
         image_index = self._rotomap_cursors[index]
-        return self._rotomaps[index][image_index]
+        posinfo = self._rotomaps[index][image_index]
+        return posinfo.path, posinfo.pos
 
     def _show(self):
         image_width = self._display.width // 2
