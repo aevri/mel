@@ -66,13 +66,17 @@ def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     return did_intersect, p_intersection
 
 
-def light_cylinder(p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles):
+def light_cylinder(
+    p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offset_rads
+):
     assert vec3.is_vec3(p_ray)
     assert vec3.is_vec3(d_ray)
     assert vec3.is_vec3(p_hit)
     assert vec3.is_vec3(p_light)
     assert vec3.is_vec3(p_cyl)
-    skin_color = skin_colour_cylinder(p_cyl, radius, p_hit, moles)
+    skin_color = skin_colour_cylinder(
+        p_cyl, radius, p_hit, moles, rot_offset_rads
+    )
     # Ambient lighting.
     color = skin_color * 0.2
     # Diffuse lighting.
@@ -95,7 +99,7 @@ def cylinder_mole_pos(p_cyl, cyl_radius, mole_y_pos, mole_rot):
     return p_mole
 
 
-def skin_colour_cylinder(p_cyl, radius, p_hit, moles):
+def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
     # Skin tone colours:
     # https://www.schemecolor.com/real-skin-tones-color-palette.php
     light_skin_colour = vec3.make(1, 0.86, 0.67)
@@ -105,7 +109,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles):
     for m in moles:
         mole_radius_sq = m["radius"] ** 2
         mole_y_pos = m["y_offset"]
-        mole_rot = m["longitude_rads"]
+        mole_rot = m["longitude_rads"] + rot_offset_rads
         front_dir = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
         hit_flat_dir = vec3.normalized(vec3_flat(p_hit) - vec3_flat(p_cyl))
         hit_f_cos = vec3.dot(hit_flat_dir, front_dir)

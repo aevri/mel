@@ -86,15 +86,15 @@ def run_smoke_test():
     with chtempdir_context():
         expect_ok('mel-debug', 'gen-repo', '.')
         target_rotomap = pathlib.Path('rotomaps/parts/LeftLeg/Lower/2018_01_01')
-        target_image = target_rotomap / '0.jpg'
-        target_json = target_image.with_suffix('.jpg.json')
-        expect_ok('mel', 'rotomap', 'automask', target_image)
-        expect_ok('mel', 'rotomap', 'calc-space', target_image)
-        expect_ok('mel', 'rotomap', 'automark', target_image)
-        expect_ok('mel', 'rotomap', 'confirm', target_json)
+        target_image_files = list(target_rotomap.glob("*.jpg"))
+        target_json_files = list(target_rotomap.glob('*.jpg.json'))
+        expect_ok('mel', 'rotomap', 'automask', *target_image_files)
+        expect_ok('mel', 'rotomap', 'calc-space', *target_image_files)
+        expect_ok('mel', 'rotomap', 'automark', *target_image_files)
+        expect_ok('mel', 'rotomap', 'confirm', *target_json_files)
         expect_ok('mel', 'rotomap', 'mark-unchanged', target_rotomap)
-        expect_ok('mel', 'rotomap', 'list', target_json)
-        expect_ok('mel', 'rotomap', 'loadsave', target_json)
+        expect_ok('mel', 'rotomap', 'list', *target_json_files)
+        expect_ok('mel', 'rotomap', 'loadsave', *target_json_files)
         expect_ok('mel', 'status', '-ttdd')
         expect_ok('mel', 'micro', 'list')
 

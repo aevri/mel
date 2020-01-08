@@ -39,7 +39,8 @@ def random_moles(num_moles):
     ]
 
 
-def render_moles(moles, image_width, image_height):
+def render_moles(moles, image_width, image_height, rot_0_to_1):
+    rot_offset_rads = rot_0_to_1 * math.pi * 2
     p_light = vec3.make(1.0, 0.0, -1.0)
 
     p_cyl = vec3.make(0.0, 0.0, 1.0)
@@ -62,7 +63,14 @@ def render_moles(moles, image_width, image_height):
     part_p_hit = p_hit[hit, :]
     part_d_ray = d_ray[hit, :]
     part_color = mel.rotomap.raytrace.light_cylinder(
-        p_ray, part_d_ray, part_p_hit, p_light, p_cyl, m_cyl_radius, moles,
+        p_ray,
+        part_d_ray,
+        part_p_hit,
+        p_light,
+        p_cyl,
+        m_cyl_radius,
+        moles,
+        rot_offset_rads,
     )
     color = vec3.zeros(len(hit))
     color[hit, :] = part_color
@@ -70,7 +78,7 @@ def render_moles(moles, image_width, image_height):
     visible_moles = []
     for m in moles:
         mole_y_pos = m["y_offset"]
-        mole_rot = m["longitude_rads"]
+        mole_rot = m["longitude_rads"] + rot_offset_rads
         p_mole = mel.rotomap.raytrace.cylinder_mole_pos(
             p_cyl, m_cyl_radius, mole_y_pos, mole_rot
         )

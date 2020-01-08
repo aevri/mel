@@ -1,6 +1,7 @@
 """Generate a mel repo for developing and testing."""
 
 import pathlib
+import random
 
 import mel.lib.common
 
@@ -35,12 +36,20 @@ def process_args(args):
     height = 400
     num_moles = 10
     moles = mel.rotomap.fake.random_moles(num_moles)
-    image, visible_moles = mel.rotomap.fake.render_moles(
-        moles, image_width=width, image_height=height
-    )
-    image_path = dir1 / '0.jpg'
-    mel.lib.common.write_image(image_path, image)
-    mel.rotomap.moles.save_image_moles(visible_moles, image_path)
+
+    num_images = 10
+    for i in range(num_images):
+        rot_0_to_1 = i / num_images
+        rot_0_to_1 += random.random() / num_images
+        image, visible_moles = mel.rotomap.fake.render_moles(
+            moles,
+            image_width=width,
+            image_height=height,
+            rot_0_to_1=rot_0_to_1,
+        )
+        image_path = dir1 / f'{i:0}.jpg'
+        mel.lib.common.write_image(image_path, image)
+        mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
 def _iterable_len(it):
