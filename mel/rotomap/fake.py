@@ -37,7 +37,7 @@ def random_moles(num_moles):
     ]
 
 
-def render_moles(moles, image_path, image_width, image_height):
+def render_moles(moles, image_width, image_height):
     p_light = vec3.make(1.0, 0.0, -1.0)
 
     p_cyl = vec3.make(0.0, 0.0, 1.0)
@@ -68,7 +68,7 @@ def render_moles(moles, image_path, image_width, image_height):
     image = color.reshape((image_height, image_width, 3))
     image = np.clip(image * 255, 0, 255).astype(np.uint8)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    mel.lib.common.write_image(image_path, image)
+    return image
 
 
 # -----------------------------------------------------------------------------
