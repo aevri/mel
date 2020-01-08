@@ -93,7 +93,10 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles):
     dark_skin_colour = vec3.make(198, 134, 66) * (1 / 255)
 
     dark_param = None
-    for mole_radius_sq, mole_y_pos, mole_rot in moles:
+    for m in moles:
+        mole_radius_sq = m["radius_sq"]
+        mole_y_pos = m["y_offset"]
+        mole_rot = m["longitude_rads"]
         front_dir = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
         hit_flat_dir = vec3.normalized(vec3_flat(p_hit) - vec3_flat(p_cyl))
         hit_f_cos = vec3.dot(hit_flat_dir, front_dir)
