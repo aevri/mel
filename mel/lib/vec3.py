@@ -131,6 +131,28 @@ def zcol(v):
     return v[:, 2:3]
 
 
+def xval(v):
+    """Return the scalar x value of a single vector.
+
+    >>> xval(make(1, 2, 3))
+    1
+    """
+    assert is_vec3(v)
+    assert v.shape[0] == 1
+    return v[0, 0]
+
+
+def yval(v):
+    """Return the scalar x value of a single vector.
+
+    >>> yval(make(1, 2, 3))
+    2
+    """
+    assert is_vec3(v)
+    assert v.shape[0] == 1
+    return v[0, 1]
+
+
 def zval(v):
     """Return the scalar x value of a single vector.
 

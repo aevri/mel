@@ -35,10 +35,12 @@ def process_args(args):
     height = 400
     num_moles = 10
     moles = mel.rotomap.fake.random_moles(num_moles)
-    image = mel.rotomap.fake.render_moles(
+    image, visible_moles = mel.rotomap.fake.render_moles(
         moles, image_width=width, image_height=height
     )
-    mel.lib.common.write_image(dir1 / '0.jpg', image)
+    image_path = dir1 / '0.jpg'
+    mel.lib.common.write_image(image_path, image)
+    mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
 def _iterable_len(it):

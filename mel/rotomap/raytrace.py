@@ -86,6 +86,15 @@ def light_cylinder(p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles):
     return color
 
 
+def cylinder_mole_pos(p_cyl, cyl_radius, mole_y_pos, mole_rot):
+    d_mole = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
+    p_flat_mole = p_cyl + d_mole * cyl_radius
+    p_mole = vec3.make(
+        vec3.xval(p_flat_mole), mole_y_pos, vec3.zval(p_flat_mole)
+    )
+    return p_mole
+
+
 def skin_colour_cylinder(p_cyl, radius, p_hit, moles):
     # Skin tone colours:
     # https://www.schemecolor.com/real-skin-tones-color-palette.php

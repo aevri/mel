@@ -8,6 +8,7 @@ import numpy as np
 
 import mel.lib.common
 import mel.lib.vec3 as vec3
+import mel.rotomap.moles
 import mel.rotomap.raytrace
 
 
@@ -29,6 +30,7 @@ import mel.rotomap.raytrace
 def random_moles(num_moles):
     return [
         {
+            "uuid": mel.rotomap.moles.make_new_uuid(),
             "radius": (random.normalvariate(0.02, 0.005) * math.pi),
             "y_offset": random.uniform(-1, 1),
             "longitude_rads": random.uniform(0, math.pi * 2),
@@ -65,10 +67,37 @@ def render_moles(moles, image_width, image_height):
     color = vec3.zeros(len(hit))
     color[hit, :] = part_color
 
+    visible_moles = []
+    for m in moles:
+        mole_y_pos = m["y_offset"]
+        mole_rot = m["longitude_rads"]
+        p_mole = mel.rotomap.raytrace.cylinder_mole_pos(
+            p_cyl, m_cyl_radius, mole_y_pos, mole_rot
+        )
+        d_mole_to_eye = vec3.normalized(p_ray - p_mole)
+        p_screen = mel.rotomap.raytrace.intersect_ray_at_z_pos(
+            p_mole, d_mole_to_eye, 0
+        )
+        d_eye_to_mole = d_mole_to_eye * -1
+        hit, p_hit = mel.rotomap.raytrace.intersect_ray_cylinder(
+            p_ray, d_eye_to_mole, p_cyl, m_cyl_radius,
+        )
+
+        if vec3.mag_sq(p_hit - p_mole) < 0.001:
+            image_x = int(
+                (vec3.xval(p_screen) * image_width * 0.5) + image_width // 2
+            )
+            image_y = int(
+                (vec3.yval(p_screen) * image_width * -0.5) + image_height // 2
+            )
+            mel.rotomap.moles.add_mole(
+                visible_moles, image_x, image_y, m["uuid"]
+            )
+
     image = color.reshape((image_height, image_width, 3))
     image = np.clip(image * 255, 0, 255).astype(np.uint8)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    return image
+    return image, visible_moles
 
 
 # -----------------------------------------------------------------------------
