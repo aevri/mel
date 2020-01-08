@@ -29,7 +29,7 @@ import mel.rotomap.raytrace
 def random_moles(num_moles):
     return [
         {
-            "radius_sq": (random.normalvariate(0.02, 0.005) * math.pi) ** 2,
+            "radius": (random.normalvariate(0.02, 0.005) * math.pi),
             "y_offset": random.uniform(-1, 1),
             "longitude_rads": random.uniform(0, math.pi * 2),
         }

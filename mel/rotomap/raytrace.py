@@ -94,7 +94,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles):
 
     dark_param = None
     for m in moles:
-        mole_radius_sq = m["radius_sq"]
+        mole_radius_sq = m["radius"] ** 2
         mole_y_pos = m["y_offset"]
         mole_rot = m["longitude_rads"]
         front_dir = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
