@@ -12,9 +12,8 @@ import mel.rotomap.fake
 
 def setup_parser(parser):
     parser.add_argument(
-        'PATH',
-        help='Where to create this generated repo.',
-        type=pathlib.Path)
+        "PATH", help="Where to create this generated repo.", type=pathlib.Path
+    )
 
 
 def process_args(args):
@@ -22,14 +21,14 @@ def process_args(args):
     if not melroot.exists():
         melroot.mkdir(parents=False)
     if _iterable_len(melroot.iterdir()):
-        raise mel.cmd.error.UsageError('Target directory must be empty.')
+        raise mel.cmd.error.UsageError("Target directory must be empty.")
 
-    melrootfile = melroot / 'melroot'
+    melrootfile = melroot / "melroot"
     melrootfile.touch()
 
-    leftleg_lower = melroot / 'rotomaps' / 'parts' / 'LeftLeg' / 'Lower'
+    leftleg_lower = melroot / "rotomaps" / "parts" / "LeftLeg" / "Lower"
     leftleg_lower.mkdir(parents=True)
-    dir1 = leftleg_lower / '2018_01_01'
+    dir1 = leftleg_lower / "2018_01_01"
     dir1.mkdir()
 
     width = 300
@@ -47,7 +46,7 @@ def process_args(args):
             image_height=height,
             rot_0_to_1=rot_0_to_1,
         )
-        image_path = dir1 / f'{i:0}.jpg'
+        image_path = dir1 / f"{i:0}.jpg"
         mel.lib.common.write_image(image_path, image)
         mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
