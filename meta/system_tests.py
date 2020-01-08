@@ -4,6 +4,7 @@
 import argparse
 import contextlib
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -84,9 +85,9 @@ def run_mel_debug_help_tests():
 def run_smoke_test():
     with chtempdir_context():
         expect_ok('mel-debug', 'gen-repo', '.')
-        target_rotomap = 'rotomaps/parts/LeftLeg/Lower/2018_01_01'
-        target_image = target_rotomap + '/0.jpg'
-        target_json = target_image + '.json'
+        target_rotomap = pathlib.Path('rotomaps/parts/LeftLeg/Lower/2018_01_01')
+        target_image = target_rotomap / '0.jpg'
+        target_json = target_image.with_suffix('.jpg.json')
         expect_ok('mel', 'rotomap', 'automask', target_image)
         expect_ok('mel', 'rotomap', 'calc-space', target_image)
         expect_ok('mel', 'rotomap', 'automark', target_image)
