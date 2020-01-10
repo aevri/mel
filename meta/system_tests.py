@@ -85,14 +85,30 @@ def run_mel_debug_help_tests():
 def run_smoke_test():
     with chtempdir_context():
         expect_ok('mel-debug', 'gen-repo', '.')
-        target_rotomap = pathlib.Path('rotomaps/parts/LeftLeg/Lower/2018_01_01')
-        target_image_files = list(target_rotomap.glob("*.jpg"))
-        target_json_files = list(target_rotomap.glob('*.jpg.json'))
+        target_part = pathlib.Path('rotomaps/parts/LeftLeg/Lower')
+
+        target_rotomap_1 = target_part / '2017_01_01'
+        target_image_files = list(target_rotomap_1.glob("*.jpg"))
+        target_json_files = list(target_rotomap_1.glob('*.jpg.json'))
+        expect_ok('mel', 'rotomap', 'automask', *target_image_files)
+        expect_ok('mel', 'rotomap', 'calc-space', *target_image_files)
+
+        target_rotomap_2 = target_part / '2018_01_01'
+        target_image_files = list(target_rotomap_2.glob("*.jpg"))
+        target_json_files = list(target_rotomap_2.glob('*.jpg.json'))
+
+        for json_file in target_json_files:
+            json_file.rename(json_file.with_suffix(".json.bak"))
+
         expect_ok('mel', 'rotomap', 'automask', *target_image_files)
         expect_ok('mel', 'rotomap', 'calc-space', *target_image_files)
         expect_ok('mel', 'rotomap', 'automark', *target_image_files)
+
+        for json_file in target_json_files:
+            json_file.with_suffix(".json.bak").rename(json_file)
+
         expect_ok('mel', 'rotomap', 'confirm', *target_json_files)
-        expect_ok('mel', 'rotomap', 'mark-unchanged', target_rotomap)
+        expect_ok('mel', 'rotomap', 'mark-unchanged', target_rotomap_2)
         expect_ok('mel', 'rotomap', 'list', *target_json_files)
         expect_ok('mel', 'rotomap', 'loadsave', *target_json_files)
         expect_ok('mel', 'status', '-ttdd')

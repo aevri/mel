@@ -28,7 +28,9 @@ def process_args(args):
 
     leftleg_lower = melroot / "rotomaps" / "parts" / "LeftLeg" / "Lower"
     leftleg_lower.mkdir(parents=True)
+    dir0 = leftleg_lower / "2017_01_01"
     dir1 = leftleg_lower / "2018_01_01"
+    dir0.mkdir()
     dir1.mkdir()
 
     width = 300
@@ -36,19 +38,20 @@ def process_args(args):
     num_moles = 10
     moles = mel.rotomap.fake.random_moles(num_moles)
 
-    num_images = 10
-    for i in range(num_images):
-        rot_0_to_1 = i / num_images
-        rot_0_to_1 += random.random() / num_images
-        image, visible_moles = mel.rotomap.fake.render_moles(
-            moles,
-            image_width=width,
-            image_height=height,
-            rot_0_to_1=rot_0_to_1,
-        )
-        image_path = dir1 / f"{i:0}.jpg"
-        mel.lib.common.write_image(image_path, image)
-        mel.rotomap.moles.save_image_moles(visible_moles, image_path)
+    for dir_path in (dir0, dir1):
+        num_images = random.randint(10, 20)
+        for i in range(num_images):
+            rot_0_to_1 = i / num_images
+            rot_0_to_1 += random.random() / num_images
+            image, visible_moles = mel.rotomap.fake.render_moles(
+                moles,
+                image_width=width,
+                image_height=height,
+                rot_0_to_1=rot_0_to_1,
+            )
+            image_path = dir_path / f"{i:02}.jpg"
+            mel.lib.common.write_image(image_path, image)
+            mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
 def _iterable_len(it):
