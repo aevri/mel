@@ -96,6 +96,11 @@ def process_args(args):
 
         positions = trans.uuid_dict_to_index_tuple(uuid_to_pos, num_locations)
 
+        if not positions or len(positions) == 1:
+            if args.verbose:
+                print('Not enough moles to guess for', frame.path)
+            continue
+
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
             positions, trans, warm_classifier
         )
