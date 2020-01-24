@@ -13,7 +13,6 @@ import mel.cmd.mel
 
 
 class ExpectationError(Exception):
-
     def __init__(self, message, completed_process):
         super(ExpectationError, self).__init__(message)
         self.completed_process = completed_process
@@ -50,69 +49,69 @@ def run_tests():
 
 def run_mel_help_tests():
 
-    mel_cmd = 'mel'
+    mel_cmd = "mel"
 
     expect_returncode(2, mel_cmd)
-    expect_ok(mel_cmd, '-h')
+    expect_ok(mel_cmd, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS['root'].keys():
-        expect_ok(mel_cmd, subcommand, '-h')
+    for subcommand in mel.cmd.mel.COMMANDS["root"].keys():
+        expect_ok(mel_cmd, subcommand, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS['micro'].keys():
-        expect_ok(mel_cmd, 'micro', subcommand, '-h')
+    for subcommand in mel.cmd.mel.COMMANDS["micro"].keys():
+        expect_ok(mel_cmd, "micro", subcommand, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS['rotomap'].keys():
-        expect_ok(mel_cmd, 'rotomap', subcommand, '-h')
+    for subcommand in mel.cmd.mel.COMMANDS["rotomap"].keys():
+        expect_ok(mel_cmd, "rotomap", subcommand, "-h")
 
 
 def run_mel_debug_help_tests():
 
-    mel_cmd = 'mel-debug'
+    mel_cmd = "mel-debug"
 
     expect_returncode(2, mel_cmd)
-    expect_ok(mel_cmd, '-h')
+    expect_ok(mel_cmd, "-h")
 
     subcommands = [
-        'bench-automark',
-        'gen-repo',
-        'render-valuefield',
+        "bench-automark",
+        "gen-repo",
+        "render-valuefield",
     ]
 
     for s in subcommands:
-        expect_ok(mel_cmd, s, '-h')
+        expect_ok(mel_cmd, s, "-h")
 
 
 def run_smoke_test():
     with chtempdir_context():
-        expect_ok('mel-debug', 'gen-repo', '.')
-        target_part = pathlib.Path('rotomaps/parts/LeftLeg/Lower')
+        expect_ok("mel-debug", "gen-repo", ".")
+        target_part = pathlib.Path("rotomaps/parts/LeftLeg/Lower")
 
-        target_rotomap_1 = target_part / '2017_01_01'
+        target_rotomap_1 = target_part / "2017_01_01"
         target_image_files = list(target_rotomap_1.glob("*.jpg"))
-        target_json_files = list(target_rotomap_1.glob('*.jpg.json'))
-        expect_ok('mel', 'rotomap', 'automask', *target_image_files)
-        expect_ok('mel', 'rotomap', 'calc-space', *target_image_files)
+        target_json_files = list(target_rotomap_1.glob("*.jpg.json"))
+        expect_ok("mel", "rotomap", "automask", *target_image_files)
+        expect_ok("mel", "rotomap", "calc-space", *target_image_files)
 
-        target_rotomap_2 = target_part / '2018_01_01'
+        target_rotomap_2 = target_part / "2018_01_01"
         target_image_files = list(target_rotomap_2.glob("*.jpg"))
-        target_json_files = list(target_rotomap_2.glob('*.jpg.json'))
+        target_json_files = list(target_rotomap_2.glob("*.jpg.json"))
 
         for json_file in target_json_files:
             json_file.rename(json_file.with_suffix(".json.bak"))
 
-        expect_ok('mel', 'rotomap', 'automask', *target_image_files)
-        expect_ok('mel', 'rotomap', 'calc-space', *target_image_files)
-        expect_ok('mel', 'rotomap', 'automark', *target_image_files)
+        expect_ok("mel", "rotomap", "automask", *target_image_files)
+        expect_ok("mel", "rotomap", "calc-space", *target_image_files)
+        expect_ok("mel", "rotomap", "automark", *target_image_files)
 
         for json_file in target_json_files:
             json_file.with_suffix(".json.bak").rename(json_file)
 
-        expect_ok('mel', 'rotomap', 'confirm', *target_json_files)
-        expect_ok('mel', 'rotomap', 'mark-unchanged', target_rotomap_2)
-        expect_ok('mel', 'rotomap', 'list', *target_json_files)
-        expect_ok('mel', 'rotomap', 'loadsave', *target_json_files)
-        expect_ok('mel', 'status', '-ttdd')
-        expect_ok('mel', 'micro', 'list')
+        expect_ok("mel", "rotomap", "confirm", *target_json_files)
+        expect_ok("mel", "rotomap", "mark-unchanged", target_rotomap_2)
+        expect_ok("mel", "rotomap", "list", *target_json_files)
+        expect_ok("mel", "rotomap", "loadsave", *target_json_files)
+        expect_ok("mel", "status", "-ttdd")
+        expect_ok("mel", "micro", "list")
 
 
 @contextlib.contextmanager
@@ -131,21 +130,25 @@ def expect_ok(*args):
 
 
 def expect_returncode(expected_code, command):
-    print('.', end='', flush=True)
+    print(".", end="", flush=True)
 
     result = subprocess.run(
         command,
         universal_newlines=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+    )
 
     if result.returncode != expected_code:
-        raise ExpectationError("'{cmd}' returned {rc}, expected {erc}".format(
-            cmd=command, rc=result.returncode, erc=expected_code),
-            result)
+        raise ExpectationError(
+            "'{cmd}' returned {rc}, expected {erc}".format(
+                cmd=command, rc=result.returncode, erc=expected_code
+            ),
+            result,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
 
 
