@@ -67,6 +67,7 @@ setuptools.setup(
         'torchvision<0.4.0',  # Match version of torch.
         'tqdm',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
+        'pillow<7',  # https://github.com/pytorch/vision/issues/1712
     ],
     extras_require={
         'dev': [
