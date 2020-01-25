@@ -66,6 +66,7 @@ setuptools.setup(
         'torch==1.1.0',  # Oddly 1.1.0.post2 is much slower on Mac, so pin.
         'torchvision<0.4.0',  # Match version of torch.
         'tqdm',
+        'six>=1.12',  # Oddly we get a version that's too old otherwise.
     ],
     extras_require={
         'dev': [
