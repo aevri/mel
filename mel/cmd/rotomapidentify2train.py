@@ -1,7 +1,6 @@
 """Train to guess which mole is which in a rotomap image."""
 
 import json
-import logging
 
 import torch.utils.data
 
@@ -85,14 +84,6 @@ def process_args(args):
             "image_size": image_size,
         }
         json.dump(metadata, f)
-
-
-def setup_logging(verbosity):
-    logtypes = [logging.WARNING, logging.INFO, logging.DEBUG]
-    level = min(len(logtypes) - 1, verbosity)
-    logging.basicConfig(
-        level=logtypes[level], format="%(levelname)s: %(message)s"
-    )
 
 
 # -----------------------------------------------------------------------------

@@ -1,10 +1,9 @@
 """Identify which moles are which, using neural nets."""
 import collections
 import contextlib
-import random
+# import random
 import time
 
-import cv2
 import numpy
 import torch.utils.data
 import torchvision
@@ -35,7 +34,7 @@ def fit(
     iters_per_epoch = len(train_dataloader) * 2 + len(valid_dataloader)
 
     with tqdm.tqdm(total=iters_per_epoch * epochs, smoothing=0) as pbar:
-        for epoch in range(epochs):
+        for _ in range(epochs):
             model.train()
             for i, xb, yb in train_dataloader:
                 opt.zero_grad()
@@ -180,102 +179,102 @@ class RotomapsClassMapping:
         self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
 
 
-def make_random_shift_crop(magnitude):
-    def no_shift(t):
-        return t
+# def make_random_shift_crop(magnitude):
+#     def no_shift(t):
+#         return t
 
-    def random_shift_crop(tensor_image):
-        v_directions = (shift_crop_up, shift_crop_down)
-        h_directions = (shift_crop_left, shift_crop_right)
-        v_dir = random.choice(v_directions)
-        h_dir = random.choice(h_directions)
-        shifts = (no_shift, v_dir, h_dir)
-        for _ in range(magnitude):
-            tensor_image = random.choice(shifts)(tensor_image)
-        return tensor_image
+#     def random_shift_crop(tensor_image):
+#         v_directions = (shift_crop_up, shift_crop_down)
+#         h_directions = (shift_crop_left, shift_crop_right)
+#         v_dir = random.choice(v_directions)
+#         h_dir = random.choice(h_directions)
+#         shifts = (no_shift, v_dir, h_dir)
+#         for _ in range(magnitude):
+#             tensor_image = random.choice(shifts)(tensor_image)
+#         return tensor_image
 
-    return random_shift_crop
-
-
-def get_sub_image(image, top, left, bottom, right):
-    width = image.shape[1]
-    height = image.shape[0]
-    topc, leftc, bottomc, rightc = numpy.clip(
-        [top, left, bottom, right],
-        numpy.array([0, 0, 0, 0]),
-        numpy.array([height, width, height, width]),
-    )
-    sub_image = image[topc:bottomc, leftc:rightc]
-    vsize = bottom - top
-    hsize = right - left
-    if sub_image.shape != (bottom - top, right - left, 3):
-        new_image = numpy.zeros((vsize, hsize, 3), dtype=image.dtype)
-        new_image[:, :, 1] = 255
-        clipped_hsize = rightc - leftc
-        clipped_vsize = bottomc - topc
-        new_image[:clipped_vsize, :clipped_hsize, :] = sub_image[:, :, :]
-        sub_image = new_image
-    return sub_image
+#     return random_shift_crop
 
 
-def to_tensor(image):
-    return torchvision.transforms.ToTensor()(image)
+# def get_sub_image(image, top, left, bottom, right):
+#     width = image.shape[1]
+#     height = image.shape[0]
+#     topc, leftc, bottomc, rightc = numpy.clip(
+#         [top, left, bottom, right],
+#         numpy.array([0, 0, 0, 0]),
+#         numpy.array([height, width, height, width]),
+#     )
+#     sub_image = image[topc:bottomc, leftc:rightc]
+#     vsize = bottom - top
+#     hsize = right - left
+#     if sub_image.shape != (bottom - top, right - left, 3):
+#         new_image = numpy.zeros((vsize, hsize, 3), dtype=image.dtype)
+#         new_image[:, :, 1] = 255
+#         clipped_hsize = rightc - leftc
+#         clipped_vsize = bottomc - topc
+#         new_image[:clipped_vsize, :clipped_hsize, :] = sub_image[:, :, :]
+#         sub_image = new_image
+#     return sub_image
+
+
+# def to_tensor(image):
+#     return torchvision.transforms.ToTensor()(image)
 
 
 def resize(image, image_size):
     return torchvision.transforms.Resize(image_size)(image)
 
 
-def to_rgb(image):
-    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# def to_rgb(image):
+#     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
-def mask_image(original_image, mask):
-    green = numpy.zeros(original_image.shape, numpy.uint8)
-    green[:, :, 1] = 255
-    image = cv2.bitwise_and(original_image, original_image, mask=mask)
-    not_mask = cv2.bitwise_not(mask)
-    green = cv2.bitwise_and(green, green, mask=not_mask)
-    image = cv2.bitwise_or(image, green)
-    return image
+# def mask_image(original_image, mask):
+#     green = numpy.zeros(original_image.shape, numpy.uint8)
+#     green[:, :, 1] = 255
+#     image = cv2.bitwise_and(original_image, original_image, mask=mask)
+#     not_mask = cv2.bitwise_not(mask)
+#     green = cv2.bitwise_and(green, green, mask=not_mask)
+#     image = cv2.bitwise_or(image, green)
+#     return image
 
 
-def shift_crop_right(tensor_image):
-    # Delete the right column, add a column of zeros down on the left.
-    new_image = torch.cat((new_col(tensor_image), tensor_image), 2)
-    return new_image[:, :, :-1]
+# def shift_crop_right(tensor_image):
+#     # Delete the right column, add a column of zeros down on the left.
+#     new_image = torch.cat((new_col(tensor_image), tensor_image), 2)
+#     return new_image[:, :, :-1]
 
 
-def shift_crop_left(tensor_image):
-    # Delete the left column, add a column of zeros down on the right.
-    new_image = torch.cat((tensor_image, new_col(tensor_image)), 2)
-    return new_image[:, :, 1:]
+# def shift_crop_left(tensor_image):
+#     # Delete the left column, add a column of zeros down on the right.
+#     new_image = torch.cat((tensor_image, new_col(tensor_image)), 2)
+#     return new_image[:, :, 1:]
 
 
-def shift_crop_down(tensor_image):
-    # Shift a row of zeros down from the top
-    new_image = torch.cat((new_row(tensor_image), tensor_image), 1)
-    return new_image[:, :-1, :]
+# def shift_crop_down(tensor_image):
+#     # Shift a row of zeros down from the top
+#     new_image = torch.cat((new_row(tensor_image), tensor_image), 1)
+#     return new_image[:, :-1, :]
 
 
-def shift_crop_up(tensor_image):
-    # Shift a row of zeros up from the bottom
-    new_image = torch.cat((tensor_image, new_row(tensor_image)), 1)
-    return new_image[:, 1:, :]
+# def shift_crop_up(tensor_image):
+#     # Shift a row of zeros up from the bottom
+#     new_image = torch.cat((tensor_image, new_row(tensor_image)), 1)
+#     return new_image[:, 1:, :]
 
 
-def new_col(tensor_image):
-    channels = tensor_image.shape[0]
-    rows = tensor_image.shape[1]
-    new_row_shape = channels, rows, 1
-    return torch.zeros(new_row_shape)
+# def new_col(tensor_image):
+#     channels = tensor_image.shape[0]
+#     rows = tensor_image.shape[1]
+#     new_row_shape = channels, rows, 1
+#     return torch.zeros(new_row_shape)
 
 
-def new_row(tensor_image):
-    channels = tensor_image.shape[0]
-    cols = tensor_image.shape[2]
-    new_row_shape = channels, 1, cols
-    return torch.zeros(new_row_shape)
+# def new_row(tensor_image):
+#     channels = tensor_image.shape[0]
+#     cols = tensor_image.shape[2]
+#     new_row_shape = channels, 1, cols
+#     return torch.zeros(new_row_shape)
 
 
 def make_model_and_fit(
@@ -354,213 +353,217 @@ def make_model_and_fit(
     return results
 
 
-def append_frame_data(
-    i,
-    frame,
-    image_size,
-    photo_size,
-    do_photo,
-    part_to_index,
-    mid_point,
-    quarter_point,
-    num_frames,
-    image_list,
-):
-    assert not do_photo
-    # half_photo_size = photo_size // 2
-    # rgb_masked = to_rgb(mask_image(frame.load_image(), frame.load_mask()))
-    if do_photo:
-        assert False
-    else:
-        frame_image = 0
-    part_name = frame_to_part_name(frame)
-    part_index = part_to_index[part_name]
-    ellipse = frame.metadata["ellipse"]
-    elspace = mel.lib.ellipsespace.Transform(ellipse)
-    a = abs(i - mid_point) / mid_point
-    b = abs((i - quarter_point) % num_frames - mid_point) / mid_point
-    for uuid_target, target_pos in frame.moledata.uuid_points.items():
-        if do_photo:
-            assert False
-        else:
-            mole_image = 0
-        image = torch.zeros(2, image_size, image_size)
-        for uuid_, pos in frame.moledata.uuid_points.items():
-            # if canonical_only and uuid_ not in
-            # frame.moledata.canonical_uuids:
-            #    continue
-            epos = elspace.to_space(pos)
-            ipos = numpy.array(epos)
-            ipos *= image_size * 0.3
-            ipos += image_size * 0.5
-            splat4(image[0], ipos[0], ipos[1])
-            if uuid_ == uuid_target:
-                splat4(image[1], ipos[0], ipos[1])
-        # pylint: disable=not-callable
-        # Pylint thinks that torch.tensor is not callable in PyTorch 1.1, this
-        # seems to be fixed in later versions.
-        image_list.append(
-            (
-                (frame.path, uuid_target),
-                (
-                    image,
-                    torch.tensor([a, b, epos[0], epos[1]]),
-                    (frame_image, mole_image),
-                    part_index,
-                ),
-                uuid_target,
-            )
-        )
-        # pylint: enable=not-callable
+# def append_frame_data(
+#     i,
+#     frame,
+#     image_size,
+#     photo_size,
+#     do_photo,
+#     part_to_index,
+#     mid_point,
+#     quarter_point,
+#     num_frames,
+#     image_list,
+# ):
+#     assert not do_photo
+#     # half_photo_size = photo_size // 2
+#     # rgb_masked = to_rgb(mask_image(frame.load_image(), frame.load_mask()))
+#     if do_photo:
+#         assert False
+#     else:
+#         frame_image = 0
+#     part_name = frame_to_part_name(frame)
+#     part_index = part_to_index[part_name]
+#     ellipse = frame.metadata["ellipse"]
+#     elspace = mel.lib.ellipsespace.Transform(ellipse)
+#     a = abs(i - mid_point) / mid_point
+#     b = abs((i - quarter_point) % num_frames - mid_point) / mid_point
+#     for uuid_target, target_pos in frame.moledata.uuid_points.items():
+#         if do_photo:
+#             assert False
+#         else:
+#             mole_image = 0
+#         image = torch.zeros(2, image_size, image_size)
+#         for uuid_, pos in frame.moledata.uuid_points.items():
+#             # if canonical_only and uuid_ not in
+#             # frame.moledata.canonical_uuids:
+#             #    continue
+#             epos = elspace.to_space(pos)
+#             ipos = numpy.array(epos)
+#             ipos *= image_size * 0.3
+#             ipos += image_size * 0.5
+#             splat4(image[0], ipos[0], ipos[1])
+#             if uuid_ == uuid_target:
+#                 splat4(image[1], ipos[0], ipos[1])
+#         # pylint: disable=not-callable
+#         # Pylint thinks that torch.tensor is not callable in PyTorch 1.1,
+#         # this seems to be fixed in later versions.
+#         image_list.append(
+#             (
+#                 (frame.path, uuid_target),
+#                 (
+#                     image,
+#                     torch.tensor([a, b, epos[0], epos[1]]),
+#                     (frame_image, mole_image),
+#                     part_index,
+#                 ),
+#                 uuid_target,
+#             )
+#         )
+#         # pylint: enable=not-callable
 
 
-def record_inputs(model, to_record, dataset):
-    activations = None
+# def record_inputs(model, to_record, dataset):
+#     activations = None
 
-    def record_response(module, input_):
-        nonlocal activations
-        activations = catted(activations, input_[0][0].clone())
+#     def record_response(module, input_):
+#         nonlocal activations
+#         activations = catted(activations, input_[0][0].clone())
 
-    model.eval()
-    hook = to_record.register_forward_pre_hook(record_response)
-    with contextlib.ExitStack() as stack:
-        stack.callback(hook.remove)
-        with torch.no_grad():
-            for data in tqdm.tqdm(dataset):
-                model(data[1].unsqueeze(0))
+#     model.eval()
+#     hook = to_record.register_forward_pre_hook(record_response)
+#     with contextlib.ExitStack() as stack:
+#         stack.callback(hook.remove)
+#         with torch.no_grad():
+#             for data in tqdm.tqdm(dataset):
+#                 model(data[1].unsqueeze(0))
 
-    return activations
-
-
-class FakePartRotomap:
-    def __init__(self, num_moles, space_width):
-        self.space_width = space_width
-        self.positions = torch.empty(num_moles, 2).uniform_(-1, 1)
-        self.positions[:, 0] *= self.space_width
-
-    def _yield_masked_points_transformed(self, mask, transform):
-        for i, v in enumerate(mask):
-            if not v:
-                continue
-            x, y = transform(self.positions[i])
-            yield i, x, y
-
-    def yield_frame_images(self, left, image_size, warp_factor):
-        top = -1
-        bottom = 1
-        right = left + 2
-
-        visible = (
-            (self.positions[:, 0] >= left)
-            * (self.positions[:, 0] <= right)
-            * (self.positions[:, 1] >= top)
-            * (self.positions[:, 1] <= bottom)
-            * 1
-        )
-
-        half_size = image_size // 2
-
-        map_image = torch.zeros(image_size, image_size)
-
-        def transform(point):
-            # pylint: disable=not-callable
-            translated = point - torch.tensor((left + 1, 0), dtype=torch.float)
-            warped_x = (torch.sigmoid(translated[0] * warp_factor) - 0.5) * 2.0
-            warped = translated
-            warped[0] = warped_x
-            return warped * half_size + half_size
-            # pylint: enable=not-callable
-
-        for i, x, y in self._yield_masked_points_transformed(
-            visible, transform
-        ):
-            splat5(map_image, x, y)
-
-        for i, x, y in self._yield_masked_points_transformed(
-            visible, transform
-        ):
-            mole_image = torch.zeros(image_size, image_size)
-            splat5(mole_image, x, y)
-            yield torch.cat(
-                (map_image.unsqueeze(0), mole_image.unsqueeze(0))
-            ), i
+#     return activations
 
 
-class FakeBodyDataset:
-    def __init__(self, parts_list, image_size):
-        self._parts = parts_list
-        self._image_size = image_size
+# class FakePartRotomap:
+#     def __init__(self, num_moles, space_width):
+#         self.space_width = space_width
+#         self.positions = torch.empty(num_moles, 2).uniform_(-1, 1)
+#         self.positions[:, 0] *= self.space_width
 
-        self._part_ident_offsets = [0]
-        for part in parts_list:
-            self._part_ident_offsets.append(
-                self._part_ident_offsets[-1] + len(part.positions)
-            )
+#     def _yield_masked_points_transformed(self, mask, transform):
+#         for i, v in enumerate(mask):
+#             if not v:
+#                 continue
+#             x, y = transform(self.positions[i])
+#             yield i, x, y
 
-        self._image_lefts = []
+#     def yield_frame_images(self, left, image_size, warp_factor):
+#         top = -1
+#         bottom = 1
+#         right = left + 2
 
-        self._images = None
-        self._images_parts = []
-        self._labels = []
+#         visible = (
+#             (self.positions[:, 0] >= left)
+#             * (self.positions[:, 0] <= right)
+#             * (self.positions[:, 1] >= top)
+#             * (self.positions[:, 1] <= bottom)
+#             * 1
+#         )
 
-        self.regen_images()
+#         half_size = image_size // 2
 
-    def _ident_to_class(self, part_index, ident):
-        return ident + self._part_ident_offsets[part_index]
+#         map_image = torch.zeros(image_size, image_size)
 
-    def regen_images(self):
-        self._image_lefts = []
-        for i, part in enumerate(self._parts):
-            num_images = random.randint(6, 20)
-            offset = part.space_width / num_images
-            lefts = torch.arange(0, part.space_width, offset)
-            self._image_lefts.extend([i, l] for l in lefts)
+#         def transform(point):
+#             # pylint: disable=not-callable
+#             translated = point - torch.tensor(
+#                (left + 1, 0), dtype=torch.float
+#            )
+#             warped_x = (
+#                torch.sigmoid(translated[0] * warp_factor) - 0.5
+#            ) * 2.0
+#             warped = translated
+#             warped[0] = warped_x
+#             return warped * half_size + half_size
+#             # pylint: enable=not-callable
 
-        self._images = None
-        self._images_parts = []
-        self._labels = []
-        # TODO: randomize warp factor
-        for part_index, left in self._image_lefts:
-            warp_factor = random.uniform(2, 5)
-            part = self._parts[part_index]
-            for image, ident in part.yield_frame_images(
-                left, self._image_size, warp_factor
-            ):
-                self._images = catted(self._images, image)
-                self._images_parts.append(part_index)
-                self._labels.append(self._ident_to_class(part_index, ident))
+#         for i, x, y in self._yield_masked_points_transformed(
+#             visible, transform
+#         ):
+#             splat5(map_image, x, y)
 
-    def __getitem__(self, i):
-        return i, (self._images[i], self._images_parts[i]), self._labels[i]
-
-    def __len__(self):
-        return len(self._labels)
-
-    def num_classes(self):
-        return self._part_ident_offsets[-1]
-
-    def num_parts(self):
-        return len(self._parts)
-
-
-def catted(list_tensor, element_tensor):
-    if list_tensor is None:
-        return element_tensor.unsqueeze(0)
-    return torch.cat((list_tensor, element_tensor.unsqueeze(0)))
+#         for i, x, y in self._yield_masked_points_transformed(
+#             visible, transform
+#         ):
+#             mole_image = torch.zeros(image_size, image_size)
+#             splat5(mole_image, x, y)
+#             yield torch.cat(
+#                 (map_image.unsqueeze(0), mole_image.unsqueeze(0))
+#             ), i
 
 
-def make_body_of_fake_parts():
-    space_width = 4
-    return (
-        *[
-            FakePartRotomap(random.randint(30, 50), space_width)
-            for _ in range(10)
-        ],
-        *[
-            FakePartRotomap(random.randint(20, 40), space_width)
-            for _ in range(10)
-        ],
-    )
+# class FakeBodyDataset:
+#     def __init__(self, parts_list, image_size):
+#         self._parts = parts_list
+#         self._image_size = image_size
+
+#         self._part_ident_offsets = [0]
+#         for part in parts_list:
+#             self._part_ident_offsets.append(
+#                 self._part_ident_offsets[-1] + len(part.positions)
+#             )
+
+#         self._image_lefts = []
+
+#         self._images = None
+#         self._images_parts = []
+#         self._labels = []
+
+#         self.regen_images()
+
+#     def _ident_to_class(self, part_index, ident):
+#         return ident + self._part_ident_offsets[part_index]
+
+#     def regen_images(self):
+#         self._image_lefts = []
+#         for i, part in enumerate(self._parts):
+#             num_images = random.randint(6, 20)
+#             offset = part.space_width / num_images
+#             lefts = torch.arange(0, part.space_width, offset)
+#             self._image_lefts.extend([i, l] for l in lefts)
+
+#         self._images = None
+#         self._images_parts = []
+#         self._labels = []
+#         # TODO: randomize warp factor
+#         for part_index, left in self._image_lefts:
+#             warp_factor = random.uniform(2, 5)
+#             part = self._parts[part_index]
+#             for image, ident in part.yield_frame_images(
+#                 left, self._image_size, warp_factor
+#             ):
+#                 self._images = catted(self._images, image)
+#                 self._images_parts.append(part_index)
+#                 self._labels.append(self._ident_to_class(part_index, ident))
+
+#     def __getitem__(self, i):
+#         return i, (self._images[i], self._images_parts[i]), self._labels[i]
+
+#     def __len__(self):
+#         return len(self._labels)
+
+#     def num_classes(self):
+#         return self._part_ident_offsets[-1]
+
+#     def num_parts(self):
+#         return len(self._parts)
+
+
+# def catted(list_tensor, element_tensor):
+#     if list_tensor is None:
+#         return element_tensor.unsqueeze(0)
+#     return torch.cat((list_tensor, element_tensor.unsqueeze(0)))
+
+
+# def make_body_of_fake_parts():
+#     space_width = 4
+#     return (
+#         *[
+#             FakePartRotomap(random.randint(30, 50), space_width)
+#             for _ in range(10)
+#         ],
+#         *[
+#             FakePartRotomap(random.randint(20, 40), space_width)
+#             for _ in range(10)
+#         ],
+#     )
 
 
 def yield_frame_mole_maps_detail(
@@ -607,14 +610,14 @@ def yield_frame_mole_maps_detail(
         yield uuid_, result
 
 
-def yield_transformed_pos(frame):
-    ellipse = frame.metadata["ellipse"]
-    elspace = mel.lib.ellipsespace.Transform(ellipse)
-    for uuid_, pos in frame.moledata.uuid_points.items():
-        epos = elspace.to_space(pos)
-        # pylint: disable=not-callable
-        yield uuid_, torch.tensor(epos, dtype=torch.float)
-        # pylint: enable=not-callable
+# def yield_transformed_pos(frame):
+#     ellipse = frame.metadata["ellipse"]
+#     elspace = mel.lib.ellipsespace.Transform(ellipse)
+#     for uuid_, pos in frame.moledata.uuid_points.items():
+#         epos = elspace.to_space(pos)
+#         # pylint: disable=not-callable
+#         yield uuid_, torch.tensor(epos, dtype=torch.float)
+#         # pylint: enable=not-callable
 
 
 def yield_frame_mole_maps(frame, image_size, escale, etranslate):
@@ -808,11 +811,11 @@ def make_data(repo_path, data_config, channel_cache=None):
     )
 
 
-def splat4(tensor, x, y):
-    splat(tensor, x, y)
-    splat(tensor, x + 1, y)
-    splat(tensor, x, y + 1)
-    splat(tensor, x + 1, y + 1)
+# def splat4(tensor, x, y):
+#     splat(tensor, x, y)
+#     splat(tensor, x + 1, y)
+#     splat(tensor, x, y + 1)
+#     splat(tensor, x + 1, y + 1)
 
 
 def splat5(tensor, x, y, alpha=1.0):
@@ -929,15 +932,15 @@ def get_limb_rotomaps(parts_path):
     return all_rotomaps
 
 
-def get_all_rotomaps(parts_path):
-    all_rotomaps = collections.defaultdict(list)
-    for part in parts_path.iterdir():
-        for subpart in part.iterdir():
-            for p in subpart.iterdir():
-                all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
-                    mel.rotomap.moles.RotomapDirectory(p)
-                )
-    return all_rotomaps
+# def get_all_rotomaps(parts_path):
+#     all_rotomaps = collections.defaultdict(list)
+#     for part in parts_path.iterdir():
+#         for subpart in part.iterdir():
+#             for p in subpart.iterdir():
+#                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
+#                     mel.rotomap.moles.RotomapDirectory(p)
+#                 )
+#     return all_rotomaps
 
 
 class Timer:

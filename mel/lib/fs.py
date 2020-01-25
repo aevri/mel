@@ -9,7 +9,7 @@ DEFAULT_MOLE_MARK_MODEL_NAME = "mole_mark_model"
 DEFAULT_MOLE_MARK_DATACONFIG_NAME = "mole_mark_dataconfig.pkl"
 
 ROTOMAPS_PATH = pathlib.Path("rotomaps")
-ROTOMAPS_PARTS_PATH = ROTOMAPS_PATH / "parts"
+# ROTOMAPS_PARTS_PATH = ROTOMAPS_PATH / "parts"
 
 
 def expand_dirs_to_jpegs(path_list):
@@ -52,17 +52,17 @@ def find_melroot():
         path = parent
 
 
-def get_rotomap_parts_relative_path(melroot, path):
-    melroot = melroot.resolve()
-    rotomaps_path = melroot / ROTOMAPS_PARTS_PATH
-    path = pathlib.Path(os.path.abspath(path))
-    return path.relative_to(rotomaps_path)
+# def get_rotomap_parts_relative_path(melroot, path):
+#     melroot = melroot.resolve()
+#     rotomaps_path = melroot / ROTOMAPS_PARTS_PATH
+#     path = pathlib.Path(os.path.abspath(path))
+#     return path.relative_to(rotomaps_path)
 
 
-def get_rotomap_part_from_path(melroot, path):
-    rel_path = get_rotomap_parts_relative_path(melroot, path)
-    parents = list(rel_path.parents)
-    return str(parents[-3])
+# def get_rotomap_part_from_path(melroot, path):
+#     rel_path = get_rotomap_parts_relative_path(melroot, path)
+#     parents = list(rel_path.parents)
+#     return str(parents[-3])
 
 
 # -----------------------------------------------------------------------------
