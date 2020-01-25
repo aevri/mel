@@ -396,6 +396,9 @@ def append_frame_data(
             splat4(image[0], ipos[0], ipos[1])
             if uuid_ == uuid_target:
                 splat4(image[1], ipos[0], ipos[1])
+        # pylint: disable=not-callable
+        # Pylint thinks that torch.tensor is not callable in PyTorch 1.1, this
+        # seems to be fixed in later versions.
         image_list.append(
             (
                 (frame.path, uuid_target),
@@ -408,6 +411,7 @@ def append_frame_data(
                 uuid_target,
             )
         )
+        # pylint: enable=not-callable
 
 
 def record_inputs(model, to_record, dataset):
@@ -459,11 +463,13 @@ class FakePartRotomap:
         map_image = torch.zeros(image_size, image_size)
 
         def transform(point):
+            # pylint: disable=not-callable
             translated = point - torch.tensor((left + 1, 0), dtype=torch.float)
             warped_x = (torch.sigmoid(translated[0] * warp_factor) - 0.5) * 2.0
             warped = translated
             warped[0] = warped_x
             return warped * half_size + half_size
+            # pylint: enable=not-callable
 
         for i, x, y in self._yield_masked_points_transformed(
             visible, transform
@@ -606,7 +612,9 @@ def yield_transformed_pos(frame):
     elspace = mel.lib.ellipsespace.Transform(ellipse)
     for uuid_, pos in frame.moledata.uuid_points.items():
         epos = elspace.to_space(pos)
+        # pylint: disable=not-callable
         yield uuid_, torch.tensor(epos, dtype=torch.float)
+        # pylint: enable=not-callable
 
 
 def yield_frame_mole_maps(frame, image_size, escale, etranslate):
@@ -983,9 +991,11 @@ def extend_dataset_by_frame(
         [class_to_index[uuid_] for uuid_ in uuid_list]
     )
 
+    # pylint: disable=not-callable
     dataset["mole_count"].extend(
         [torch.tensor([len(uuid_list)], dtype=torch.float)] * len(uuid_list)
     )
+    # pylint: enable=not-callable
 
     def extend_dataset(field_name, dataset_part):
         dataset[field_name].extend(unzip_dataset_part(uuid_list, dataset_part))

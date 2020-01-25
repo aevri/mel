@@ -3,7 +3,6 @@
 import collections
 import json
 import os
-import pathlib
 
 import torch
 import torch.utils.data
@@ -55,7 +54,7 @@ def process_args(args):
         if args.verbose:
             print('Processing', target, '..')
 
-        part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
+        # part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
         frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
 
         class_to_index2 = class_to_index.copy()

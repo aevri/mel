@@ -64,9 +64,13 @@ def process_args(args):
         "weight_decay": weight_decay,
     }
 
-    results = mel.rotomap.identifynn.make_model_and_fit(*data, model_config, train_config)
+    results = mel.rotomap.identifynn.make_model_and_fit(
+        *data, model_config, train_config
+    )
 
-    valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(results["valid_fit_record"])
+    valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(
+        results["valid_fit_record"]
+    )
     print(valid_fit_record.acc[-1])
 
     model = results["model"]
