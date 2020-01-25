@@ -690,7 +690,7 @@ def make_dataset(
     dataset = collections.defaultdict(list)
     with tqdm.tqdm(total=total_frames * len(augmentations)) as pbar:
         for rotomap in rotomaps:
-            for i, frame in enumerate(rotomap.yield_frames()):
+            for frame in rotomap.yield_frames():
                 for escale, etranslate in augmentations:
                     extend_dataset_by_frame(
                         dataset,
@@ -721,6 +721,8 @@ def make_data(repo_path, data_config, channel_cache=None):
         rotomaps = get_lower_limb_rotomaps(parts_path)
     elif data_config["rotomaps"] == "limbs":
         rotomaps = get_limb_rotomaps(parts_path)
+    elif data_config["rotomaps"] == "all":
+        rotomaps = get_all_rotomaps(parts_path)
     else:
         raise Exception("Unhandled rotomap type")
     # rotomaps = get_lower_limb_rotomaps(parts_path)
@@ -794,6 +796,13 @@ def make_data(repo_path, data_config, channel_cache=None):
         in_fields=in_fields,
         out_fields=out_fields,
     )
+
+    if not train_dataset:
+        raise Exception("No data in training dataset.")
+
+    if not valid_dataset:
+        raise Exception("No data in training dataset.")
+
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=data_config["batch_size"], shuffle=True
     )
@@ -932,15 +941,15 @@ def get_limb_rotomaps(parts_path):
     return all_rotomaps
 
 
-# def get_all_rotomaps(parts_path):
-#     all_rotomaps = collections.defaultdict(list)
-#     for part in parts_path.iterdir():
-#         for subpart in part.iterdir():
-#             for p in subpart.iterdir():
-#                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
-#                     mel.rotomap.moles.RotomapDirectory(p)
-#                 )
-#     return all_rotomaps
+def get_all_rotomaps(parts_path):
+    all_rotomaps = collections.defaultdict(list)
+    for part in parts_path.iterdir():
+        for subpart in part.iterdir():
+            for p in subpart.iterdir():
+                all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
+                    mel.rotomap.moles.RotomapDirectory(p)
+                )
+    return all_rotomaps
 
 
 class Timer:
@@ -982,6 +991,8 @@ def extend_dataset_by_frame(
     escale,
     etranslate,
 ):
+    if "ellipse" not in frame.metadata:
+        return
 
     uuid_list = [uuid_ for uuid_, pos in frame.moledata.uuid_points.items()]
     dataset["uuid"].extend(uuid_list)

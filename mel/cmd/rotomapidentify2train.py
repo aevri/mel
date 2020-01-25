@@ -31,7 +31,7 @@ def process_args(args):
     cnn_depth = 4
 
     data_config = {
-        "rotomaps": ("limbs"),
+        "rotomaps": ("all"),
         # "rotomaps": ("subpart", "LeftLeg", "Lower"),
         "train_proportion": 0.9,
         "image_size": image_size,
@@ -74,6 +74,8 @@ def process_args(args):
 
     model = results["model"]
 
+    if not model_dir.exists():
+        model_dir.mkdir()
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}.")
     with open(metadata_path, "w") as f:

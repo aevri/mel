@@ -86,11 +86,19 @@ def run_smoke_test():
         expect_ok("mel-debug", "gen-repo", ".")
         target_part = pathlib.Path("rotomaps/parts/LeftLeg/Lower")
 
+        target_rotomap_0 = target_part / "2016_01_01"
+        target_image_files = list(target_rotomap_0.glob("*.jpg"))
+        target_json_files = list(target_rotomap_0.glob("*.jpg.json"))
+        expect_ok("mel", "rotomap", "automask", *target_image_files)
+        expect_ok("mel", "rotomap", "calc-space", *target_image_files)
+
         target_rotomap_1 = target_part / "2017_01_01"
         target_image_files = list(target_rotomap_1.glob("*.jpg"))
         target_json_files = list(target_rotomap_1.glob("*.jpg.json"))
         expect_ok("mel", "rotomap", "automask", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
+
+        expect_ok("mel", "rotomap", "identify2-train")
 
         target_rotomap_2 = target_part / "2018_01_01"
         target_image_files = list(target_rotomap_2.glob("*.jpg"))
@@ -102,6 +110,7 @@ def run_smoke_test():
         expect_ok("mel", "rotomap", "automask", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
         expect_ok("mel", "rotomap", "automark", *target_image_files)
+        expect_ok("mel", "rotomap", "identify2", *target_image_files)
 
         for json_file in target_json_files:
             json_file.with_suffix(".json.bak").rename(json_file)
