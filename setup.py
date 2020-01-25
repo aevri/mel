@@ -64,7 +64,7 @@ setuptools.setup(
         # 'opencv',  # Not a possibility as yet.
         'scipy',
         'torch==1.1.0',  # Oddly 1.1.0.post2 is much slower on Mac, so pin.
-        'torchvision',
+        'torchvision==0.4.2',  # Match version of torch.
         'tqdm',
     ],
     extras_require={
