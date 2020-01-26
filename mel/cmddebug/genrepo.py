@@ -21,6 +21,13 @@ def setup_parser(parser):
         type=int,
         default=3,
     )
+    parser.add_argument(
+        "--num-parts",
+        "-p",
+        help="How many parts to make.",
+        type=int,
+        default=1,
+    )
 
 
 def process_args(args):
@@ -33,30 +40,35 @@ def process_args(args):
     melrootfile = melroot / "melroot"
     melrootfile.touch()
 
-    leftleg_lower = melroot / "rotomaps" / "parts" / "LeftLeg" / "Lower"
-    leftleg_lower.mkdir(parents=True)
-
     width = 300
     height = 400
-    num_moles = 10
-    moles = mel.rotomap.fake.random_moles(num_moles)
 
-    for dirnum in range(args.num_rotomaps):
-        dir_path = leftleg_lower / f"{2018 - dirnum}_01_01"
-        dir_path.mkdir()
-        num_images = random.randint(10, 20)
-        for i in range(num_images):
-            rot_0_to_1 = i / num_images
-            rot_0_to_1 += random.random() / num_images
-            image, visible_moles = mel.rotomap.fake.render_moles(
-                moles,
-                image_width=width,
-                image_height=height,
-                rot_0_to_1=rot_0_to_1,
-            )
-            image_path = dir_path / f"{i:02}.jpg"
-            mel.lib.common.write_image(image_path, image)
-            mel.rotomap.moles.save_image_moles(visible_moles, image_path)
+    part_names = ["LeftLeg"]
+    part_names.extend([f"Part{i}" for i in range(2, args.num_parts + 1)])
+
+    for part in part_names:
+        leftleg_lower = melroot / "rotomaps" / "parts" / part / "Lower"
+        leftleg_lower.mkdir(parents=True)
+
+        num_moles = 10
+        moles = mel.rotomap.fake.random_moles(num_moles)
+
+        for dirnum in range(args.num_rotomaps):
+            dir_path = leftleg_lower / f"{2018 - dirnum}_01_01"
+            dir_path.mkdir()
+            num_images = random.randint(10, 20)
+            for i in range(num_images):
+                rot_0_to_1 = i / num_images
+                rot_0_to_1 += random.random() / num_images
+                image, visible_moles = mel.rotomap.fake.render_moles(
+                    moles,
+                    image_width=width,
+                    image_height=height,
+                    rot_0_to_1=rot_0_to_1,
+                )
+                image_path = dir_path / f"{i:02}.jpg"
+                mel.lib.common.write_image(image_path, image)
+                mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
 def _iterable_len(it):
