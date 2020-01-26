@@ -2,12 +2,6 @@
 
 import json
 
-import torch.utils.data
-
-import mel.rotomap.moles
-import mel.lib.ellipsespace
-import mel.lib.fs
-import mel.rotomap.identifynn
 
 
 def setup_parser(parser):
@@ -20,6 +14,15 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    # Some of are expensive imports, so to keep program start-up time lower,
+    # import them only when necessary.
+    import torch.utils.data
+
+    import mel.rotomap.moles
+    import mel.lib.ellipsespace
+    import mel.lib.fs
+    import mel.rotomap.identifynn
+
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"

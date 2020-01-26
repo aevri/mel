@@ -4,14 +4,6 @@ import collections
 import json
 import os
 
-import torch
-import torch.utils.data
-
-import mel.lib.fs
-
-import mel.rotomap.moles
-import mel.rotomap.identifynn
-
 
 def setup_parser(parser):
     parser.add_argument(
@@ -28,6 +20,15 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    # Some of are expensive imports, so to keep program start-up time lower,
+    # import them only when necessary.
+    import torch
+    import torch.utils.data
+
+    import mel.lib.fs
+    import mel.rotomap.moles
+    import mel.rotomap.identifynn
+
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
