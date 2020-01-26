@@ -804,7 +804,10 @@ def make_data(repo_path, data_config, channel_cache=None):
         )
 
     if not valid_dataset:
-        raise Exception("No data in training dataset.")
+        raise Exception(
+            f"No data in validation dataset. "
+            f"Tried these rotomaps: {valid_rotomaps}"
+        )
 
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=data_config["batch_size"], shuffle=True
