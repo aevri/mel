@@ -798,7 +798,10 @@ def make_data(repo_path, data_config, channel_cache=None):
     )
 
     if not train_dataset:
-        raise Exception("No data in training dataset.")
+        raise Exception(
+            f"No data in training dataset. "
+            f"Tried these rotomaps: {train_rotomaps}"
+        )
 
     if not valid_dataset:
         raise Exception("No data in training dataset.")
