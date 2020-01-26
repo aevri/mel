@@ -10,6 +10,13 @@ def setup_parser(parser):
         action="store_true",
         help="Print information about the processing.",
     )
+    parser.add_argument(
+        "--epochs",
+        "-e",
+        type=int,
+        default=10,
+        help="Number of epochs to train for.",
+    )
 
 
 def process_args(args):
@@ -59,7 +66,7 @@ def process_args(args):
     momentum = 0.95
 
     train_config = {
-        "epochs": 10,
+        "epochs": args.epochs,
         "learning_rate": learning_rate,
         "momentum": momentum,
         "weight_decay": weight_decay,
