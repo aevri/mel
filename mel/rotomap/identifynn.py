@@ -1,6 +1,7 @@
 """Identify which moles are which, using neural nets."""
 import collections
 import contextlib
+
 # import random
 import time
 
@@ -873,11 +874,19 @@ def split_train_valid(rotomaps, train_split=0.8):
     train_rotomaps = []
     valid_rotomaps = []
     for part, rotomap_list in rotomaps.items():
-        num_train_rotomaps = int(len(rotomap_list) * train_split)
-        num_valid_rotomaps = len(rotomap_list) - num_train_rotomaps
+        empty_rotomaps = [
+            r
+            for r in rotomap_list
+            if all(("ellipse" not in f.metadata) for f in r.yield_frames())
+        ]
+        nonempty_rotomaps = [
+            r for r in rotomap_list if r not in empty_rotomaps
+        ]
+        num_train_rotomaps = int(len(nonempty_rotomaps) * train_split)
+        num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
         assert num_valid_rotomaps
-        train_rotomaps.extend(rotomap_list[:num_train_rotomaps])
-        valid_rotomaps.extend(rotomap_list[num_train_rotomaps:])
+        train_rotomaps.extend(nonempty_rotomaps[:num_train_rotomaps])
+        valid_rotomaps.extend(nonempty_rotomaps[num_train_rotomaps:])
         # train_rotomaps.extend(rotomap_list[num_valid_rotomaps:])
         # valid_rotomaps.extend(rotomap_list[:num_valid_rotomaps])
     return train_rotomaps, valid_rotomaps
@@ -951,7 +960,8 @@ def get_all_rotomaps(parts_path):
     all_rotomaps = collections.defaultdict(list)
     for part in parts_path.iterdir():
         for subpart in part.iterdir():
-            for p in subpart.iterdir():
+            subpart_paths = sorted(p for p in subpart.iterdir())
+            for p in subpart_paths:
                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
                     mel.rotomap.moles.RotomapDirectory(p)
                 )
