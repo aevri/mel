@@ -7,8 +7,6 @@ import os
 import torch
 import torch.utils.data
 
-import mel.cmd.rotomapidentify2train  # TODO: extract this to lib instead
-
 import mel.lib.fs
 
 import mel.rotomap.moles
