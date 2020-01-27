@@ -63,11 +63,11 @@ setuptools.setup(
     install_requires=[
         # 'opencv',  # Not a possibility as yet.
         'scipy',
-        'torch==1.1.0',  # Oddly 1.1.0.post2 is much slower on Mac, so pin.
-        'torchvision<0.4.0',  # Match version of torch.
+        'torch~=1.4.0',
+        'torchvision~=0.5.0',
         'tqdm',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
-        'pillow<7',  # https://github.com/pytorch/vision/issues/1712
+        'pillow',
     ],
     extras_require={
         'dev': [
