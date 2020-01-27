@@ -198,12 +198,8 @@ def make_model_and_fit(
         cnn_depth=model_config["cnn_depth"],
         num_parts=len(part_to_index),
         num_classes=len(train_dataset.classes),
-        use_pos=model_config["use_pos"],
-        use_photo=model_config["use_photo"],
         num_cnns=3,
         channels_in=2,
-        predict_pos=False,
-        predict_count=False,
     )
 
     model = Model(**model_args)
@@ -345,9 +341,7 @@ def unzip_dataset_part(uuid_list, dataset_generator):
 def make_dataset(
     rotomaps,
     image_size,
-    photo_size,
     part_to_index,
-    do_photo,
     do_channels,
     channel_cache,
     class_mapping,
@@ -370,9 +364,7 @@ def make_dataset(
                         dataset,
                         frame,
                         image_size,
-                        photo_size,
                         part_to_index,
-                        do_photo,
                         do_channels,
                         channel_cache,
                         class_mapping.class_to_index,
@@ -408,8 +400,6 @@ def make_data(repo_path, data_config, channel_cache=None):
         assert False
 
     image_size = data_config["image_size"]
-    photo_size = data_config["photo_size"]
-    do_photo = data_config["do_photo"]
     do_channels = data_config["do_channels"]
 
     part_to_index = {p: i for i, p in enumerate(sorted(rotomaps.keys()))}
@@ -421,8 +411,6 @@ def make_data(repo_path, data_config, channel_cache=None):
         in_fields.append("channels")
     else:
         in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
-    if do_photo:
-        in_fields.extend(["frame_photo", "mole_photo"])
 
     out_fields = ["uuid_index", "mole_count"]
 
@@ -438,9 +426,7 @@ def make_data(repo_path, data_config, channel_cache=None):
         make_dataset(
             train_rotomaps,
             image_size,
-            photo_size,
             part_to_index,
-            do_photo,
             do_channels,
             channel_cache,
             class_mapping,
@@ -455,9 +441,7 @@ def make_data(repo_path, data_config, channel_cache=None):
         make_dataset(
             valid_rotomaps,
             image_size,
-            photo_size,
             part_to_index,
-            do_photo,
             do_channels,
             channel_cache,
             class_mapping,
@@ -662,9 +646,7 @@ def extend_dataset_by_frame(
     dataset,
     frame,
     image_size,
-    photo_size,
     part_to_index,
-    do_photo,
     do_channels,
     channel_cache,
     class_to_index,
@@ -724,12 +706,8 @@ class Model(torch.nn.Module):
         cnn_depth,
         num_parts,
         num_classes,
-        use_pos,
-        use_photo,
         num_cnns,
         channels_in=2,
-        predict_pos=False,
-        predict_count=False,
     ):
         super().__init__()
 
@@ -740,33 +718,8 @@ class Model(torch.nn.Module):
             cnn_width, cnn_depth, channels_in=channels_in
         )
 
-        self._use_pos = use_pos
-        assert not self._use_pos
-
         self._num_cnns = num_cnns
         end_width = (cnn_width * num_cnns) + self.embedding_len
-
-        self._predict_pos = predict_pos
-        if self._predict_pos:
-            self.predict_pos = torch.nn.Sequential(
-                torch.nn.Linear(cnn_width, 32),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm1d(num_features=32),
-                torch.nn.Linear(32, 2),
-            )
-
-        self._predict_count = predict_count
-        if self._predict_count:
-            self.predict_count = torch.nn.Sequential(
-                torch.nn.Linear(cnn_width, 32),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm1d(num_features=32),
-                torch.nn.Linear(32, 1),
-            )
-
-        self._use_photo = use_photo
-        if self._use_photo:
-            end_width += 512
 
         self.fc = torch.nn.Sequential(
             torch.nn.Linear(end_width, num_classes),
@@ -785,19 +738,10 @@ class Model(torch.nn.Module):
                 break
             convs_out.append(self.conv(image))
 
-        if self._use_pos:
-            assert not self._use_pos
-            assert not self._use_photo
-        elif self._use_photo:
-            assert not self._use_photo
-        else:
-            combined = torch.cat((*convs_out, part_embedding), 1)
+        combined = torch.cat((*convs_out, part_embedding), 1)
 
         result = [self.fc(combined)]
-        if self._predict_pos:
-            result.append(self.predict_pos(convs_out[0]))
-        if self._predict_count:
-            result.append(self.predict_count(convs_out[0]))
+
         return result
 
 

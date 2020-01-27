@@ -44,9 +44,7 @@ def process_args(args):
         "rotomaps": ("all"),
         "train_proportion": 0.9,
         "image_size": image_size,
-        "photo_size": 224,
         "batch_size": 100,
-        "do_photo": False,
         "do_augmentation": False,
         "do_channels": False,
     }
@@ -57,8 +55,6 @@ def process_args(args):
     model_config = {
         "cnn_width": cnn_width,
         "cnn_depth": cnn_depth,
-        "use_pos": False,
-        "use_photo": data_config["do_photo"],
     }
 
     weight_decay = 0.005
