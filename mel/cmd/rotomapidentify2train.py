@@ -42,7 +42,6 @@ def process_args(args):
 
     data_config = {
         "rotomaps": ("all"),
-        # "rotomaps": ("subpart", "LeftLeg", "Lower"),
         "train_proportion": 0.9,
         "image_size": image_size,
         "photo_size": 224,
