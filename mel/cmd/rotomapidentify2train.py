@@ -33,7 +33,8 @@ def process_args(args):
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
     metadata_path = model_dir / "identify.json"
-    print(f"Will save to {model_path}.")
+    print(f"Will save to {model_path}")
+    print(f"         and {metadata_path}")
 
     image_size = 32
     cnn_width = 128
@@ -86,7 +87,7 @@ def process_args(args):
     if not model_dir.exists():
         model_dir.mkdir()
     torch.save(model.state_dict(), model_path)
-    print(f"Saved {model_path}.")
+    print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
         metadata = {
             "model_args": results["model_args"],
@@ -95,6 +96,7 @@ def process_args(args):
             "image_size": image_size,
         }
         json.dump(metadata, f)
+        print(f"Saved {metadata_path}")
 
 
 # -----------------------------------------------------------------------------
