@@ -188,6 +188,7 @@ def make_model_and_fit(
     part_to_index,
     model_config,
     train_config,
+    old_results=None,
 ):
 
     train_fit_record = FitRecord()
@@ -202,7 +203,31 @@ def make_model_and_fit(
         channels_in=2,
     )
 
-    model = Model(**model_args)
+    if old_results is not None:
+        model = old_results["model"]
+        old_part_to_index = old_results["part_to_index"]
+        old_classes = old_results["classes"]
+        old_model_args = old_results["model_args"]
+        if (
+            old_part_to_index != part_to_index
+            or old_classes != train_dataset.classes
+        ):
+            # TODO: support copying over embeddings and other bits that are the
+            # same, and don't need to be re-learned.
+            old_model_args["num_parts"] = model_args["num_parts"]
+            old_model_args["num_classes"] = model_args["num_classes"]
+            model.reset_num_parts_classes(
+                new_num_parts=old_model_args["num_parts"],
+                new_num_classes=old_model_args["num_classes"],
+            )
+        if old_model_args != model_args:
+            raise Exception(
+                f"Old model args not compatible.\n"
+                f"old: {old_model_args}\n"
+                f"new: {model_args}\n"
+            )
+    else:
+        model = Model(**model_args)
 
     timer = Timer()
 
@@ -719,10 +744,10 @@ class Model(torch.nn.Module):
         )
 
         self._num_cnns = num_cnns
-        end_width = (cnn_width * num_cnns) + self.embedding_len
+        self.end_width = (cnn_width * num_cnns) + self.embedding_len
 
         self.fc = torch.nn.Sequential(
-            torch.nn.Linear(end_width, num_classes),
+            torch.nn.Linear(self.end_width, num_classes),
             torch.nn.ReLU(),
             torch.nn.BatchNorm1d(num_features=num_classes),
             torch.nn.Linear(num_classes, num_classes),
@@ -743,6 +768,18 @@ class Model(torch.nn.Module):
         result = [self.fc(combined)]
 
         return result
+
+    def reset_num_parts_classes(self, new_num_parts, new_num_classes):
+        self.end_width -= self.embedding_len
+        self.embedding_len = new_num_parts // 2
+        self.end_width += self.embedding_len
+        self.embedding = torch.nn.Embedding(new_num_parts, new_num_parts // 2)
+        self.fc = torch.nn.Sequential(
+            torch.nn.Linear(self.end_width, new_num_classes),
+            torch.nn.ReLU(),
+            torch.nn.BatchNorm1d(num_features=new_num_classes),
+            torch.nn.Linear(new_num_classes, new_num_classes),
+        )
 
 
 # -----------------------------------------------------------------------------

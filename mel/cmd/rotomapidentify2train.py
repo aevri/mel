@@ -33,12 +33,36 @@ def process_args(args):
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
     metadata_path = model_dir / "identify.json"
-    print(f"Will save to {model_path}")
-    print(f"         and {metadata_path}")
 
     image_size = 32
     cnn_width = 128
     cnn_depth = 4
+
+    old_results = None
+    if model_path.exists():
+        if not metadata_path.exists():
+            raise Exception(
+                f"Metadata for model does not exist: "
+                f"{metadata_path}"
+            )
+        print(f"Will fine-tune {model_path}")
+        print(f"           and {metadata_path}")
+
+        with open(metadata_path) as f:
+            old_results = json.load(f)
+        old_results["model"] = mel.rotomap.identifynn.Model(
+            **old_results["model_args"]
+        )
+        old_results["model"].load_state_dict(torch.load(model_path))
+        if old_results["image_size"] != image_size:
+            raise Exception(
+                f"Old image size is not the same.\n"
+                f"old: {old_results['image_size']}\n"
+                f"new: {image_size}\n"
+            )
+    else:
+        print(f"Will save to {model_path}")
+        print(f"         and {metadata_path}")
 
     data_config = {
         "rotomaps": ("all"),
@@ -69,7 +93,7 @@ def process_args(args):
     }
 
     results = mel.rotomap.identifynn.make_model_and_fit(
-        *data, model_config, train_config
+        *data, model_config, train_config, old_results
     )
 
     valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(
