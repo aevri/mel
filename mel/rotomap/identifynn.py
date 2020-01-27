@@ -64,7 +64,10 @@ def fit(
                         valid_record.batch(i, yb, out, loss)
                         pbar.update(1)
 
-            pbar.set_description(f"valid: {int(valid_record.acc[-1] * 100)}%")
+            if valid_dataloader:
+                pbar.set_description(
+                    f"valid: {int(valid_record.acc[-1] * 100)}%"
+                )
 
 
 def make_convnet2d(width, depth, channels_in):
@@ -484,7 +487,7 @@ def make_data(repo_path, data_config, channel_cache=None):
             f"Tried these rotomaps: {train_rotomaps}"
         )
 
-    if not valid_dataset:
+    if not valid_dataset and data_config["train_proportion"] != 1:
         raise Exception(
             f"No data in validation dataset. "
             f"Tried these rotomaps: {valid_rotomaps}"
@@ -557,7 +560,8 @@ def split_train_valid(rotomaps, train_split=0.8):
         ]
         num_train_rotomaps = int(len(nonempty_rotomaps) * train_split)
         num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
-        assert num_valid_rotomaps
+        if train_split != 1:
+            assert num_valid_rotomaps
         train_rotomaps.extend(nonempty_rotomaps[:num_train_rotomaps])
         valid_rotomaps.extend(nonempty_rotomaps[num_train_rotomaps:])
         # train_rotomaps.extend(rotomap_list[num_valid_rotomaps:])

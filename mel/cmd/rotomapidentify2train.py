@@ -1,6 +1,21 @@
 """Train to guess which mole is which in a rotomap image."""
 
+import argparse
 import json
+
+
+def proportion_arg(x):
+    try:
+        x = float(x)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{x}' is not a float")
+
+    if not (x > 0.0 and x <= 1.0):
+        raise argparse.ArgumentTypeError(
+            f"'{x}' is not in range 0.0 > x <= 1.0"
+        )
+
+    return x
 
 
 def setup_parser(parser):
@@ -16,6 +31,16 @@ def setup_parser(parser):
         type=int,
         default=10,
         help="Number of epochs to train for.",
+    )
+    parser.add_argument(
+        "--train-proportion",
+        "-t",
+        type=proportion_arg,
+        default=0.9,
+        help=(
+            "Proportion (0.0-1.0) of data to use for training. "
+            "Defaults to 0.9."
+        ),
     )
 
 
@@ -66,7 +91,7 @@ def process_args(args):
 
     data_config = {
         "rotomaps": ("all"),
-        "train_proportion": 0.9,
+        "train_proportion": args.train_proportion,
         "image_size": image_size,
         "batch_size": 100,
         "do_augmentation": False,
@@ -96,10 +121,11 @@ def process_args(args):
         *data, model_config, train_config, old_results
     )
 
-    valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(
-        results["valid_fit_record"]
-    )
-    print(valid_fit_record.acc[-1])
+    if data_config["train_proportion"] != 1:
+        valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(
+            results["valid_fit_record"]
+        )
+        print(valid_fit_record.acc[-1])
 
     model = results["model"]
 
