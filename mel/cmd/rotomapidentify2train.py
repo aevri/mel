@@ -42,6 +42,14 @@ def setup_parser(parser):
             "Defaults to 0.9."
         ),
     )
+    parser.add_argument(
+        "--no-train-conv",
+        action="store_true",
+        help=(
+            "Don't train the convnet, useful when fine-tuning "
+            "a network that just needs to learn new moles."
+        ),
+    )
 
 
 def process_args(args):
@@ -113,6 +121,7 @@ def process_args(args):
         "epochs": args.epochs,
         "learning_rate": learning_rate,
         "weight_decay": weight_decay,
+        "train_conv": not args.no_train_conv,
     }
 
     results = mel.rotomap.identifynn.make_model_and_fit(

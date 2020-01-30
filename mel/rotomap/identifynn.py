@@ -246,8 +246,25 @@ def make_model_and_fit(
             # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
         )
 
+    params = [
+        {"params": model.embedding.parameters()},
+        {"params": model.fc.parameters()},
+    ]
+
+    # Note that the static analysis tool 'vulture' doesn't seem to be happy
+    # with setting requires_grad but not reading it here. The only workaround
+    # appears to be ignoring the whole file.
+
+    if train_config["train_conv"]:
+        for p in model.conv.parameters():
+            p.requires_grad = True
+        params.append({"params": model.conv.parameters()})
+    else:
+        for p in model.conv.parameters():
+            p.requires_grad = False
+
     opt = torch.optim.AdamW(
-        params=model.parameters(),
+        params=params,
         weight_decay=train_config["weight_decay"],
     )
 
