@@ -23,6 +23,7 @@ def fit(
     *,
     opt=None,
     loss_func=None,
+    scheduler=None,
 ):
 
     if opt is None:
@@ -43,6 +44,8 @@ def fit(
 
                 loss.backward()
                 opt.step()
+                if scheduler is not None:
+                    scheduler.step()
 
                 pbar.update(1)
 
@@ -243,11 +246,16 @@ def make_model_and_fit(
             # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
         )
 
-    opt = torch.optim.SGD(
+    opt = torch.optim.AdamW(
         params=model.parameters(),
-        lr=train_config["learning_rate"],
-        momentum=train_config["momentum"],
         weight_decay=train_config["weight_decay"],
+    )
+
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        opt,
+        max_lr=train_config["learning_rate"],
+        epochs=train_config["epochs"],
+        steps_per_epoch=len(train_dataloader),
     )
 
     fit(
@@ -259,6 +267,7 @@ def make_model_and_fit(
         valid_fit_record,
         opt=opt,
         loss_func=loss_func,
+        scheduler=scheduler,
     )
 
     results = {

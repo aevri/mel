@@ -106,14 +106,12 @@ def process_args(args):
         "cnn_depth": cnn_depth,
     }
 
-    weight_decay = 0.005
+    weight_decay = 0.01
     learning_rate = 0.01
-    momentum = 0.95
 
     train_config = {
         "epochs": args.epochs,
         "learning_rate": learning_rate,
-        "momentum": momentum,
         "weight_decay": weight_decay,
     }
 
