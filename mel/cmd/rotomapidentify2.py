@@ -86,7 +86,7 @@ def process_args(args):
         new_moles = list(frame.moles)
         model.eval()
         with torch.no_grad():
-            for i, xb, yb in dataloader:
+            for i, xb, _ in dataloader:
                 if new_moles[i][mel.rotomap.moles.KEY_IS_CONFIRMED]:
                     continue
                 out = model(xb)
