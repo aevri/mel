@@ -767,7 +767,9 @@ class Model(torch.nn.Module):
         super().__init__()
 
         self.embedding_len = num_parts // 2
-        self.embedding = torch.nn.Embedding(num_parts, num_parts // 2)
+        self.embedding = None
+        if num_parts:
+            self.embedding = torch.nn.Embedding(num_parts, num_parts // 2)
 
         self.conv = make_convnet2d(
             cnn_width, cnn_depth, channels_in=channels_in
@@ -776,12 +778,14 @@ class Model(torch.nn.Module):
         self._num_cnns = num_cnns
         self.end_width = (cnn_width * num_cnns) + self.embedding_len
 
-        self.fc = torch.nn.Sequential(
-            torch.nn.Linear(self.end_width, num_classes),
-            torch.nn.ReLU(),
-            torch.nn.BatchNorm1d(num_features=num_classes),
-            torch.nn.Linear(num_classes, num_classes),
-        )
+        self.fc = None
+        if num_classes:
+            self.fc = torch.nn.Sequential(
+                torch.nn.Linear(self.end_width, num_classes),
+                torch.nn.ReLU(),
+                torch.nn.BatchNorm1d(num_features=num_classes),
+                torch.nn.Linear(num_classes, num_classes),
+            )
 
     def forward(self, data):
         part, *rest = data
@@ -810,6 +814,12 @@ class Model(torch.nn.Module):
             torch.nn.BatchNorm1d(num_features=new_num_classes),
             torch.nn.Linear(new_num_classes, new_num_classes),
         )
+
+    def clear_non_cnn(self):
+        self.end_width -= self.embedding_len
+        self.embedding_len = 0
+        self.embedding = None
+        self.fc = None
 
 
 # -----------------------------------------------------------------------------

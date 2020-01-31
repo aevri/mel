@@ -50,6 +50,16 @@ def setup_parser(parser):
             "a network that just needs to learn new moles."
         ),
     )
+    parser.add_argument(
+        "--forget-moles",
+        action="store_true",
+        help=(
+            "Don't save the mapping from features to moles, "
+            "only the bit that is good at identifying useful features. "
+            "This is useful when training a model on simulated data, "
+            "which will then be fine-tuned to a new set of moles."
+        ),
+    )
 
 
 def process_args(args):
@@ -138,6 +148,12 @@ def process_args(args):
 
     if not model_dir.exists():
         model_dir.mkdir()
+    if args.forget_moles:
+        model.clear_non_cnn()
+        results["part_to_index"] = {}
+        results["classes"] = []
+        results["model_args"]["num_parts"] = 0
+        results["model_args"]["num_classes"] = 0
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
