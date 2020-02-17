@@ -10,6 +10,7 @@ import uuid
 
 import numpy
 
+import mel.lib.fs
 import mel.lib.image
 import mel.lib.math
 
@@ -36,7 +37,7 @@ class RotomapDirectory:
 
         self.image_paths = [
             str(f) for f in self.path.iterdir()
-            if f.suffix.lower() == '.jpg'
+            if mel.lib.fs.is_jpeg_name(f)
         ]
         self.image_paths.sort()
 
@@ -76,7 +77,7 @@ class RotomapFrame:
             raise ValueError(f'Expected file, not directory: {path}')
         if not self.path.exists():
             raise ValueError(f'Path does not exist: {path}')
-        if self.path.suffix.lower() != '.jpg':
+        if not mel.lib.fs.is_jpeg_name(self.path):
             raise ValueError(f'Unrecognised suffix for rotomap frame: {path}')
 
         self.moles = load_image_moles(self.path)
