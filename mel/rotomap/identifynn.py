@@ -1,4 +1,10 @@
-"""Identify which moles are which, using neural nets."""
+"""Identify which moles are which, using neural nets.
+
+Note that PyTorch is somewhat slow on Mac CPU, as captured in this issue:
+
+    https://github.com/pytorch/pytorch/issues/7686
+
+"""
 import collections
 import contextlib
 
