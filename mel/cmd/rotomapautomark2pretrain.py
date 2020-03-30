@@ -128,9 +128,32 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     if not len(mole_locations):
         return torch.tensor([0.0] * len(image_locations))
 
-    ge_top_left = [mole_loc >= image_locations for mole_loc in mole_locations]
+    centroids = image_locations + torch.tensor(
+        (tile_size // 2, tile_size // 2)
+    )
+
+    # Insert an extra dimension for us to fit the comparisons with the moles
+    # into. Note that broadcasting matches on the last dimension first, and
+    # we'll get shapes like this:
+    #
+    #   mole_locations.shape = (1,        num_moles, 2)
+    #        centroids.shape = (num_locs,         1, 2)
+    #
+    mole_locations = mole_locations.unsqueeze(0)
+    centroids = centroids.unsqueeze(1)
+    image_locations = image_locations.unsqueeze(1)
+
+    pos_diff = mole_locations - centroids
+    pos_diff_sq = pos_diff ** 2
+    dist_sq = pos_diff_sq[:, :, 0] + pos_diff_sq[:, :, 1]
+
+    ge_top_left = [
+        mole_loc >= image_locations[:, 0, :]
+        for mole_loc in mole_locations[0, :, :]
+    ]
     lt_bottom_right = [
-        mole_loc < image_locations + tile_size for mole_loc in mole_locations
+        mole_loc < image_locations[:, 0, :] + tile_size
+        for mole_loc in mole_locations[0, :, :]
     ]
     mole_in_tile = [
         (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
