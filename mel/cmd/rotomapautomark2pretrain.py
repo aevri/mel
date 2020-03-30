@@ -116,9 +116,15 @@ def image_to_tiles_locations(image, transforms, tile_size=32):
     return torch.stack(tiles), torch.stack(locations)
 
 
-def locations_to_expected_output(
-    image_locations, mole_locations, tile_size=32
-):
+def locations_to_expected_output(image_locations, moles, tile_size=32):
+
+    mole_points = [
+        (m["x"], m["y"])
+        for m in moles
+        if "looks_like" not in m or m["looks_like"] == "mole"
+    ]
+    mole_locations = torch.tensor(list(mole_points))
+
     if not len(mole_locations):
         return torch.tensor([0.0] * len(image_locations))
 
@@ -288,18 +294,9 @@ class TileDataset:
             raise ValueError("Location and activation length mismatch.")
         frame = mel.rotomap.moles.RotomapFrame(image_path)
 
-        look_like_moles_uuids = [
-            m["uuid"]
-            for m in frame.moledata.moles
-            if "looks_like" not in m or m["looks_like"] == "mole"
-        ]
-        mole_points = [
-            point
-            for uuid, point in frame.moledata.uuid_points.items()
-            if uuid in look_like_moles_uuids
-        ]
-        mole_location = torch.tensor(list(mole_points))
-        expected_output = locations_to_expected_output(location, mole_location)
+        expected_output = locations_to_expected_output(
+            location, frame.moledata.moles
+        )
 
         self._image_path.extend([image_path] * len(location))
         self._location.append(location)
