@@ -262,19 +262,22 @@ def image_path_to_part(image_path):
     return f"{part_path.name}, {subpart_path.name}"
 
 
-class Dataset:
-    def __init__(self, image_paths):
+class TileDataset:
+    def __init__(self, image_paths, tile_size):
+        self._tile_size = tile_size
         self._image_path = []
         self._location = []
         self._activations = []
         self._expected_output = []
         self._part = []
+        self._image_location_to_index = {}
         for path in image_paths:
             self._append_image_data(path)
 
         self._location = torch.cat(self._location)
         self._activations = torch.cat(self._activations)
         self._expected_output = torch.cat(self._expected_output)
+        self._calc_neighbour_activations()
 
     def _append_image_data(self, image_path):
         datapath = str(image_path) + ".resnet18.pt"
@@ -303,6 +306,27 @@ class Dataset:
         self._activations.append(activations)
         self._expected_output.append(expected_output)
         self._part.extend([image_path_to_part(image_path)] * len(location))
+        for loc in location:
+            index = len(self._image_location_to_index)
+            image_location_key = self._image_location_to_key(image_path, loc)
+            self._image_location_to_index[image_location_key] = index
+
+    def _calc_neighbour_activations(self):
+        self._neigbour_activations = []
+        for main_index in range(len(self._image_path)):
+            image_path = self._image_path[main_index]
+            loc = self._location[main_index]
+            neighbour_activations = []
+            for nloc in get_neighbors(loc, self._tile_size):
+                image_location_key = self._image_location_to_key(
+                    image_path, nloc
+                )
+                index = self._image_location_to_index.get(
+                    image_location_key, None
+                )
+                if index is not None:
+                    neighbour_activations.append(self._activations[index])
+            self._neigbour_activations.append(neighbour_activations)
 
     def __len__(self):
         return len(self._image_path)
@@ -317,6 +341,39 @@ class Dataset:
             self._part[key],
             self._expected_output[key],
         )
+
+    def _image_location_to_key(self, image_path, location):
+        return str(image_path) + " : " + str([int(i) for i in location])
+
+
+class NeighboursDataset:
+    def __init__(self, tile_dataset):
+        self._tile_dataset = tile_dataset
+        self._indices = [
+            i
+            for i, neighbours in enumerate(tile_dataset._neigbour_activations)
+            if len(neighbours) == 8
+        ]
+
+    def __len__(self):
+        return len(self._indices)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            raise NotImplementedError()
+        index = self._indices[key]
+        vals = self._tile_dataset[index]
+        neighbours = torch.stack(
+            self._tile_dataset._neigbour_activations[index]
+        )
+        return tuple(vals) + (neighbours,)
+
+
+def get_neighbors(location, tile_size):
+    offsets = torch.tensor(
+        [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1],]
+    )
+    return (offsets * tile_size) + location
 
 
 class LinearSigmoidModel(torch.nn.Module):
@@ -348,7 +405,41 @@ class LinearSigmoidModel(torch.nn.Module):
         return self.sequence(input_)
 
 
+class NeighboursLinearSigmoidModel(torch.nn.Module):
+    def __init__(self, part_to_id):
+        super().__init__()
+        self._part_to_id = part_to_id
+        resnet18_num_features = 512
+        num_intermediate = 20
+        num_parts = len(part_to_id)
+        self._embedding_len = num_parts // 2
+        self.embedding = torch.nn.Embedding(num_parts, self._embedding_len)
+        self.sequence = torch.nn.Sequential(
+            torch.nn.Linear(
+                resnet18_num_features
+                + self._embedding_len
+                + resnet18_num_features,
+                num_intermediate,
+            ),
+            torch.nn.ReLU(inplace=True),
+            torch.nn.Linear(num_intermediate, 1),
+            torch.nn.Sigmoid(),
+        )
+
+    def forward(self, activations, parts, neighbour_activations):
+        # print(activations)
+        # print(parts)
+        parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
+        parts_embedding = self.embedding(parts_tensor)
+        neighbours = torch.mean(neighbour_activations, 1)
+        # print(parts_embedding)
+        input_ = torch.cat((activations, parts_embedding, neighbours), 1)
+        # print(input_)
+        return self.sequence(input_)
+
+
 def train(model, train_dataloader, valid_dataloader):
+    threshold = 0.8
     num_epochs = 10
     opt = torch.optim.AdamW(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
@@ -368,9 +459,11 @@ def train(model, train_dataloader, valid_dataloader):
                 batch_activations,
                 batch_parts,
                 batch_expected_outputs,
+                batch_neighbours,
             ) = batch
             opt.zero_grad()
-            out = model(batch_activations, batch_parts)
+            out = model(batch_activations, batch_parts, batch_neighbours)
+            # out = model(batch_activations, batch_parts)
             # print(batch_expected_outputs.unsqueeze(1).shape)
             # print(out.shape)
             loss = loss_func(out, batch_expected_outputs.unsqueeze(1))
@@ -416,11 +509,15 @@ def train(model, train_dataloader, valid_dataloader):
                 batch_activations,
                 batch_parts,
                 batch_expected_outputs,
+                batch_neighbours,
             ) = batch
             with torch.no_grad():
-                out = model(batch_activations, batch_parts)
-                choices = out > 0.8
-                expected_choices = batch_expected_outputs.unsqueeze(1) > 0.8
+                out = model(batch_activations, batch_parts, batch_neighbours)
+                # out = model(batch_activations, batch_parts)
+                choices = out > threshold
+                expected_choices = (
+                    batch_expected_outputs.unsqueeze(1) > threshold
+                )
                 loss = loss_func(out, batch_expected_outputs.unsqueeze(1))
                 num_correct += (choices == expected_choices).float().sum()
                 num_moles_correct += (
