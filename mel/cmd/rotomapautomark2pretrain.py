@@ -4,6 +4,7 @@ import contextlib
 
 import cv2
 import numpy
+import pathlib
 import torch
 import torchvision
 
@@ -277,6 +278,8 @@ class Dataset:
 
     def _append_image_data(self, image_path):
         datapath = str(image_path) + ".resnet18.pt"
+        if not pathlib.Path(datapath).exists():
+            return
         location, activations = torch.load(datapath)
         if len(location) != len(activations):
             raise ValueError("Location and activation length mismatch.")
