@@ -40,7 +40,10 @@ def process_args(args):
             print(path)
         frame = mel.rotomap.moles.RotomapFrame(path)
         data = get_tile_locations_activations(frame, transforms, resnet)
-        torch.save(data, path + ".resnet18.pt")
+        if data is not None:
+            torch.save(data, path + ".resnet18.pt")
+        else:
+            print("Nothing to save.")
 
 
 def get_tile_locations_activations(frame, transforms, resnet):
@@ -51,6 +54,11 @@ def get_tile_locations_activations(frame, transforms, resnet):
     locations = reduce_nonmole_locations(
         locations, frame.moledata.uuid_points.values()
     )
+    locations = add_neighbour_locations(locations, tile_size=32)
+    locations = unique_locations(locations)
+    locations = drop_green_and_edge_locations(masked_image, locations)
+    if locations is None:
+        return None
     locations, tiles = image_locations_to_tiles(
         masked_image, locations, transforms
     )
@@ -127,6 +135,18 @@ def locations_to_expected_output(
 def image_locations_to_tiles(image, locations, transforms, tile_size=32):
     new_locations = []
     tiles = []
+    for loc in locations:
+        x1, y1 = loc
+        t = image[y1 : y1 + tile_size, x1 : x1 + tile_size]
+        tiles.append(transforms(t))
+        new_locations.append(loc)
+    if not new_locations:
+        return [], []
+    return torch.stack(new_locations), torch.stack(tiles)
+
+
+def drop_green_and_edge_locations(image, locations, tile_size=32):
+    new_locations = []
     green = [0, 255, 0]
     for loc in locations:
         x1, y1 = loc
@@ -136,9 +156,10 @@ def image_locations_to_tiles(image, locations, transforms, tile_size=32):
         if t.shape != (tile_size, tile_size, 3):
             # TODO: fill-in edge bits with green.
             continue
-        tiles.append(transforms(t))
         new_locations.append(loc)
-    return torch.stack(new_locations), torch.stack(tiles)
+    if not new_locations:
+        return None
+    return torch.stack(new_locations)
 
 
 def reduce_nonmole_locations(
@@ -168,6 +189,55 @@ def reduce_nonmole_locations(
         new_locations.append(loc)
 
     return torch.stack(new_locations)
+
+
+def int_tensor2d_to_tuple(tensor2d):
+    """
+
+        >>> a = torch.tensor([[1, 2], [3, 4]])
+        >>> int_tensor2d_to_tuple(a)
+        ((1, 2), (3, 4))
+
+    """
+    if tensor2d.dtype != torch.int64:
+        raise ValueError("Must be torch.int64")
+    if len(tensor2d.shape) != 2:
+        raise ValueError("Must be 2d")
+    return tuple(tuple(int(c) for c in row) for row in tensor2d)
+
+
+def add_neighbour_locations(locations, tile_size):
+    """
+
+        >>> a = torch.tensor([[0, 0]])
+        >>> add_neighbour_locations(a, 1)
+        tensor([[ 0,  0],
+                [-1, -1],
+                [ 0, -1],
+                [ 1, -1],
+                [-1,  0],
+                [ 1,  0],
+                [-1,  1],
+                [ 0,  1],
+                [ 1,  1]])
+
+    """
+    new_locations = [locations]
+    for loc in locations:
+        new_locations.append(get_neighbors(loc, tile_size))
+    return torch.cat(new_locations)
+
+
+def unique_locations(locations):
+    """
+
+        >>> a = torch.tensor([[0, 0], [0, 0]])
+        >>> unique_locations(a)
+        tensor([[0, 0]])
+
+    """
+    new_locations = set(int_tensor2d_to_tuple(locations))
+    return torch.tensor(list(new_locations))
 
 
 def tiles_to_activations(tiles, resnet):
