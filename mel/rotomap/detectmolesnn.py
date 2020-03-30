@@ -1,12 +1,12 @@
 """Detect moles in an image, using deep neural nets."""
 
-
 import contextlib
 import pathlib
 
 import cv2
 import numpy
 import torch
+import tqdm
 
 import mel.lib.math
 import mel.rotomap.moles
@@ -143,6 +143,11 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
             torch.nn.Linear(num_intermediate, 3),
         )
 
+    def init_dict(self):
+        return {
+            "part_to_id": self._part_to_id,
+        }
+
     def forward(self, activations, parts, neighbour_activations):
         # print(activations)
         # print(parts)
@@ -226,8 +231,9 @@ class TileDataset:
         self._expected_output = []
         self._part = []
         self._image_location_to_index = {}
-        for path in image_paths:
-            self._append_image_data(path)
+        with tqdm.tqdm(image_paths) as pbar:
+            for path in pbar:
+                self._append_image_data(path)
 
         self._location = torch.cat(self._location)
         self._activations = torch.cat(self._activations)
@@ -259,20 +265,21 @@ class TileDataset:
 
     def _calc_neighbour_activations(self):
         self._neigbour_activations = []
-        for main_index in range(len(self._image_path)):
-            image_path = self._image_path[main_index]
-            loc = self._location[main_index]
-            neighbour_activations = []
-            for nloc in get_neighbors(loc, self._tile_size):
-                image_location_key = self._image_location_to_key(
-                    image_path, nloc
-                )
-                index = self._image_location_to_index.get(
-                    image_location_key, None
-                )
-                if index is not None:
-                    neighbour_activations.append(self._activations[index])
-            self._neigbour_activations.append(neighbour_activations)
+        with tqdm.tqdm(range(len(self._image_path))) as pbar:
+            for main_index in pbar:
+                image_path = self._image_path[main_index]
+                loc = self._location[main_index]
+                neighbour_activations = []
+                for nloc in get_neighbors(loc, self._tile_size):
+                    image_location_key = self._image_location_to_key(
+                        image_path, nloc
+                    )
+                    index = self._image_location_to_index.get(
+                        image_location_key, None
+                    )
+                    if index is not None:
+                        neighbour_activations.append(self._activations[index])
+                self._neigbour_activations.append(neighbour_activations)
 
     def __len__(self):
         return len(self._image_path)
