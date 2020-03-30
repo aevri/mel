@@ -126,7 +126,7 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     mole_locations = torch.tensor(list(mole_points))
 
     if not len(mole_locations):
-        return torch.tensor([0.0] * len(image_locations))
+        return torch.tensor([[0.0, 0.0, 0.0]] * len(image_locations))
 
     centroids = image_locations + torch.tensor(
         (tile_size // 2, tile_size // 2)
@@ -146,6 +146,8 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     pos_diff = mole_locations - centroids
     pos_diff_sq = pos_diff ** 2
     dist_sq = pos_diff_sq[:, :, 0] + pos_diff_sq[:, :, 1]
+    nearest = dist_sq.argmin(1)
+    nearest_pos_diff = pos_diff[torch.arange(len(image_locations)), nearest]
 
     ge_top_left = [
         mole_loc >= image_locations[:, 0, :]
@@ -159,7 +161,14 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
         (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
     ]
     mole_in_tile = torch.stack(mole_in_tile).any(0)
-    return mole_in_tile.float()
+
+    result = torch.cat(
+        [mole_in_tile.float().unsqueeze(1), nearest_pos_diff.float()], dim=1
+    )
+
+    assert result.shape == (len(image_locations), 3)
+
+    return result
 
 
 def image_locations_to_tiles(image, locations, transforms, tile_size=32):
@@ -442,8 +451,7 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
                 num_intermediate,
             ),
             torch.nn.ReLU(inplace=True),
-            torch.nn.Linear(num_intermediate, 1),
-            torch.nn.Sigmoid(),
+            torch.nn.Linear(num_intermediate, 3),
         )
 
     def forward(self, activations, parts, neighbour_activations):
@@ -455,10 +463,13 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
         # print(parts_embedding)
         input_ = torch.cat((activations, parts_embedding, neighbours), 1)
         # print(input_)
-        return self.sequence(input_)
+        seq = self.sequence(input_)
+        sig = torch.sigmoid(seq[:, 0:1])
+        pos = torch.tanh(seq[:, 1:3])
+        return torch.cat([sig, pos], dim=1)
 
 
-def train(model, train_dataloader, valid_dataloader):
+def train(model, train_dataloader, valid_dataloader, loss_func):
     threshold = 0.8
     num_epochs = 10
     opt = torch.optim.AdamW(model.parameters())
@@ -468,7 +479,7 @@ def train(model, train_dataloader, valid_dataloader):
         max_lr=0.01,
         epochs=num_epochs,
     )
-    loss_func = torch.nn.MSELoss()
+    # loss_func = torch.nn.MSELoss()
     for epoch in range(num_epochs):
         print("epoch:", epoch + 1)
 
@@ -486,7 +497,7 @@ def train(model, train_dataloader, valid_dataloader):
             # out = model(batch_activations, batch_parts)
             # print(batch_expected_outputs.unsqueeze(1).shape)
             # print(out.shape)
-            loss = loss_func(out, batch_expected_outputs.unsqueeze(1))
+            loss = loss_func(out, batch_expected_outputs)
             loss.backward()
             opt.step()
             scheduler.step()
@@ -534,14 +545,17 @@ def train(model, train_dataloader, valid_dataloader):
             with torch.no_grad():
                 out = model(batch_activations, batch_parts, batch_neighbours)
                 # out = model(batch_activations, batch_parts)
-                choices = out > threshold
-                expected_choices = (
-                    batch_expected_outputs.unsqueeze(1) > threshold
+                choices = out[:, 0] > threshold
+                expected_choices = (batch_expected_outputs > threshold)[:, 0]
+                loss = loss_func(out, batch_expected_outputs)
+                num_correct += (
+                    (choices == expected_choices).float().sum()
                 )
-                loss = loss_func(out, batch_expected_outputs.unsqueeze(1))
-                num_correct += (choices == expected_choices).float().sum()
                 num_moles_correct += (
-                    ((choices == expected_choices) & expected_choices)
+                    (
+                        (choices == expected_choices)
+                        & expected_choices
+                    )
                     .float()
                     .sum()
                 )
