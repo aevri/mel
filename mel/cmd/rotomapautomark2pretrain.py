@@ -164,7 +164,7 @@ def drop_green_and_edge_locations(image, locations, tile_size=32):
 
 
 def reduce_nonmole_locations(
-    locations, mole_locations, min_sq_dist=64 * 64, non_mole_chance=0.01
+    locations, mole_locations, min_sq_dist=64 * 64, non_mole_chance=0.001
 ):
     if not mole_locations:
         near_moles = torch.tensor([False] * len(locations))
