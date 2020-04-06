@@ -299,6 +299,48 @@ class TileDataset:
         return str(image_path) + " : " + str([int(i) for i in location])
 
 
+def match_with_neighbours(locations, activations, tile_size):
+    matched_locations = []
+    matched_activations = []
+    matched_neighbours_activations = []
+
+    # Note that you can't really use tensors as dictionary keys, as a newly
+    # constructed tensor with the same int values as an existing key won't be
+    # found in the dictionary.
+
+    locationtuple_to_activation = {
+        loc: act
+        for loc, act in zip(int_tensor2d_to_tuple(locations), activations)
+    }
+
+    for loc in locations:
+        neighbours_activations = []
+        for nloc in get_neighbors(loc, tile_size):
+            nact = locationtuple_to_activation.get(
+                int_tensor1d_to_tuple(nloc), None
+            )
+            if nact is None:
+                break
+            neighbours_activations.append(nact)
+        if len(neighbours_activations) == 8:
+            act = locationtuple_to_activation.get(
+                int_tensor1d_to_tuple(loc), None
+            )
+            matched_locations.append(loc)
+            matched_activations.append(act)
+            matched_neighbours_activations.append(
+                torch.stack(neighbours_activations)
+            )
+
+    return list(
+        zip(
+            matched_locations,
+            matched_activations,
+            matched_neighbours_activations,
+        )
+    )
+
+
 def image_path_to_part(image_path):
     subpart_path = image_path.parent.parent
     part_path = subpart_path.parent
@@ -310,8 +352,9 @@ def tiles_to_activations(tiles, resnet):
     resnet.eval()
     with record_input_context(resnet.avgpool) as batch_activation_tuples:
         with torch.no_grad():
-            for tiles in tile_dataloader:
-                resnet(tiles)
+            with tqdm.tqdm(tile_dataloader) as pbar:
+                for tiles in pbar:
+                    resnet(tiles)
 
     batch_activations = [
         batch[0].flatten(1) for batch in batch_activation_tuples
@@ -352,6 +395,21 @@ def add_neighbour_locations(locations, tile_size):
     for loc in locations:
         new_locations.append(get_neighbors(loc, tile_size))
     return torch.cat(new_locations)
+
+
+def int_tensor1d_to_tuple(tensor1d):
+    """
+
+        >>> a = torch.tensor([1, 2])
+        >>> int_tensor1d_to_tuple(a)
+        (1, 2)
+
+    """
+    if tensor1d.dtype != torch.int64:
+        raise ValueError("Must be torch.int64")
+    if len(tensor1d.shape) != 1:
+        raise ValueError("Must be 1d")
+    return tuple(int(c) for c in tensor1d)
 
 
 def int_tensor2d_to_tuple(tensor2d):
@@ -420,7 +478,8 @@ def image_locations_to_tiles(image, locations, transforms, tile_size=32):
     tiles = []
     for loc in locations:
         x1, y1 = loc
-        t = image[y1 : y1 + tile_size, x1 : x1 + tile_size]
+        x2, y2 = loc + tile_size
+        t = image[y1 : y2, x1 : x2]
         tiles.append(transforms(t))
         new_locations.append(loc)
     if not new_locations:
@@ -455,7 +514,7 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     centroids = centroids.unsqueeze(1)
     image_locations = image_locations.unsqueeze(1)
 
-    pos_diff = mole_locations - centroids
+    pos_diff = (mole_locations - centroids) / (tile_size * 0.5)
     pos_diff_sq = pos_diff ** 2
     dist_sq = pos_diff_sq[:, :, 0] + pos_diff_sq[:, :, 1]
     nearest = dist_sq.argmin(1)
@@ -518,16 +577,19 @@ def green_mask_image(image, mask):
     return image
 
 
-def get_tile_locations_activations(frame, transforms, resnet):
+def get_tile_locations_activations(
+    frame, transforms, resnet, reduce_nonmoles=True
+):
     image = frame.load_image()
     mask = frame.load_mask()
     masked_image = green_mask_image(image, mask)
     locations = get_image_locations(masked_image)
-    locations = reduce_nonmole_locations(
-        locations, frame.moledata.uuid_points.values()
-    )
-    locations = add_neighbour_locations(locations, tile_size=32)
-    locations = unique_locations(locations)
+    if reduce_nonmoles:
+        locations = reduce_nonmole_locations(
+            locations, frame.moledata.uuid_points.values()
+        )
+        locations = add_neighbour_locations(locations, tile_size=32)
+        locations = unique_locations(locations)
     locations = drop_green_and_edge_locations(masked_image, locations)
     if locations is None:
         return None

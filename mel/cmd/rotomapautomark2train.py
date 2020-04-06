@@ -26,7 +26,6 @@ def process_args(args):
         print('Not in a mel repo, could not find melroot', file=sys.stderr)
         return 1
 
-    melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detectmoles.pth"
     metadata_path = model_dir / "detectmoles.json"
