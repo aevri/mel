@@ -36,8 +36,11 @@ class NoMelrootError(Exception):
     pass
 
 
-def find_melroot():
-    original_path = pathlib.Path.cwd()
+def find_melroot(original_path=None):
+    if original_path is None:
+        original_path = pathlib.Path.cwd()
+    else:
+        original_path = pathlib.Path(original_path)
 
     path = original_path
     while True:
