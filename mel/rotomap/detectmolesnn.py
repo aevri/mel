@@ -497,7 +497,7 @@ def image_locations_to_tiles(image, locations, transforms, tile_size=32):
     for loc in locations:
         x1, y1 = loc
         x2, y2 = loc + tile_size
-        t = image[y1 : y2, x1 : x2]
+        t = image[y1:y2, x1:x2]
         tiles.append(transforms(t))
         new_locations.append(loc)
     if not new_locations:

@@ -23,7 +23,7 @@ def process_args(args):
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:
-        print('Not in a mel repo, could not find melroot', file=sys.stderr)
+        print("Not in a mel repo, could not find melroot", file=sys.stderr)
         return 1
 
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
