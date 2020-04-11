@@ -183,7 +183,7 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
         # print(input_)
         seq = self.sequence(input_)
         sig = torch.sigmoid(seq[:, 0:1])
-        pos = torch.tanh(seq[:, 1:3])
+        pos = torch.tanh(seq[:, 1:3]) * 2
         return torch.cat([sig, pos], dim=1)
 
 
