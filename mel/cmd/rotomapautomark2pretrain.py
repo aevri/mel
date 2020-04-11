@@ -30,8 +30,8 @@ def process_args(args):
         ]
     )
 
-    # resnet = torchvision.models.resnet18(pretrained=True)
-    resnet = torchvision.models.resnet50(pretrained=True)
+    resnet = torchvision.models.resnet18(pretrained=True)
+    #resnet = torchvision.models.resnet50(pretrained=True)
 
     for path in args.IMAGES:
         if args.verbose:
@@ -41,8 +41,8 @@ def process_args(args):
             frame, transforms, resnet
         )
         if data is not None:
-            # torch.save(data, path + ".resnet18.pt")
-            torch.save(data, path + ".resnet50.pt")
+            torch.save(data, path + ".resnet18.pt")
+            #torch.save(data, path + ".resnet50.pt")
         else:
             print("Nothing to save.")
 

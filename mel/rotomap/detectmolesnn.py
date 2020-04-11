@@ -265,8 +265,8 @@ class TileDataset:
         self._calc_neighbour_activations()
 
     def _append_image_data(self, image_path):
-        # datapath = str(image_path) + ".resnet18.pt"
-        datapath = str(image_path) + ".resnet50.pt"
+        datapath = str(image_path) + ".resnet18.pt"
+        # datapath = str(image_path) + ".resnet50.pt"
         if not pathlib.Path(datapath).exists():
             return
         location, activations = torch.load(datapath)
