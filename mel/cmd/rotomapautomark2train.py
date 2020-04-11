@@ -34,7 +34,13 @@ def process_args(args):
 
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
 
-    all_images = list(parts_path.glob("LeftLeg/*/*/*.jpg"))
+    # all_images = list(parts_path.glob("LeftLeg/*/*/*.jpg"))
+    all_images = [
+        path
+        for path in parts_path.glob("*/*/*/*.jpg")
+        if ("Left" in str(path) or "Right" in str(path))
+        and ("Lower" in str(path) or "Upper" in str(path))
+    ]
 
     all_parts = sorted(
         {mel.rotomap.detectmolesnn.image_path_to_part(i) for i in all_images}
