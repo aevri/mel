@@ -138,7 +138,7 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
             torch.nn.Linear(
                 self._num_input_features
                 + self._embedding_len
-                + self._num_input_features,
+                + self._num_input_features * 8,
                 num_intermediate,
             ),
             torch.nn.BatchNorm1d(num_intermediate),
@@ -170,9 +170,16 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
         # print(parts)
         parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
         parts_embedding = self.embedding(parts_tensor)
-        neighbours = torch.mean(neighbour_activations, 1)
+        # neighbours = torch.cat(neighbour_activations)
+        neighbours = torch.flatten(neighbour_activations, start_dim=1)
+        assert neighbours.shape == (
+            len(neighbour_activations),
+            8 * self._num_input_features,
+        ), f"Got {neighbours.shape}."
         # print(parts_embedding)
-        input_ = torch.cat((activations, parts_embedding, neighbours), 1)
+        input_ = torch.cat(
+            (activations, parts_embedding, neighbours), 1
+        )
         # print(input_)
         seq = self.sequence(input_)
         sig = torch.sigmoid(seq[:, 0:1])
