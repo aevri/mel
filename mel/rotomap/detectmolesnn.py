@@ -538,21 +538,26 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     nearest = dist_sq.argmin(1)
     nearest_pos_diff = pos_diff[torch.arange(len(image_locations)), nearest]
 
-    ge_top_left = [
-        mole_loc >= image_locations[:, 0, :]
-        for mole_loc in mole_locations[0, :, :]
-    ]
-    lt_bottom_right = [
-        mole_loc < image_locations[:, 0, :] + tile_size
-        for mole_loc in mole_locations[0, :, :]
-    ]
-    mole_in_tile = [
-        (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
-    ]
-    mole_in_tile = torch.stack(mole_in_tile).any(0)
+    nearest_dist_sq = dist_sq[torch.arange(len(image_locations)), nearest]
+    nearest_dist = nearest_dist_sq.sqrt()
+    nearest_distmoid = torch.sigmoid(10 - (nearest_dist * 8))
+
+    # ge_top_left = [
+    #     mole_loc >= image_locations[:, 0, :]
+    #     for mole_loc in mole_locations[0, :, :]
+    # ]
+    # lt_bottom_right = [
+    #     mole_loc < image_locations[:, 0, :] + tile_size
+    #     for mole_loc in mole_locations[0, :, :]
+    # ]
+    # mole_in_tile = [
+    #     (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
+    # ]
+    # mole_in_tile = torch.stack(mole_in_tile).any(0)
 
     result = torch.cat(
-        [mole_in_tile.float().unsqueeze(1), nearest_pos_diff.float()], dim=1
+        [nearest_distmoid.float().unsqueeze(1), nearest_pos_diff.float()],
+        dim=1,
     )
 
     assert result.shape == (len(image_locations), 3)
