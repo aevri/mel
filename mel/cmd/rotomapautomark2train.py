@@ -46,10 +46,22 @@ def process_args(args):
     validation_images = [path for path in all_images if "2019_" in str(path)]
     validation_dataloader = load_dataset(validation_images)
 
-    model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel(part_to_id)
+    resnet18_num_features = 512
+    # resnet50_num_features = 2048
+    resnet_num_features = resnet18_num_features
+    num_intermediate = 80
+    num_layers = 1
+    model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel(
+        part_to_id, resnet_num_features, num_intermediate, num_layers
+    )
 
+    num_epochs = 5
     mel.rotomap.detectmolesnn.train(
-        model, training_dataloader, validation_dataloader, loss_func
+        model,
+        training_dataloader,
+        validation_dataloader,
+        loss_func,
+        num_epochs,
     )
 
     with open(metadata_path, "w") as f:

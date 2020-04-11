@@ -18,9 +18,8 @@ def cat_allow_none(left, right):
     return torch.cat((left, right))
 
 
-def train(model, train_dataloader, valid_dataloader, loss_func):
+def train(model, train_dataloader, valid_dataloader, loss_func, num_epochs=10):
     threshold = 0.8
-    num_epochs = 10
     opt = torch.optim.AdamW(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         opt,
@@ -124,31 +123,49 @@ def train(model, train_dataloader, valid_dataloader, loss_func):
 
 
 class NeighboursLinearSigmoidModel(torch.nn.Module):
-    def __init__(self, part_to_id):
+    def __init__(
+        self, part_to_id, num_input_features, num_intermediate, num_layers
+    ):
         super().__init__()
         self._part_to_id = part_to_id
-        resnet18_num_features = 512
-        num_intermediate = 20
+        self._num_input_features = num_input_features
+        self._num_intermediate = num_intermediate
+        self._num_layers = num_layers
         num_parts = len(part_to_id)
         self._embedding_len = num_parts // 2
         self.embedding = torch.nn.Embedding(num_parts, self._embedding_len)
         self.sequence = torch.nn.Sequential(
             torch.nn.Linear(
-                resnet18_num_features
+                self._num_input_features
                 + self._embedding_len
-                + resnet18_num_features,
+                + self._num_input_features,
                 num_intermediate,
             ),
+            torch.nn.BatchNorm1d(num_intermediate),
             torch.nn.ReLU(inplace=True),
+            *[
+                torch.nn.Sequential(
+                    torch.nn.Linear(num_intermediate, num_intermediate),
+                    torch.nn.BatchNorm1d(num_intermediate),
+                    torch.nn.ReLU(inplace=True),
+                )
+                for _ in range(self._num_layers)
+            ],
             torch.nn.Linear(num_intermediate, 3),
         )
 
     def init_dict(self):
         return {
             "part_to_id": self._part_to_id,
+            "num_input_features": self._num_input_features,
+            "num_intermediate": self._num_intermediate,
+            "num_layers": self._num_layers,
         }
 
     def forward(self, activations, parts, neighbour_activations):
+        # print(activations.shape)
+        # print(parts.shape)
+        # print(neighbour_activations.shape)
         # print(activations)
         # print(parts)
         parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
@@ -242,6 +259,7 @@ class TileDataset:
 
     def _append_image_data(self, image_path):
         datapath = str(image_path) + ".resnet18.pt"
+        # datapath = str(image_path) + ".resnet50.pt"
         if not pathlib.Path(datapath).exists():
             return
         location, activations = torch.load(datapath)
