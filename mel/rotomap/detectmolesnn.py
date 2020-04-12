@@ -18,13 +18,20 @@ def cat_allow_none(left, right):
     return torch.cat((left, right))
 
 
-def train(model, train_dataloader, valid_dataloader, loss_func, num_epochs=10):
+def train(
+    model,
+    train_dataloader,
+    valid_dataloader,
+    loss_func,
+    max_lr,
+    num_epochs,
+):
     threshold = 0.8
     opt = torch.optim.AdamW(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         opt,
         steps_per_epoch=len(train_dataloader),
-        max_lr=0.01,
+        max_lr=max_lr,
         epochs=num_epochs,
     )
     # loss_func = torch.nn.MSELoss()
@@ -177,9 +184,7 @@ class NeighboursLinearSigmoidModel(torch.nn.Module):
             8 * self._num_input_features,
         ), f"Got {neighbours.shape}."
         # print(parts_embedding)
-        input_ = torch.cat(
-            (activations, parts_embedding, neighbours), 1
-        )
+        input_ = torch.cat((activations, parts_embedding, neighbours), 1)
         # print(input_)
         seq = self.sequence(input_)
         sig = torch.sigmoid(seq[:, 0:1])

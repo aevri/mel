@@ -32,6 +32,10 @@ def process_args(args):
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
+    batch_size = 512
+    max_lr = 0.1
+    num_epochs = 5
+
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
 
     # all_images = list(parts_path.glob("LeftLeg/*/*/*.jpg"))
@@ -48,9 +52,9 @@ def process_args(args):
     part_to_id = {part: i for i, part in enumerate(all_parts)}
 
     training_images = [path for path in all_images if not "2019_" in str(path)]
-    training_dataloader = load_dataset(training_images)
+    training_dataloader = load_dataset(training_images, batch_size)
     validation_images = [path for path in all_images if "2019_" in str(path)]
-    validation_dataloader = load_dataset(validation_images)
+    validation_dataloader = load_dataset(validation_images, batch_size)
 
     resnet18_num_features = 512
     # resnet50_num_features = 2048
@@ -61,12 +65,12 @@ def process_args(args):
         part_to_id, resnet_num_features, num_intermediate, num_layers
     )
 
-    num_epochs = 5
     mel.rotomap.detectmolesnn.train(
         model,
         training_dataloader,
         validation_dataloader,
         loss_func,
+        max_lr,
         num_epochs,
     )
 
@@ -98,14 +102,14 @@ def loss_func(in_, target):
     return loss1 + loss2
 
 
-def load_dataset(images):
+def load_dataset(images, batch_size):
     print(f"Will load from {len(images)} images.")
     dataset = mel.rotomap.detectmolesnn.TileDataset(images, 32)
     print(f"Loaded {len(dataset)} tiles.")
     neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
-    print(f"Got {len(neighbours_dataset)} 9x9 tiles.")
+    print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
     neighbours_dataloader = torch.utils.data.DataLoader(
-        neighbours_dataset, batch_size=64,
+        neighbours_dataset, batch_size=batch_size,
     )
     return neighbours_dataloader
 
