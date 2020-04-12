@@ -117,7 +117,7 @@ def load_dataset(images, batch_size):
     neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
     print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
     neighbours_dataloader = torch.utils.data.DataLoader(
-        neighbours_dataset, batch_size=batch_size,
+        neighbours_dataset, batch_size=batch_size, shuffle=True,
     )
     return neighbours_dataloader
 
