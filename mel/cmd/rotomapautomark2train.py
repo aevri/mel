@@ -44,7 +44,15 @@ def process_args(args):
         for path in parts_path.glob("*/*/*/*.jpg")
         if ("Left" in str(path) or "Right" in str(path))
         and ("Lower" in str(path) or "Upper" in str(path))
+        and "2015" not in str(path)
+        and "2016" not in str(path)
     ]
+    # all_images = [
+    #     path
+    #     for path in parts_path.glob("*/*/*/*.jpg")
+    #     if ("Left" in str(path) or "Right" in str(path))
+    #     and ("Lower" in str(path) or "Upper" in str(path))
+    # ]
 
     all_parts = sorted(
         {mel.rotomap.detectmolesnn.image_path_to_part(i) for i in all_images}
