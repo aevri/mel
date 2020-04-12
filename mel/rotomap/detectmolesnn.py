@@ -458,7 +458,7 @@ def int_tensor2d_to_tuple(tensor2d):
 
 
 def reduce_nonmole_locations(
-    locations, mole_locations, min_sq_dist=64 * 64, non_mole_chance=0.001
+    locations, mole_locations, min_sq_dist=64 * 64, non_mole_chance=0.005
 ):
     if not mole_locations:
         near_moles = torch.tensor([False] * len(locations))
