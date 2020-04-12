@@ -90,9 +90,14 @@ def process_args(args):
 
 
 def loss_func(in_, target):
-    loss1 = torch.nn.functional.mse_loss(in_[:, 0], target[:, 0])
     scale = target[:, 0].unsqueeze(1)
     assert scale.shape == (len(in_), 1)
+    scale1 = (scale * 10) + 1
+    # scale1 = scale + 1
+    # loss1 = torch.nn.functional.mse_loss(in_[:, 0], target[:, 0])
+    loss1 = torch.nn.functional.mse_loss(
+        in_[:, 0] + scale1, target[:, 0] + scale1
+    )
 
     pos_diff = in_[:, 1:] - target[:, 1:]
     pos_diff_sq = pos_diff ** 2
