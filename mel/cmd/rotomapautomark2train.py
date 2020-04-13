@@ -64,7 +64,8 @@ def process_args(args):
     validation_images = [path for path in all_images if "2019_" in str(path)]
     validation_dataloader = load_dataset(validation_images, batch_size)
 
-    resnet18_num_features = 512
+    # resnet18_num_features = 512
+    resnet18_num_features = 7680
     # resnet50_num_features = 2048
     resnet_num_features = resnet18_num_features
     num_intermediate = 80

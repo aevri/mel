@@ -380,17 +380,47 @@ def image_path_to_part(image_path):
 def tiles_to_activations(tiles, resnet):
     tile_dataloader = torch.utils.data.DataLoader(tiles, batch_size=64)
     resnet.eval()
-    with record_input_context(resnet.avgpool) as batch_activation_tuples:
+    with record_input_context(
+        resnet.avgpool
+    ) as avgpool_in, record_input_context(
+        resnet.layer2
+    ) as layer2_in, record_input_context(
+        resnet.layer3
+    ) as layer3_in, record_input_context(
+        resnet.layer4
+    ) as layer4_in:
         with torch.no_grad():
             with tqdm.tqdm(tile_dataloader) as pbar:
                 for tiles in pbar:
                     resnet(tiles)
 
-    batch_activations = [
-        batch[0].flatten(1) for batch in batch_activation_tuples
-    ]
+    layer2_activations = torch.cat(
+        [batch[0].flatten(1) for batch in layer2_in]
+    )
 
-    return torch.cat(batch_activations)
+    layer3_activations = torch.cat(
+        [batch[0].flatten(1) for batch in layer3_in]
+    )
+
+    layer4_activations = torch.cat(
+        [batch[0].flatten(1) for batch in layer4_in]
+    )
+
+    avgpool_activations = torch.cat(
+        [batch[0].flatten(1) for batch in avgpool_in]
+    )
+
+    batch_activations = torch.cat(
+        [
+            layer2_activations,
+            layer3_activations,
+            layer4_activations,
+            avgpool_activations,
+        ],
+        dim=1,
+    )
+
+    return batch_activations
 
 
 def unique_locations(locations):
