@@ -19,12 +19,7 @@ def cat_allow_none(left, right):
 
 
 def train(
-    model,
-    train_dataloader,
-    valid_dataloader,
-    loss_func,
-    max_lr,
-    num_epochs,
+    model, train_dataloader, valid_dataloader, loss_func, max_lr, num_epochs,
 ):
     threshold = 0.8
     opt = torch.optim.AdamW(model.parameters())
