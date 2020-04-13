@@ -129,6 +129,95 @@ def train(
         print()
 
 
+class NeighboursLinearSigmoidModel2(torch.nn.Module):
+    def __init__(
+        self, part_to_id, num_input_features, num_intermediate, num_layers
+    ):
+        super().__init__()
+        self._part_to_id = part_to_id
+        self._num_input_features = num_input_features
+        self._num_intermediate = num_intermediate
+        self._num_layers = num_layers
+        num_parts = len(part_to_id)
+        self._embedding_len = num_parts // 2
+        self.embedding = torch.nn.Embedding(num_parts, self._embedding_len)
+
+        self.resnet_interpreter = torch.nn.Sequential(
+            torch.nn.Linear(
+                self._num_input_features + self._embedding_len,
+                num_intermediate,
+            ),
+            torch.nn.BatchNorm1d(num_intermediate),
+            torch.nn.ReLU(inplace=True),
+            # *[
+            #     torch.nn.Sequential(
+            #         torch.nn.Linear(num_intermediate, num_intermediate),
+            #         torch.nn.BatchNorm1d(num_intermediate),
+            #         torch.nn.ReLU(inplace=True),
+            #     )
+            #     for _ in range(self._num_layers)
+            # ],
+        )
+
+        self.integrator = torch.nn.Sequential(
+            torch.nn.Linear(num_intermediate * 9, num_intermediate,),
+            torch.nn.BatchNorm1d(num_intermediate),
+            torch.nn.ReLU(inplace=True),
+            *[
+                torch.nn.Sequential(
+                    torch.nn.Linear(num_intermediate, num_intermediate),
+                    torch.nn.BatchNorm1d(num_intermediate),
+                    torch.nn.ReLU(inplace=True),
+                )
+                for _ in range(self._num_layers)
+            ],
+        )
+
+        self.final = torch.nn.Linear(num_intermediate, 3)
+
+    def init_dict(self):
+        return {
+            "part_to_id": self._part_to_id,
+            "num_input_features": self._num_input_features,
+            "num_intermediate": self._num_intermediate,
+            "num_layers": self._num_layers,
+        }
+
+    def forward(self, activations, parts, neighbour_activations):
+        parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
+        parts_embedding = self.embedding(parts_tensor)
+        assert activations.shape == (
+            len(activations),
+            self._num_input_features,
+        )
+        activation_list = [
+            neighbour_activations[:, i, :] for i in range(8)
+        ] + [activations]
+        interpretations = [
+            self.resnet_interpreter(torch.cat([x, parts_embedding], dim=1))
+            for x in activation_list
+        ]
+        assert len(interpretations) == 9
+        assert interpretations[0].shape == (
+            len(activations),
+            self._num_intermediate,
+        )
+        integrated = self.integrator(torch.cat(interpretations, dim=1))
+        assert integrated.shape == (len(activations), self._num_intermediate,)
+        # neighbours = torch.flatten(neighbour_activations, start_dim=1)
+        # assert neighbours.shape == (
+        #     len(neighbour_activations),
+        #     8 * self._num_input_features,
+        # ), f"Got {neighbours.shape}."
+        # input_ = torch.cat((activations, parts_embedding, neighbours), 1)
+        # input_ = torch.cat((activations, parts_embedding, neighbours), 1)
+        # seq = self.sequence(input_)
+        seq = self.final(integrated)
+        sig = torch.sigmoid(seq[:, 0:1])
+        pos = torch.tanh(seq[:, 1:3]) * 2
+        return torch.cat([sig, pos], dim=1)
+
+
 class NeighboursLinearSigmoidModel(torch.nn.Module):
     def __init__(
         self, part_to_id, num_input_features, num_intermediate, num_layers

@@ -70,7 +70,7 @@ def process_args(args):
     resnet_num_features = resnet18_num_features
     num_intermediate = 80
     num_layers = 2
-    model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel(
+    model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
         part_to_id, resnet_num_features, num_intermediate, num_layers
     )
 
