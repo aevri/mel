@@ -630,6 +630,40 @@ def image_locations_to_tiles(image, locations, transforms, tile_size=32):
     return torch.stack(new_locations), torch.stack(tiles)
 
 
+def drop_green_and_edge_big_locations(image, locations, tile_size=32):
+    new_locations = []
+    green = [0, 255, 0]
+    for loc in locations:
+        x1, y1 = loc
+        t = image[
+            y1 - tile_size : y1 + (tile_size * 2),
+            x1 - tile_size : x1 + (tile_size * 2),
+        ]
+        if (t[:, :] == green).all():
+            continue
+        if t.shape != (tile_size * 3, tile_size * 3, 3):
+            # TODO: fill-in edge bits with green.
+            continue
+        new_locations.append(loc)
+    if not new_locations:
+        return None
+    return torch.stack(new_locations)
+
+
+def image_locations_to_big_tiles(image, locations, transforms, tile_size=32):
+    new_locations = []
+    tiles = []
+    for loc in locations:
+        x1, y1 = loc - tile_size
+        x2, y2 = loc + (tile_size * 2)
+        t = image[y1:y2, x1:x2]
+        tiles.append(transforms(t))
+        new_locations.append(loc)
+    if not new_locations:
+        return [], []
+    return torch.stack(new_locations), torch.stack(tiles)
+
+
 def locations_to_expected_output(image_locations, moles, tile_size=32):
 
     mole_points = [
@@ -736,12 +770,14 @@ def get_tile_locations_activations(
         locations = reduce_nonmole_locations(
             locations, frame.moledata.uuid_points.values()
         )
-        locations = add_neighbour_locations(locations, tile_size=32)
+        # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
-    locations = drop_green_and_edge_locations(masked_image, locations)
+    # locations = drop_green_and_edge_locations(masked_image, locations)
+    locations = drop_green_and_edge_big_locations(masked_image, locations)
     if locations is None:
         return None
-    locations, tiles = image_locations_to_tiles(
+    # locations, tiles = image_locations_to_tiles(
+    locations, tiles = image_locations_to_big_tiles(
         masked_image, locations, transforms
     )
     activations = tiles_to_activations(tiles, resnet)
