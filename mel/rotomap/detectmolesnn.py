@@ -474,9 +474,8 @@ def tiles_to_activations(tiles, resnet):
         resnet.layer4
     ) as layer4_in:
         with torch.no_grad():
-            with tqdm.tqdm(tile_dataloader) as pbar:
-                for tiles in pbar:
-                    resnet(tiles)
+            for tiles in tile_dataloader:
+                resnet(tiles)
 
     layer2_activations = torch.cat(
         [batch[0].flatten(1) for batch in layer2_in]

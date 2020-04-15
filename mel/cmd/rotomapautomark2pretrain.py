@@ -2,6 +2,7 @@
 
 import torch
 import torchvision
+import tqdm
 
 import mel.lib.math
 import mel.rotomap.detectmolesnn
@@ -33,18 +34,19 @@ def process_args(args):
     resnet = torchvision.models.resnet18(pretrained=True)
     #resnet = torchvision.models.resnet50(pretrained=True)
 
-    for path in args.IMAGES:
-        if args.verbose:
-            print(path)
-        frame = mel.rotomap.moles.RotomapFrame(path)
-        data = mel.rotomap.detectmolesnn.get_tile_locations_activations(
-            frame, transforms, resnet
-        )
-        if data is not None:
-            torch.save(data, path + ".resnet18.pt")
-            #torch.save(data, path + ".resnet50.pt")
-        else:
-            print("Nothing to save.")
+    with tqdm.tqdm(args.IMAGES) as pbar:
+        for path in pbar:
+            if args.verbose:
+                print(path)
+            frame = mel.rotomap.moles.RotomapFrame(path)
+            data = mel.rotomap.detectmolesnn.get_tile_locations_activations(
+                frame, transforms, resnet
+            )
+            if data is not None:
+                torch.save(data, path + ".resnet18.pt")
+                #torch.save(data, path + ".resnet50.pt")
+            else:
+                print("Nothing to save.")
 
 
 # -----------------------------------------------------------------------------
