@@ -918,11 +918,11 @@ def get_tile_locations_activations(
     tile_size = 32
     image = frame.load_image()
     mask = frame.load_mask()
-    masked_image = green_mask_image(image, mask)
-    masked_image = green_expand_image_to_full_tiles(image, tile_size)
-    # locations = get_image_locations(masked_image)
+    image = green_mask_image(image, mask)
+    image = green_expand_image_to_full_tiles(image, tile_size)
+    # locations = get_image_locations(image)
     locations, activations = get_image_locations_activations(
-        masked_image, tile_size, transforms, resnet
+        image, tile_size, transforms, resnet
     )
     locations_tuple = int_tensor2d_to_tuple(locations)
     if reduce_nonmoles:
@@ -931,13 +931,13 @@ def get_tile_locations_activations(
         )
         # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
-    locations = drop_green_and_edge_locations(masked_image, locations)
-    # locations = drop_green_and_edge_big_locations(masked_image, locations)
+    locations = drop_green_and_edge_locations(image, locations)
+    # locations = drop_green_and_edge_big_locations(image, locations)
     if locations is None:
         return None
     # locations, tiles = image_locations_to_tiles(
     # locations, tiles = image_locations_to_big_tiles(
-    #     masked_image, locations, transforms
+    #     image, locations, transforms
     # )
     # activations = tiles_to_activations(tiles, resnet)
     locations_to_activations = {
