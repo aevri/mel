@@ -109,6 +109,8 @@ def train(
                 num_moles_total += expected_choices.float().sum()
                 num_total += len(batch_ids)
         print("valid:", loss)
+        print("num_moles:", num_moles_total)
+        print("num_total:", num_total)
         print(
             "valid recall:", float(100 * num_moles_correct / num_moles_total),
         )
