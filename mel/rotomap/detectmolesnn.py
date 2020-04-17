@@ -4,6 +4,7 @@ import contextlib
 import pathlib
 
 import cv2
+import math
 import numpy
 import torch
 import tqdm
@@ -809,6 +810,84 @@ def get_image_locations(image, tile_size=32):
     return torch.stack(locations)
 
 
+def get_image_locations_activations(image, tile_size, transforms, resnet):
+    assert tile_size == 32
+    locations = get_image_locations(image, tile_size)
+    layer_activation_list = get_image_activations(image, transforms, resnet)
+
+    # Note: assuming activations are in same left-right top-bottom order as
+    # image.
+
+    tile_activations = []
+    for y1 in range(0, image.shape[0], tile_size):
+        y2 = y1 + tile_size
+        for x1 in range(0, image.shape[1], tile_size):
+            x2 = x1 + tile_size
+            activations_temp = []
+            for layer in layer_activation_list:
+                width = layer.shape[-1]
+                height = layer.shape[-2]
+                float_divisor = image.shape[1] / width
+                divisor = int(float_divisor)
+                if (
+                    divisor != float_divisor
+                    or divisor != image.shape[0] / height
+                ):
+                    raise NotImplementedError(
+                        "Need to handle images that don't tile perfectly"
+                    )
+                assert len(layer.shape) == 3
+                activations_temp.append(
+                    layer[
+                        :,
+                        y1 // divisor : y2 // divisor,
+                        x1 // divisor : x2 // divisor,
+                    ]
+                )
+            tile_activations.append(
+                torch.cat([a.flatten() for a in activations_temp])
+            )
+
+    activations = torch.stack(tile_activations)
+
+    assert len(locations) == len(activations)
+    assert len(activations.shape) == 2
+    assert all(a.shape == activations[0].shape for a in activations)
+
+    return locations, activations
+
+
+def get_image_activations(image, transforms, resnet):
+    resnet.eval()
+    with record_input_context(
+        resnet.avgpool
+    ) as avgpool_in, record_input_context(
+        resnet.layer2
+    ) as layer2_in, record_input_context(
+        resnet.layer3
+    ) as layer3_in, record_input_context(
+        resnet.layer4
+    ) as layer4_in:
+        with torch.no_grad():
+            resnet(transforms(image).unsqueeze(0))
+
+    assert layer2_in[0][0].shape[0] == 1
+    assert layer3_in[0][0].shape[0] == 1
+    assert layer4_in[0][0].shape[0] == 1
+    assert avgpool_in[0][0].shape[0] == 1
+
+    activations = [
+        layer2_in[0][0][0],
+        layer3_in[0][0][0],
+        layer4_in[0][0][0],
+        avgpool_in[0][0][0],
+    ]
+
+    assert all([len(x.shape) == 3 for x in activations])
+
+    return activations
+
+
 def green_mask_image(image, mask):
     green = numpy.zeros(image.shape, numpy.uint8)
     green[:, :, 1] = 255
@@ -819,28 +898,62 @@ def green_mask_image(image, mask):
     return image
 
 
+def green_expand_image_to_full_tiles(image, tile_size):
+    height, width = image.shape[:2]
+    big_height = math.ceil(height / tile_size) * tile_size
+    big_width = math.ceil(height / tile_size) * tile_size
+
+    if big_height == height and big_width == width:
+        return image
+
+    big_image = numpy.zeros((big_height, big_width, 3), numpy.uint8)
+    big_image[:, :, 1] = 255
+    big_image[:height, :width, :] = image[:, :, :]
+    return big_image
+
+
 def get_tile_locations_activations(
     frame, transforms, resnet, reduce_nonmoles=True
 ):
+    tile_size = 32
     image = frame.load_image()
     mask = frame.load_mask()
     masked_image = green_mask_image(image, mask)
-    locations = get_image_locations(masked_image)
+    masked_image = green_expand_image_to_full_tiles(image, tile_size)
+    # locations = get_image_locations(masked_image)
+    locations, activations = get_image_locations_activations(
+        masked_image, tile_size, transforms, resnet
+    )
+    locations_tuple = int_tensor2d_to_tuple(locations)
     if reduce_nonmoles:
         locations = reduce_nonmole_locations(
             locations, frame.moledata.uuid_points.values()
         )
         # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
-    # locations = drop_green_and_edge_locations(masked_image, locations)
-    locations = drop_green_and_edge_big_locations(masked_image, locations)
+    locations = drop_green_and_edge_locations(masked_image, locations)
+    # locations = drop_green_and_edge_big_locations(masked_image, locations)
     if locations is None:
         return None
     # locations, tiles = image_locations_to_tiles(
-    locations, tiles = image_locations_to_big_tiles(
-        masked_image, locations, transforms
+    # locations, tiles = image_locations_to_big_tiles(
+    #     masked_image, locations, transforms
+    # )
+    # activations = tiles_to_activations(tiles, resnet)
+    locations_to_activations = {
+        location: activation
+        for location, activation in zip(locations_tuple, activations)
+    }
+    filtered_locations_tuple = int_tensor2d_to_tuple(locations)
+    activations = torch.stack(
+        [
+            locations_to_activations[location]
+            for location in filtered_locations_tuple
+        ]
     )
-    activations = tiles_to_activations(tiles, resnet)
+    assert len(locations) == len(activations)
+    assert locations.shape == (len(locations), 2)
+    assert len(activations.shape) == 2
     return locations, activations
 
 
