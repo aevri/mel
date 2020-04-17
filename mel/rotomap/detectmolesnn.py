@@ -820,25 +820,29 @@ def get_image_locations_activations(image, tile_size, transforms, resnet):
     # Note: assuming activations are in same left-right top-bottom order as
     # image.
 
+    divisors = []
+    for layer in layer_activation_list:
+        width = layer.shape[-1]
+        height = layer.shape[-2]
+        float_divisor = image.shape[1] / width
+        divisor = int(float_divisor)
+        if (
+            divisor != float_divisor
+            or divisor != image.shape[0] / height
+        ):
+            raise NotImplementedError(
+                "Need to handle images that don't tile perfectly"
+            )
+        assert len(layer.shape) == 3
+        divisors.append(divisor)
+
     tile_activations = []
     for y1 in range(0, image.shape[0], tile_size):
         y2 = y1 + tile_size
         for x1 in range(0, image.shape[1], tile_size):
             x2 = x1 + tile_size
             activations_temp = []
-            for layer in layer_activation_list:
-                width = layer.shape[-1]
-                height = layer.shape[-2]
-                float_divisor = image.shape[1] / width
-                divisor = int(float_divisor)
-                if (
-                    divisor != float_divisor
-                    or divisor != image.shape[0] / height
-                ):
-                    raise NotImplementedError(
-                        "Need to handle images that don't tile perfectly"
-                    )
-                assert len(layer.shape) == 3
+            for divisor, layer in zip(divisors, layer_activation_list):
                 activations_temp.append(
                     layer[
                         :,
@@ -937,11 +941,13 @@ def get_tile_locations_activations(
     # locations = drop_green_and_edge_big_locations(image, locations)
     if locations is None:
         return None
+
     # locations, tiles = image_locations_to_tiles(
     # locations, tiles = image_locations_to_big_tiles(
     #     image, locations, transforms
     # )
     # activations = tiles_to_activations(tiles, resnet)
+
     locations_to_activations = {
         location: activation
         for location, activation in zip(locations_tuple, activations)
