@@ -33,8 +33,8 @@ def process_args(args):
     print(f"         and {metadata_path}")
 
     batch_size = 512
-    max_lr = 0.1
-    num_epochs = 5
+    max_lr = 0.01
+    num_epochs = 100
 
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
 

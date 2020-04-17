@@ -32,21 +32,32 @@ def process_args(args):
     )
 
     resnet = torchvision.models.resnet18(pretrained=True)
-    #resnet = torchvision.models.resnet50(pretrained=True)
+    # resnet = torchvision.models.resnet50(pretrained=True)
 
-    with tqdm.tqdm(args.IMAGES) as pbar:
-        for path in pbar:
+    batch_size = 2
+
+    path_batches = [
+        args.IMAGES[n : n + batch_size]
+        for n in range(0, len(args.IMAGES), batch_size)
+    ]
+
+    get_data_batch = mel.rotomap.detectmolesnn.get_tile_locations_activations
+
+    with tqdm.tqdm(total=len(args.IMAGES)) as pbar:
+        for paths in path_batches:
             if args.verbose:
-                print(path)
-            frame = mel.rotomap.moles.RotomapFrame(path)
-            data = mel.rotomap.detectmolesnn.get_tile_locations_activations(
-                frame, transforms, resnet
+                print(", ".join(paths))
+            frames = [mel.rotomap.moles.RotomapFrame(path) for path in paths]
+            data_batch = get_data_batch(
+                frames, transforms, resnet
             )
-            if data is not None:
-                torch.save(data, path + ".resnet18.pt")
-                #torch.save(data, path + ".resnet50.pt")
-            else:
-                print("Nothing to save.")
+            for data, path in zip(data_batch, paths):
+                if data_batch is not None:
+                    torch.save(data, path + ".resnet18.pt")
+                    # torch.save(data, path + ".resnet50.pt")
+                else:
+                    print("Nothing to save.")
+            pbar.update(len(paths))
 
 
 # -----------------------------------------------------------------------------

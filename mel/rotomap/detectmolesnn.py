@@ -810,14 +810,37 @@ def get_image_locations(image, tile_size=32):
     return torch.stack(locations)
 
 
-def get_image_locations_activations(image, tile_size, transforms, resnet):
+def get_image_locations_activations(images, tile_size, transforms, resnet):
     assert tile_size == 32
-    locations = get_image_locations(image, tile_size)
-    layer_activation_list = get_image_activations(image, transforms, resnet)
+    locations_batch = [
+        get_image_locations(image, tile_size) for image in images
+    ]
+
+    layer_activation_list_batch = get_images_activations(
+        images, transforms, resnet
+    )
 
     # Note: assuming activations are in same left-right top-bottom order as
     # image.
 
+    assert len(layer_activation_list_batch) == len(images)
+    activations_batch = [
+        split_tile_activations(layer_activation_list, image, tile_size)
+        for layer_activation_list, image in zip(
+            layer_activation_list_batch, images
+        )
+    ]
+
+    assert len(locations_batch) == len(activations_batch)
+    for locations, activations in zip(locations_batch, activations_batch):
+        assert len(locations) == len(activations)
+        assert len(activations.shape) == 2
+        assert all(a.shape == activations[0].shape for a in activations)
+
+    return locations_batch, activations_batch
+
+
+def split_tile_activations(layer_activation_list, image, tile_size):
     tile_activations = []
     for y1 in range(0, image.shape[0], tile_size):
         y2 = y1 + tile_size
@@ -849,16 +872,15 @@ def get_image_locations_activations(image, tile_size, transforms, resnet):
             )
 
     activations = torch.stack(tile_activations)
-
-    assert len(locations) == len(activations)
-    assert len(activations.shape) == 2
-    assert all(a.shape == activations[0].shape for a in activations)
-
-    return locations, activations
+    return activations
 
 
-def get_image_activations(image, transforms, resnet):
+def get_images_activations(images, transforms, resnet):
     resnet.eval()
+
+    images = [transforms(image) for image in images]
+    dataloader = torch.utils.data.DataLoader(images, batch_size=len(images))
+
     with record_input_context(
         resnet.avgpool
     ) as avgpool_in, record_input_context(
@@ -869,21 +891,25 @@ def get_image_activations(image, transforms, resnet):
         resnet.layer4
     ) as layer4_in:
         with torch.no_grad():
-            resnet(transforms(image).unsqueeze(0))
+            for batch in dataloader:
+                resnet(batch)
 
-    assert layer2_in[0][0].shape[0] == 1
-    assert layer3_in[0][0].shape[0] == 1
-    assert layer4_in[0][0].shape[0] == 1
-    assert avgpool_in[0][0].shape[0] == 1
+    assert layer2_in[0][0].shape[0] == len(images)
+    assert layer3_in[0][0].shape[0] == len(images)
+    assert layer4_in[0][0].shape[0] == len(images)
+    assert avgpool_in[0][0].shape[0] == len(images)
 
     activations = [
-        layer2_in[0][0][0],
-        layer3_in[0][0][0],
-        layer4_in[0][0][0],
-        avgpool_in[0][0][0],
+        [
+            layer2_in[0][0][i],
+            layer3_in[0][0][i],
+            layer4_in[0][0][i],
+            avgpool_in[0][0][i],
+        ]
+        for i in range(len(images))
     ]
 
-    assert all([len(x.shape) == 3 for x in activations])
+    assert all([len(a.shape) == 3 for a_list in activations for a in a_list])
 
     return activations
 
@@ -913,17 +939,32 @@ def green_expand_image_to_full_tiles(image, tile_size):
 
 
 def get_tile_locations_activations(
-    frame, transforms, resnet, reduce_nonmoles=True
+    frames, transforms, resnet, reduce_nonmoles=True
 ):
     tile_size = 32
-    image = frame.load_image()
-    mask = frame.load_mask()
-    masked_image = green_mask_image(image, mask)
-    masked_image = green_expand_image_to_full_tiles(image, tile_size)
+    images = [frame.load_image() for frame in frames]
+    masks = [frame.load_mask() for frame in frames]
+    masked_images = [
+        green_mask_image(image, mask) for image, mask in zip(images, masks)
+    ]
+    masked_images = [
+        green_expand_image_to_full_tiles(image, tile_size)
+        for image in masked_images
+    ]
     # locations = get_image_locations(masked_image)
-    locations, activations = get_image_locations_activations(
-        masked_image, tile_size, transforms, resnet
+    locations_batch, activations_batch = get_image_locations_activations(
+        masked_images, tile_size, transforms, resnet
     )
+    for i in range(len(frames)):
+        locations = locations_batch[i]
+        frame = frames[i]
+        masked_image = masked_images[i]
+        yield get_locations_activations(
+            locations, frame, masked_image, reduce_nonmoles
+        )
+
+
+def get_locations_activations(locations, frame, masked_image, reduce_nonmoles):
     locations_tuple = int_tensor2d_to_tuple(locations)
     if reduce_nonmoles:
         locations = reduce_nonmole_locations(
