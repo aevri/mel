@@ -66,14 +66,20 @@ def process_args(args):
 
     # resnet18_num_features = 512
     # resnet18_num_features = 7680
-    resnet18_num_features = 69120
+    # resnet18_num_features = 69120
     # resnet50_num_features = 2048
-    resnet_num_features = resnet18_num_features
+    # resnet_num_features = resnet18_num_features
+    num_features = None
+    for batch in training_dataloader:
+        activations_batch = batch[1]
+        assert len(activations_batch.shape) == 2
+        num_features = len(activations_batch[0])
+        break
     num_intermediate = 80
     num_layers = 2
     # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
     model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(
-        part_to_id, resnet_num_features, num_intermediate, num_layers
+        part_to_id, num_features, num_intermediate, num_layers
     )
 
     mel.rotomap.detectmolesnn.train(
