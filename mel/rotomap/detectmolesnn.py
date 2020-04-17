@@ -315,6 +315,7 @@ def get_neighbors(location, tile_size):
 class NeighboursDataset:
     def __init__(self, tile_dataset):
         self._tile_dataset = tile_dataset
+        self._tile_dataset._calc_neighbour_activations()
         self._indices = [
             i
             for i, neighbours in enumerate(tile_dataset._neigbour_activations)
@@ -351,7 +352,6 @@ class TileDataset:
         self._location = torch.cat(self._location)
         self._activations = torch.cat(self._activations)
         self._expected_output = torch.cat(self._expected_output)
-        self._calc_neighbour_activations()
 
     def _append_image_data(self, image_path):
         datapath = str(image_path) + ".resnet18.pt"
