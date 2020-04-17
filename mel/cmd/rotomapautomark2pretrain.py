@@ -1,7 +1,5 @@
 """Train to automatically mark moles on rotomap images."""
 
-import multiprocessing
-
 import torch
 import torchvision
 import tqdm
@@ -24,18 +22,6 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    # with tqdm.tqdm(args.IMAGES) as pbar:
-    #     for image_path in pbar:
-    #         process_image(image_path)
-    pool = multiprocessing.Pool()
-    with tqdm.tqdm(
-        pool.imap_unordered(process_image, args.IMAGES), total=len(args.IMAGES)
-    ) as pbar:
-        for result in pbar:
-            pass
-
-
-def process_image(image_path):
     transforms = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToTensor(),
@@ -46,19 +32,21 @@ def process_image(image_path):
     )
 
     resnet = torchvision.models.resnet18(pretrained=True)
-    # resnet = torchvision.models.resnet50(pretrained=True)
+    #resnet = torchvision.models.resnet50(pretrained=True)
 
-    # if args.verbose:
-    #     print(path)
-    frame = mel.rotomap.moles.RotomapFrame(image_path)
-    data = mel.rotomap.detectmolesnn.get_tile_locations_activations(
-        frame, transforms, resnet
-    )
-    if data is not None:
-        torch.save(data, image_path + ".resnet18.pt")
-        # torch.save(data, image_path + ".resnet50.pt")
-    else:
-        print("Nothing to save.")
+    with tqdm.tqdm(args.IMAGES) as pbar:
+        for path in pbar:
+            if args.verbose:
+                print(path)
+            frame = mel.rotomap.moles.RotomapFrame(path)
+            data = mel.rotomap.detectmolesnn.get_tile_locations_activations(
+                frame, transforms, resnet
+            )
+            if data is not None:
+                torch.save(data, path + ".resnet18.pt")
+                #torch.save(data, path + ".resnet50.pt")
+            else:
+                print("Nothing to save.")
 
 
 # -----------------------------------------------------------------------------
