@@ -923,6 +923,7 @@ def get_tile_locations_activations(
 ):
     tile_size = 32
     image = frame.load_image()
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     mask = frame.load_mask()
     image = green_mask_image(image, mask)
     image = green_expand_image_to_full_tiles(image, tile_size)
