@@ -897,10 +897,7 @@ def get_image_locations_activations(image, tile_size, transforms, resnet):
         height = layer.shape[-2]
         float_divisor = image.shape[1] / width
         divisor = int(float_divisor)
-        if (
-            divisor != float_divisor
-            or divisor != image.shape[0] / height
-        ):
+        if divisor != float_divisor or divisor != image.shape[0] / height:
             raise NotImplementedError(
                 "Need to handle images that don't tile perfectly"
             )
