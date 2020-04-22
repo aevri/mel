@@ -8,7 +8,7 @@ import math
 import numpy
 import torch
 import tqdm
-import PIL
+# import PIL
 
 import mel.lib.math
 import mel.rotomap.moles
@@ -1008,10 +1008,10 @@ def get_tile_locations_activations(
     frame, transforms, resnet, reduce_nonmoles=True
 ):
     tile_size = 32
-    # image = frame.load_image()
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = PIL.Image.open(frame.path).convert("RGB")
-    image = numpy.array(image)
+    image = frame.load_image()
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # image = PIL.Image.open(frame.path).convert("RGB")
+    # image = numpy.array(image)
     mask = frame.load_mask()
     image = green_mask_image(image, mask)
     image = green_expand_image_to_full_tiles(image, tile_size)
