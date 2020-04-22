@@ -43,11 +43,11 @@ def train(
                 batch_activations,
                 batch_parts,
                 batch_expected_outputs,
-                batch_neighbours,
+                # batch_neighbours,
             ) = batch
             opt.zero_grad()
-            out = model(batch_activations, batch_parts, batch_neighbours)
-            # out = model(batch_activations, batch_parts)
+            # out = model(batch_activations, batch_parts, batch_neighbours)
+            out = model(batch_activations, batch_parts)
             # print(batch_expected_outputs.unsqueeze(1).shape)
             # print(out.shape)
             loss = loss_func(out, batch_expected_outputs)
@@ -93,11 +93,11 @@ def train(
                 batch_activations,
                 batch_parts,
                 batch_expected_outputs,
-                batch_neighbours,
+                # batch_neighbours,
             ) = batch
             with torch.no_grad():
-                out = model(batch_activations, batch_parts, batch_neighbours)
-                # out = model(batch_activations, batch_parts)
+                # out = model(batch_activations, batch_parts, batch_neighbours)
+                out = model(batch_activations, batch_parts)
                 choices = out[:, 0] > threshold
                 expected_choices = (batch_expected_outputs > threshold)[:, 0]
                 loss = loss_func(out, batch_expected_outputs)
@@ -1110,7 +1110,7 @@ def get_tile_locations_activations(
         locations = reduce_nonmole_locations(
             locations, frame.moledata.uuid_points.values()
         )
-        locations = add_neighbour_locations(locations, tile_size=tile_size)
+        # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
     # locations = drop_green_and_edge_locations(image, locations)
 
