@@ -1114,7 +1114,7 @@ def get_tile_locations_activations(
         locations = unique_locations(locations)
     # locations = drop_green_and_edge_locations(image, locations)
 
-    tile_magnification = 2
+    tile_magnification = 1
 
     locations = drop_green_and_edge_big_locations(
         image, locations, tile_size, tile_magnification
