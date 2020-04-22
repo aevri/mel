@@ -907,7 +907,7 @@ def green_mask_image(image, mask):
 def green_expand_image_to_full_tiles(image, tile_size):
     height, width = image.shape[:2]
     big_height = math.ceil(height / tile_size) * tile_size
-    big_width = math.ceil(height / tile_size) * tile_size
+    big_width = math.ceil(width / tile_size) * tile_size
 
     if big_height == height and big_width == width:
         return image
