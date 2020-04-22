@@ -932,6 +932,9 @@ def get_image_locations_activations(image, tile_size, transforms, resnet):
 
 
 def get_image_activations(image, transforms, resnet):
+    tile_dataloader = torch.utils.data.DataLoader(
+        [transforms(image)], batch_size=1
+    )
     resnet.eval()
     with record_input_context(
         resnet.avgpool
@@ -943,7 +946,21 @@ def get_image_activations(image, transforms, resnet):
         resnet.layer4
     ) as layer4_in:
         with torch.no_grad():
-            resnet(transforms(image).unsqueeze(0))
+            for tiles in tile_dataloader:
+                resnet(tiles)
+
+    # resnet.eval()
+    # with record_input_context(
+    #     resnet.avgpool
+    # ) as avgpool_in, record_input_context(
+    #     resnet.layer2
+    # ) as layer2_in, record_input_context(
+    #     resnet.layer3
+    # ) as layer3_in, record_input_context(
+    #     resnet.layer4
+    # ) as layer4_in:
+    #     with torch.no_grad():
+    #         resnet(transforms(image).unsqueeze(0))
 
     assert layer2_in[0][0].shape[0] == 1
     assert layer3_in[0][0].shape[0] == 1
