@@ -79,7 +79,8 @@ def process_args(args):
         match = mel.rotomap.detectmolesnn.match_with_neighbours
         locs_acts_neighbour_acts = match(locations, activations, tile_size)
         dataset = [
-            (act, part, neighbour_acts)
+            # (act, part, neighbour_acts)
+            (act, part)
             for loc, act, neighbour_acts in locs_acts_neighbour_acts
         ]
         print("Neighbour blocks:", len(dataset))
