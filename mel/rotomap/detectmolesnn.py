@@ -8,6 +8,7 @@ import math
 import numpy
 import torch
 import tqdm
+
 # import PIL
 
 import mel.lib.math
@@ -599,7 +600,7 @@ def tiles_to_activations(tiles, resnet):
     return batch_activations
 
 
-def tiles_to_central_activations_3x3(tiles, resnet):
+def tiles_to_central_activations(tiles, resnet, tile_magnification):
     batch_size = 64
     tile_dataloader = torch.utils.data.DataLoader(tiles, batch_size=batch_size)
     resnet.eval()
@@ -616,10 +617,18 @@ def tiles_to_central_activations_3x3(tiles, resnet):
             for tiles in tile_dataloader:
                 resnet(tiles)
 
-    layer2_activations = flat_cat_central_activations(layer2_in)
-    layer3_activations = flat_cat_central_activations(layer3_in)
-    layer4_activations = flat_cat_central_activations(layer4_in)
-    avgpool_activations = flat_cat_central_activations(avgpool_in)
+    layer2_activations = flat_cat_central_activations(
+        layer2_in, tile_magnification
+    )
+    layer3_activations = flat_cat_central_activations(
+        layer3_in, tile_magnification
+    )
+    layer4_activations = flat_cat_central_activations(
+        layer4_in, tile_magnification
+    )
+    avgpool_activations = flat_cat_central_activations(
+        avgpool_in, tile_magnification
+    )
 
     batch_activations = torch.cat(
         [
@@ -634,21 +643,25 @@ def tiles_to_central_activations_3x3(tiles, resnet):
     return batch_activations
 
 
-def flat_cat_central_activations(layer):
+def flat_cat_central_activations(layer, tile_magnification):
     for batch in layer:
         assert len(batch) == 1
     return torch.cat(
-        [central_activations_3x3(batch[0]).flatten(1) for batch in layer]
+        [
+            central_activations(batch[0], tile_magnification).flatten(1)
+            for batch in layer
+        ]
     )
 
 
-def central_activations_3x3(layer):
+def central_activations(layer, tile_magnification):
     assert len(layer.shape) == 4
     assert layer.shape[-1] == layer.shape[-2]
-    blocks_per_tile = layer.shape[-1] / 3
+    tiles_per_side = 1 + (tile_magnification * 2)
+    blocks_per_tile = layer.shape[-1] / tiles_per_side
     assert blocks_per_tile == int(blocks_per_tile)
     blocks_per_tile = int(blocks_per_tile)
-    start = blocks_per_tile
+    start = blocks_per_tile * tile_magnification
     end = start + blocks_per_tile
     return layer[:, :, start:end, start:end]
 
@@ -777,18 +790,25 @@ def image_locations_to_tiles(image, locations, transforms, tile_size=32):
     return torch.stack(new_locations), torch.stack(tiles)
 
 
-def drop_green_and_edge_big_locations(image, locations, tile_size=32):
+def drop_green_and_edge_big_locations(
+    image, locations, tile_size, tile_magnification
+):
     new_locations = []
     green = [0, 255, 0]
+
+    back_offset = tile_size * tile_magnification
+    forward_offset = tile_size + (tile_size * tile_magnification)
+    big_tile_size = tile_size * (1 + (tile_magnification * 2))
+
     for loc in locations:
         x1, y1 = loc
         t = image[
-            y1 - tile_size : y1 + (tile_size * 2),
-            x1 - tile_size : x1 + (tile_size * 2),
+            y1 - back_offset : y1 + forward_offset,
+            x1 - back_offset : x1 + forward_offset,
         ]
         if (t[:, :] == green).all():
             continue
-        if t.shape != (tile_size * 3, tile_size * 3, 3):
+        if t.shape != (big_tile_size, big_tile_size, 3):
             # TODO: fill-in edge bits with green.
             continue
         new_locations.append(loc)
@@ -797,18 +817,30 @@ def drop_green_and_edge_big_locations(image, locations, tile_size=32):
     return torch.stack(new_locations)
 
 
-def image_locations_to_big_tiles(image, locations, transforms, tile_size=32):
+def image_locations_to_big_tiles(
+    image, locations, transforms, tile_size, tile_magnification
+):
     new_locations = []
     tiles = []
+
+    back_offset = tile_size * tile_magnification
+    forward_offset = tile_size + (tile_size * tile_magnification)
+    big_tile_size = tile_size * (1 + (tile_magnification * 2))
+
     for loc in locations:
-        x1, y1 = loc - tile_size
-        x2, y2 = loc + (tile_size * 2)
+        x1, y1 = loc - back_offset
+        x2, y2 = loc + forward_offset
         t = image[y1:y2, x1:x2]
         tiles.append(transforms(t))
         new_locations.append(loc)
     if not new_locations:
         return [], []
-    return torch.stack(new_locations), torch.stack(tiles)
+
+    tiles = torch.stack(tiles)
+    assert tiles.shape[-1] == big_tile_size
+    assert tiles.shape[-2] == big_tile_size
+
+    return torch.stack(new_locations), tiles
 
 
 def locations_to_expected_output(image_locations, moles, tile_size=32):
@@ -1081,16 +1113,23 @@ def get_tile_locations_activations(
         # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
     # locations = drop_green_and_edge_locations(image, locations)
-    locations = drop_green_and_edge_big_locations(image, locations)
+
+    tile_magnification = 2
+
+    locations = drop_green_and_edge_big_locations(
+        image, locations, tile_size, tile_magnification
+    )
     if locations is None:
         return None
 
     # locations, tiles = image_locations_to_tiles(
     locations, tiles = image_locations_to_big_tiles(
-        image, locations, transforms
+        image, locations, transforms, tile_size, tile_magnification
     )
     # activations = tiles_to_activations(tiles, resnet)
-    activations = tiles_to_central_activations_3x3(tiles, resnet)
+    activations = tiles_to_central_activations(
+        tiles, resnet, tile_magnification
+    )
 
     # locations_to_activations = {
     #     location: activation
