@@ -524,6 +524,35 @@ def image_path_to_part(image_path):
     return f"{part_path.name}, {subpart_path.name}"
 
 
+def tiles_to_activations_no_flat_cat(tiles, resnet):
+    tile_dataloader = torch.utils.data.DataLoader(tiles, batch_size=64)
+    resnet.eval()
+    with record_input_context(
+        resnet.avgpool
+    ) as avgpool_in, record_input_context(
+        resnet.layer2
+    ) as layer2_in, record_input_context(
+        resnet.layer3
+    ) as layer3_in, record_input_context(
+        resnet.layer4
+    ) as layer4_in:
+        with torch.no_grad():
+            for tiles in tile_dataloader:
+                resnet(tiles)
+
+    layer2_activations = [tile for batch in layer2_in for tile in batch[0]]
+    layer3_activations = [tile for batch in layer3_in for tile in batch[0]]
+    layer4_activations = [tile for batch in layer4_in for tile in batch[0]]
+    avgpool_activations = [tile for batch in avgpool_in for tile in batch[0]]
+
+    return (
+        layer2_activations,
+        layer3_activations,
+        layer4_activations,
+        avgpool_activations,
+    )
+
+
 def tiles_to_activations(tiles, resnet):
     tile_dataloader = torch.utils.data.DataLoader(tiles, batch_size=64)
     resnet.eval()
@@ -816,6 +845,48 @@ def get_image_locations_activations(image, tile_size, transforms, resnet):
     assert tile_size == 32
     locations = get_image_locations(image, tile_size)
     layer_activation_list = get_image_activations(image, transforms, resnet)
+
+    # locations, tiles = image_locations_to_tiles(image, locations, transforms)
+    # activations = tiles_to_activations(tiles, resnet)
+
+    # activations2 = tiles_to_activations_no_flat_cat(tiles, resnet)
+    # layer_activation_list = []
+    # for layer in activations2:
+    #     assert len(layer[0].shape) == 3
+
+    #     image_height, image_width = image.shape[:2]
+    #     assert tile_size == ((image_height * image_width) / len(layer)) ** 0.5
+    #     feature_blocks_per_tile_side = layer[0].shape[1]
+    #     assert feature_blocks_per_tile_side == layer[0].shape[2]
+
+    #     image_width_in_tiles = image_width / tile_size
+    #     assert image_width_in_tiles == int(image_width_in_tiles)
+    #     image_width_in_tiles = int(image_width_in_tiles)
+
+    #     tensor_width = image_width_in_tiles * feature_blocks_per_tile_side
+    #     assert isinstance(tensor_width, int)
+
+    #     image_height_in_tiles = image_height / tile_size
+    #     assert image_height_in_tiles == int(image_height_in_tiles)
+    #     image_height_in_tiles = int(image_height_in_tiles)
+
+    #     tensor_height = image_height_in_tiles * feature_blocks_per_tile_side
+    #     assert isinstance(tensor_height, int)
+
+    #     layer_tensor = torch.empty(
+    #         layer[0].shape[0], tensor_height, tensor_width
+    #     )
+    #     for tile_y in range(image_height_in_tiles):
+    #         for tile_x in range(image_width_in_tiles):
+    #             tile_index = tile_x + tile_y * image_width_in_tiles
+    #             layer_y = tile_y * feature_blocks_per_tile_side
+    #             layer_x = tile_x * feature_blocks_per_tile_side
+    #             layer_tensor[
+    #                 :,
+    #                 layer_y : layer_y + feature_blocks_per_tile_side,
+    #                 layer_x : layer_x + feature_blocks_per_tile_side,
+    #             ] = layer[tile_index]
+    #     layer_activation_list.append(layer_tensor)
 
     # Note: assuming activations are in same left-right top-bottom order as
     # image.
