@@ -77,8 +77,8 @@ def process_args(args):
         break
     num_intermediate = 80
     num_layers = 2
-    # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
-    model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(
+    model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
+    # model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(
         part_to_id, num_features, num_intermediate, num_layers
     )
 
@@ -128,16 +128,16 @@ def load_dataset(images, batch_size):
     print(f"Will load from {len(images)} images.")
     dataset = mel.rotomap.detectmolesnn.TileDataset(images, 32)
     print(f"Loaded {len(dataset)} tiles.")
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True,
-    )
-    return dataloader
-    # neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
-    # print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
-    # neighbours_dataloader = torch.utils.data.DataLoader(
-    #     neighbours_dataset, batch_size=batch_size, shuffle=True,
+    # dataloader = torch.utils.data.DataLoader(
+    #     dataset, batch_size=batch_size, shuffle=True,
     # )
-    # return neighbours_dataloader
+    # return dataloader
+    neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
+    print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
+    neighbours_dataloader = torch.utils.data.DataLoader(
+        neighbours_dataset, batch_size=batch_size, shuffle=True,
+    )
+    return neighbours_dataloader
 
 
 # -----------------------------------------------------------------------------
