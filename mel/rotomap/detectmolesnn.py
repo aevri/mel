@@ -599,6 +599,60 @@ def tiles_to_activations(tiles, resnet):
     return batch_activations
 
 
+def tiles_to_central_activations_3x3(tiles, resnet):
+    batch_size = 64
+    tile_dataloader = torch.utils.data.DataLoader(tiles, batch_size=batch_size)
+    resnet.eval()
+    with record_input_context(
+        resnet.avgpool
+    ) as avgpool_in, record_input_context(
+        resnet.layer2
+    ) as layer2_in, record_input_context(
+        resnet.layer3
+    ) as layer3_in, record_input_context(
+        resnet.layer4
+    ) as layer4_in:
+        with torch.no_grad():
+            for tiles in tile_dataloader:
+                resnet(tiles)
+
+    layer2_activations = flat_cat_central_activations(layer2_in)
+    layer3_activations = flat_cat_central_activations(layer3_in)
+    layer4_activations = flat_cat_central_activations(layer4_in)
+    avgpool_activations = flat_cat_central_activations(avgpool_in)
+
+    batch_activations = torch.cat(
+        [
+            layer2_activations,
+            layer3_activations,
+            layer4_activations,
+            avgpool_activations,
+        ],
+        dim=1,
+    )
+
+    return batch_activations
+
+
+def flat_cat_central_activations(layer):
+    for batch in layer:
+        assert len(batch) == 1
+    return torch.cat(
+        [central_activations_3x3(batch[0]).flatten(1) for batch in layer]
+    )
+
+
+def central_activations_3x3(layer):
+    assert len(layer.shape) == 4
+    assert layer.shape[-1] == layer.shape[-2]
+    blocks_per_tile = layer.shape[-1] / 3
+    assert blocks_per_tile == int(blocks_per_tile)
+    blocks_per_tile = int(blocks_per_tile)
+    start = blocks_per_tile
+    end = start + blocks_per_tile
+    return layer[:, :, start:end, start:end]
+
+
 def unique_locations(locations):
     """
 
@@ -1015,39 +1069,40 @@ def get_tile_locations_activations(
     mask = frame.load_mask()
     image = green_mask_image(image, mask)
     image = green_expand_image_to_full_tiles(image, tile_size)
-    # locations = get_image_locations(image)
-    locations, activations = get_image_locations_activations(
-        image, tile_size, transforms, resnet
-    )
-    locations_tuple = int_tensor2d_to_tuple(locations)
+    locations = get_image_locations(image)
+    # locations, activations = get_image_locations_activations(
+    #     image, tile_size, transforms, resnet
+    # )
+    # locations_tuple = int_tensor2d_to_tuple(locations)
     if reduce_nonmoles:
         locations = reduce_nonmole_locations(
             locations, frame.moledata.uuid_points.values()
         )
         # locations = add_neighbour_locations(locations, tile_size=32)
         locations = unique_locations(locations)
-    locations = drop_green_and_edge_locations(image, locations)
-    # locations = drop_green_and_edge_big_locations(image, locations)
+    # locations = drop_green_and_edge_locations(image, locations)
+    locations = drop_green_and_edge_big_locations(image, locations)
     if locations is None:
         return None
 
     # locations, tiles = image_locations_to_tiles(
-    # locations, tiles = image_locations_to_big_tiles(
-    #     image, locations, transforms
-    # )
-    # activations = tiles_to_activations(tiles, resnet)
-
-    locations_to_activations = {
-        location: activation
-        for location, activation in zip(locations_tuple, activations)
-    }
-    filtered_locations_tuple = int_tensor2d_to_tuple(locations)
-    activations = torch.stack(
-        [
-            locations_to_activations[location]
-            for location in filtered_locations_tuple
-        ]
+    locations, tiles = image_locations_to_big_tiles(
+        image, locations, transforms
     )
+    # activations = tiles_to_activations(tiles, resnet)
+    activations = tiles_to_central_activations_3x3(tiles, resnet)
+
+    # locations_to_activations = {
+    #     location: activation
+    #     for location, activation in zip(locations_tuple, activations)
+    # }
+    # filtered_locations_tuple = int_tensor2d_to_tuple(locations)
+    # activations = torch.stack(
+    #     [
+    #         locations_to_activations[location]
+    #         for location in filtered_locations_tuple
+    #     ]
+    # )
     assert len(locations) == len(activations)
     assert locations.shape == (len(locations), 2)
     assert len(activations.shape) == 2
