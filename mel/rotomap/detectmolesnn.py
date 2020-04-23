@@ -14,6 +14,10 @@ import tqdm
 import mel.lib.math
 import mel.rotomap.moles
 
+X_OFFSET = 1
+Y_OFFSET = 1
+TILE_MAGNIFICATION = 1
+
 
 def cat_allow_none(left, right):
     if left is None:
@@ -654,16 +658,36 @@ def flat_cat_central_activations(layer, tile_magnification):
     )
 
 
+# def central_activations(layer, tile_magnification):
+#     assert len(layer.shape) == 4
+#     assert layer.shape[-1] == layer.shape[-2]
+#     tiles_per_side = 1 + (tile_magnification * 2)
+#     blocks_per_tile = layer.shape[-1] / tiles_per_side
+#     assert blocks_per_tile == int(blocks_per_tile)
+#     blocks_per_tile = int(blocks_per_tile)
+#     start = blocks_per_tile * tile_magnification
+#     end = start + blocks_per_tile
+#     return layer[:, :, start:end, start:end]
+
+
 def central_activations(layer, tile_magnification):
     assert len(layer.shape) == 4
     assert layer.shape[-1] == layer.shape[-2]
     tiles_per_side = 1 + (tile_magnification * 2)
+
     blocks_per_tile = layer.shape[-1] / tiles_per_side
     assert blocks_per_tile == int(blocks_per_tile)
     blocks_per_tile = int(blocks_per_tile)
-    start = blocks_per_tile * tile_magnification
-    end = start + blocks_per_tile
-    return layer[:, :, start:end, start:end]
+
+    # start = blocks_per_tile * tile_magnification
+    start_x = blocks_per_tile * X_OFFSET
+    end_x = start_x + blocks_per_tile
+    start_y = blocks_per_tile * Y_OFFSET
+    end_y = start_y + blocks_per_tile
+    result = layer[:, :, start_y:end_y, start_x:end_x]
+    assert result.shape[-1] == blocks_per_tile
+    assert result.shape[-2] == blocks_per_tile
+    return result
 
 
 def unique_locations(locations):
@@ -796,15 +820,31 @@ def drop_green_and_edge_big_locations(
     new_locations = []
     green = [0, 255, 0]
 
-    back_offset = tile_size * tile_magnification
-    forward_offset = tile_size + (tile_size * tile_magnification)
+    # back_offset = tile_size * tile_magnification
+    # forward_offset = tile_size + (tile_size * tile_magnification)
     big_tile_size = tile_size * (1 + (tile_magnification * 2))
 
+    back_offset_x = tile_size * X_OFFSET
+    forward_offset_x = (
+        tile_size + (2 * tile_size * tile_magnification) - back_offset_x
+    )
+
+    back_offset_y = tile_size * Y_OFFSET
+    forward_offset_y = (
+        tile_size + (2 * tile_size * tile_magnification) - back_offset_y
+    )
+
+    assert back_offset_x + forward_offset_x == big_tile_size
+    assert back_offset_y + forward_offset_y == big_tile_size
+
     for loc in locations:
-        x1, y1 = loc
+        x1 = loc[0] - back_offset_x
+        x2 = loc[0] + forward_offset_x
+        y1 = loc[1] - back_offset_y
+        y2 = loc[1] + forward_offset_y
+        # x1, y1 = loc
         t = image[
-            y1 - back_offset : y1 + forward_offset,
-            x1 - back_offset : x1 + forward_offset,
+            y1:y2, x1:x2,
         ]
         if (t[:, :] == green).all():
             continue
@@ -823,13 +863,31 @@ def image_locations_to_big_tiles(
     new_locations = []
     tiles = []
 
-    back_offset = tile_size * tile_magnification
-    forward_offset = tile_size + (tile_size * tile_magnification)
+    # back_offset = tile_size * tile_magnification
+    # forward_offset = tile_size + (tile_size * tile_magnification)
+
+    back_offset_x = tile_size * X_OFFSET
+    forward_offset_x = (
+        tile_size + (2 * tile_size * tile_magnification) - back_offset_x
+    )
+
+    back_offset_y = tile_size * Y_OFFSET
+    forward_offset_y = (
+        tile_size + (2 * tile_size * tile_magnification) - back_offset_y
+    )
+
     big_tile_size = tile_size * (1 + (tile_magnification * 2))
 
+    assert back_offset_x + forward_offset_x == big_tile_size
+    assert back_offset_y + forward_offset_y == big_tile_size
+
     for loc in locations:
-        x1, y1 = loc - back_offset
-        x2, y2 = loc + forward_offset
+        # x1, y1 = loc - back_offset
+        # x2, y2 = loc + forward_offset
+        x1 = loc[0] - back_offset_x
+        x2 = loc[0] + forward_offset_x
+        y1 = loc[1] - back_offset_y
+        y2 = loc[1] + forward_offset_y
         t = image[y1:y2, x1:x2]
         tiles.append(transforms(t))
         new_locations.append(loc)
@@ -841,6 +899,41 @@ def image_locations_to_big_tiles(
     assert tiles.shape[-2] == big_tile_size
 
     return torch.stack(new_locations), tiles
+
+
+def image_locations_to_squished_big_tiles(
+    image, locations, transforms, tile_size, tile_magnification
+):
+    tiles = []
+
+    # back_offset = tile_size * tile_magnification
+    # forward_offset = tile_size + (tile_size * tile_magnification)
+
+    back_offset = tile_size * tile_magnification
+    forward_offset = tile_size + (tile_size * tile_magnification)
+
+    big_tile_size = tile_size * (1 + (tile_magnification * 2))
+
+    assert back_offset + forward_offset == big_tile_size
+
+    for loc in locations:
+        # x1, y1 = loc - back_offset
+        # x2, y2 = loc + forward_offset
+        x1 = loc[0] - back_offset
+        x2 = loc[0] + forward_offset
+        y1 = loc[1] - back_offset
+        y2 = loc[1] + forward_offset
+        t = image[y1:y2, x1:x2]
+        assert t.shape[0] == big_tile_size
+        assert t.shape[0] == big_tile_size
+        t = cv2.resize(t, (tile_size, tile_size))
+        tiles.append(transforms(t))
+
+    tiles = torch.stack(tiles)
+    assert tiles.shape[-1] == tile_size
+    assert tiles.shape[-2] == tile_size
+
+    return tiles
 
 
 def locations_to_expected_output(image_locations, moles, tile_size=32):
@@ -1114,7 +1207,7 @@ def get_tile_locations_activations(
         locations = unique_locations(locations)
     # locations = drop_green_and_edge_locations(image, locations)
 
-    tile_magnification = 1
+    tile_magnification = TILE_MAGNIFICATION
 
     locations = drop_green_and_edge_big_locations(
         image, locations, tile_size, tile_magnification
@@ -1123,13 +1216,19 @@ def get_tile_locations_activations(
         return None
 
     # locations, tiles = image_locations_to_tiles(
-    locations, tiles = image_locations_to_big_tiles(
+    tiles = image_locations_to_squished_big_tiles(
         image, locations, transforms, tile_size, tile_magnification
     )
-    # activations = tiles_to_activations(tiles, resnet)
-    activations = tiles_to_central_activations(
-        tiles, resnet, tile_magnification
+    activations = tiles_to_activations(tiles, resnet)
+
+    # _, tiles2 = image_locations_to_big_tiles(
+    _, tiles2 = image_locations_to_tiles(
+        image, locations, transforms, tile_size
     )
+    activations2 = tiles_to_activations(tiles2, resnet)
+    # activations2 = tiles_to_central_activations(
+    #     tiles2, resnet, tile_magnification
+    # )
 
     # locations_to_activations = {
     #     location: activation
@@ -1143,9 +1242,20 @@ def get_tile_locations_activations(
     #     ]
     # )
     assert len(locations) == len(activations)
+    assert len(activations2) == len(activations)
     assert locations.shape == (len(locations), 2)
     assert len(activations.shape) == 2
-    return locations, activations
+    assert len(activations2.shape) == 2
+
+    activations_mixed = torch.cat([activations, activations2], dim=1)
+    assert len(activations_mixed.shape) == 2
+    assert len(activations_mixed) == len(activations)
+    assert (
+        activations_mixed.shape[1]
+        == activations.shape[1] + activations2.shape[1]
+    )
+
+    return locations, activations_mixed
 
 
 @contextlib.contextmanager
