@@ -51,8 +51,8 @@ def process_args(args):
             ),
         ]
     )
-    resnet = torchvision.models.resnet18(pretrained=True)
-    # resnet = torchvision.models.resnet50(pretrained=True)
+    # resnet = torchvision.models.resnet18(pretrained=True)
+    resnet = torchvision.models.resnet50(pretrained=True)
     resnet.eval()
     # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(**init_dict)
     model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(**init_dict)
