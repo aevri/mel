@@ -184,6 +184,7 @@ def train(
         epoch_dict["valid_accuracy"] = valid_accuracy
         print("valid acc:", valid_accuracy, int(num_correct), int(num_total))
         distances = torch.cat(batch_distances)
+        distances *= 16.0
         true_positives = torch.cat(batch_is_true_positive)
         tp_distances = torch.masked_select(distances, true_positives)
         if len(tp_distances):
