@@ -91,6 +91,8 @@ def train(
         num_moles_correct = 0
         num_predicted_moles_total = 0
         num_moles_total = 0
+        batch_distances = []
+        batch_is_true_positive = []
         for batch in valid_dataloader:
             (
                 batch_ids,
@@ -106,6 +108,18 @@ def train(
                 expected_choices = (batch_expected_outputs > threshold)[:, 0]
                 loss = loss_func(out, batch_expected_outputs)
                 num_correct += (choices == expected_choices).float().sum()
+
+                pos_diff = out[:, 1:] - batch_expected_outputs[:, 1:]
+                pos_diff_sq = pos_diff ** 2
+                dist_sq = (pos_diff_sq[:, 0] + pos_diff_sq[:, 1]).unsqueeze(1)
+                distance = torch.sqrt(dist_sq)
+                batch_distances.append(distance)
+
+                is_true_positive = (
+                    choices == expected_choices
+                ) & expected_choices
+                batch_is_true_positive.append(is_true_positive)
+
                 num_moles_correct += (
                     ((choices == expected_choices) & expected_choices)
                     .float()
@@ -130,6 +144,15 @@ def train(
             int(num_correct),
             int(num_total),
         )
+        distances = torch.cat(batch_distances)
+        true_positives = torch.cat(batch_is_true_positive)
+        tp_distances = torch.masked_select(distances, true_positives)
+        if len(tp_distances):
+            print("tp distance 10%", numpy.percentile(tp_distances, 10))
+            print("tp distance 25%", numpy.percentile(tp_distances, 25))
+            print("tp distance 50%", numpy.percentile(tp_distances, 50))
+            print("tp distance 75%", numpy.percentile(tp_distances, 75))
+            print("tp distance 90%", numpy.percentile(tp_distances, 90))
         print()
 
 
