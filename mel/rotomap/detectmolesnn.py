@@ -1019,6 +1019,12 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
         (tile_size // 2, tile_size // 2)
     )
 
+    num_moles = len(mole_locations)
+
+    assert len(image_locations.shape) == 2
+    assert image_locations.shape[1] == 2
+    num_locs = len(image_locations)
+
     # Insert an extra dimension for us to fit the comparisons with the moles
     # into. Note that broadcasting matches on the last dimension first, and
     # we'll get shapes like this:
@@ -1028,17 +1034,29 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     #
     mole_locations = mole_locations.unsqueeze(0)
     centroids = centroids.unsqueeze(1)
+    assert mole_locations.shape == (1, num_moles, 2)
+    assert centroids.shape == (num_locs, 1, 2)
+
     image_locations = image_locations.unsqueeze(1)
+    assert len(image_locations.shape) == 3
+    assert image_locations.shape == (num_locs, 1, 2)
 
     pos_diff = (mole_locations - centroids) / (tile_size * 0.5)
+    assert pos_diff.shape == (num_locs, num_moles, 2)
     pos_diff_sq = pos_diff ** 2
     dist_sq = pos_diff_sq[:, :, 0] + pos_diff_sq[:, :, 1]
     nearest = dist_sq.argmin(1)
+    assert nearest.shape == (num_locs)
+
     nearest_pos_diff = pos_diff[torch.arange(len(image_locations)), nearest]
+    assert nearest_pos_diff.shape == (num_locs, 2)
 
     nearest_dist_sq = dist_sq[torch.arange(len(image_locations)), nearest]
+    assert nearest_dist_sq.shape == (num_locs, 2)
     nearest_dist = nearest_dist_sq.sqrt()
+    assert nearest_dist.shape == (num_locs, 2)
     nearest_distmoid = torch.sigmoid(10 - (nearest_dist * 8))
+    assert nearest_distmoid.shape == (num_locs, 2)
 
     # ge_top_left = [
     #     mole_loc >= image_locations[:, 0, :]
