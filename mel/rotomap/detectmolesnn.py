@@ -1046,18 +1046,24 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     assert pos_diff.shape == (num_locs, num_moles, 2)
     pos_diff_sq = pos_diff ** 2
     dist_sq = pos_diff_sq[:, :, 0] + pos_diff_sq[:, :, 1]
+    assert dist_sq.shape == (num_locs, num_moles)
     nearest = dist_sq.argmin(1)
-    assert nearest.shape == (num_locs)
+    assert nearest.shape == (num_locs,)
 
     nearest_pos_diff = pos_diff[torch.arange(len(image_locations)), nearest]
     assert nearest_pos_diff.shape == (num_locs, 2)
 
-    nearest_dist_sq = dist_sq[torch.arange(len(image_locations)), nearest]
-    assert nearest_dist_sq.shape == (num_locs, 2)
-    nearest_dist = nearest_dist_sq.sqrt()
-    assert nearest_dist.shape == (num_locs, 2)
-    nearest_distmoid = torch.sigmoid(10 - (nearest_dist * 8))
-    assert nearest_distmoid.shape == (num_locs, 2)
+    # intilish_manhatten = torch.max(
+    #     torch.tensor(0), torch.max(nearest_pos_diff, dim=1) - 1
+    # )
+
+    # nearest_dist_sq = dist_sq[torch.arange(len(image_locations)), nearest]
+    # assert nearest_dist_sq.shape == (num_locs,)
+    # nearest_dist = nearest_dist_sq.sqrt()
+    # assert nearest_dist.shape == (num_locs,)
+    # nearest_distmoid = torch.sigmoid(10 - (nearest_dist * 8))
+    # # nearest_distmoid = nearest_dist
+    # assert nearest_distmoid.shape == (num_locs,)
 
     # ge_top_left = [
     #     mole_loc >= image_locations[:, 0, :]
@@ -1072,14 +1078,48 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     # ]
     # mole_in_tile = torch.stack(mole_in_tile).any(0)
 
+    nearest_dist_sq = dist_sq[torch.arange(num_locs), nearest]
+    assert nearest_dist_sq.shape == (num_locs,)
+    nearest_dist = nearest_dist_sq.sqrt()
+    assert nearest_dist.shape == (num_locs,)
+
+    # result = torch.cat(
+    #     [distmoid(nearest_dist).float().unsqueeze(1), nearest_pos_diff.float()],
+    #     dim=1,
+    # )
+
     result = torch.cat(
-        [nearest_distmoid.float().unsqueeze(1), nearest_pos_diff.float()],
+        [
+            intilish_manhatten(nearest_pos_diff).float().unsqueeze(1),
+            nearest_pos_diff.float(),
+        ],
         dim=1,
     )
 
     assert result.shape == (len(image_locations), 3)
 
     return result
+
+
+def distmoid(nearest_dist):
+    nearest_distmoid = torch.sigmoid(10 - (nearest_dist * 8))
+    # nearest_distmoid = nearest_dist
+    assert nearest_distmoid.shape == (len(nearest_dist),)
+    return nearest_distmoid
+
+
+def intilish_manhatten(pos_diff):
+    max_coord = torch.max(torch.abs(pos_diff), dim=1).values
+    inside_box_always_zero = torch.max(torch.tensor(0.0), max_coord - 1.0)
+    max_is_across_next_box = torch.min(torch.tensor(2.0), inside_box_always_zero)
+    range_is_0_to_1 = max_is_across_next_box * 0.5
+    range_is_1_to_0 = 1.0 - range_is_0_to_1
+    # return range_is_1_to_0
+    return range_is_1_to_0 ** 2
+    # return torch.sigmoid(range_is_1_to_0 * 8 - 4)
+    # return torch.sigmoid(range_is_1_to_0 * 10 - 6)
+    # return torch.sigmoid(range_is_1_to_0 * 10 - 8)
+    # return torch.sigmoid(range_is_1_to_0 * 8 + 2)
 
 
 def image_to_tiles_locations(image, transforms, tile_size=32):
