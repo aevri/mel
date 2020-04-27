@@ -103,8 +103,10 @@ def process_args(args):
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
 
-    dt_string = mel.lib.datetime.make_datetime_string(datetime.datetime.utcnow())
-    log_path = model_dir /  f"{dt_string}_detectmoles.log.json"
+    dt_string = mel.lib.datetime.make_datetime_string(
+        datetime.datetime.utcnow()
+    )
+    log_path = model_dir / f"{dt_string}_detectmoles.log.json"
     with open(log_path, "w") as f:
         json.dump(train_log_dict, f)
     print(f"Saved {log_path}")
