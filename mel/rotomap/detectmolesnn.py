@@ -26,22 +26,40 @@ def cat_allow_none(left, right):
 
 
 def train(
-    model, train_dataloader, valid_dataloader, loss_func, max_lr, num_epochs,
+    model,
+    train_dataloader,
+    valid_dataloader,
+    loss_func,
+    max_lr,
+    num_epochs,
+    log_dict,
 ):
     threshold = 0.8
+    log_dict["threshold"] = threshold
     opt = torch.optim.AdamW(model.parameters())
+    log_dict["opt"] = "AdamW"
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         opt,
         steps_per_epoch=len(train_dataloader),
         max_lr=max_lr,
         epochs=num_epochs,
     )
+    log_dict["scheduler"] = "OneCycleLR"
+    log_dict["max_lr"] = max_lr
+    log_dict["num_epochs"] = num_epochs
     # loss_func = torch.nn.MSELoss()
+    log_dict["training_loop"] = []
     for epoch in range(num_epochs):
+        epoch_dict = {}
+        log_dict["training_loop"].append(epoch_dict)
+        epoch_dict["num"] = epoch
         print("epoch:", epoch + 1)
 
+        epoch_dict["train_batches"] = []
         model.train()
         for batch in train_dataloader:
+            batch_dict = {}
+            epoch_dict["train_batches"].append(batch_dict)
             (
                 batch_ids,
                 batch_activations,
@@ -49,16 +67,18 @@ def train(
                 batch_expected_outputs,
                 # batch_neighbours,
             ) = batch
+            batch_dict["len"] = len(batch_ids)
             opt.zero_grad()
             # out = model(batch_activations, batch_parts, batch_neighbours)
             out = model(batch_activations, batch_parts)
             # print(batch_expected_outputs.unsqueeze(1).shape)
             # print(out.shape)
             loss = loss_func(out, batch_expected_outputs)
+            batch_dict["loss"] = float(loss)
             loss.backward()
             opt.step()
             scheduler.step()
-        print("train:", loss)
+        print("train loss:", float(loss))
 
         # model.eval()
         # num_correct = 0
@@ -93,7 +113,10 @@ def train(
         num_moles_total = 0
         batch_distances = []
         batch_is_true_positive = []
+        epoch_dict["valid_batches"] = []
         for batch in valid_dataloader:
+            batch_dict = {}
+            epoch_dict["valid_batches"].append(batch_dict)
             (
                 batch_ids,
                 batch_activations,
@@ -101,12 +124,14 @@ def train(
                 batch_expected_outputs,
                 # batch_neighbours,
             ) = batch
+            batch_dict["len"] = len(batch_ids)
             with torch.no_grad():
                 # out = model(batch_activations, batch_parts, batch_neighbours)
                 out = model(batch_activations, batch_parts)
                 choices = out[:, 0] > threshold
                 expected_choices = (batch_expected_outputs > threshold)[:, 0]
                 loss = loss_func(out, batch_expected_outputs)
+                batch_dict["loss"] = float(loss)
                 num_correct += (choices == expected_choices).float().sum()
 
                 pos_diff = out[:, 1:] - batch_expected_outputs[:, 1:]
@@ -128,30 +153,35 @@ def train(
                 num_predicted_moles_total += choices.float().sum()
                 num_moles_total += expected_choices.float().sum()
                 num_total += len(batch_ids)
-        print("valid:", loss)
+        print("valid loss:", float(loss))
         print("num_moles:", num_moles_total)
+        epoch_dict["num_moles"] = int(num_moles_total)
         print("num_total:", num_total)
-        print(
-            "valid recall:", float(100 * num_moles_correct / num_moles_total),
+        epoch_dict["num_total"] = int(num_total)
+        valid_recall = float(100 * num_moles_correct / num_moles_total)
+        print("valid recall:", valid_recall)
+        epoch_dict["valid_recall"] = valid_recall
+        valid_precision = float(
+            100 * num_moles_correct / num_predicted_moles_total
         )
-        print(
-            "valid precision:",
-            float(100 * num_moles_correct / num_predicted_moles_total),
-        )
-        print(
-            "valid acc:",
-            float(100 * num_correct / num_total),
-            int(num_correct),
-            int(num_total),
-        )
+        print("valid precision:", valid_precision)
+        epoch_dict["valid_precision"] = valid_precision
+        valid_accuracy = float(100 * num_correct / num_total)
+        epoch_dict["valid_accuracy"] = valid_accuracy
+        print("valid acc:", valid_accuracy, int(num_correct), int(num_total))
         distances = torch.cat(batch_distances)
         true_positives = torch.cat(batch_is_true_positive)
         tp_distances = torch.masked_select(distances, true_positives)
         if len(tp_distances):
+            epoch_dict["tp distance 10%"] = numpy.percentile(tp_distances, 10)
             print("tp distance 10%", numpy.percentile(tp_distances, 10))
+            epoch_dict["tp distance 25%"] = numpy.percentile(tp_distances, 25)
             print("tp distance 25%", numpy.percentile(tp_distances, 25))
+            epoch_dict["tp distance 50%"] = numpy.percentile(tp_distances, 50)
             print("tp distance 50%", numpy.percentile(tp_distances, 50))
+            epoch_dict["tp distance 75%"] = numpy.percentile(tp_distances, 75)
             print("tp distance 75%", numpy.percentile(tp_distances, 75))
+            epoch_dict["tp distance 90%"] = numpy.percentile(tp_distances, 90)
             print("tp distance 90%", numpy.percentile(tp_distances, 90))
         print()
 

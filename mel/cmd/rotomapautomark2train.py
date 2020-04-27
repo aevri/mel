@@ -1,5 +1,6 @@
 """Train to automatically mark moles on rotomap images."""
 
+import datetime
 import json
 import sys
 
@@ -82,6 +83,7 @@ def process_args(args):
         part_to_id, num_features, num_intermediate, num_layers
     )
 
+    train_log_dict = {}
     mel.rotomap.detectmolesnn.train(
         model,
         training_dataloader,
@@ -89,6 +91,7 @@ def process_args(args):
         loss_func,
         max_lr,
         num_epochs,
+        train_log_dict,
     )
 
     with open(metadata_path, "w") as f:
@@ -96,6 +99,12 @@ def process_args(args):
     print(f"Saved {metadata_path}")
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
+
+    dt_string = mel.lib.datetime.make_datetime_string(datetime.datetime.utcnow())
+    log_path = model_dir /  f"{dt_string}_detectmoles.log.json"
+    with open(log_path, "w") as f:
+        json.dump(train_log_dict, f)
+    print(f"Saved {log_path}")
 
 
 def loss_func(in_, target):
