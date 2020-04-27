@@ -461,8 +461,8 @@ class NeighboursDataset:
 class TileDataset:
     def __init__(self, image_paths, tile_size):
         self._tile_size = tile_size
-        self._image_path = []
-        self._location = []
+        self.image_path = []
+        self.location = []
         self._activations = []
         self._expected_output = []
         self._part = []
@@ -471,7 +471,7 @@ class TileDataset:
             for path in pbar:
                 self._append_image_data(path)
 
-        self._location = torch.cat(self._location)
+        self.location = torch.cat(self.location)
         self._activations = torch.cat(self._activations)
         self._expected_output = torch.cat(self._expected_output)
 
@@ -489,8 +489,8 @@ class TileDataset:
             location, frame.moledata.moles
         )
 
-        self._image_path.extend([image_path] * len(location))
-        self._location.append(location)
+        self.image_path.extend([image_path] * len(location))
+        self.location.append(location)
         self._activations.append(activations)
         self._expected_output.append(expected_output)
         self._part.extend([image_path_to_part(image_path)] * len(location))
@@ -501,10 +501,10 @@ class TileDataset:
 
     def _calc_neighbour_activations(self):
         self._neigbour_activations = []
-        with tqdm.tqdm(range(len(self._image_path))) as pbar:
+        with tqdm.tqdm(range(len(self.image_path))) as pbar:
             for main_index in pbar:
-                image_path = self._image_path[main_index]
-                loc = self._location[main_index]
+                image_path = self.image_path[main_index]
+                loc = self.location[main_index]
                 neighbour_activations = []
                 for nloc in get_neighbors(loc, self._tile_size):
                     image_location_key = self._image_location_to_key(
@@ -518,7 +518,7 @@ class TileDataset:
                 self._neigbour_activations.append(neighbour_activations)
 
     def __len__(self):
-        return len(self._image_path)
+        return len(self.image_path)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
