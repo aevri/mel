@@ -129,6 +129,15 @@ def train(
             with torch.no_grad():
                 # out = model(batch_activations, batch_parts, batch_neighbours)
                 out = model(batch_activations, batch_parts)
+                batch_dict["image_paths"] = [
+                    str(valid_dataset.image_path[index]) for index in batch_ids
+                ]
+                batch_dict["output"] = [
+                    [float(x) for x in item] for item in out
+                ]
+                batch_dict["expected_output"] = [
+                    [float(x) for x in item] for item in batch_expected_outputs
+                ]
                 choices = out[:, 0] > threshold
                 expected_choices = (batch_expected_outputs > threshold)[:, 0]
                 loss = loss_func(out, batch_expected_outputs)
