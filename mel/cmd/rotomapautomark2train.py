@@ -61,9 +61,11 @@ def process_args(args):
     part_to_id = {part: i for i, part in enumerate(all_parts)}
 
     training_images = [path for path in all_images if not "2019_" in str(path)]
-    training_dataloader = load_dataset(training_images, batch_size)
+    training_dataloader, _ = load_dataset(training_images, batch_size)
     validation_images = [path for path in all_images if "2019_" in str(path)]
-    validation_dataloader = load_dataset(validation_images, batch_size)
+    validation_dataloader, validation_dataset = load_dataset(
+        validation_images, batch_size
+    )
 
     # resnet18_num_features = 512
     # resnet18_num_features = 7680
@@ -88,6 +90,7 @@ def process_args(args):
         model,
         training_dataloader,
         validation_dataloader,
+        validation_dataset,
         loss_func,
         max_lr,
         num_epochs,
@@ -140,7 +143,7 @@ def load_dataset(images, batch_size):
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True,
     )
-    return dataloader
+    return dataloader, dataset
     # neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
     # print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
     # neighbours_dataloader = torch.utils.data.DataLoader(

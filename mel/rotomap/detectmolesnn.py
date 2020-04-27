@@ -29,6 +29,7 @@ def train(
     model,
     train_dataloader,
     valid_dataloader,
+    valid_dataset,
     loss_func,
     max_lr,
     num_epochs,
