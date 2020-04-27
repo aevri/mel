@@ -129,8 +129,12 @@ def train(
             with torch.no_grad():
                 # out = model(batch_activations, batch_parts, batch_neighbours)
                 out = model(batch_activations, batch_parts)
-                batch_dict["image_paths"] = [
+                batch_dict["image_path"] = [
                     str(valid_dataset.image_path[index]) for index in batch_ids
+                ]
+                batch_dict["location"] = [
+                    [float(x) for x in valid_dataset.location[index]]
+                    for index in batch_ids
                 ]
                 batch_dict["output"] = [
                     [float(x) for x in item] for item in out
