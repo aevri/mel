@@ -633,6 +633,8 @@ def tiles_to_activations(tiles, resnet):
     with record_input_context(
         resnet.avgpool
     ) as avgpool_in, record_input_context(
+        resnet.layer1
+    ) as layer1_in, record_input_context(
         resnet.layer2
     ) as layer2_in, record_input_context(
         resnet.layer3
@@ -642,6 +644,10 @@ def tiles_to_activations(tiles, resnet):
         with torch.no_grad():
             for tiles in tile_dataloader:
                 resnet(tiles)
+
+    layer1_activations = torch.cat(
+        [batch[0].flatten(1) for batch in layer1_in]
+    )
 
     layer2_activations = torch.cat(
         [batch[0].flatten(1) for batch in layer2_in]
@@ -661,6 +667,7 @@ def tiles_to_activations(tiles, resnet):
 
     batch_activations = torch.cat(
         [
+            layer1_activations,
             layer2_activations,
             layer3_activations,
             layer4_activations,
