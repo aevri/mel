@@ -98,13 +98,85 @@ def process_args(args):
             loc for loc, act, neighbour_acts in locs_acts_neighbour_acts
         ]
         num_moles_before = len(moles)
-        for (x, y), (mole_likelihood, xoff, yoff) in zip(match_locs, results):
-            if mole_likelihood > 0.85:
-                new_x = int(x + (1 + xoff) * (tile_size * 0.5))
-                new_y = int(y + (1 + yoff) * (tile_size * 0.5))
+
+        min_likelihood = 0.85
+        likelihood_x_y = _collate_results(
+            match_locs, results, tile_size, min_likelihood
+        )
+        likelihood_x_y = _merge_close_results(likelihood_x_y, tile_size)
+
+        for likelihood, x, y in likelihood_x_y:
+            if likelihood > 0.85:
+                new_x = int(x)
+                new_y = int(y)
                 mel.rotomap.moles.add_mole(moles, new_x, new_y)
+
         mel.rotomap.moles.save_image_moles(moles, path)
         print("Added", len(moles) - num_moles_before, "moles.")
+
+
+def _collate_results(match_locs, results, tile_size, min_likelihood):
+    if len(match_locs) != len(results):
+        raise ValueError(
+            f"Length of match_locs ({len(match_locs)}) != "
+            f"length of results ({len(results)})."
+        )
+    likelihood_x_y_list = []
+    for (x, y), (mole_likelihood, xoff, yoff) in zip(match_locs, results):
+        if mole_likelihood >= min_likelihood:
+            new_x = x + (1 + xoff) * (tile_size * 0.5)
+            new_y = y + (1 + yoff) * (tile_size * 0.5)
+            likelihood_x_y_list.append(
+                torch.tensor([mole_likelihood, new_x, new_y])
+            )
+    result = torch.stack(likelihood_x_y_list)
+    assert len(result.shape) == 2
+    assert result.shape[1] == 3
+    return result
+
+
+def _merge_close_results(likelihood_x_y, min_dist):
+
+    min_dist_sq = min_dist ** 2
+
+    x_y = likelihood_x_y[:, 1:]
+
+    x_y_a = x_y.unsqueeze(0)
+    x_y_b = x_y.unsqueeze(1)
+    assert x_y_a.shape == (1, len(x_y), 2)
+    assert x_y_b.shape == (len(x_y), 1, 2)
+
+    x_y_dist = x_y_a - x_y_b
+    x_y_dist_sq = x_y_dist ** 2
+    dist_sq = x_y_dist_sq[:, :, 0] + x_y_dist_sq[:, :, 1]
+    assert x_y_dist.shape == (len(x_y), len(x_y), 2)
+    assert x_y_dist_sq.shape == (len(x_y), len(x_y), 2)
+    assert dist_sq.shape == (len(x_y), len(x_y))
+
+    index_to_cluster = {}
+
+    for i, mole in enumerate(dist_sq):
+        curr_cluster = index_to_cluster.get(i, set([i]))
+        index_to_cluster[i] = curr_cluster
+        for j in range(i, len(dist_sq)):
+            j_dist_sq = mole[j]
+            if j_dist_sq < min_dist_sq:
+                other_cluster = index_to_cluster.get(j, set([j]))
+                curr_cluster |= other_cluster
+                for k in other_cluster:
+                    index_to_cluster[k] = curr_cluster
+
+    clusters = {tuple(s) for s in index_to_cluster.values()}
+
+    # TODO: get unique clusters, merge items based on average position,
+    # weighted by likelihood.
+
+    new_likelihood_x_y = []
+    for indices in clusters:
+        i = indices[0]
+        new_likelihood_x_y.append(likelihood_x_y[i])
+
+    return torch.stack(new_likelihood_x_y)
 
 
 # -----------------------------------------------------------------------------
