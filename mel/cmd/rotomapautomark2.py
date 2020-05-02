@@ -76,14 +76,15 @@ def process_args(args):
         print(len(locations), "tiles")
 
         part = mel.rotomap.detectmolesnn.image_path_to_part(pathlib.Path(path))
-        match = mel.rotomap.detectmolesnn.match_with_neighbours
-        locs_acts_neighbour_acts = match(locations, activations, tile_size)
+        # match = mel.rotomap.detectmolesnn.match_with_neighbours
+        # locs_acts_neighbour_acts = match(locations, activations, tile_size)
         dataset = [
             # (act, part, neighbour_acts)
             (act, part)
-            for loc, act, neighbour_acts in locs_acts_neighbour_acts
+            # for loc, act, neighbour_acts in locs_acts_neighbour_acts
+            for act in activations
         ]
-        print("Neighbour blocks:", len(dataset))
+        # print("Neighbour blocks:", len(dataset))
 
         results = []
         with torch.no_grad():
@@ -94,14 +95,15 @@ def process_args(args):
         print(len(results), "results")
 
         moles = copy.deepcopy(frame.moles)
-        match_locs = [
-            loc for loc, act, neighbour_acts in locs_acts_neighbour_acts
-        ]
+        # match_locs = [
+        #     loc for loc, act, neighbour_acts in locs_acts_neighbour_acts
+        # ]
         num_moles_before = len(moles)
 
         min_likelihood = 0.85
         likelihood_x_y = _collate_results(
-            match_locs, results, tile_size, min_likelihood
+            # match_locs, results, tile_size, min_likelihood
+            locations, results, tile_size, min_likelihood
         )
         likelihood_x_y = _merge_close_results(likelihood_x_y, tile_size)
 
