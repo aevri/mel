@@ -1118,7 +1118,9 @@ def distmoid(nearest_dist):
 def intilish_manhatten(pos_diff):
     max_coord = torch.max(torch.abs(pos_diff), dim=1).values
     inside_box_always_zero = torch.max(torch.tensor(0.0), max_coord - 1.0)
-    max_is_across_next_box = torch.min(torch.tensor(2.0), inside_box_always_zero)
+    max_is_across_next_box = torch.min(
+        torch.tensor(2.0), inside_box_always_zero
+    )
     range_is_0_to_1 = max_is_across_next_box * 0.5
     range_is_1_to_0 = 1.0 - range_is_0_to_1
     # return range_is_1_to_0
@@ -1146,10 +1148,10 @@ def image_to_tiles_locations(image, transforms, tile_size=32):
     return torch.stack(tiles), torch.stack(locations)
 
 
-def get_image_locations(image, tile_size=32):
+def get_image_locations(image, tile_size=32, xoffset=0, yoffset=0):
     locations = []
-    for y1 in range(0, image.shape[0], tile_size):
-        for x1 in range(0, image.shape[1], tile_size):
+    for y1 in range(xoffset, image.shape[0], tile_size):
+        for x1 in range(yoffset, image.shape[1], tile_size):
             locations.append(torch.tensor((y1, x1)))
     return torch.stack(locations)
 
@@ -1327,7 +1329,12 @@ def get_tile_locations_activations(
     mask = frame.load_mask()
     image = green_mask_image(image, mask)
     image = green_expand_image_to_full_tiles(image, tile_size)
-    locations = get_image_locations(image)
+    locations = torch.cat(
+        [
+            get_image_locations(image),
+            get_image_locations(image, xoffset=16, yoffset=16),
+        ]
+    )
     # locations, activations = get_image_locations_activations(
     #     image, tile_size, transforms, resnet
     # )
