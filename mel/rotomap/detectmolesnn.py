@@ -58,7 +58,7 @@ def train(
 
         epoch_dict["train_batches"] = []
         model.train()
-        for batch in train_dataloader:
+        for batch in tqdm.auto.tqdm(train_dataloader):
             batch_dict = {}
             epoch_dict["train_batches"].append(batch_dict)
             (
@@ -115,7 +115,7 @@ def train(
         batch_distances = []
         batch_is_true_positive = []
         epoch_dict["valid_batches"] = []
-        for batch in valid_dataloader:
+        for batch in tqdm.auto.tqdm(valid_dataloader):
             batch_dict = {}
             epoch_dict["valid_batches"].append(batch_dict)
             (
