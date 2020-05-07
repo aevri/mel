@@ -168,7 +168,11 @@ def train(
                 num_moles_total += expected_choices.float().sum()
                 num_total += len(batch_ids)
         print("valid loss:", float(loss))
-        print("num_moles:", num_moles_total)
+        print(
+            "num_moles:",
+            int(num_moles_total),
+            f"({100 * num_moles_total / num_total:0.1f})%",
+        )
         epoch_dict["num_moles"] = int(num_moles_total)
         print("num_total:", num_total)
         epoch_dict["num_total"] = int(num_total)
