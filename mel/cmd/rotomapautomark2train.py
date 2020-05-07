@@ -61,8 +61,41 @@ def process_args(args):
     part_to_id = {part: i for i, part in enumerate(all_parts)}
 
     training_images = [path for path in all_images if not "2019_" in str(path)]
-    training_dataloader, _ = load_dataset(training_images, batch_size)
     validation_images = [path for path in all_images if "2019_" in str(path)]
+
+    model, train_log_dict = train(
+        training_images,
+        validation_images,
+        batch_size,
+        num_epochs,
+        max_lr,
+        part_to_id,
+    )
+
+    with open(metadata_path, "w") as f:
+        json.dump(model.init_dict(), f)
+    print(f"Saved {metadata_path}")
+    torch.save(model.state_dict(), model_path)
+    print(f"Saved {model_path}")
+
+    dt_string = mel.lib.datetime.make_datetime_string(
+        datetime.datetime.utcnow()
+    )
+    log_path = model_dir / f"{dt_string}_detectmoles.log.json"
+    with open(log_path, "w") as f:
+        json.dump(train_log_dict, f)
+    print(f"Saved {log_path}")
+
+
+def train(
+    training_images,
+    validation_images,
+    batch_size,
+    num_epochs,
+    max_lr,
+    part_to_id,
+):
+    training_dataloader, _ = load_dataset(training_images, batch_size)
     validation_dataloader, validation_dataset = load_dataset(
         validation_images, batch_size
     )
@@ -97,19 +130,7 @@ def process_args(args):
         train_log_dict,
     )
 
-    with open(metadata_path, "w") as f:
-        json.dump(model.init_dict(), f)
-    print(f"Saved {metadata_path}")
-    torch.save(model.state_dict(), model_path)
-    print(f"Saved {model_path}")
-
-    dt_string = mel.lib.datetime.make_datetime_string(
-        datetime.datetime.utcnow()
-    )
-    log_path = model_dir / f"{dt_string}_detectmoles.log.json"
-    with open(log_path, "w") as f:
-        json.dump(train_log_dict, f)
-    print(f"Saved {log_path}")
+    return model, train_log_dict
 
 
 def loss_func(in_, target):
