@@ -38,6 +38,12 @@ def setup_parser(parser):
         default=None,
         help="Minimum age of the micro image to compare with, if possible.",
     )
+    parser.add_argument(
+        '--video-device-index',
+        type=int,
+        default=0,
+        help="The index of the device to take images from.",
+    )
 
     # From NHS 'Moles' page:
     # http://www.nhs.uk/Conditions/Moles/Pages/Introduction.aspx
@@ -139,7 +145,7 @@ def load_comparison_image(path, min_compare_age_days):
 
 
 def process_args(args):
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(args.video_device_index)
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
 
