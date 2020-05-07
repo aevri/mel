@@ -63,7 +63,7 @@ def process_args(args):
     training_images = [path for path in all_images if not "2019_" in str(path)]
     validation_images = [path for path in all_images if "2019_" in str(path)]
 
-    model, train_log_dict = train(
+    model, train_log_dict = train3(
         training_images,
         validation_images,
         batch_size,
@@ -85,6 +85,44 @@ def process_args(args):
     with open(log_path, "w") as f:
         json.dump(train_log_dict, f)
     print(f"Saved {log_path}")
+
+
+def train3(
+    training_images,
+    validation_images,
+    batch_size,
+    num_epochs,
+    max_lr,
+    part_to_id,
+):
+    training_dataloader, _ = load_dataset2(training_images, batch_size)
+    validation_dataloader, validation_dataset = load_dataset2(
+        validation_images, batch_size
+    )
+
+    # num_features = None
+    # for batch in training_dataloader:
+    #     activations_batch = batch[1]
+    #     assert len(activations_batch.shape) == 2
+    #     num_features = len(activations_batch[0])
+    #     break
+
+    # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
+    model = mel.rotomap.detectmolesnn.LinearSigmoidModel3(part_to_id)
+
+    train_log_dict = {}
+    mel.rotomap.detectmolesnn.train(
+        model,
+        training_dataloader,
+        validation_dataloader,
+        validation_dataset,
+        loss_func,
+        max_lr,
+        num_epochs,
+        train_log_dict,
+    )
+
+    return model, train_log_dict
 
 
 def train(
@@ -157,6 +195,22 @@ def loss_func(in_, target):
     # )
 
     return loss1 + loss2
+
+
+def load_dataset2(images, batch_size):
+    print(f"Will load from {len(images)} images.")
+    dataset = mel.rotomap.detectmolesnn.TileDataset2(images, 32)
+    print(f"Loaded {len(dataset)} tiles.")
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=False,
+    )
+    return dataloader, dataset
+    # neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
+    # print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
+    # neighbours_dataloader = torch.utils.data.DataLoader(
+    #     neighbours_dataset, batch_size=batch_size, shuffle=True,
+    # )
+    # return neighbours_dataloader
 
 
 def load_dataset(images, batch_size):

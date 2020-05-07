@@ -1,12 +1,14 @@
 """Detect moles in an image, using deep neural nets."""
 
 import contextlib
+import functools
 import pathlib
 
 import cv2
 import math
 import numpy
 import torch
+import torchvision
 import tqdm
 
 # import PIL
@@ -475,6 +477,148 @@ class NeighboursDataset:
             self._tile_dataset._neigbour_activations[index]
         )
         return tuple(vals) + (neighbours,)
+
+
+class TileDataset2:
+    def __init__(self, image_paths, tile_size):
+        self._tile_size = tile_size
+        self.image_path = []
+        self.location = []
+        self._expected_output = []
+        self._part = []
+        with tqdm.auto.tqdm(image_paths) as pbar:
+            for path in pbar:
+                self._append_image_data(path)
+
+        self.location = torch.cat(self.location)
+        self._expected_output = torch.cat(self._expected_output)
+
+        self._transforms = torchvision.transforms.Compose(
+            [torchvision.transforms.ToTensor()]
+        )
+
+    def _append_image_data(self, image_path):
+        frame = mel.rotomap.moles.RotomapFrame(image_path)
+        location = get_tile_locations_for_frame(frame, self._tile_size)
+        expected_output = locations_to_expected_output(
+            location, frame.moledata.moles
+        )
+        self.image_path.extend([image_path] * len(location))
+        self.location.append(location)
+        self._expected_output.append(expected_output)
+        self._part.extend([image_path_to_part(image_path)] * len(location))
+
+    def __len__(self):
+        return len(self.location)
+
+    @functools.lru_cache(10)
+    def _getimage(self, path):
+        frame = mel.rotomap.moles.RotomapFrame(path)
+        image = frame.load_image()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return self._transforms(image)
+
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise ValueError("Only int keys are supported.")
+
+        location = self.location[key]
+        path = self.image_path[key]
+        image = self._getimage(path)
+
+        back_offset = self._tile_size
+        forward_offset = self._tile_size * 2
+
+        x1 = location[0] - back_offset
+        x2 = location[0] + forward_offset
+        y1 = location[1] - back_offset
+        y2 = location[1] + forward_offset
+
+        return (
+            key,
+            image[:, y1:y2, x1:x2],
+            self._part[key],
+            self._expected_output[key],
+        )
+
+
+def make_convnet2d(width, depth, channels_in):
+    return torch.nn.Sequential(
+        torch.nn.BatchNorm2d(channels_in),
+        make_cnn_layer(channels_in, width),
+        *[make_cnn_layer(width, width) for _ in range(depth - 1)],
+        torch.nn.AdaptiveAvgPool2d(output_size=(1, 1)),
+        Lambda(lambda x: x.view(x.size(0), -1)),
+    )
+
+
+class Lambda(torch.nn.Module):
+    def __init__(self, func):
+        super().__init__()
+        self.func = func
+
+    def forward(self, x):
+        return self.func(x)
+
+
+def make_cnn_layer(in_width, out_width):
+    return torch.nn.Sequential(
+        torch.nn.Conv2d(
+            in_width, out_width, kernel_size=3, stride=2, padding=1, bias=False
+        ),
+        torch.nn.BatchNorm2d(out_width),
+        torch.nn.ReLU(inplace=True),
+    )
+
+
+class LinearSigmoidModel3(torch.nn.Module):
+    def __init__(self, part_to_id):
+        super().__init__()
+        self._part_to_id = part_to_id
+        num_parts = len(part_to_id)
+        self._embedding_len = num_parts // 2
+        self.embedding = torch.nn.Embedding(num_parts, self._embedding_len)
+
+        self._cnn_width = 128
+        channels_in = 3
+
+        self.conv = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(channels_in),
+            make_cnn_layer(channels_in, self._cnn_width // 8),
+            make_cnn_layer(self._cnn_width // 8, self._cnn_width // 4),
+            make_cnn_layer(self._cnn_width // 4, self._cnn_width // 2),
+            make_cnn_layer(self._cnn_width // 2, self._cnn_width // 1),
+            torch.nn.AdaptiveAvgPool2d(output_size=(1, 1)),
+            Lambda(lambda x: x.view(x.size(0), -1)),
+        )
+
+        self.end_width = self._cnn_width + self._embedding_len
+
+        self.final = torch.nn.Linear(self.end_width, 3)
+
+    def init_dict(self):
+        return {
+            "part_to_id": self._part_to_id,
+        }
+
+    def forward(self, images, parts):
+        parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
+        parts_embedding = self.embedding(parts_tensor)
+
+        features = self.conv(images)
+
+        assert features.shape == (len(images), self._cnn_width,)
+
+        final_input = torch.cat([features, parts_embedding], dim=1)
+        assert final_input.shape == (
+            len(images),
+            self._cnn_width + self._embedding_len,
+        )
+
+        seq = self.final(final_input)
+        sig = torch.sigmoid(seq[:, 0:1])
+        pos = torch.tanh(seq[:, 1:3]) * 2
+        return torch.cat([sig, pos], dim=1)
 
 
 class TileDataset:
@@ -1320,6 +1464,31 @@ def green_expand_image_to_full_tiles(image, tile_size):
     big_image[:, :, 1] = 255
     big_image[:height, :width, :] = image[:, :, :]
     return big_image
+
+
+def get_tile_locations_for_frame(frame, tile_size):
+    image = frame.load_image()
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    mask = frame.load_mask()
+    image = green_mask_image(image, mask)
+    locations = torch.cat(
+        [
+            get_image_locations(image),
+            get_image_locations(image, xoffset=16),
+            get_image_locations(image, yoffset=16),
+            get_image_locations(image, xoffset=16, yoffset=16),
+        ]
+    )
+    locations = reduce_nonmole_locations(
+        locations, frame.moledata.uuid_points.values()
+    )
+    locations = unique_locations(locations)
+    tile_magnification = TILE_MAGNIFICATION
+
+    locations = drop_green_and_edge_big_locations(
+        image, locations, tile_size, tile_magnification
+    )
+    return locations
 
 
 def get_tile_locations_activations(
