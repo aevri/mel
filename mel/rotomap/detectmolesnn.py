@@ -588,11 +588,12 @@ class LinearSigmoidModel3(torch.nn.Module):
             make_cnn_layer(self._cnn_width // 8, self._cnn_width // 4),
             make_cnn_layer(self._cnn_width // 4, self._cnn_width // 2),
             make_cnn_layer(self._cnn_width // 2, self._cnn_width // 1),
-            torch.nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             Lambda(lambda x: x.view(x.size(0), -1)),
         )
 
-        self.end_width = self._cnn_width + self._embedding_len
+        end_dimension = 96 // (2 ** 4)
+        self.cnn_result_len = self._cnn_width * (end_dimension ** 2)
+        self.end_width = self.cnn_result_len + self._embedding_len
 
         self.final = torch.nn.Linear(self.end_width, 3)
 
@@ -607,12 +608,13 @@ class LinearSigmoidModel3(torch.nn.Module):
 
         features = self.conv(images)
 
-        assert features.shape == (len(images), self._cnn_width,)
+        assert features.shape == (len(images), self.cnn_result_len), str(
+            features.shape
+        )
 
         final_input = torch.cat([features, parts_embedding], dim=1)
-        assert final_input.shape == (
-            len(images),
-            self._cnn_width + self._embedding_len,
+        assert final_input.shape == (len(images), self.end_width), str(
+            final_input.shape
         )
 
         seq = self.final(final_input)
