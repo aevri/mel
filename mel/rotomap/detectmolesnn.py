@@ -1332,6 +1332,8 @@ def get_tile_locations_activations(
     locations = torch.cat(
         [
             get_image_locations(image),
+            get_image_locations(image, xoffset=16),
+            get_image_locations(image, yoffset=16),
             get_image_locations(image, xoffset=16, yoffset=16),
         ]
     )
