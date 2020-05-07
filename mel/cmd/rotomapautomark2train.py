@@ -47,6 +47,12 @@ def process_args(args):
         and ("Lower" in str(path) or "Upper" in str(path))
         and "2015" not in str(path)
         and "2016" not in str(path)
+
+        # and "2017" not in str(path)
+        # and "2018" not in str(path)
+        # and "Leg" in str(path)
+        # and "Lower" in str(path)
+        # and "Left" in str(path)
     ]
     # all_images = [
     #     path
