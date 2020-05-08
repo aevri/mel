@@ -576,6 +576,109 @@ def make_cnn_layer(in_width, out_width):
     )
 
 
+class DenseCNN(torch.nn.Module):
+    def __init__(self, channels_in, channels_per_layer):
+        super().__init__()
+        self.channels_in = channels_in
+        self.channels_per_layer = channels_per_layer
+
+        self.bn_in = torch.nn.BatchNorm2d(self.channels_in)
+
+        self.pool = torch.nn.AvgPool2d(3, stride=2, padding=1)
+
+        self.cnn1 = make_cnn_layer(self.channels_in, self.channels_per_layer)
+        self.cnn2 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer, self.channels_per_layer
+        )
+        self.cnn3 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 2,
+            self.channels_per_layer,
+        )
+        self.cnn4 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 3,
+            self.channels_per_layer,
+        )
+
+        # self.flatten = Lambda(lambda x: x.view(x.size(0), -1))
+
+        self.dimension_divisor = 2 ** 4
+        self.end_channels = self.channels_in + self.channels_per_layer * 4
+
+    def forward(self, images):
+        assert len(images.shape) == 4
+        assert images.shape[1] == self.channels_in
+
+        bn = self.bn_in(images)
+
+        cnn1_in = bn
+        assert cnn1_in.shape == (
+            len(images),
+            self.channels_in,
+            *images.shape[2:],
+        )
+        cnn1_out = self.cnn1(cnn1_in)
+        assert cnn1_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+
+        cnn2_in = torch.cat([self.pool(cnn1_in), cnn1_out], dim=1)
+        assert cnn2_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+        cnn2_out = self.cnn2(cnn2_in)
+        assert cnn2_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+
+        cnn3_in = torch.cat([self.pool(cnn2_in), cnn2_out], dim=1)
+        assert cnn3_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 2,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+        cnn3_out = self.cnn3(cnn3_in)
+        assert cnn3_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 8,
+            images.shape[3] // 8,
+        )
+
+        cnn4_in = torch.cat([self.pool(cnn3_in), cnn3_out], dim=1)
+        assert cnn4_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 3,
+            images.shape[2] // 8,
+            images.shape[3] // 8,
+        )
+        cnn4_out = self.cnn4(cnn4_in)
+        assert cnn4_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 16,
+            images.shape[3] // 16,
+        )
+
+        result = torch.cat([self.pool(cnn4_in), cnn4_out], dim=1)
+        assert result.shape == (
+            len(images),
+            self.end_channels,
+            images.shape[2] // self.dimension_divisor,
+            images.shape[3] // self.dimension_divisor,
+        )
+        return result
+
+
 class LinearSigmoidModel3(torch.nn.Module):
     def __init__(self, part_to_id):
         super().__init__()
@@ -584,20 +687,23 @@ class LinearSigmoidModel3(torch.nn.Module):
         self._embedding_len = num_parts // 2
         self.embedding = torch.nn.Embedding(num_parts, self._embedding_len)
 
-        self._cnn_width = 128
+        # self._cnn_width = 128
         channels_in = 3
 
-        self.conv = torch.nn.Sequential(
-            torch.nn.BatchNorm2d(channels_in),
-            make_cnn_layer(channels_in, self._cnn_width // 8),
-            make_cnn_layer(self._cnn_width // 8, self._cnn_width // 4),
-            make_cnn_layer(self._cnn_width // 4, self._cnn_width // 2),
-            make_cnn_layer(self._cnn_width // 2, self._cnn_width // 1),
-            Lambda(lambda x: x.view(x.size(0), -1)),
-        )
+        self.conv = DenseCNN(channels_in, channels_per_layer=32)
+        self.flatten = Lambda(lambda x: x.view(x.size(0), -1))
 
-        end_dimension = 96 // (2 ** 4)
-        self.cnn_result_len = self._cnn_width * (end_dimension ** 2)
+        # self.conv = torch.nn.Sequential(
+        #     torch.nn.BatchNorm2d(channels_in),
+        #     make_cnn_layer(channels_in, self._cnn_width // 8),
+        #     make_cnn_layer(self._cnn_width // 8, self._cnn_width // 4),
+        #     make_cnn_layer(self._cnn_width // 4, self._cnn_width // 2),
+        #     make_cnn_layer(self._cnn_width // 2, self._cnn_width // 1),
+        #     Lambda(lambda x: x.view(x.size(0), -1)),
+        # )
+
+        end_dimension = 96 // self.conv.dimension_divisor
+        self.cnn_result_len = self.conv.end_channels * (end_dimension ** 2)
         self.end_width = self.cnn_result_len + self._embedding_len
 
         self.final = torch.nn.Linear(self.end_width, 3)
@@ -611,7 +717,7 @@ class LinearSigmoidModel3(torch.nn.Module):
         parts_tensor = torch.tensor([self._part_to_id[p] for p in parts])
         parts_embedding = self.embedding(parts_tensor)
 
-        features = self.conv(images)
+        features = self.flatten(self.conv(images))
 
         assert features.shape == (len(images), self.cnn_result_len), str(
             features.shape
