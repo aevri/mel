@@ -194,16 +194,21 @@ def train(
         true_positives = torch.cat(batch_is_true_positive)
         tp_distances = torch.masked_select(distances, true_positives)
         if len(tp_distances):
-            epoch_dict["tp distance 10%"] = numpy.percentile(tp_distances, 10)
-            print("tp distance 10%", numpy.percentile(tp_distances, 10))
-            epoch_dict["tp distance 25%"] = numpy.percentile(tp_distances, 25)
-            print("tp distance 25%", numpy.percentile(tp_distances, 25))
-            epoch_dict["tp distance 50%"] = numpy.percentile(tp_distances, 50)
-            print("tp distance 50%", numpy.percentile(tp_distances, 50))
-            epoch_dict["tp distance 75%"] = numpy.percentile(tp_distances, 75)
-            print("tp distance 75%", numpy.percentile(tp_distances, 75))
-            epoch_dict["tp distance 90%"] = numpy.percentile(tp_distances, 90)
-            print("tp distance 90%", numpy.percentile(tp_distances, 90))
+            p10 = numpy.percentile(tp_distances, 10)
+            epoch_dict["tp distance 10%"] = p10
+            print("tp distance 10%", p10)
+            p25 = numpy.percentile(tp_distances, 25)
+            epoch_dict["tp distance 25%"] = p25
+            print("tp distance 25%", p25)
+            p50 = numpy.percentile(tp_distances, 50)
+            epoch_dict["tp distance 50%"] = p50
+            print("tp distance 50%", p50)
+            p75 = numpy.percentile(tp_distances, 75)
+            epoch_dict["tp distance 75%"] = p75
+            print("tp distance 75%", p75)
+            p90 = numpy.percentile(tp_distances, 90)
+            epoch_dict["tp distance 90%"] = p90
+            print("tp distance 90%", p90)
         print()
 
 
