@@ -566,14 +566,248 @@ class Lambda(torch.nn.Module):
         return self.func(x)
 
 
-def make_cnn_layer(in_width, out_width):
+def make_cnn_layer(in_width, out_width, stride=2):
     return torch.nn.Sequential(
         torch.nn.Conv2d(
-            in_width, out_width, kernel_size=3, stride=2, padding=1, bias=False
+            in_width,
+            out_width,
+            kernel_size=3,
+            stride=stride,
+            padding=1,
+            bias=False,
         ),
         torch.nn.BatchNorm2d(out_width),
         torch.nn.ReLU(inplace=True),
     )
+
+
+class DenseUnetModel(torch.nn.Module):
+    def __init__(self, channels_in, channels_per_layer):
+        super().__init__()
+        self.cnn = DenseUnet(channels_in, channels_per_layer, num_classes=1)
+
+    def forward(self, images):
+        assert len(images.shape) == 4
+        maps = self.cnn(images)
+        assert maps.shape == (
+            len(images),
+            1,
+            images.shape[2],
+            images.shape[3],
+        )
+
+        assert images.shape[2] == images.shape[3]
+
+        size = images.shape[2]
+
+        location_map_x = torch.linspace(-1.5, 1.5, steps=size).repeat(size, 1)
+        location_map_y = (
+            torch.linspace(-1.5, 1.5, steps=size).repeat(size, 1).T
+        )
+
+        has_mole = torch.max(
+            torch.flatten(maps, start_dim=1), dim=1
+        ).values.unsqueeze(1)
+        assert has_mole.shape == (len(images), 1), str(has_mole.shape)
+        x = torch.flatten(maps[:, 0, :, :] * location_map_x, start_dim=1).mean(
+            dim=1
+        ).unsqueeze(1)
+        assert x.shape == (len(images), 1)
+        y = torch.flatten(maps[:, 0, :, :] * location_map_y, start_dim=1).mean(
+            dim=1
+        ).unsqueeze(1)
+        assert y.shape == (len(images), 1)
+
+        result = torch.cat([has_mole, x, y], dim=1)
+        assert result.shape == (len(images), 3)
+
+        return result
+
+
+class DenseUnet(torch.nn.Module):
+    def __init__(self, channels_in, channels_per_layer, num_classes):
+        super().__init__()
+        self.channels_in = channels_in
+        self.channels_per_layer = channels_per_layer
+        self.num_classes = num_classes
+
+        self.bn_in = torch.nn.BatchNorm2d(self.channels_in)
+
+        self.pool = torch.nn.AvgPool2d(3, stride=2, padding=1)
+
+        self.down_cnn1 = make_cnn_layer(
+            self.channels_in, self.channels_per_layer
+        )
+        self.down_cnn2 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer, self.channels_per_layer
+        )
+        self.down_cnn3 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 2,
+            self.channels_per_layer,
+        )
+
+        self.bottom_cnn = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 3,
+            self.channels_per_layer,
+            stride=1,
+        )
+
+        self.upsample = torch.nn.Upsample(scale_factor=2)
+        # Note: torch.nn.functional.interpolate() is an alternative.
+
+        self.up_cnn3 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 4,
+            self.channels_per_layer,
+            stride=1,
+        )
+        self.up_cnn2 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 5,
+            self.channels_per_layer,
+            stride=1,
+        )
+        self.up_cnn1 = make_cnn_layer(
+            self.channels_in + self.channels_per_layer * 6,
+            self.num_classes,
+            stride=1,
+        )
+
+    def forward(self, images):
+        assert len(images.shape) == 4
+        assert images.shape[1] == self.channels_in
+
+        bn = self.bn_in(images)
+
+        down_cnn1_in = bn
+        assert down_cnn1_in.shape == (
+            len(images),
+            self.channels_in,
+            *images.shape[2:],
+        )
+        down_cnn1_out = self.down_cnn1(down_cnn1_in)
+        assert down_cnn1_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+
+        down_cnn2_in = torch.cat(
+            [self.pool(down_cnn1_in), down_cnn1_out], dim=1
+        )
+        assert down_cnn2_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+        down_cnn2_out = self.down_cnn2(down_cnn2_in)
+        assert down_cnn2_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+
+        down_cnn3_in = torch.cat(
+            [self.pool(down_cnn2_in), down_cnn2_out], dim=1
+        )
+        assert down_cnn3_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 2,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+        down_cnn3_out = self.down_cnn3(down_cnn3_in)
+        assert down_cnn3_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 8,
+            images.shape[3] // 8,
+        )
+
+        bottom_cnn_in = torch.cat(
+            [self.pool(down_cnn3_in), down_cnn3_out], dim=1
+        )
+        assert bottom_cnn_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 3,
+            images.shape[2] // 8,
+            images.shape[3] // 8,
+        )
+        bottom_cnn_out = self.bottom_cnn(bottom_cnn_in)
+        assert bottom_cnn_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 8,
+            images.shape[3] // 8,
+        )
+
+        up_cnn3_in_upsampled = torch.cat(
+            [self.upsample(down_cnn3_out), self.upsample(bottom_cnn_out),],
+            dim=1,
+        )
+        up_cnn3_in = torch.cat([down_cnn3_in, up_cnn3_in_upsampled,], dim=1,)
+        assert up_cnn3_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 4,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+        up_cnn3_out = self.up_cnn3(up_cnn3_in)
+        assert up_cnn3_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 4,
+            images.shape[3] // 4,
+        )
+
+        up_cnn2_in_upsampled = torch.cat(
+            [
+                self.upsample(down_cnn2_out),
+                self.upsample(up_cnn3_in_upsampled),
+                self.upsample(up_cnn3_out),
+            ],
+            dim=1,
+        )
+        up_cnn2_in = torch.cat([down_cnn2_in, up_cnn2_in_upsampled], dim=1,)
+        assert up_cnn2_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 5,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+        up_cnn2_out = self.up_cnn2(up_cnn2_in)
+        assert up_cnn2_out.shape == (
+            len(images),
+            self.channels_per_layer,
+            images.shape[2] // 2,
+            images.shape[3] // 2,
+        )
+
+        up_cnn1_in_upsampled = torch.cat(
+            [
+                self.upsample(down_cnn1_out),
+                self.upsample(up_cnn2_in_upsampled),
+                self.upsample(up_cnn2_out),
+            ],
+            dim=1,
+        )
+        up_cnn1_in = torch.cat([down_cnn1_in, up_cnn1_in_upsampled], dim=1,)
+        assert up_cnn1_in.shape == (
+            len(images),
+            self.channels_in + self.channels_per_layer * 6,
+            images.shape[2],
+            images.shape[3],
+        )
+        up_cnn1_out = self.up_cnn1(up_cnn1_in)
+        assert up_cnn1_out.shape == (
+            len(images),
+            self.num_classes,
+            images.shape[2],
+            images.shape[3],
+        )
+
+        return up_cnn1_out
 
 
 class DenseCNN(torch.nn.Module):
