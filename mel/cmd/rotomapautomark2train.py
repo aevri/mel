@@ -69,7 +69,7 @@ def process_args(args):
     training_images = [path for path in all_images if not "2019_" in str(path)]
     validation_images = [path for path in all_images if "2019_" in str(path)]
 
-    model, train_log_dict = train3(
+    model, train_log_dict = train4(
         training_images,
         validation_images,
         batch_size,
@@ -91,6 +91,38 @@ def process_args(args):
     with open(log_path, "w") as f:
         json.dump(train_log_dict, f)
     print(f"Saved {log_path}")
+
+
+def train4(
+    training_images,
+    validation_images,
+    batch_size,
+    num_epochs,
+    max_lr,
+    part_to_id,
+):
+    training_dataloader, _ = load_dataset2(training_images, batch_size)
+    validation_dataloader, validation_dataset = load_dataset2(
+        validation_images, batch_size
+    )
+
+    model = mel.rotomap.detectmolesnn.DenseUnetModel(
+        channels_in=3, channels_per_layer=8
+    )
+
+    train_log_dict = {}
+    mel.rotomap.detectmolesnn.train(
+        model,
+        training_dataloader,
+        validation_dataloader,
+        validation_dataset,
+        loss_func,
+        max_lr,
+        num_epochs,
+        train_log_dict,
+    )
+
+    return model, train_log_dict
 
 
 def train3(

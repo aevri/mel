@@ -73,7 +73,8 @@ def train(
             batch_dict["len"] = len(batch_ids)
             opt.zero_grad()
             # out = model(batch_activations, batch_parts, batch_neighbours)
-            out = model(batch_activations, batch_parts)
+            # out = model(batch_activations, batch_parts)
+            out = model(batch_activations)
             # print(batch_expected_outputs.unsqueeze(1).shape)
             # print(out.shape)
             loss = loss_func(out, batch_expected_outputs)
@@ -130,7 +131,8 @@ def train(
             batch_dict["len"] = len(batch_ids)
             with torch.no_grad():
                 # out = model(batch_activations, batch_parts, batch_neighbours)
-                out = model(batch_activations, batch_parts)
+                # out = model(batch_activations, batch_parts)
+                out = model(batch_activations)
                 batch_dict["image_path"] = [
                     str(valid_dataset.image_path[index]) for index in batch_ids
                 ]
