@@ -35,7 +35,8 @@ def process_args(args):
 
     batch_size = 512
     max_lr = 0.05
-    num_epochs = 50
+    # num_epochs = 50
+    num_epochs = 5
 
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
 
@@ -53,6 +54,7 @@ def process_args(args):
         # and "Leg" in str(path)
         # and "Lower" in str(path)
         # and "Left" in str(path)
+
     ]
     # all_images = [
     #     path
