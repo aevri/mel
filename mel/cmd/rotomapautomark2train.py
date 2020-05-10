@@ -210,6 +210,45 @@ def train(
     return model, train_log_dict
 
 
+def loss_func2(in_, target):
+    in_has_mole = in_[:, 0].unsqueeze(1)
+    assert in_has_mole.shape == (len(in_), 1)
+    target_has_mole = target[:, 0].unsqueeze(1)
+    assert target_has_mole.shape == (len(target), 1)
+
+    in_pos = in_[:, 1:]
+    assert in_pos.shape == (len(in_), 2)
+    target_pos = target[:, 1:3]
+    assert target_pos.shape == (len(target), 2)
+
+    pos_diff = in_pos - target_pos
+    pos_diff_sq = pos_diff ** 2
+    dist_sq = (pos_diff_sq[:, 0] + pos_diff_sq[:, 1]).unsqueeze(1)
+
+    scale = target[:, 3].unsqueeze(1)
+    assert scale.shape == (len(in_), 1)
+
+    # scale1 = torch.max(scale - 0.5, 0.0) * 2.0
+
+    loss1 = torch.nn.functional.mse_loss(
+        in_has_mole, target_has_mole
+    )
+
+    loss2 = torch.nn.functional.mse_loss(
+        dist_sq * target_has_mole, torch.zeros(len(in_), 1)
+    )
+
+    # loss1 = torch.nn.functional.mse_loss(
+    #     (in_has_mole - target_has_mole) * scale1, torch.zeros(len(in_), 1)
+    # )
+
+    # loss2 = torch.nn.functional.mse_loss(
+    #     dist_sq * scale, torch.zeros(len(in_), 1)
+    # )
+
+    return loss1 + loss2
+
+
 def loss_func(in_, target):
     scale = target[:, 0].unsqueeze(1)
     assert scale.shape == (len(in_), 1)
