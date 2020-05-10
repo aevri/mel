@@ -629,13 +629,17 @@ class DenseUnetModel(torch.nn.Module):
             torch.flatten(maps, start_dim=1), dim=1
         ).values.unsqueeze(1)
         assert has_mole.shape == (len(images), 1), str(has_mole.shape)
-        x = torch.flatten(maps[:, 0, :, :] * location_map_x, start_dim=1).mean(
-            dim=1
-        ).unsqueeze(1)
+        x = (
+            torch.flatten(maps[:, 0, :, :] * location_map_x, start_dim=1)
+            .mean(dim=1)
+            .unsqueeze(1)
+        )
         assert x.shape == (len(images), 1)
-        y = torch.flatten(maps[:, 0, :, :] * location_map_y, start_dim=1).mean(
-            dim=1
-        ).unsqueeze(1)
+        y = (
+            torch.flatten(maps[:, 0, :, :] * location_map_y, start_dim=1)
+            .mean(dim=1)
+            .unsqueeze(1)
+        )
         assert y.shape == (len(images), 1)
 
         result = torch.cat([has_mole, x, y], dim=1)
