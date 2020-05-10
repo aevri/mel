@@ -543,8 +543,10 @@ class TileDataset2:
         path = self.image_path[key]
         image = self._getimage(path)
 
-        back_offset = self._tile_size
-        forward_offset = self._tile_size * 2
+        # back_offset = self._tile_size
+        # forward_offset = self._tile_size * 2
+        back_offset = 0
+        forward_offset = self._tile_size
 
         x1 = location[0] - back_offset
         x2 = location[0] + forward_offset
