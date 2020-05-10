@@ -60,28 +60,30 @@ def train(
 
         epoch_dict["train_batches"] = []
         model.train()
-        for batch in tqdm.auto.tqdm(train_dataloader):
-            batch_dict = {}
-            epoch_dict["train_batches"].append(batch_dict)
-            (
-                batch_ids,
-                batch_activations,
-                batch_parts,
-                batch_expected_outputs,
-                # batch_neighbours,
-            ) = batch
-            batch_dict["len"] = len(batch_ids)
-            opt.zero_grad()
-            # out = model(batch_activations, batch_parts, batch_neighbours)
-            # out = model(batch_activations, batch_parts)
-            out = model(batch_activations)
-            # print(batch_expected_outputs.unsqueeze(1).shape)
-            # print(out.shape)
-            loss = loss_func(out, batch_expected_outputs)
-            batch_dict["loss"] = float(loss)
-            loss.backward()
-            opt.step()
-            scheduler.step()
+        with tqdm.auto.tqdm(train_dataloader) as batcher:
+            for batch in batcher:
+                batch_dict = {}
+                epoch_dict["train_batches"].append(batch_dict)
+                (
+                    batch_ids,
+                    batch_activations,
+                    batch_parts,
+                    batch_expected_outputs,
+                    # batch_neighbours,
+                ) = batch
+                batch_dict["len"] = len(batch_ids)
+                opt.zero_grad()
+                # out = model(batch_activations, batch_parts, batch_neighbours)
+                # out = model(batch_activations, batch_parts)
+                out = model(batch_activations)
+                # print(batch_expected_outputs.unsqueeze(1).shape)
+                # print(out.shape)
+                loss = loss_func(out, batch_expected_outputs)
+                batch_dict["loss"] = float(loss)
+                batcher.set_description(f"loss={float(loss):.3f}")
+                loss.backward()
+                opt.step()
+                scheduler.step()
         print("train loss:", float(loss))
 
         # model.eval()
@@ -118,59 +120,67 @@ def train(
         batch_distances = []
         batch_is_true_positive = []
         epoch_dict["valid_batches"] = []
-        for batch in tqdm.auto.tqdm(valid_dataloader):
-            batch_dict = {}
-            epoch_dict["valid_batches"].append(batch_dict)
-            (
-                batch_ids,
-                batch_activations,
-                batch_parts,
-                batch_expected_outputs,
-                # batch_neighbours,
-            ) = batch
-            batch_dict["len"] = len(batch_ids)
-            with torch.no_grad():
-                # out = model(batch_activations, batch_parts, batch_neighbours)
-                # out = model(batch_activations, batch_parts)
-                out = model(batch_activations)
-                batch_dict["image_path"] = [
-                    str(valid_dataset.image_path[index]) for index in batch_ids
-                ]
-                batch_dict["location"] = [
-                    [float(x) for x in valid_dataset.location[index]]
-                    for index in batch_ids
-                ]
-                batch_dict["output"] = [
-                    [float(x) for x in item] for item in out
-                ]
-                batch_dict["expected_output"] = [
-                    [float(x) for x in item] for item in batch_expected_outputs
-                ]
-                choices = out[:, 0] > threshold
-                expected_choices = (batch_expected_outputs > threshold)[:, 0]
-                loss = loss_func(out, batch_expected_outputs)
-                batch_dict["loss"] = float(loss)
-                num_correct += (choices == expected_choices).float().sum()
+        with tqdm.auto.tqdm(valid_dataloader) as batcher:
+            for batch in batcher:
+                batch_dict = {}
+                epoch_dict["valid_batches"].append(batch_dict)
+                (
+                    batch_ids,
+                    batch_activations,
+                    batch_parts,
+                    batch_expected_outputs,
+                    # batch_neighbours,
+                ) = batch
+                batch_dict["len"] = len(batch_ids)
+                with torch.no_grad():
+                    # out = model(batch_activations, batch_parts, batch_neighbours)
+                    # out = model(batch_activations, batch_parts)
+                    out = model(batch_activations)
+                    batch_dict["image_path"] = [
+                        str(valid_dataset.image_path[index])
+                        for index in batch_ids
+                    ]
+                    batch_dict["location"] = [
+                        [float(x) for x in valid_dataset.location[index]]
+                        for index in batch_ids
+                    ]
+                    batch_dict["output"] = [
+                        [float(x) for x in item] for item in out
+                    ]
+                    batch_dict["expected_output"] = [
+                        [float(x) for x in item]
+                        for item in batch_expected_outputs
+                    ]
+                    choices = out[:, 0] > threshold
+                    expected_choices = (batch_expected_outputs > threshold)[
+                        :, 0
+                    ]
+                    loss = loss_func(out, batch_expected_outputs)
+                    batch_dict["loss"] = float(loss)
+                    batcher.set_description(f"loss={float(loss):.3f}")
+                    num_correct += (choices == expected_choices).float().sum()
 
-                pos_diff = out[:, 1:] - batch_expected_outputs[:, 1:]
-                pos_diff_sq = pos_diff ** 2
-                dist_sq = (pos_diff_sq[:, 0] + pos_diff_sq[:, 1]).unsqueeze(1)
-                distance = torch.sqrt(dist_sq)
-                batch_distances.append(distance)
+                    pos_diff = out[:, 1:3] - batch_expected_outputs[:, 1:3]
+                    pos_diff_sq = pos_diff ** 2
+                    dist_sq = (
+                        pos_diff_sq[:, 0] + pos_diff_sq[:, 1]
+                    ).unsqueeze(1)
+                    distance = torch.sqrt(dist_sq)
+                    batch_distances.append(distance)
 
-                is_true_positive = (
-                    choices == expected_choices
-                ) & expected_choices
-                batch_is_true_positive.append(is_true_positive)
+                    is_true_positive = (
+                        choices == expected_choices
+                    ) & expected_choices
+                    batch_is_true_positive.append(is_true_positive)
 
-                num_moles_correct += (
-                    ((choices == expected_choices) & expected_choices)
-                    .float()
-                    .sum()
-                )
-                num_predicted_moles_total += choices.float().sum()
-                num_moles_total += expected_choices.float().sum()
-                num_total += len(batch_ids)
+                    num_moles_correct += (
+                        ((choices == expected_choices) & expected_choices)
+                        .float()
+                        .sum()
+                    )
+                    num_predicted_moles_total += choices.float().sum()
+                    num_moles_total += expected_choices.float().sum()
+                    num_total += len(batch_ids)
         print("valid loss:", float(loss))
         print(
             "num_moles:",
