@@ -117,7 +117,7 @@ def train4(
         training_dataloader,
         validation_dataloader,
         validation_dataset,
-        loss_func,
+        loss_func2,
         max_lr,
         num_epochs,
         train_log_dict,
