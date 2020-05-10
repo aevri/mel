@@ -1540,7 +1540,7 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     mole_locations = torch.tensor(list(mole_points))
 
     if not len(mole_locations):
-        return torch.tensor([[0.0, 0.0, 0.0]] * len(image_locations))
+        return torch.tensor([[0.0, 0.0, 0.0, 0.0]] * len(image_locations))
 
     centroids = image_locations + torch.tensor(
         (tile_size // 2, tile_size // 2)
