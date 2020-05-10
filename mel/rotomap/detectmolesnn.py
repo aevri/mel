@@ -602,8 +602,8 @@ class DenseUnetModel(torch.nn.Module):
 
     def init_dict(self):
         return {
-            "channels_in": self.cnn.self.channels_in,
-            "channels_per_layer": self.cnn.self.channels_per_layer,
+            "channels_in": self.cnn.channels_in,
+            "channels_per_layer": self.cnn.channels_per_layer,
         }
 
     def forward(self, images):
