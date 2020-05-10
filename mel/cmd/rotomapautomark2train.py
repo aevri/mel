@@ -63,10 +63,10 @@ def process_args(args):
     #     and ("Lower" in str(path) or "Upper" in str(path))
     # ]
 
-    all_parts = sorted(
-        {mel.rotomap.detectmolesnn.image_path_to_part(i) for i in all_images}
-    )
-    part_to_id = {part: i for i, part in enumerate(all_parts)}
+    # all_parts = sorted(
+    #     {mel.rotomap.detectmolesnn.image_path_to_part(i) for i in all_images}
+    # )
+    # part_to_id = {part: i for i, part in enumerate(all_parts)}
 
     training_images = [path for path in all_images if not "2019_" in str(path)]
     validation_images = [path for path in all_images if "2019_" in str(path)]
@@ -77,7 +77,7 @@ def process_args(args):
         batch_size,
         num_epochs,
         max_lr,
-        part_to_id,
+        # part_to_id,
     )
 
     with open(metadata_path, "w") as f:
@@ -101,7 +101,6 @@ def train4(
     batch_size,
     num_epochs,
     max_lr,
-    part_to_id,
 ):
     training_dataloader, _ = load_dataset2(training_images, batch_size)
     validation_dataloader, validation_dataset = load_dataset2(
