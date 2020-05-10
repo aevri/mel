@@ -517,6 +517,8 @@ class TileDataset2:
     def _append_image_data(self, image_path):
         frame = mel.rotomap.moles.RotomapFrame(image_path)
         location = get_tile_locations_for_frame(frame, self._tile_size)
+        if location is None:
+            return
         expected_output = locations_to_expected_output(
             location, frame.moledata.moles
         )
