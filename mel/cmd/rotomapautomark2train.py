@@ -34,7 +34,7 @@ def process_args(args):
     print(f"         and {metadata_path}")
 
     batch_size = 512
-    max_lr = 0.05
+    max_lr = 0.001
     # num_epochs = 50
     num_epochs = 5
 
