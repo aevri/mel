@@ -598,6 +598,12 @@ class DenseUnetModel(torch.nn.Module):
         super().__init__()
         self.cnn = DenseUnet(channels_in, channels_per_layer, num_classes=1)
 
+    def init_dict(self):
+        return {
+            "channels_in": self.cnn.self.channels_in,
+            "channels_per_layer": self.cnn.self.channels_per_layer,
+        }
+
     def forward(self, images):
         assert len(images.shape) == 4
         maps = self.cnn(images)
