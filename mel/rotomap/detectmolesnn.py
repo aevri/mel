@@ -1585,23 +1585,24 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
     # # nearest_distmoid = nearest_dist
     # assert nearest_distmoid.shape == (num_locs,)
 
-    # ge_top_left = [
-    #     mole_loc >= image_locations[:, 0, :]
-    #     for mole_loc in mole_locations[0, :, :]
-    # ]
-    # lt_bottom_right = [
-    #     mole_loc < image_locations[:, 0, :] + tile_size
-    #     for mole_loc in mole_locations[0, :, :]
-    # ]
-    # mole_in_tile = [
-    #     (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
-    # ]
-    # mole_in_tile = torch.stack(mole_in_tile).any(0)
+    ge_top_left = [
+        mole_loc >= image_locations[:, 0, :]
+        for mole_loc in mole_locations[0, :, :]
+    ]
+    lt_bottom_right = [
+        mole_loc < image_locations[:, 0, :] + tile_size
+        for mole_loc in mole_locations[0, :, :]
+    ]
+    mole_in_tile = [
+        (ge & lt).sum(1) == 2 for ge, lt in zip(ge_top_left, lt_bottom_right)
+    ]
+    mole_in_tile = torch.stack(mole_in_tile).any(0).unsqueeze(1)
+    assert mole_in_tile.shape == (num_locs, 1)
 
-    nearest_dist_sq = dist_sq[torch.arange(num_locs), nearest]
-    assert nearest_dist_sq.shape == (num_locs,)
-    nearest_dist = nearest_dist_sq.sqrt()
-    assert nearest_dist.shape == (num_locs,)
+    # nearest_dist_sq = dist_sq[torch.arange(num_locs), nearest]
+    # assert nearest_dist_sq.shape == (num_locs,)
+    # nearest_dist = nearest_dist_sq.sqrt()
+    # assert nearest_dist.shape == (num_locs,)
 
     # result = torch.cat(
     #     [distmoid(nearest_dist).float().unsqueeze(1), nearest_pos_diff.float()],
@@ -1610,13 +1611,15 @@ def locations_to_expected_output(image_locations, moles, tile_size=32):
 
     result = torch.cat(
         [
+            mole_in_tile.float(),
             intilish_manhatten(nearest_pos_diff).float().unsqueeze(1),
             nearest_pos_diff.float(),
         ],
         dim=1,
     )
 
-    assert result.shape == (len(image_locations), 3)
+    # assert result.shape == (len(image_locations), 3)
+    assert result.shape == (len(image_locations), 4)
 
     return result
 
