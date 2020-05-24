@@ -40,6 +40,7 @@ def setup_parser(parser):
     )
     parser.add_argument(
         '--video-device-index',
+        '-D',
         type=int,
         default=0,
         help="The index of the device to take images from.",
