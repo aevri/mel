@@ -96,7 +96,7 @@ class Display:
         if not self._is_zoomed:
             self._transform = FittedImageTransform(image, self._rect)
         else:
-            self._transform = ZoomedImageTransform(
+            self._transform = FullyZoomedImageTransform(
                 image, self._zoom_pos, self._rect
             )
 
@@ -350,7 +350,7 @@ class BoundingAreaOverlay:
         return image
 
 
-class ZoomedImageTransform:
+class FullyZoomedImageTransform:
     def __init__(self, image, pos, rect):
         self._pos = pos
         self._rect = rect
