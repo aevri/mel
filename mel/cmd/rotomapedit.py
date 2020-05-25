@@ -7,6 +7,7 @@ In all modes:
     Press left for previous image, right for next image.
     Press up for previous map, down for next map.
     Ctrl-click on a point to zoom in on it.
+    Press 'z' or 'x' to adjust the zoom level.
     Press space to restore original zoom.
 
 Mode selection:
@@ -409,6 +410,9 @@ class Controller:
         self.automoledebug_controller = AutomoleDebugController()
         self.current_controller = self.moleedit_controller
 
+        self.zooms = [1.0, 0.75, 0.5, 0.25, 2.0, 1.75, 1.5]
+        self.zoom_index = 0
+
     def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             if flags & cv2.EVENT_FLAG_CTRLKEY:
@@ -462,6 +466,18 @@ class Controller:
             if self._visit_list:
                 to_visit = self._visit_list.forward()
                 editor.visit(to_visit)
+        elif key == ord('z'):
+            self.zoom_index += 1
+            self.zoom_index %= len(self.zooms)
+            zoom = self.zooms[self.zoom_index]
+            editor.set_status(f"Zoom {zoom}")
+            editor.set_zoom_level(zoom)
+        elif key == ord('x'):
+            self.zoom_index += len(self.zooms) - 1
+            self.zoom_index %= len(self.zooms)
+            zoom = self.zooms[self.zoom_index]
+            editor.set_status(f"Zoom {zoom}")
+            editor.set_zoom_level(zoom)
 
         self.current_controller.on_key(editor, key)
 

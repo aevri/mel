@@ -90,15 +90,16 @@ class Display:
 
         self._zoom_pos = None
         self._is_zoomed = False
+        self._zoom_level = 1
 
     def show_current(self, image, overlay):
 
-        if not self._is_zoomed:
-            self._transform = FittedImageTransform(image, self._rect)
-        else:
+        if self._is_zoomed:
             self._transform = ZoomedImageTransform(
-                image, self._zoom_pos, self._rect, scale=1
+                image, self._zoom_pos, self._rect, scale=self._zoom_level
             )
+        else:
+            self._transform = FittedImageTransform(image, self._rect)
 
         image = self._transform.render()
         if overlay is not None:
@@ -109,15 +110,20 @@ class Display:
     def set_fitted(self):
         self._is_zoomed = False
 
-    def set_zoomed(self, x, y):
+    def set_zoom_level(self, zoom_level=1):
+        self._zoom_level = zoom_level
+
+    def set_zoomed(self, x, y, zoom_level=None):
         self._zoom_pos = numpy.array((x, y))
         self._is_zoomed = True
+        if zoom_level is not None:
+            self._zoom_level = zoom_level
 
     def is_zoomed(self):
         return self._is_zoomed
 
     def get_zoom_pos(self):
-        if not self._is_zoomed:
+        if not self.is_zoomed():
             raise Exception('Not zoomed')
         return self._zoom_pos
 
@@ -563,13 +569,17 @@ class Editor:
         self.display.set_fitted()
         self.show_current()
 
-    def show_zoomed(self, mouse_x, mouse_y):
-        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
-        self.display.set_zoomed(image_x, image_y)
+    def set_zoom_level(self, zoom_level):
+        self.display.set_zoom_level(zoom_level)
         self.show_current()
 
-    def show_zoomed_display(self, image_x, image_y):
-        self.display.set_zoomed(image_x, image_y)
+    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None):
+        image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
+        self.display.set_zoomed(image_x, image_y, zoom_level)
+        self.show_current()
+
+    def show_zoomed_display(self, image_x, image_y, zoom_level=None):
+        self.display.set_zoomed(image_x, image_y, zoom_level)
         self.show_current()
 
     def show_prev_map(self):
