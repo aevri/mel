@@ -166,6 +166,10 @@ def process_args(args):
             is_unchanged = True
             mark_lesion(target_rotomap, uuid_, is_unchanged=True)
             display.indicate_changed(False)
+        elif key == ord('z'):
+            display.adjust_zoom(1.025)
+        elif key == ord('x'):
+            display.adjust_zoom(1 / 1.025)
 
 
 def is_lesion_unchanged(rotomap, uuid_):
@@ -210,6 +214,7 @@ class ImageCompareDisplay:
                 raise ValueError("path_images_tuple not have empty groups.")
 
         self._rotomaps = path_images_tuple
+        self._zooms = [1 for _ in path_images_tuple]
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
         for i, rotomap in enumerate(self._rotomaps):
@@ -263,10 +268,16 @@ class ImageCompareDisplay:
         self._should_indicate_changed = should_indicate_changed
         self._show()
 
-    def _path_pos(self, index):
+    def adjust_zoom(self, zoom_multiplier):
+        ix = self._indices[0]
+        self._zooms[ix] *= zoom_multiplier
+        self._show()
+
+    def _path_pos_zoom(self, index):
         image_index = self._rotomap_cursors[index]
         posinfo = self._rotomaps[index][image_index]
-        return posinfo.path, posinfo.pos
+        zoom = self._zooms[index]
+        return posinfo.path, posinfo.pos, zoom
 
     def _show(self):
         image_width = self._display.width // 2
@@ -281,7 +292,7 @@ class ImageCompareDisplay:
 
         images = [
             captioned_mole_image(
-                *self._path_pos(i),
+                *self._path_pos_zoom(i),
                 image_size,
                 self._should_draw_crosshairs,
                 border_colour,
@@ -293,11 +304,11 @@ class ImageCompareDisplay:
 
 
 def captioned_mole_image(
-    path, pos, size, should_draw_crosshairs, border_colour=None
+    path, pos, zoom, size, should_draw_crosshairs, border_colour=None
 ):
 
     image, caption_shape = _cached_captioned_mole_image(
-        str(path), tuple(pos), tuple(size)
+        str(path), tuple(pos), zoom, tuple(size)
     )
 
     if should_draw_crosshairs:
@@ -315,8 +326,10 @@ def captioned_mole_image(
 
 
 @functools.lru_cache()
-def _cached_captioned_mole_image(path, pos, size):
+def _cached_captioned_mole_image(path, pos, zoom, size):
     image = mel.lib.image.load_image(path)
+    image = mel.lib.image.scale_image(image, zoom)
+    pos = tuple(int(v * zoom) for v in pos)
     size = numpy.array(size)
     image = mel.lib.image.centered_at(image, pos, size)
     caption = mel.lib.image.render_text_as_image(str(path))
