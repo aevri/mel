@@ -96,8 +96,8 @@ class Display:
         if not self._is_zoomed:
             self._transform = FittedImageTransform(image, self._rect)
         else:
-            self._transform = FullyZoomedImageTransform(
-                image, self._zoom_pos, self._rect
+            self._transform = ZoomedImageTransform(
+                image, self._zoom_pos, self._rect, scale=1
             )
 
         image = self._transform.render()
@@ -350,23 +350,23 @@ class BoundingAreaOverlay:
         return image
 
 
-class FullyZoomedImageTransform:
-    def __init__(self, image, pos, rect):
-        self._pos = pos
+class ZoomedImageTransform:
+    def __init__(self, image, pos, rect, scale):
+        self._pos = tuple(int(v * scale) for v in pos)
         self._rect = rect
-        self._offset = mel.lib.image.calc_centering_offset(pos, rect)
+        self._offset = mel.lib.image.calc_centering_offset(self._pos, rect)
+        self._scale = scale
 
-        self._image = image
+        self._image = mel.lib.image.scale_image(image, self._scale)
 
     def render(self):
-
         return mel.lib.image.centered_at(self._image, self._pos, self._rect)
 
     def imagexy_to_transformedxy(self, x, y):
-        return numpy.array((x, y)) + self._offset
+        return ((numpy.array((x, y)) * self._scale) + self._offset).astype(int)
 
     def transformedxy_to_imagexy(self, x, y):
-        return numpy.array((x, y)) - self._offset
+        return ((numpy.array((x, y)) - self._offset) / self._scale).astype(int)
 
 
 class FittedImageTransform:
