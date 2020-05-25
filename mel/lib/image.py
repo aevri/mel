@@ -328,6 +328,11 @@ def rotated180(image):
     return cv2.flip(image, -1)
 
 
+def scale_image(image, scale):
+    height, width = image.shape[:2]
+    return cv2.resize(image, (int(width * scale), int(height * scale)))
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2015-2018 Angelos Evripiotis.
 #
