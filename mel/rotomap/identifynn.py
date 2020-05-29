@@ -386,7 +386,7 @@ def unzip_dataset_part(uuid_list, dataset_generator):
     for uuid_, item in zip(uuid_list, dataset_part):
         item_uuid, data = item
         if item_uuid != uuid_:
-            raise ValueError(f"uuids don't match")
+            raise ValueError("uuids don't match")
         data_list.append(data)
     assert len(data_list) == len(dataset_part)
     return data_list
