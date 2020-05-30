@@ -76,6 +76,21 @@ class RotomapLesionChangedAlert(AlertNotification):
         return output
 
 
+class MicroLesionChangedAlert(AlertNotification):
+    def __init__(self, path, id_):
+        super().__init__(path)
+        self.id_ = id_
+
+    def format(self, detail_level):
+        output = f"{self.path}"
+        if detail_level > 0:
+            output += "\n\n"
+            output += " " * 2 + f"{self.id_}"
+            output += "\n"
+
+        return output
+
+
 class InvalidDateError(ErrorNotification):
     pass
 
@@ -545,6 +560,11 @@ def check_micro(path, notices):
                     if minor_part.is_dir():
                         for mole in mel.micro.fs.yield_moles(minor_part):
                             _validate_mole_dir(mole.path, notices)
+                            changed_path = mel.micro.fs.Names.CHANGED
+                            if (mole.path / changed_path).exists():
+                                notices.append(
+                                    MicroLesionChangedAlert(mole.path, mole.id)
+                                )
                     else:
                         notices.append(UnexpectedFileInfo(minor_part))
             else:
