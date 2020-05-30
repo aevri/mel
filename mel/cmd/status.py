@@ -327,7 +327,7 @@ def print_klass_to_notices(klass_to_notices, detail_level):
 
     for klass, notice_list in klass_to_notices.items():
         print()
-        print(klass)
+        print(klass.__name__)
         for notice in notice_list:
             print(textwrap.indent(notice.format(detail_level), "  "))
 
