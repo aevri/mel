@@ -43,6 +43,8 @@ def process_args(args):
     width = 300
     height = 400
 
+    make_fake_micro(melroot)
+
     part_names = ["LeftLeg"]
     part_names.extend([f"Part{i}" for i in range(2, args.num_parts + 1)])
 
@@ -69,6 +71,11 @@ def process_args(args):
                 image_path = dir_path / f"{i:02}.jpg"
                 mel.lib.common.write_image(image_path, image)
                 mel.rotomap.moles.save_image_moles(visible_moles, image_path)
+
+
+def make_fake_micro(melroot):
+    micro_parts_path = melroot / "micro" / "data"
+    micro_parts_path.mkdir(parents=True)
 
 
 def _iterable_len(it):
