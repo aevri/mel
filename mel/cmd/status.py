@@ -268,6 +268,12 @@ def process_args(args):
     else:
         notice_list.append(NoBaseDirInfo(mel.lib.fs.ROTOMAPS_PATH))
 
+    micro_path = melroot / mel.lib.fs.MICRO_PATH
+    if micro_path.exists():
+        check_micro(micro_path, notice_list)
+    else:
+        notice_list.append(NoBaseDirInfo(mel.lib.fs.MICRO_PATH))
+
     alerts_to_notices = collections.defaultdict(list)
     errors_to_notices = collections.defaultdict(list)
     info_to_notices = collections.defaultdict(list)
@@ -512,6 +518,58 @@ def check_newest_rotomap(notices, rotomap):
         notices.append(missing_unchanged_status)
     if changed.uuid_list:
         notices.append(changed)
+
+
+def check_micro(path, notices):
+    parts_path = path / "data"
+    if parts_path.exists():
+        # So far I've organised parts like so:
+        #
+        #   LeftArm/Hand
+        #   LeftArm/Upper
+        #   LeftLeg/Foot
+        #   LeftLeg/LowerLeg
+        #   LeftLeg/UpperLeg
+        #   RightArm/Armpit
+        #   RightArm/Forearm
+        #   RightArm/Hand
+        #   RightArm/Upper
+        #   etc.
+        #
+        # So each part is a two-level thing. Each of the parts has leaf
+        # directories that are the actual moles or mole groups.
+        #
+        for major_part in parts_path.iterdir():
+            if major_part.is_dir():
+                for minor_part in major_part.iterdir():
+                    if minor_part.is_dir():
+                        for mole in mel.micro.fs.yield_moles(minor_part):
+                            _validate_mole_dir(mole.path, notices)
+                    else:
+                        notices.append(UnexpectedFileInfo(minor_part))
+            else:
+                notices.append(UnexpectedFileInfo(major_part))
+    else:
+        notices.append(NoBaseDirInfo(parts_path))
+
+
+def _validate_mole_dir(path, notices):
+    for sub in path.iterdir():
+        if sub.name.lower() not in mel.micro.fs.MOLE_DIR_ENTRIES:
+
+            if sub.suffix.lower() in mel.micro.fs.IMAGE_SUFFIXES:
+                continue
+
+            if sub.name in mel.micro.fs.FILES_TO_IGNORE and sub.is_file():
+                continue
+
+            if sub.name in mel.micro.fs.DIRS_TO_IGNORE and sub.is_dir():
+                continue
+
+            if sub.is_dir():
+                notices.append(UnexpectedDirInfo(sub))
+            else:
+                notices.append(UnexpectedFileInfo(sub))
 
 
 # -----------------------------------------------------------------------------
