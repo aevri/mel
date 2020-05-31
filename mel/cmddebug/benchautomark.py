@@ -68,7 +68,14 @@ def _pair_off_inputs(from_, to):
 
 
 def _common_path(from_path, to_path):
-    return str(from_path) + str(to_path)
+    common = []
+    for char_from, char_to in zip(
+        reversed(str(from_path)), reversed(str(to_path))
+    ):
+        if char_from != char_to:
+            break
+        common.insert(0, char_from)
+    return "".join(common)
 
 
 def _zip_samelen(*args):
