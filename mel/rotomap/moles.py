@@ -133,6 +133,20 @@ def make_argparse_image_moles(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
+def make_argparse_image_moles_tree(path):
+    """Use in the 'type=' parameter to add_argument()."""
+    path = pathlib.Path(path)
+    if path.is_dir():
+        for item in sorted(path.iterdir()):
+            if item.is_dir():
+                yield from make_argparse_image_moles_tree(item)
+            else:
+                yield from make_argparse_image_moles(item)
+    else:
+        yield from make_argparse_image_moles(path)
+
+
+
 class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
 
