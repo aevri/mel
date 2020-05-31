@@ -22,6 +22,8 @@ import os
 import sys
 import textwrap
 
+import colorama
+
 import mel.lib.fs
 import mel.rotomap.moles
 
@@ -266,6 +268,7 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    colorama.init()
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:
@@ -313,21 +316,25 @@ def process_args(args):
 
     any_notices = bool(alerts_to_notices or errors_to_notices)
 
-    print_klass_to_notices(alerts_to_notices, args.detail)
-    print_klass_to_notices(errors_to_notices, args.detail)
+    print_klass_to_notices(alerts_to_notices, args.detail, colorama.Fore.RED)
+    print_klass_to_notices(
+        errors_to_notices, args.detail, colorama.Fore.MAGENTA
+    )
     if args.trivia > 0:
-        print_klass_to_notices(info_to_notices, args.detail)
+        print_klass_to_notices(
+            info_to_notices, args.detail, colorama.Fore.BLUE
+        )
         if not any_notices and info_to_notices:
             any_notices = True
 
     return any_notices
 
 
-def print_klass_to_notices(klass_to_notices, detail_level):
+def print_klass_to_notices(klass_to_notices, detail_level, fore):
 
     for klass, notice_list in klass_to_notices.items():
         print()
-        print(klass.__name__)
+        print(fore, klass.__name__, colorama.Fore.RESET)
         for notice in notice_list:
             print(textwrap.indent(notice.format(detail_level), "  "))
 
