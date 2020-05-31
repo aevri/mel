@@ -13,23 +13,23 @@ import mel.cmd.error
 def setup_parser(parser):
 
     parser.add_argument(
-        'FROM_FRAMES',
+        "FROM_FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
         help="Path of the 'reference' rotomap or image.",
     )
     parser.add_argument(
-        'TO_FRAMES',
+        "TO_FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
         help="Path of the directory of rotomap or image.",
     )
     parser.add_argument(
-        '--error-distance',
+        "--error-distance",
         default=5,
         type=int,
-        help='Consider guesses this far from their target to be misses / '
-        'errors.',
+        help="Consider guesses this far from their target to be misses / "
+        "errors.",
     )
-    parser.add_argument('--verbose', '-v', action='count', default=0)
+    parser.add_argument("--verbose", "-v", action="count", default=0)
 
 
 def process_args(args):
@@ -42,9 +42,9 @@ def process_args(args):
             from_moles, to_moles, args.error_distance
         )
         if args.verbose > 1:
-            print_items(common_path, matches, 'MATCH')
-            print_items(common_path, missing, 'MISSING')
-            print_items(common_path, added, 'ADDED')
+            print_items(common_path, matches, "MATCH")
+            print_items(common_path, missing, "MISSING")
+            print_items(common_path, added, "ADDED")
         if args.verbose > 0:
             print(f"{common_path}: {len(matches)} matched")
             print(f"{common_path}: {len(missing)} missing")
@@ -92,15 +92,15 @@ def _zip_samelen(*args):
 
 def print_items(common_path, items, label):
     for i in items:
-        print(f'{label}: {common_path}: {i}')
+        print(f"{label}: {common_path}: {i}")
 
 
 def match_moles(from_moles, to_moles, error_distance):
 
     if from_moles and not to_moles:
-        return [], [m['uuid'] for m in from_moles], []
+        return [], [m["uuid"] for m in from_moles], []
     elif not from_moles and to_moles:
-        return [], [], [m['uuid'] for m in to_moles]
+        return [], [], [m["uuid"] for m in to_moles]
     elif not from_moles and not to_moles:
         return [], [], []
 
@@ -108,20 +108,15 @@ def match_moles(from_moles, to_moles, error_distance):
     to_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(to_moles)
 
     vec_matches, vec_missing, vec_added = _match_pos_vecs(
-        from_pos_vec, to_pos_vec, error_distance)
+        from_pos_vec, to_pos_vec, error_distance
+    )
 
     matches = [
-        (from_moles[from_i]['uuid'], to_moles[to_i]['uuid'])
+        (from_moles[from_i]["uuid"], to_moles[to_i]["uuid"])
         for from_i, to_i in vec_matches
     ]
-    missing = [
-        from_moles[from_i]['uuid']
-        for from_i in vec_missing
-    ]
-    added = [
-        to_moles[to_i]['uuid']
-        for to_i in vec_added
-    ]
+    missing = [from_moles[from_i]["uuid"] for from_i in vec_missing]
+    added = [to_moles[to_i]["uuid"] for to_i in vec_added]
 
     return matches, missing, added
 
