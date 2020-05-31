@@ -57,6 +57,10 @@ def process_args(args):
     print(f"{num_matches} matched")
     print(f"{num_missing} missing")
     print(f"{num_added} added")
+    precision = num_matches / (num_missing + num_added + num_matches)
+    recall = num_matches / (num_missing + num_matches)
+    print(f"{precision * 100:0.1f}% precision")
+    print(f"{recall * 100:0.1f}% recall")
 
 
 def _pair_off_inputs(from_, to):
