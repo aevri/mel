@@ -14,12 +14,12 @@ def setup_parser(parser):
 
     parser.add_argument(
         "FROM_FRAMES",
-        type=mel.rotomap.moles.make_argparse_image_moles,
+        type=mel.rotomap.moles.make_argparse_image_moles_tree,
         help="Path of the 'reference' rotomap or image.",
     )
     parser.add_argument(
         "TO_FRAMES",
-        type=mel.rotomap.moles.make_argparse_image_moles,
+        type=mel.rotomap.moles.make_argparse_image_moles_tree,
         help="Path of the directory of rotomap or image.",
     )
     parser.add_argument(
