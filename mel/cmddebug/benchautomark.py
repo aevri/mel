@@ -34,13 +34,29 @@ def setup_parser(parser):
 
 def process_args(args):
     from_to_pairs = _pair_off_inputs(args.FROM_FRAMES, args.TO_FRAMES)
+    num_matches = 0
+    num_missing = 0
+    num_added = 0
     for common_path, from_moles, to_moles in from_to_pairs:
         matches, missing, added = match_moles(
             from_moles, to_moles, args.error_distance
         )
-        print_items(common_path, matches, 'MATCH')
-        print_items(common_path, missing, 'MISSING')
-        print_items(common_path, added, 'ADDED')
+        if args.verbose > 1:
+            print_items(common_path, matches, 'MATCH')
+            print_items(common_path, missing, 'MISSING')
+            print_items(common_path, added, 'ADDED')
+        if args.verbose > 0:
+            print(f"{common_path}: {len(matches)} matched")
+            print(f"{common_path}: {len(missing)} missing")
+            print(f"{common_path}: {len(added)} added")
+
+        num_matches += len(matches)
+        num_missing += len(missing)
+        num_added += len(added)
+
+    print(f"{num_matches} matched")
+    print(f"{num_missing} missing")
+    print(f"{num_added} added")
 
 
 def _pair_off_inputs(from_, to):
