@@ -146,7 +146,6 @@ def make_argparse_image_moles_tree(path):
         yield from make_argparse_image_moles(path)
 
 
-
 class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
 
