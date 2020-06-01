@@ -43,17 +43,18 @@ def process_args(args):
     with open(metadata_path) as f:
         init_dict = json.load(f)
 
-    transforms = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(
-                [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
-            ),
-        ]
-    )
-    resnet = torchvision.models.resnet18(pretrained=True)
+    # transforms = torchvision.transforms.Compose(
+    #     [
+    #         torchvision.transforms.ToTensor(),
+    #         torchvision.transforms.Normalize(
+    #             [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+    #         ),
+    #     ]
+    # )
+
+    # resnet = torchvision.models.resnet18(pretrained=True)
     # resnet = torchvision.models.resnet50(pretrained=True)
-    resnet.eval()
+    # resnet.eval()
     # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(**init_dict)
     # model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(**init_dict)
     model = mel.rotomap.detectmolesnn.DenseUnetModel(**init_dict)
