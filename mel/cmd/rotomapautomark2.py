@@ -55,7 +55,9 @@ def process_args(args):
     # resnet = torchvision.models.resnet50(pretrained=True)
     resnet.eval()
     # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(**init_dict)
-    model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(**init_dict)
+    # model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(**init_dict)
+    model = mel.rotomap.detectmolesnn.DenseUnetModel(**init_dict)
+
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
@@ -63,34 +65,49 @@ def process_args(args):
         if args.verbose:
             print(path)
         frame = mel.rotomap.moles.RotomapFrame(path)
-        get_data = mel.rotomap.detectmolesnn.get_tile_locations_activations
-        with torch.no_grad():
-            locations_activations = get_data(
-                frame, transforms, resnet, reduce_nonmoles=False
-            )
-        if locations_activations is None:
-            print(path, ":", "no locations to test.")
-            continue
+        # get_data = mel.rotomap.detectmolesnn.get_tile_locations_activations
+        # with torch.no_grad():
+        #     locations_activations = get_data(
+        #         frame, transforms, resnet, reduce_nonmoles=False
+        #     )
+        # if locations_activations is None:
+        #     print(path, ":", "no locations to test.")
+        #     continue
 
-        locations, activations = locations_activations
-        print(len(locations), "tiles")
+        # locations, activations = locations_activations
+        # print(len(locations), "tiles")
 
-        part = mel.rotomap.detectmolesnn.image_path_to_part(pathlib.Path(path))
+        # part = mel.rotomap.detectmolesnn.image_path_to_part(pathlib.Path(path))
         # match = mel.rotomap.detectmolesnn.match_with_neighbours
         # locs_acts_neighbour_acts = match(locations, activations, tile_size)
-        dataset = [
-            # (act, part, neighbour_acts)
-            (act, part)
-            # for loc, act, neighbour_acts in locs_acts_neighbour_acts
-            for act in activations
-        ]
+        # dataset = [
+        #     # (act, part, neighbour_acts)
+        #     (act, part)
+        #     # for loc, act, neighbour_acts in locs_acts_neighbour_acts
+        #     for act in activations
+        # ]
         # print("Neighbour blocks:", len(dataset))
 
+        # results = []
+        # with torch.no_grad():
+        #     dataloader = torch.utils.data.DataLoader(dataset, batch_size=64)
+        #     for batch in dataloader:
+        #         results.append(model(*batch))
+        # results = torch.cat(results)
+        # print(len(results), "results")
+
         results = []
+        dataloader, dataset = load_dataset2([pathlib.Path(path)], 64)
         with torch.no_grad():
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=64)
             for batch in dataloader:
-                results.append(model(*batch))
+                (
+                    batch_ids,
+                    batch_activations,
+                    batch_parts,
+                    batch_expected_outputs,
+                    # batch_neighbours,
+                ) = batch
+                results.append(model(batch_activations))
         results = torch.cat(results)
         print(len(results), "results")
 
@@ -103,7 +120,10 @@ def process_args(args):
         min_likelihood = 0.85
         likelihood_x_y = _collate_results(
             # match_locs, results, tile_size, min_likelihood
-            locations, results, tile_size, min_likelihood
+            dataset.location,
+            results,
+            tile_size,
+            min_likelihood,
         )
         likelihood_x_y = _merge_close_results(likelihood_x_y, tile_size)
 
@@ -115,6 +135,16 @@ def process_args(args):
 
         mel.rotomap.moles.save_image_moles(moles, path)
         print("Added", len(moles) - num_moles_before, "moles.")
+
+
+def load_dataset2(images, batch_size):
+    print(f"Will load from {len(images)} images.")
+    dataset = mel.rotomap.detectmolesnn.TileDataset2(images, 32)
+    print(f"Loaded {len(dataset)} tiles.")
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=False,
+    )
+    return dataloader, dataset
 
 
 def _collate_results(match_locs, results, tile_size, min_likelihood):
