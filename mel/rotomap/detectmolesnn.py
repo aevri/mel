@@ -1850,14 +1850,14 @@ def get_tile_locations_for_frame(frame, tile_size):
     locations = torch.cat(
         [
             get_image_locations(image),
-            get_image_locations(image, xoffset=16),
-            get_image_locations(image, yoffset=16),
-            get_image_locations(image, xoffset=16, yoffset=16),
+            # get_image_locations(image, xoffset=16),
+            # get_image_locations(image, yoffset=16),
+            # get_image_locations(image, xoffset=16, yoffset=16),
         ]
     )
-    locations = reduce_nonmole_locations(
-        locations, frame.moledata.uuid_points.values()
-    )
+    # locations = reduce_nonmole_locations(
+    #     locations, frame.moledata.uuid_points.values()
+    # )
     locations = unique_locations(locations)
     tile_magnification = TILE_MAGNIFICATION
 
