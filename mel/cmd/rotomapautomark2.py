@@ -125,6 +125,9 @@ def process_args(args):
             tile_size,
             min_likelihood,
         )
+        if likelihood_x_y is None:
+            print("No moles found.")
+            continue
         likelihood_x_y = _merge_close_results(likelihood_x_y, tile_size)
 
         for likelihood, x, y in likelihood_x_y:
@@ -161,9 +164,12 @@ def _collate_results(match_locs, results, tile_size, min_likelihood):
             likelihood_x_y_list.append(
                 torch.tensor([mole_likelihood, new_x, new_y])
             )
-    result = torch.stack(likelihood_x_y_list)
-    assert len(result.shape) == 2
-    assert result.shape[1] == 3
+    if likelihood_x_y_list:
+        result = torch.stack(likelihood_x_y_list)
+        assert len(result.shape) == 2
+        assert result.shape[1] == 3
+    else:
+        result = None
     return result
 
 
