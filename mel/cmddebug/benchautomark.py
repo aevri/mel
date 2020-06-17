@@ -13,34 +13,54 @@ import mel.cmd.error
 def setup_parser(parser):
 
     parser.add_argument(
-        'FROM_FRAMES',
-        type=mel.rotomap.moles.make_argparse_image_moles,
+        "FROM_FRAMES",
+        type=mel.rotomap.moles.make_argparse_image_moles_tree,
         help="Path of the 'reference' rotomap or image.",
     )
     parser.add_argument(
-        'TO_FRAMES',
-        type=mel.rotomap.moles.make_argparse_image_moles,
+        "TO_FRAMES",
+        type=mel.rotomap.moles.make_argparse_image_moles_tree,
         help="Path of the directory of rotomap or image.",
     )
     parser.add_argument(
-        '--error-distance',
+        "--error-distance",
         default=5,
         type=int,
-        help='Consider guesses this far from their target to be misses / '
-        'errors.',
+        help="Consider guesses this far from their target to be misses / "
+        "errors.",
     )
-    parser.add_argument('--verbose', '-v', action='count', default=0)
+    parser.add_argument("--verbose", "-v", action="count", default=0)
 
 
 def process_args(args):
     from_to_pairs = _pair_off_inputs(args.FROM_FRAMES, args.TO_FRAMES)
+    num_matches = 0
+    num_missing = 0
+    num_added = 0
     for common_path, from_moles, to_moles in from_to_pairs:
         matches, missing, added = match_moles(
             from_moles, to_moles, args.error_distance
         )
-        print_items(common_path, matches, 'MATCH')
-        print_items(common_path, missing, 'MISSING')
-        print_items(common_path, added, 'ADDED')
+        if args.verbose > 1:
+            print_items(common_path, matches, "MATCH")
+            print_items(common_path, missing, "MISSING")
+            print_items(common_path, added, "ADDED")
+        if args.verbose > 0:
+            print(f"{common_path}: {len(matches)} matched")
+            print(f"{common_path}: {len(missing)} missing")
+            print(f"{common_path}: {len(added)} added")
+
+        num_matches += len(matches)
+        num_missing += len(missing)
+        num_added += len(added)
+
+    print(f"{num_matches} matched")
+    print(f"{num_missing} missing")
+    print(f"{num_added} added")
+    precision = num_matches / (num_missing + num_added + num_matches)
+    recall = num_matches / (num_missing + num_matches)
+    print(f"{precision * 100:0.1f}% precision")
+    print(f"{recall * 100:0.1f}% recall")
 
 
 def _pair_off_inputs(from_, to):
@@ -52,7 +72,14 @@ def _pair_off_inputs(from_, to):
 
 
 def _common_path(from_path, to_path):
-    return str(from_path) + str(to_path)
+    common = []
+    for char_from, char_to in zip(
+        reversed(str(from_path)), reversed(str(to_path))
+    ):
+        if char_from != char_to:
+            break
+        common.insert(0, char_from)
+    return "".join(common)
 
 
 def _zip_samelen(*args):
@@ -76,15 +103,15 @@ def _zip_samelen(*args):
 
 def print_items(common_path, items, label):
     for i in items:
-        print(f'{label}: {common_path}: {i}')
+        print(f"{label}: {common_path}: {i}")
 
 
 def match_moles(from_moles, to_moles, error_distance):
 
     if from_moles and not to_moles:
-        return [], [m['uuid'] for m in from_moles], []
+        return [], [m["uuid"] for m in from_moles], []
     elif not from_moles and to_moles:
-        return [], [], [m['uuid'] for m in to_moles]
+        return [], [], [m["uuid"] for m in to_moles]
     elif not from_moles and not to_moles:
         return [], [], []
 
@@ -92,20 +119,15 @@ def match_moles(from_moles, to_moles, error_distance):
     to_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(to_moles)
 
     vec_matches, vec_missing, vec_added = _match_pos_vecs(
-        from_pos_vec, to_pos_vec, error_distance)
+        from_pos_vec, to_pos_vec, error_distance
+    )
 
     matches = [
-        (from_moles[from_i]['uuid'], to_moles[to_i]['uuid'])
+        (from_moles[from_i]["uuid"], to_moles[to_i]["uuid"])
         for from_i, to_i in vec_matches
     ]
-    missing = [
-        from_moles[from_i]['uuid']
-        for from_i in vec_missing
-    ]
-    added = [
-        to_moles[to_i]['uuid']
-        for to_i in vec_added
-    ]
+    missing = [from_moles[from_i]["uuid"] for from_i in vec_missing]
+    added = [to_moles[to_i]["uuid"] for to_i in vec_added]
 
     return matches, missing, added
 

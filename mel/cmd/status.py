@@ -22,6 +22,8 @@ import os
 import sys
 import textwrap
 
+import colorama
+
 import mel.lib.fs
 import mel.rotomap.moles
 
@@ -52,11 +54,11 @@ class RotomapNewMoleAlert(AlertNotification):
         self.uuid_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.uuid_list)
+            output += "\n"
 
         return output
 
@@ -67,11 +69,26 @@ class RotomapLesionChangedAlert(AlertNotification):
         self.uuid_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.uuid_list)
+            output += "\n"
+
+        return output
+
+
+class MicroLesionChangedAlert(AlertNotification):
+    def __init__(self, path, id_):
+        super().__init__(path)
+        self.id_ = id_
+
+    def format(self, detail_level):
+        output = f"{self.path}"
+        if detail_level > 0:
+            output += "\n\n"
+            output += " " * 2 + f"{self.id_}"
+            output += "\n"
 
         return output
 
@@ -86,21 +103,21 @@ class RotomapDuplicateUuidError(ErrorNotification):
         self.frame_to_uuid_list = collections.defaultdict(list)
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
-                output += '\n\n'
-                output += '\n'.join(
-                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list)
+                output += "\n\n"
+                output += "\n".join(
+                    " " * 2 + f"{f}" for f in sorted(self.frame_to_uuid_list)
                 )
-                output += '\n'
+                output += "\n"
             else:
                 f_to_ul = self.frame_to_uuid_list
                 for frame, uuid_list in sorted(f_to_ul.items()):
-                    output += '\n\n'
-                    output += f'  {frame}:\n'
-                    output += '\n'
-                    output += '\n'.join(' ' * 4 + f'{u}' for u in uuid_list)
+                    output += "\n\n"
+                    output += f"  {frame}:\n"
+                    output += "\n"
+                    output += "\n".join(" " * 4 + f"{u}" for u in uuid_list)
 
         return output
 
@@ -111,11 +128,11 @@ class RotomapNotLoadable(ErrorNotification):
         self.error = error
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
 
         if detail_level > 0 and self.error is not None:
-            output += ':\n\n'
-            output += f'  {self.error}'
+            output += ":\n\n"
+            output += f"  {self.error}"
             if isinstance(self.error, Exception):
                 error = self.error
                 while True:
@@ -127,7 +144,7 @@ class RotomapNotLoadable(ErrorNotification):
                         output += f"\n  during '{error}'."
                     else:
                         break
-            output += '\n'
+            output += "\n"
 
         return output
 
@@ -150,11 +167,11 @@ class RotomapMissingMoleInfo(InfoNotification):
         self.uuid_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.uuid_list)
+            output += "\n"
 
         return output
 
@@ -165,11 +182,11 @@ class RotomapMissingLesionUnchangedStatus(InfoNotification):
         self.uuid_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.uuid_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.uuid_list)
+            output += "\n"
 
         return output
 
@@ -180,21 +197,21 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
         self.frame_to_uuid_list = collections.defaultdict(list)
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
-                output += '\n\n'
-                output += '\n'.join(
-                    ' ' * 2 + f'{f}' for f in sorted(self.frame_to_uuid_list)
+                output += "\n\n"
+                output += "\n".join(
+                    " " * 2 + f"{f}" for f in sorted(self.frame_to_uuid_list)
                 )
-                output += '\n'
+                output += "\n"
             else:
                 f_to_ul = self.frame_to_uuid_list
                 for frame, uuid_list in sorted(f_to_ul.items()):
-                    output += '\n\n'
-                    output += f'  {frame}:\n'
-                    output += '\n'
-                    output += '\n'.join(' ' * 4 + f'{u}' for u in uuid_list)
+                    output += "\n\n"
+                    output += f"  {frame}:\n"
+                    output += "\n"
+                    output += "\n".join(" " * 4 + f"{u}" for u in uuid_list)
 
         return output
 
@@ -205,11 +222,11 @@ class RotomapMissingMoleFileInfo(InfoNotification):
         self.frame_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.frame_list)
+            output += "\n"
 
         return output
 
@@ -220,11 +237,11 @@ class RotomapMissingMaskInfo(InfoNotification):
         self.frame_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.frame_list)
+            output += "\n"
 
         return output
 
@@ -235,30 +252,31 @@ class RotomapMissingSpaceInfo(InfoNotification):
         self.frame_list = []
 
     def format(self, detail_level):
-        output = f'{self.path}'
+        output = f"{self.path}"
         if detail_level > 0:
-            output += '\n\n'
-            output += '\n'.join(' ' * 2 + f'{u}' for u in self.frame_list)
-            output += '\n'
+            output += "\n\n"
+            output += "\n".join(" " * 2 + f"{u}" for u in self.frame_list)
+            output += "\n"
 
         return output
 
 
 def setup_parser(parser):
-    parser.add_argument('PATH', nargs='?')
-    parser.add_argument('--detail', '-d', action='count', default=0)
-    parser.add_argument('--trivia', '-t', action='count', default=0)
+    parser.add_argument("PATH", nargs="?")
+    parser.add_argument("--detail", "-d", action="count", default=0)
+    parser.add_argument("--trivia", "-t", action="count", default=0)
 
 
 def process_args(args):
+    colorama.init()
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:
-        print('Not in a mel repo, could not find melroot', file=sys.stderr)
+        print("Not in a mel repo, could not find melroot", file=sys.stderr)
         return 1
 
     if args.detail > 2:
-        print(f'melroot: {melroot}')
+        print(f"melroot: {melroot}")
 
     notice_list = []
 
@@ -267,6 +285,12 @@ def process_args(args):
         check_rotomaps(rotomaps_path, notice_list)
     else:
         notice_list.append(NoBaseDirInfo(mel.lib.fs.ROTOMAPS_PATH))
+
+    micro_path = melroot / mel.lib.fs.MICRO_PATH
+    if micro_path.exists():
+        check_micro(micro_path, notice_list)
+    else:
+        notice_list.append(NoBaseDirInfo(mel.lib.fs.MICRO_PATH))
 
     alerts_to_notices = collections.defaultdict(list)
     errors_to_notices = collections.defaultdict(list)
@@ -288,32 +312,36 @@ def process_args(args):
         elif issubclass(klass, InfoNotification):
             info_to_notices[klass].append(notice)
         else:
-            raise RuntimeError(f'Unexpected notice type: {klass}')
+            raise RuntimeError(f"Unexpected notice type: {klass}")
 
     any_notices = bool(alerts_to_notices or errors_to_notices)
 
-    print_klass_to_notices(alerts_to_notices, args.detail)
-    print_klass_to_notices(errors_to_notices, args.detail)
+    print_klass_to_notices(alerts_to_notices, args.detail, colorama.Fore.RED)
+    print_klass_to_notices(
+        errors_to_notices, args.detail, colorama.Fore.MAGENTA
+    )
     if args.trivia > 0:
-        print_klass_to_notices(info_to_notices, args.detail)
+        print_klass_to_notices(
+            info_to_notices, args.detail, colorama.Fore.BLUE
+        )
         if not any_notices and info_to_notices:
             any_notices = True
 
     return any_notices
 
 
-def print_klass_to_notices(klass_to_notices, detail_level):
+def print_klass_to_notices(klass_to_notices, detail_level, fore):
 
     for klass, notice_list in klass_to_notices.items():
         print()
-        print(klass)
+        print(fore, klass.__name__, colorama.Fore.RESET)
         for notice in notice_list:
-            print(textwrap.indent(notice.format(detail_level), '  '))
+            print(textwrap.indent(notice.format(detail_level), "  "))
 
 
 def check_rotomaps(path, notices):
     # incoming_path = path / 'incoming'
-    parts_path = path / 'parts'
+    parts_path = path / "parts"
     if parts_path.exists():
         # So far I've organised parts like so:
         #
@@ -355,7 +383,7 @@ def check_rotomap_minor_part(path, notices):
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
             try:
-                datetime.datetime.strptime(rotomap_path.name[:10], '%Y_%m_%d')
+                datetime.datetime.strptime(rotomap_path.name[:10], "%Y_%m_%d")
             except ValueError:
                 notices.append(InvalidDateError(rotomap_path))
             else:
@@ -380,7 +408,7 @@ def uuids_from_dir(rotomap_dir):
     for _, moles in rotomap_dir.yield_mole_lists():
         for m in moles:
             if m[mel.rotomap.moles.KEY_IS_CONFIRMED]:
-                uuid_set.add(m['uuid'])
+                uuid_set.add(m["uuid"])
     return uuid_set
 
 
@@ -397,7 +425,7 @@ def check_rotomap_list(notices, rotomap_list):
         for _, mole_list in dir_.yield_mole_lists():
             for mole in mole_list:
                 if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
-                    uuid_to_oldmaps[mole['uuid']].add(dir_.path)
+                    uuid_to_oldmaps[mole["uuid"]].add(dir_.path)
 
     old_uuids = set(uuid_to_oldmaps.keys())
     new_uuids = uuids_from_dir(newest)
@@ -432,7 +460,7 @@ def check_rotomap(notices, rotomap):
     for imagepath, mole_list in rotomap.yield_mole_lists():
         current_uuid_set = set()
         for mole in mole_list:
-            uuid_ = mole['uuid']
+            uuid_ = mole["uuid"]
 
             if uuid_ in current_uuid_set:
                 duplicates.frame_to_uuid_list[imagepath].append(uuid_)
@@ -456,7 +484,7 @@ def check_rotomap(notices, rotomap):
                 missing_mole_file_info.frame_list.append(frame.path)
             if not frame.has_mask():
                 missing_mask_info.frame_list.append(frame.path)
-            if 'ellipse' not in frame.metadata:
+            if "ellipse" not in frame.metadata:
                 missing_space_info.frame_list.append(frame.path)
     except Exception as e:
         notices.append(RotomapNotLoadable(rotomap.path, e))
@@ -512,6 +540,63 @@ def check_newest_rotomap(notices, rotomap):
         notices.append(missing_unchanged_status)
     if changed.uuid_list:
         notices.append(changed)
+
+
+def check_micro(path, notices):
+    parts_path = path / "data"
+    if parts_path.exists():
+        # So far I've organised parts like so:
+        #
+        #   LeftArm/Hand
+        #   LeftArm/Upper
+        #   LeftLeg/Foot
+        #   LeftLeg/LowerLeg
+        #   LeftLeg/UpperLeg
+        #   RightArm/Armpit
+        #   RightArm/Forearm
+        #   RightArm/Hand
+        #   RightArm/Upper
+        #   etc.
+        #
+        # So each part is a two-level thing. Each of the parts has leaf
+        # directories that are the actual moles or mole groups.
+        #
+        for major_part in parts_path.iterdir():
+            if major_part.is_dir():
+                for minor_part in major_part.iterdir():
+                    if minor_part.is_dir():
+                        for mole in mel.micro.fs.yield_moles(minor_part):
+                            _validate_mole_dir(mole.path, notices)
+                            changed_path = mel.micro.fs.Names.CHANGED
+                            if (mole.path / changed_path).exists():
+                                notices.append(
+                                    MicroLesionChangedAlert(mole.path, mole.id)
+                                )
+                    else:
+                        notices.append(UnexpectedFileInfo(minor_part))
+            else:
+                notices.append(UnexpectedFileInfo(major_part))
+    else:
+        notices.append(NoBaseDirInfo(parts_path))
+
+
+def _validate_mole_dir(path, notices):
+    for sub in path.iterdir():
+        if sub.name.lower() not in mel.micro.fs.MOLE_DIR_ENTRIES:
+
+            if sub.suffix.lower() in mel.micro.fs.IMAGE_SUFFIXES:
+                continue
+
+            if sub.name in mel.micro.fs.FILES_TO_IGNORE and sub.is_file():
+                continue
+
+            if sub.name in mel.micro.fs.DIRS_TO_IGNORE and sub.is_dir():
+                continue
+
+            if sub.is_dir():
+                notices.append(UnexpectedDirInfo(sub))
+            else:
+                notices.append(UnexpectedFileInfo(sub))
 
 
 # -----------------------------------------------------------------------------

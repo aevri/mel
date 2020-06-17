@@ -133,6 +133,19 @@ def make_argparse_image_moles(path):
         raise argparse.ArgumentTypeError(str(e))
 
 
+def make_argparse_image_moles_tree(path):
+    """Use in the 'type=' parameter to add_argument()."""
+    path = pathlib.Path(path)
+    if path.is_dir():
+        for item in sorted(path.iterdir()):
+            if item.is_dir():
+                yield from make_argparse_image_moles_tree(item)
+            else:
+                yield from make_argparse_image_moles(item)
+    else:
+        yield from make_argparse_image_moles(path)
+
+
 class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
 
@@ -215,15 +228,15 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
     if lesions_path.exists():
         lesions = load_json(lesions_path)
 
-    for l in lesions:
-        if KEY_IS_UNCHANGED not in l:
+    for m in lesions:
+        if KEY_IS_UNCHANGED not in m:
             raise Exception(
-                f'Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {l}'
+                f'Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}'
             )
 
-    for l in lesions:
-        if l['uuid'] is None:
-            raise Exception(f'Lesion UUID cannot be None: {lesions_path} {l}')
+    for m in lesions:
+        if m['uuid'] is None:
+            raise Exception(f'Lesion UUID cannot be None: {lesions_path} {m}')
 
     return lesions
 
@@ -421,8 +434,8 @@ def load_potential_set_file(path, filename):
     if file_path.is_file():
         with file_path.open() as f:
             lines = f.read().splitlines()
-        for l in lines:
-            text = l.strip()
+        for text in lines:
+            text = text.strip()
             if text and not text.startswith('#'):
                 ignore_set.add(text)
     return ignore_set

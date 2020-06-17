@@ -9,6 +9,7 @@ DEFAULT_MOLE_MARK_MODEL_NAME = "mole_mark_model"
 DEFAULT_MOLE_MARK_DATACONFIG_NAME = "mole_mark_dataconfig.pkl"
 
 ROTOMAPS_PATH = pathlib.Path("rotomaps")
+MICRO_PATH = pathlib.Path("micro")
 
 
 def expand_dirs_to_jpegs(path_list):

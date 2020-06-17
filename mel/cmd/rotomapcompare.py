@@ -174,18 +174,18 @@ def process_args(args):
 
 def is_lesion_unchanged(rotomap, uuid_):
     """Mark the provided uuid changed status in the lesions datafile."""
-    for l in rotomap.lesions:
-        if l["uuid"] == uuid_:
-            return l[mel.rotomap.moles.KEY_IS_UNCHANGED]
+    for lesion in rotomap.lesions:
+        if lesion["uuid"] == uuid_:
+            return lesion[mel.rotomap.moles.KEY_IS_UNCHANGED]
     return None
 
 
 def mark_lesion(rotomap, uuid_, *, is_unchanged):
     """Mark the provided uuid changed status in the lesions datafile."""
     target_lesion = None
-    for l in rotomap.lesions:
-        if l["uuid"] == uuid_:
-            target_lesion = l
+    for lesion in rotomap.lesions:
+        if lesion["uuid"] == uuid_:
+            target_lesion = lesion
     if target_lesion is None:
         target_lesion = {"uuid": uuid_}
         rotomap.lesions.append(target_lesion)

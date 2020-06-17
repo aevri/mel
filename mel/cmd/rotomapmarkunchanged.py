@@ -19,9 +19,9 @@ def process_args(args):
         uuids = rotomap.calc_uuids()
         for uuid_ in uuids:
             lesion = None
-            for l in rotomap.lesions:
-                if l["uuid"] == uuid_:
-                    lesion = l
+            for existing_lesion in rotomap.lesions:
+                if existing_lesion["uuid"] == uuid_:
+                    lesion = existing_lesion
             if lesion is None:
                 lesion = {"uuid": uuid_}
                 rotomap.lesions.append(lesion)

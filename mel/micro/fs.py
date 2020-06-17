@@ -69,7 +69,6 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
     )
 
     if should_be_mole_dir:
-        _validate_mole_dir(path)
         micro_image_details = _list_micro_dir_if_exists(path / Names.MICRO)
         yield Mole(
             abspath=path.resolve(strict=True),
@@ -88,22 +87,6 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
                 yield from _yield_moles_imp(
                     sub, refrelpath, context_image_name_tuple_tuple
                 )
-
-
-def _validate_mole_dir(path):
-    for sub in path.iterdir():
-        if sub.name.lower() not in MOLE_DIR_ENTRIES:
-
-            if sub.suffix.lower() in IMAGE_SUFFIXES:
-                continue
-
-            if sub.name in FILES_TO_IGNORE and sub.is_file():
-                continue
-
-            if sub.name in DIRS_TO_IGNORE and sub.is_dir():
-                continue
-
-            raise Exception('Unexpected in a mole dir: {}'.format(sub))
 
 
 def _extend_context_image_name_tuple_tuple(
