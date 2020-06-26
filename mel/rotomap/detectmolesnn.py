@@ -812,6 +812,7 @@ class DenseUnet(torch.nn.Module):
             images.shape[3] // 8,
         )
         bottom_cnn_out = self.bottom_cnn(bottom_cnn_in)
+        del bottom_cnn_in
         assert bottom_cnn_out.shape == (
             len(images),
             self.channels_per_layer,
@@ -823,7 +824,10 @@ class DenseUnet(torch.nn.Module):
             [self.upsample(down_cnn3_out), self.upsample(bottom_cnn_out),],
             dim=1,
         )
+        del down_cnn3_out
+        del bottom_cnn_out
         up_cnn3_in = torch.cat([down_cnn3_in, up_cnn3_in_upsampled,], dim=1,)
+        del down_cnn3_in
         assert up_cnn3_in.shape == (
             len(images),
             self.channels_in + self.channels_per_layer * 4,
@@ -831,6 +835,7 @@ class DenseUnet(torch.nn.Module):
             images.shape[3] // 4,
         )
         up_cnn3_out = self.up_cnn3(up_cnn3_in)
+        del up_cnn3_in
         assert up_cnn3_out.shape == (
             len(images),
             self.channels_per_layer,
@@ -846,7 +851,11 @@ class DenseUnet(torch.nn.Module):
             ],
             dim=1,
         )
+        del down_cnn2_out
+        del up_cnn3_in_upsampled
+        del up_cnn3_out
         up_cnn2_in = torch.cat([down_cnn2_in, up_cnn2_in_upsampled], dim=1,)
+        del down_cnn2_in
         assert up_cnn2_in.shape == (
             len(images),
             self.channels_in + self.channels_per_layer * 5,
@@ -854,6 +863,7 @@ class DenseUnet(torch.nn.Module):
             images.shape[3] // 2,
         )
         up_cnn2_out = self.up_cnn2(up_cnn2_in)
+        del up_cnn2_in
         assert up_cnn2_out.shape == (
             len(images),
             self.channels_per_layer,
@@ -869,7 +879,12 @@ class DenseUnet(torch.nn.Module):
             ],
             dim=1,
         )
+        del down_cnn1_out
+        del up_cnn2_in_upsampled
+        del up_cnn2_out
         up_cnn1_in = torch.cat([down_cnn1_in, up_cnn1_in_upsampled], dim=1,)
+        del down_cnn1_in
+        del up_cnn1_in_upsampled
         assert up_cnn1_in.shape == (
             len(images),
             self.channels_in + self.channels_per_layer * 6,
@@ -877,6 +892,7 @@ class DenseUnet(torch.nn.Module):
             images.shape[3],
         )
         up_cnn1_out = self.up_cnn1(up_cnn1_in)
+        del up_cnn1_in
         assert up_cnn1_out.shape == (
             len(images),
             self.num_classes,
