@@ -782,12 +782,12 @@ class DenseUnet(torch.nn.Module):
             stride=1,
         )
         self.up_cnn2 = make_cnn_layer(
-            self.channels_in + self.channels_per_layer * 5,
+            self.channels_in + self.channels_per_layer * 3,
             self.channels_per_layer,
             stride=1,
         )
         self.up_cnn1 = make_cnn_layer(
-            self.channels_in + self.channels_per_layer * 6,
+            self.channels_in + self.channels_per_layer * 2,
             self.num_classes,
             stride=1,
         )
@@ -881,6 +881,7 @@ class DenseUnet(torch.nn.Module):
         del down_cnn3_out
         del bottom_cnn_out
         up_cnn3_in = torch.cat([down_cnn3_in, up_cnn3_in_upsampled,], dim=1,)
+        del up_cnn3_in_upsampled
         del down_cnn3_in
         assert up_cnn3_in.shape == (
             len(images),
@@ -901,21 +902,20 @@ class DenseUnet(torch.nn.Module):
         up_cnn2_in_upsampled = torch.cat(
             [
                 self.upsample(down_cnn2_out),
-                self.upsample(up_cnn3_in_upsampled),
                 self.upsample(up_cnn3_out),
             ],
             dim=1,
         )
         print_tensor_size("up_cnn2_in_upsampled", up_cnn2_in_upsampled)
         del down_cnn2_out
-        del up_cnn3_in_upsampled
         del up_cnn3_out
         up_cnn2_in = torch.cat([down_cnn2_in, up_cnn2_in_upsampled], dim=1,)
+        del up_cnn2_in_upsampled
         print_tensor_size("up_cnn2_in", up_cnn2_in)
         del down_cnn2_in
         assert up_cnn2_in.shape == (
             len(images),
-            self.channels_in + self.channels_per_layer * 5,
+            self.channels_in + self.channels_per_layer * 3,
             images.shape[2] // 2,
             images.shape[3] // 2,
         )
@@ -932,14 +932,12 @@ class DenseUnet(torch.nn.Module):
         up_cnn1_in_upsampled = torch.cat(
             [
                 self.upsample(down_cnn1_out),
-                self.upsample(up_cnn2_in_upsampled),
                 self.upsample(up_cnn2_out),
             ],
             dim=1,
         )
         print_tensor_size("up_cnn1_in_upsampled", up_cnn1_in_upsampled)
         del down_cnn1_out
-        del up_cnn2_in_upsampled
         del up_cnn2_out
         up_cnn1_in = torch.cat([down_cnn1_in, up_cnn1_in_upsampled], dim=1,)
         print_tensor_size("up_cnn1_in", up_cnn1_in)
@@ -947,7 +945,7 @@ class DenseUnet(torch.nn.Module):
         del up_cnn1_in_upsampled
         assert up_cnn1_in.shape == (
             len(images),
-            self.channels_in + self.channels_per_layer * 6,
+            self.channels_in + self.channels_per_layer * 2,
             images.shape[2],
             images.shape[3],
         )
