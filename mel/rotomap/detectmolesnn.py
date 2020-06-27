@@ -21,6 +21,42 @@ Y_OFFSET = 1
 TILE_MAGNIFICATION = 1
 
 
+to_tensor = torchvision.transforms.ToTensor()
+
+
+def get_masked_image(path):
+    frame = mel.rotomap.moles.RotomapFrame(path)
+    image = frame.load_image()
+    mask = frame.load_mask()
+    if mask is not None:
+        image = green_mask_image(image, mask)
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+
+def calc_images_mean_std(image_iter):
+    # Weight each image equally, even if they have a different number of
+    # pixels.
+    # Don't apply Bessel's correction to the variance, because I don't
+    # understand it enough to know if it is relevant here.
+    mean_sum = 0
+    meansq_sum = 0
+    num_images = 0
+    for image in image_iter:
+        num_images += 1
+        # Expect a tensor of shape ['Colour', 'Height', 'Width'].
+        assert len(image.shape) == 3, image.shape
+        assert image.shape[0] == 3, image.shape
+        image_view = image.view(3, -1)
+        mean_sum += image_view.mean(dim=1)
+        meansq_sum += (image_view ** 2).mean(dim=1)
+
+    meansq = meansq_sum / num_images
+    mean = mean_sum / num_images
+    variance = torch.max(meansq - (mean ** 2), torch.tensor([0., 0., 0.]))
+    std = variance.sqrt()
+    return mean, std
+
+
 def cat_allow_none(left, right):
     if left is None:
         return right

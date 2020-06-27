@@ -34,6 +34,7 @@ import mel.cmd.microcompare  # noqa: E402
 import mel.cmd.microview  # noqa: E402
 import mel.cmd.rotomapautomark  # noqa: E402
 import mel.cmd.rotomapautomark2  # noqa: E402
+import mel.cmd.rotomapautomark2imagestats  # noqa: E402
 import mel.cmd.rotomapautomark2train  # noqa: E402
 import mel.cmd.rotomapautomark2pretrain  # noqa: E402
 import mel.cmd.rotomapautomask  # noqa: E402
@@ -72,6 +73,7 @@ COMMANDS = {
     'rotomap': {
         'automark': mel.cmd.rotomapautomark,
         'automark2': mel.cmd.rotomapautomark2,
+        'automark2imagestats': mel.cmd.rotomapautomark2imagestats,
         'automark2train': mel.cmd.rotomapautomark2train,
         'automark2pretrain': mel.cmd.rotomapautomark2pretrain,
         'automask': mel.cmd.rotomapautomask,
