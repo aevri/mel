@@ -52,7 +52,7 @@ def calc_images_mean_std(image_iter):
 
     meansq = meansq_sum / num_images
     mean = mean_sum / num_images
-    variance = torch.max(meansq - (mean ** 2), torch.tensor([0., 0., 0.]))
+    variance = torch.max(meansq - (mean ** 2), torch.tensor([0.0, 0.0, 0.0]))
     std = variance.sqrt()
     return mean, std
 
