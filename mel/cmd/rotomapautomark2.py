@@ -43,7 +43,14 @@ def process_args(args):
     model.eval()
 
     transforms = torchvision.transforms.Compose(
-        [torchvision.transforms.ToTensor()]
+        [
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(
+                mean=[0.1940, 0.9525, 0.1776],
+                std=[0.3537, 0.0972, 0.3244],
+                inplace=True,
+            ),
+        ]
     )
 
     for path in args.IMAGES:

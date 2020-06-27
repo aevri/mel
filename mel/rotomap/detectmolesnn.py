@@ -752,8 +752,6 @@ class DenseUnet(torch.nn.Module):
         self.channels_per_layer = channels_per_layer
         self.num_classes = num_classes
 
-        self.bn_in = torch.nn.BatchNorm2d(self.channels_in)
-
         self.pool = torch.nn.AvgPool2d(3, stride=2, padding=1)
 
         self.down_cnn1 = make_cnn_layer(
@@ -797,9 +795,8 @@ class DenseUnet(torch.nn.Module):
         assert images.shape[1] == self.channels_in
 
         print_tensor_size("images", images)
-        bn = self.bn_in(images)
 
-        down_cnn1_in = bn
+        down_cnn1_in = images
         print_tensor_size("down_cnn1_in", down_cnn1_in)
         assert down_cnn1_in.shape == (
             len(images),
