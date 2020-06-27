@@ -1911,6 +1911,8 @@ def get_image_activations(image, transforms, resnet):
 
 
 def green_mask_image(image, mask):
+    if mask is None:
+        raise ValueError("mask must not be None.")
     green = numpy.zeros(image.shape, numpy.uint8)
     green[:, :, 1] = 255
     image = cv2.bitwise_and(image, image, mask=mask)
