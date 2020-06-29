@@ -3,6 +3,7 @@
 import contextlib
 import functools
 import pathlib
+import random
 
 import cv2
 import math
@@ -22,6 +23,135 @@ TILE_MAGNIFICATION = 1
 
 
 to_tensor = torchvision.transforms.ToTensor()
+
+
+def draw_moles_dist_image(moles, width, height, max_dist=32):
+    if not moles:
+        return numpy.full((height, width), max_dist, dtype=numpy.float32)
+
+    xpos = numpy.repeat(
+        numpy.arange(0, width, dtype=numpy.float32)[numpy.newaxis, :],
+        height,
+        axis=0,
+    )
+    assert xpos.shape == (height, width)
+    assert xpos[0, 1] > xpos[0, 0]
+    assert xpos[0, 0] == xpos[1, 0]
+    ypos = numpy.repeat(
+        numpy.arange(0, height, dtype=numpy.float32)[:, numpy.newaxis],
+        width,
+        axis=1,
+    )
+    assert ypos.shape == (height, width)
+    assert ypos[0, 1] == ypos[0, 0]
+    assert ypos[1, 0] > ypos[0, 0]
+
+    mole_x = numpy.array([m["x"] for m in moles], dtype=numpy.float32)
+    mole_y = numpy.array([m["y"] for m in moles], dtype=numpy.float32)
+    num_moles = len(moles)
+    xdist = xpos[:, :, numpy.newaxis] - mole_x
+    assert xdist.shape == (height, width, num_moles)
+    ydist = ypos[:, :, numpy.newaxis] - mole_y
+    assert ydist.shape == (height, width, num_moles)
+    sqdist = xdist ** 2 + ydist ** 2
+    nearest_sqdist = numpy.min(sqdist, axis=2)
+    assert nearest_sqdist.shape == (height, width), nearest_sqdist
+    dist = numpy.sqrt(nearest_sqdist)
+    assert dist.dtype == numpy.float32, dist.dtype
+    return numpy.minimum(dist, max_dist)
+
+
+class FrameDataset:
+    def __init__(self, image_paths, tile_size):
+        self.image_path = list(image_paths)
+        self.tile_size = tile_size
+        self._transforms = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[0.1940, 0.9525, 0.1776],
+                    std=[0.3537, 0.0972, 0.3244],
+                    inplace=True,
+                ),
+            ]
+        )
+        self._expected_shape = None
+
+    def __len__(self):
+        return len(self.image_path)
+
+    @functools.lru_cache(10)
+    def _getimage(self, path):
+        frame = mel.rotomap.moles.RotomapFrame(path)
+        image = frame.load_image()
+        mask = frame.load_mask()
+        image = mel.rotomap.detectmolesnn.green_mask_image(image, mask)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return self._transforms(image)
+
+    @functools.lru_cache(10)
+    def _get_expected_image(self, path, image_shape):
+        frame = mel.rotomap.moles.RotomapFrame(path)
+        return draw_moles_dist_image(
+            frame.moles, image_shape[2], image_shape[1]
+        )
+
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise ValueError("Only int keys are supported.")
+
+        path = self.image_path[key]
+        image = self._getimage(path)
+        expected_image = self._get_expected_image(path, image.shape)
+
+        if self._expected_shape is None:
+            self._expected_shape = image.shape
+
+        if image.shape != self._expected_shape:
+            raise ValueError(
+                f"image is unexpected shape: {path} {image.shape}"
+            )
+
+        x_offset = random.randint(0, image.shape[2] - self.tile_size)
+        y_offset = random.randint(0, image.shape[1] - self.tile_size)
+
+        return {
+            "key": key,
+            "image": image[
+                :,
+                y_offset : y_offset + self.tile_size,
+                x_offset : x_offset + self.tile_size,
+            ],
+            "expected_image": expected_image[
+                numpy.newaxis,
+                y_offset : y_offset + self.tile_size,
+                x_offset : x_offset + self.tile_size,
+            ],
+            "path": str(path),
+        }
+
+
+class FrameSampler(torch.utils.data.Sampler):
+    def __init__(self, frame_dataset, repeats):
+        super().__init__(frame_dataset)
+        self.frame_dataset = frame_dataset
+        self.repeats = repeats
+
+    def __iter__(self):
+        num_items = len(self.frame_dataset)
+        indices = list(range(num_items))
+        random.shuffle(indices)
+        out_count = 0
+        for i in indices[: num_items // self.repeats]:
+            for _ in range(self.repeats):
+                yield i
+                out_count += 1
+        while out_count < num_items:
+            yield indices[-1]
+            out_count += 1
+
+    def __len__(self):
+        return len(self.frame_dataset)
 
 
 def get_masked_image(path):
