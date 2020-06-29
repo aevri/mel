@@ -934,6 +934,9 @@ class DenseUnet(torch.nn.Module):
             stride=1,
         )
 
+    def init_dict(self):
+        return self.channels_in, self.channels_per_yaler, self.num_classes
+
     def forward(self, images):
         assert len(images.shape) == 4
         assert images.shape[1] == self.channels_in
