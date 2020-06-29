@@ -221,6 +221,7 @@ def item_atlas(items, items_per_row=10):
 
 
 def train_epoch(
+    device,
     model,
     dataloader,
     loss_func,
@@ -230,12 +231,14 @@ def train_epoch(
     expected_output_keys,
 ):
     model.train()
-    with tqdm.auto.tqdm(dataloader) as batcher:
+    with tqdm.auto.tqdm(dataloader, disable=True) as batcher:
         for batch in batcher:
             optimizer.zero_grad()
-            out = model(*[batch[key] for key in input_keys])
+            for key in input_keys:
+                batch[key].to(device)
+            out = model(*[batch[key].to(device) for key in input_keys])
             loss = loss_func(
-                out, *[batch[key] for key in expected_output_keys]
+                out, *[batch[key].to(device) for key in expected_output_keys]
             )
             batcher.set_description(f"loss={float(loss):.3f}")
             loss.backward()
