@@ -1,8 +1,9 @@
 """Train to automatically mark moles on rotomap images."""
 
-import datetime
 import json
 import sys
+
+import tqdm
 
 import torch
 
@@ -12,6 +13,11 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
+    parser.add_argument(
+        "IMAGES",
+        nargs="+",
+        help="A list of paths to images to learn to automark.",
+    )
     parser.add_argument(
         "--verbose",
         "-v",
@@ -27,57 +33,36 @@ def process_args(args):
         print("Not in a mel repo, could not find melroot", file=sys.stderr)
         return 1
 
+    cpu_device = torch.device("cpu")
+    device = torch.device("cuda") if torch.cuda.is_available() else cpu_device
+
+    print("Will train on", device)
+
+    model = mel.rotomap.detectmolesnn.DenseUnet(
+        channels_in=3, channels_per_layer=16, num_classes=1
+    )
+
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detectmoles.pth"
     metadata_path = model_dir / "detectmoles.json"
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
-    batch_size = 512
-    max_lr = 0.001
-    # num_epochs = 50
-    num_epochs = 5
+    training_images = args.IMAGES
 
-    parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
+    batch_size = 40
+    num_epochs = 1800
+    max_lr = 0.01
+    tile_size = 512
 
-    # all_images = list(parts_path.glob("LeftLeg/*/*/*.jpg"))
-    all_images = [
-        path
-        for path in parts_path.glob("*/*/*/*.jpg")
-        if ("Left" in str(path) or "Right" in str(path))
-        and ("Lower" in str(path) or "Upper" in str(path))
-        and "2015" not in str(path)
-        and "2016" not in str(path)
-
-        # and "2017" not in str(path)
-        # and "2018" not in str(path)
-        # and "Leg" in str(path)
-        # and "Lower" in str(path)
-        # and "Left" in str(path)
-
-    ]
-    # all_images = [
-    #     path
-    #     for path in parts_path.glob("*/*/*/*.jpg")
-    #     if ("Left" in str(path) or "Right" in str(path))
-    #     and ("Lower" in str(path) or "Upper" in str(path))
-    # ]
-
-    # all_parts = sorted(
-    #     {mel.rotomap.detectmolesnn.image_path_to_part(i) for i in all_images}
-    # )
-    # part_to_id = {part: i for i, part in enumerate(all_parts)}
-
-    training_images = [path for path in all_images if not "2019_" in str(path)]
-    validation_images = [path for path in all_images if "2019_" in str(path)]
-
-    model, train_log_dict = train4(
+    train(
+        model,
+        device,
         training_images,
-        validation_images,
         batch_size,
+        tile_size,
         num_epochs,
         max_lr,
-        # part_to_id,
     )
 
     with open(metadata_path, "w") as f:
@@ -86,225 +71,50 @@ def process_args(args):
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
 
-    dt_string = mel.lib.datetime.make_datetime_string(
-        datetime.datetime.utcnow()
-    )
-    log_path = model_dir / f"{dt_string}_detectmoles.log.json"
-    with open(log_path, "w") as f:
-        json.dump(train_log_dict, f)
-    print(f"Saved {log_path}")
-
-
-def train4(
-    training_images,
-    validation_images,
-    batch_size,
-    num_epochs,
-    max_lr,
-):
-    training_dataloader, _ = load_dataset2(training_images, batch_size)
-    validation_dataloader, validation_dataset = load_dataset2(
-        validation_images, batch_size
-    )
-
-    model = mel.rotomap.detectmolesnn.DenseUnetModel(
-        channels_in=3, channels_per_layer=8
-    )
-
-    train_log_dict = {}
-    mel.rotomap.detectmolesnn.train(
-        model,
-        training_dataloader,
-        validation_dataloader,
-        validation_dataset,
-        loss_func2,
-        max_lr,
-        num_epochs,
-        train_log_dict,
-    )
-
-    return model, train_log_dict
-
-
-def train3(
-    training_images,
-    validation_images,
-    batch_size,
-    num_epochs,
-    max_lr,
-    part_to_id,
-):
-    training_dataloader, _ = load_dataset2(training_images, batch_size)
-    validation_dataloader, validation_dataset = load_dataset2(
-        validation_images, batch_size
-    )
-
-    # num_features = None
-    # for batch in training_dataloader:
-    #     activations_batch = batch[1]
-    #     assert len(activations_batch.shape) == 2
-    #     num_features = len(activations_batch[0])
-    #     break
-
-    # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
-    model = mel.rotomap.detectmolesnn.LinearSigmoidModel3(part_to_id)
-
-    train_log_dict = {}
-    mel.rotomap.detectmolesnn.train(
-        model,
-        training_dataloader,
-        validation_dataloader,
-        validation_dataset,
-        loss_func,
-        max_lr,
-        num_epochs,
-        train_log_dict,
-    )
-
-    return model, train_log_dict
+    # dt_string = mel.lib.datetime.make_datetime_string(
+    #     datetime.datetime.utcnow()
+    # )
+    # log_path = model_dir / f"{dt_string}_detectmoles.log.json"
+    # with open(log_path, "w") as f:
+    #     json.dump(train_log_dict, f)
+    # print(f"Saved {log_path}")
 
 
 def train(
-    training_images,
-    validation_images,
-    batch_size,
-    num_epochs,
-    max_lr,
-    part_to_id,
+    model, device, training_images, batch_size, tile_size, num_epochs, max_lr,
 ):
-    training_dataloader, _ = load_dataset(training_images, batch_size)
-    validation_dataloader, validation_dataset = load_dataset(
-        validation_images, batch_size
+    model.to(device)
+
+    frame_dataset = mel.rotomap.detectmolesnn.FrameDataset(
+        training_images, tile_size=tile_size,
     )
 
-    # resnet18_num_features = 512
-    # resnet18_num_features = 7680
-    # resnet18_num_features = 69120
-    # resnet50_num_features = 2048
-    # resnet_num_features = resnet18_num_features
-    num_features = None
-    for batch in training_dataloader:
-        activations_batch = batch[1]
-        assert len(activations_batch.shape) == 2
-        num_features = len(activations_batch[0])
-        break
-    num_intermediate = 80
-    num_layers = 2
-    # model = mel.rotomap.detectmolesnn.NeighboursLinearSigmoidModel2(
-    model = mel.rotomap.detectmolesnn.LinearSigmoidModel2(
-        part_to_id, num_features, num_intermediate, num_layers
-    )
-
-    train_log_dict = {}
-    mel.rotomap.detectmolesnn.train(
-        model,
-        training_dataloader,
-        validation_dataloader,
-        validation_dataset,
-        loss_func,
-        max_lr,
-        num_epochs,
-        train_log_dict,
-    )
-
-    return model, train_log_dict
-
-
-def loss_func2(in_, target):
-    in_has_mole = in_[:, 0].unsqueeze(1)
-    assert in_has_mole.shape == (len(in_), 1)
-    target_has_mole = target[:, 0].unsqueeze(1)
-    assert target_has_mole.shape == (len(target), 1)
-
-    in_pos = in_[:, 1:]
-    assert in_pos.shape == (len(in_), 2)
-    target_pos = target[:, 1:3]
-    assert target_pos.shape == (len(target), 2)
-
-    pos_diff = in_pos - target_pos
-    pos_diff_sq = pos_diff ** 2
-    dist_sq = (pos_diff_sq[:, 0] + pos_diff_sq[:, 1]).unsqueeze(1)
-
-    scale = target[:, 3].unsqueeze(1)
-    assert scale.shape == (len(in_), 1)
-
-    # scale1 = torch.max(scale - 0.5, 0.0) * 2.0
-
-    loss1 = torch.nn.functional.mse_loss(
-        in_has_mole, target_has_mole
-    )
-
-    loss2 = torch.nn.functional.mse_loss(
-        dist_sq * target_has_mole, torch.zeros(len(in_), 1)
-    )
-
-    # loss1 = torch.nn.functional.mse_loss(
-    #     (in_has_mole - target_has_mole) * scale1, torch.zeros(len(in_), 1)
-    # )
-
-    # loss2 = torch.nn.functional.mse_loss(
-    #     dist_sq * scale, torch.zeros(len(in_), 1)
-    # )
-
-    return loss1 + loss2
-
-
-def loss_func(in_, target):
-    scale = target[:, 0].unsqueeze(1)
-    assert scale.shape == (len(in_), 1)
-    scale1 = (scale * 10) + 1
-    # scale1 = scale + 1
-    # loss1 = torch.nn.functional.mse_loss(in_[:, 0], target[:, 0])
-    loss1 = torch.nn.functional.mse_loss(
-        in_[:, 0] + scale1, target[:, 0] + scale1
-    )
-
-    pos_diff = in_[:, 1:] - target[:, 1:]
-    pos_diff_sq = pos_diff ** 2
-    dist_sq = (pos_diff_sq[:, 0] + pos_diff_sq[:, 1]).unsqueeze(1)
-    assert dist_sq.shape == (len(in_), 1), f"{dist_sq.shape}"
-
-    loss2 = torch.nn.functional.mse_loss(
-        dist_sq * scale, torch.zeros(len(in_), 1)
-    )
-
-    # loss2 = torch.nn.functional.mse_loss(
-    #     in_[:, 1:] * scale, target[:, 1:] * scale
-    # )
-
-    return loss1 + loss2
-
-
-def load_dataset2(images, batch_size):
-    print(f"Will load from {len(images)} images.")
-    dataset = mel.rotomap.detectmolesnn.TileDataset2(images, 32)
-    print(f"Loaded {len(dataset)} tiles.")
     dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=False,
+        frame_dataset,
+        batch_size=batch_size,
+        sampler=mel.rotomap.detectmolesnn.FrameSampler(
+            frame_dataset, batch_size
+        ),
     )
-    return dataloader, dataset
-    # neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
-    # print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
-    # neighbours_dataloader = torch.utils.data.DataLoader(
-    #     neighbours_dataset, batch_size=batch_size, shuffle=True,
-    # )
-    # return neighbours_dataloader
 
-
-def load_dataset(images, batch_size):
-    print(f"Will load from {len(images)} images.")
-    dataset = mel.rotomap.detectmolesnn.TileDataset(images, 32)
-    print(f"Loaded {len(dataset)} tiles.")
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True,
+    optimizer = torch.optim.AdamW(model.parameters())
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        steps_per_epoch=len(dataloader),
+        max_lr=max_lr,
+        epochs=num_epochs,
     )
-    return dataloader, dataset
-    # neighbours_dataset = mel.rotomap.detectmolesnn.NeighboursDataset(dataset)
-    # print(f"Got {len(neighbours_dataset)} 3x3 tiles.")
-    # neighbours_dataloader = torch.utils.data.DataLoader(
-    #     neighbours_dataset, batch_size=batch_size, shuffle=True,
-    # )
-    # return neighbours_dataloader
+    for epoch in tqdm.tqdm(range(num_epochs)):
+        mel.rotomap.detectmolesnn.train_epoch(
+            device,
+            model,
+            dataloader,
+            mel.rotomap.detectmolesnn.image_loss_inv32,
+            optimizer,
+            scheduler,
+            ["image"],
+            ["expected_image"],
+        )
 
 
 # -----------------------------------------------------------------------------
