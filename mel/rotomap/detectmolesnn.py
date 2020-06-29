@@ -878,6 +878,17 @@ def print_tensor_size(name, tensor):
     print(f"{name}: {tensor_size_string(tensor)} bytes.")
 
 
+def image_loss_inv32(in_, image_target):
+    image_in = in_[:, 0].unsqueeze(1)
+    assert image_in.shape == image_target.shape, (
+        image_in.shape,
+        image_target.shape,
+    )
+    return torch.nn.functional.mse_loss(
+        (32 - image_in) ** 2, (32 - image_target) ** 2,
+    )
+
+
 class DenseUnet(torch.nn.Module):
     def __init__(self, channels_in, channels_per_layer, num_classes):
         super().__init__()
