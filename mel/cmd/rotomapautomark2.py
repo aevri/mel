@@ -33,6 +33,8 @@ def process_args(args):
         print("Not in a mel repo, could not find melroot", file=sys.stderr)
         return 1
 
+    cpu_device = torch.device("cpu")
+
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "moles_512x512_tiles_60_epochs.pt"
 
@@ -40,6 +42,7 @@ def process_args(args):
         channels_in=3, channels_per_layer=16, num_classes=1
     )
     model.load_state_dict(torch.load(model_path))
+    model.to(cpu_device)
     model.eval()
 
     transforms = torchvision.transforms.Compose(
