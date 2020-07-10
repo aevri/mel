@@ -231,7 +231,7 @@ def train_epoch(
     expected_output_keys,
 ):
     model.train()
-    with tqdm.auto.tqdm(dataloader, disable=True) as batcher:
+    with tqdm.auto.tqdm(dataloader, disable=False, leave=False) as batcher:
         for batch in batcher:
             optimizer.zero_grad()
             for key in input_keys:
@@ -244,7 +244,8 @@ def train_epoch(
             loss.backward()
             optimizer.step()
             scheduler.step()
-    print("train loss:", float(loss))
+    # print("train loss:", float(loss))
+    batcher.set_description(f"Loss: {float(loss):.4g}")
 
 
 def train(
