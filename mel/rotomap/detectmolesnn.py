@@ -876,7 +876,8 @@ def tensor_size_string(tensor):
 
 
 def print_tensor_size(name, tensor):
-    print(f"{name}: {tensor_size_string(tensor)} bytes.")
+    # print(f"{name}: {tensor_size_string(tensor)} bytes.")
+    pass
 
 
 def image_loss_inv32(in_, image_target):
