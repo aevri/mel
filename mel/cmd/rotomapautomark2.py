@@ -41,7 +41,7 @@ def process_args(args):
     model = mel.rotomap.detectmolesnn.DenseUnet(
         channels_in=3, channels_per_layer=16, num_classes=1
     )
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=cpu_device))
     model.to(cpu_device)
     model.eval()
 
