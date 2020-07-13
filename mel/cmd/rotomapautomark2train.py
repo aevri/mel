@@ -24,6 +24,13 @@ def setup_parser(parser):
         action="store_true",
         help="Print information about the processing.",
     )
+    parser.add_argument(
+        "--epochs",
+        "-e",
+        type=int,
+        default=1800,
+        help="Number of epochs to train for.",
+    )
 
 
 def process_args(args):
@@ -51,7 +58,7 @@ def process_args(args):
     training_images = args.IMAGES
 
     batch_size = 40
-    num_epochs = 1800
+    num_epochs = args.epochs
     max_lr = 0.01
     tile_size = 512
 
