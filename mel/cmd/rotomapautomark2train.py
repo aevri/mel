@@ -45,15 +45,28 @@ def process_args(args):
 
     print("Will train on", device)
 
-    model = mel.rotomap.detectmolesnn.DenseUnet(
-        channels_in=3, channels_per_layer=16, num_classes=1
-    )
-
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detectmoles.pth"
     metadata_path = model_dir / "detectmoles.json"
-    print(f"Will save to {model_path}")
-    print(f"         and {metadata_path}")
+
+    if model_path.exists():
+        if not metadata_path.exists():
+            raise Exception(
+                f"Metadata for model does not exist: {metadata_path}"
+            )
+        print(f"Will fine-tune {model_path}")
+        print(f"           and {metadata_path}")
+        with open(metadata_path) as f:
+            init_dict = json.load(f)
+        model = mel.rotomap.detectmolesnn.DenseUnet(**init_dict)
+        model.load_state_dict(torch.load(model_path, map_location=device))
+    else:
+        print(f"Will save to {model_path}")
+        print(f"         and {metadata_path}")
+
+        model = mel.rotomap.detectmolesnn.DenseUnet(
+            channels_in=3, channels_per_layer=16, num_classes=1
+        )
 
     training_images = args.IMAGES
 
