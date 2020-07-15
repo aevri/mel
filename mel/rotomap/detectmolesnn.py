@@ -246,6 +246,7 @@ def train_epoch(
             scheduler.step()
     # print("train loss:", float(loss))
     batcher.set_description(f"Loss: {float(loss):.4g}")
+    return loss.item()
 
 
 def train(

@@ -125,7 +125,7 @@ def train(
         epochs=num_epochs,
     )
     for epoch in tqdm.tqdm(range(num_epochs)):
-        mel.rotomap.detectmolesnn.train_epoch(
+        loss = mel.rotomap.detectmolesnn.train_epoch(
             device,
             model,
             dataloader,
@@ -135,6 +135,7 @@ def train(
             ["image"],
             ["expected_image"],
         )
+        tqdm.tqdm.write(f"Epoch {epoch}: loss {loss:0,.2f}")
 
 
 # -----------------------------------------------------------------------------
