@@ -36,7 +36,7 @@ def process_args(args):
     cpu_device = torch.device("cpu")
 
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
-    model_path = model_dir / "detectmoles.pt"
+    model_path = model_dir / "detectmoles.pth"
 
     model = mel.rotomap.detectmolesnn.DenseUnet(
         channels_in=3, channels_per_layer=16, num_classes=1
