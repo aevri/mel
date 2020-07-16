@@ -124,17 +124,21 @@ def train(
         max_lr=max_lr,
         epochs=num_epochs,
     )
-    for epoch in tqdm.tqdm(range(num_epochs)):
-        loss = mel.rotomap.detectmolesnn.train_epoch(
-            device,
-            model,
-            dataloader,
-            mel.rotomap.detectmolesnn.image_loss_inv32,
-            optimizer,
-            scheduler,
-            ["image"],
-            ["expected_image"],
-        )
+    with tqdm.auto.tqdm(range(num_epochs)) as bar:
+        for epoch in bar:
+            loss = mel.rotomap.detectmolesnn.train_epoch(
+                device,
+                model,
+                dataloader,
+                mel.rotomap.detectmolesnn.image_loss_inv32,
+                optimizer,
+                scheduler,
+                ["image"],
+                ["expected_image"],
+            )
+            bar.set_description(f"Loss: {float(loss):.4g}")
+            if not (epoch % 100):
+                tqdm.tqdm.write(f"Epoch {epoch}: loss {loss:0,.2f}")
         tqdm.tqdm.write(f"Epoch {epoch}: loss {loss:0,.2f}")
 
 
