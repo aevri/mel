@@ -1,5 +1,6 @@
 """Automatically mark moles on rotomap images."""
 
+import json
 import sys
 
 import cv2
@@ -37,10 +38,12 @@ def process_args(args):
 
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detectmoles.pth"
+    metadata_path = model_dir / "detectmoles.json"
 
-    model = mel.rotomap.detectmolesnn.DenseUnet(
-        channels_in=3, channels_per_layer=16, num_classes=1
-    )
+    with open(metadata_path) as f:
+        init_dict = json.load(f)
+
+    model = mel.rotomap.detectmolesnn.DenseUnet(**init_dict)
     model.load_state_dict(torch.load(model_path, map_location=cpu_device))
     model.to(cpu_device)
     model.eval()
