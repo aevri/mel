@@ -84,6 +84,8 @@ def process_args(args):
 def _connected_pixels(binary_image):
     # Note that PyTorch arrays don't work in maps.
     clusters = {(int(i[1]), int(i[0])): [] for i in binary_image.nonzero()}
+    if len(clusters) > 10000:
+        raise Exception("Too many potential clusters to count.")
     for pixel, joined_pixels in clusters.items():
         x, y = pixel
         if not joined_pixels:
