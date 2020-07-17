@@ -15,6 +15,10 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
+class TooManyClusters(ValueError):
+    pass
+
+
 def setup_parser(parser):
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
@@ -69,7 +73,11 @@ def process_args(args):
             out = model(transforms(masked_image).unsqueeze(0))
 
         minimums = _show_minimums(out[0][0], maximum=10)
-        connected = _connected_pixels(minimums)
+        try:
+            connected = _connected_pixels(minimums)
+        except TooManyClusters:
+            print(path, "- too many potential moles, bad data?")
+            return 1
         mole_locations = [
             torch.mean(torch.tensor(x, dtype=float), axis=0) for x in connected
         ]
@@ -85,7 +93,7 @@ def _connected_pixels(binary_image):
     # Note that PyTorch arrays don't work in maps.
     clusters = {(int(i[1]), int(i[0])): [] for i in binary_image.nonzero()}
     if len(clusters) > 10000:
-        raise Exception("Too many potential clusters to count.")
+        raise TooManyClusters("Too many potential clusters to count.")
     for pixel, joined_pixels in clusters.items():
         x, y = pixel
         if not joined_pixels:
