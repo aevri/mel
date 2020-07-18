@@ -62,7 +62,7 @@ def draw_moles_dist_image(moles, width, height, max_dist=32):
 
 
 class FrameDataset:
-    def __init__(self, image_paths, tile_size):
+    def __init__(self, image_paths, tile_size, max_dist):
         self.image_path = list(image_paths)
         self.tile_size = tile_size
         self._transforms = torchvision.transforms.Compose(
@@ -76,6 +76,7 @@ class FrameDataset:
             ]
         )
         self._expected_shape = None
+        self.max_dist = max_dist
 
     def __len__(self):
         return len(self.image_path)
@@ -93,7 +94,7 @@ class FrameDataset:
     def _get_expected_image(self, path, image_shape):
         frame = mel.rotomap.moles.RotomapFrame(path)
         return draw_moles_dist_image(
-            frame.moles, image_shape[2], image_shape[1]
+            frame.moles, image_shape[2], image_shape[1], max_dist=self.max_dist
         )
 
     def __getitem__(self, key):
@@ -881,14 +882,14 @@ def print_tensor_size(name, tensor):
     pass
 
 
-def image_loss_inv32(in_, image_target):
+def image_loss_max_dist(in_, image_target, max_dist):
     image_in = in_[:, 0].unsqueeze(1)
     assert image_in.shape == image_target.shape, (
         image_in.shape,
         image_target.shape,
     )
     return torch.nn.functional.mse_loss(
-        (32 - image_in) ** 2, (32 - image_target) ** 2,
+        (max_dist - image_in) ** 2, (max_dist - image_target) ** 2,
     )
 
 

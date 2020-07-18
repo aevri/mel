@@ -63,6 +63,8 @@ def process_args(args):
         ]
     )
 
+    max_detect_dist = 10
+
     for path in args.IMAGES:
         if args.verbose:
             print(path)
@@ -72,7 +74,7 @@ def process_args(args):
         with torch.no_grad():
             out = model(transforms(masked_image).unsqueeze(0))
 
-        minimums = _show_minimums(out[0][0], maximum=10)
+        minimums = _show_minimums(out[0][0], maximum=max_detect_dist)
         try:
             connected = _connected_pixels(minimums)
         except TooManyClusters:
