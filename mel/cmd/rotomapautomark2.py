@@ -15,6 +15,9 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
+_MAX_CLUSTER_SIZE = 10000
+
+
 class TooManyClusters(ValueError):
     pass
 
@@ -94,7 +97,7 @@ def process_args(args):
 def _connected_pixels(binary_image):
     # Note that PyTorch arrays don't work in maps.
     clusters = {(int(i[1]), int(i[0])): [] for i in binary_image.nonzero()}
-    if len(clusters) > 10000:
+    if len(clusters) > _MAX_CLUSTER_SIZE:
         raise TooManyClusters("Too many potential clusters to count.")
     for pixel, joined_pixels in clusters.items():
         x, y = pixel
