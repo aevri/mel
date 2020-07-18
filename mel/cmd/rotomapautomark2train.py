@@ -77,6 +77,7 @@ def process_args(args):
     num_epochs = args.epochs
     max_lr = 0.01
     tile_size = 512
+    max_dist = 32
 
     train(
         model,
@@ -86,6 +87,7 @@ def process_args(args):
         tile_size,
         num_epochs,
         max_lr,
+        max_dist,
     )
 
     with open(metadata_path, "w") as f:
@@ -104,12 +106,23 @@ def process_args(args):
 
 
 def train(
-    model, device, training_images, batch_size, tile_size, num_epochs, max_lr,
+    model,
+    device,
+    training_images,
+    batch_size,
+    tile_size,
+    num_epochs,
+    max_lr,
+    max_dist,
 ):
     model.to(device)
 
     frame_dataset = mel.rotomap.detectmolesnn.IterableFrameDataset(
-        training_images, tile_size=tile_size, num_repeats=10, cache_size=40,
+        training_images,
+        tile_size=tile_size,
+        num_repeats=10,
+        cache_size=40,
+        max_dist=max_dist,
     )
 
     dataloader = torch.utils.data.DataLoader(
@@ -137,13 +150,19 @@ def train(
         max_lr=max_lr,
         epochs=num_epochs,
     )
+
+    def loss_func(output, target):
+        return mel.rotomap.detectmolesnn.image_loss_max_dist(
+            output, target, max_dist
+        )
+
     with tqdm.auto.tqdm(range(num_epochs)) as bar:
         for epoch in bar:
             loss = mel.rotomap.detectmolesnn.train_epoch(
                 device,
                 model,
                 dataloader,
-                mel.rotomap.detectmolesnn.image_loss_inv32,
+                loss_func,
                 optimizer,
                 scheduler,
                 ["image"],
