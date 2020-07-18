@@ -15,7 +15,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-_MAX_CLUSTER_SIZE = 10000
+_MAX_CLUSTER_SIZE = 100000
 
 
 class TooManyClusters(ValueError):
