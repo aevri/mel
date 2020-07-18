@@ -241,7 +241,7 @@ def train_epoch(
             loss = loss_func(
                 out, *[batch[key].to(device) for key in expected_output_keys]
             )
-            batcher.set_description(f"loss={float(loss):.3f}")
+            batcher.set_description(f"loss={float(loss):.4g}")
             loss.backward()
             optimizer.step()
             scheduler.step()

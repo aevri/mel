@@ -153,8 +153,8 @@ def train(
             )
             bar.set_description(f"Loss: {float(loss):.4g}")
             if not (epoch % 100):
-                tqdm.tqdm.write(f"Epoch {epoch}: loss {loss:0,.2f}")
-        tqdm.tqdm.write(f"Epoch {epoch}: loss {loss:0,.2f}")
+                tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
+        tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
 
 
 # -----------------------------------------------------------------------------
