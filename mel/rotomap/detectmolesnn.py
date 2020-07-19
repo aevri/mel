@@ -805,7 +805,7 @@ class Lambda(torch.nn.Module):
         return self.func(x)
 
 
-def make_cnn_layer(in_width, out_width, stride=2):
+def make_cnn_layer(in_width, out_width, stride=2, bias=False):
     return torch.nn.Sequential(
         torch.nn.Conv2d(
             in_width,
@@ -813,7 +813,7 @@ def make_cnn_layer(in_width, out_width, stride=2):
             kernel_size=3,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=bias,
         ),
         torch.nn.BatchNorm2d(out_width),
         torch.nn.ReLU(inplace=True),
