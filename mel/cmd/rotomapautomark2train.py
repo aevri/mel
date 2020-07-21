@@ -70,6 +70,8 @@ def process_args(args):
 
     training_images = args.IMAGES
 
+    print(f"Got {len(training_images)} images to train on.")
+
     batch_size = 40
     num_epochs = args.epochs
     max_lr = 0.01
