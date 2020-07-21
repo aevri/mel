@@ -906,24 +906,20 @@ class DenseUnet(torch.nn.Module):
         self.pool = torch.nn.AvgPool2d(3, stride=2, padding=1)
 
         self.down_cnn1 = make_cnn_layer(
-            self.channels_in, self.channels_per_layer, bias=True
+            self.channels_in, self.channels_per_layer
         )
         self.down_cnn2 = make_cnn_layer(
-            self.channels_in + self.channels_per_layer,
-            self.channels_per_layer,
-            bias=True,
+            self.channels_in + self.channels_per_layer, self.channels_per_layer
         )
         self.down_cnn3 = make_cnn_layer(
             self.channels_in + self.channels_per_layer * 2,
             self.channels_per_layer,
-            bias=True,
         )
 
         self.bottom_cnn = make_cnn_layer(
             self.channels_in + self.channels_per_layer * 3,
             self.channels_per_layer,
             stride=1,
-            bias=True,
         )
 
         self.upsample = torch.nn.Upsample(scale_factor=2)
@@ -933,19 +929,16 @@ class DenseUnet(torch.nn.Module):
             self.channels_in + self.channels_per_layer * 4,
             self.channels_per_layer,
             stride=1,
-            bias=True,
         )
         self.up_cnn2 = make_cnn_layer(
             self.channels_in + self.channels_per_layer * 3,
             self.channels_per_layer,
             stride=1,
-            bias=True,
         )
         self.up_cnn1 = make_cnn_layer(
             self.channels_in + self.channels_per_layer * 2,
             self.num_classes,
             stride=1,
-            bias=True,
         )
 
     def init_dict(self):
