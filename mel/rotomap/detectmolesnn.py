@@ -232,6 +232,8 @@ def train_epoch(
     expected_output_keys,
 ):
     model.train()
+    avg_loss = 0
+    num_batches = 0
     with tqdm.auto.tqdm(dataloader, disable=False, leave=False) as batcher:
         for batch in batcher:
             optimizer.zero_grad()
@@ -242,12 +244,13 @@ def train_epoch(
                 out, *[batch[key].to(device) for key in expected_output_keys]
             )
             batcher.set_description(f"loss={float(loss):.4g}")
+            avg_loss += loss.item()
+            num_batches += 1
             loss.backward()
             optimizer.step()
             scheduler.step()
     # print("train loss:", float(loss))
-    batcher.set_description(f"Loss: {float(loss):.4g}")
-    return loss.item()
+    return avg_loss / num_batches
 
 
 def train(
