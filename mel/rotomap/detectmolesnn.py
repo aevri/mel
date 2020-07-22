@@ -86,7 +86,7 @@ class IterableFrameDataset(torch.utils.data.IterableDataset):
     # def __len__(self):
     #     return len(self.image_path) * self.num_repeats
 
-    @functools.lru_cache(10)
+    @functools.lru_cache(40)
     def _getimage(self, path):
         frame = mel.rotomap.moles.RotomapFrame(path)
         image = frame.load_image()
@@ -95,7 +95,7 @@ class IterableFrameDataset(torch.utils.data.IterableDataset):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return self._transforms(image)
 
-    @functools.lru_cache(10)
+    @functools.lru_cache(40)
     def _get_expected_image(self, path, image_shape):
         frame = mel.rotomap.moles.RotomapFrame(path)
         return draw_moles_dist_image(

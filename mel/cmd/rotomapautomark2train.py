@@ -109,7 +109,7 @@ def train(
     model.to(device)
 
     frame_dataset = mel.rotomap.detectmolesnn.IterableFrameDataset(
-        training_images, tile_size=tile_size, num_repeats=10, cache_size=10,
+        training_images, tile_size=tile_size, num_repeats=10, cache_size=40,
     )
 
     dataloader = torch.utils.data.DataLoader(
