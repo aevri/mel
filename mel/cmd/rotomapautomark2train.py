@@ -1,6 +1,7 @@
 """Train to automatically mark moles on rotomap images."""
 
 import json
+import math
 import sys
 
 import tqdm
@@ -107,22 +108,32 @@ def train(
 ):
     model.to(device)
 
-    frame_dataset = mel.rotomap.detectmolesnn.FrameDataset(
-        training_images, tile_size=tile_size,
+    frame_dataset = mel.rotomap.detectmolesnn.IterableFrameDataset(
+        training_images, tile_size=tile_size, num_repeats=10, cache_size=10,
     )
 
     dataloader = torch.utils.data.DataLoader(
         frame_dataset,
         batch_size=batch_size,
-        sampler=mel.rotomap.detectmolesnn.FrameSampler(
-            frame_dataset, batch_size
-        ),
+        # sampler=mel.rotomap.detectmolesnn.FrameSampler(
+        #     frame_dataset, batch_size
+        # ),
     )
+
+    # print(f"dataloader len {len(dataloader)}")
+    # print(f"batch size {batch_size}")
+    # print(f"dataset len {len(frame_dataset)}")
+    # print(f"dataset len {frame_dataset.len()}")
+    num_batches = math.ceil(frame_dataset.len() / batch_size)
+    # print(f"num_batches len {num_batches}")
+
+    # for i, data in enumerate(dataloader):
+    #     print(i, data["key"].shape)
 
     optimizer = torch.optim.AdamW(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
-        steps_per_epoch=len(dataloader),
+        steps_per_epoch=num_batches,
         max_lr=max_lr,
         epochs=num_epochs,
     )
@@ -137,6 +148,7 @@ def train(
                 scheduler,
                 ["image"],
                 ["expected_image"],
+                num_batches,
             )
             bar.set_description(f"Loss: {float(loss):.4g}")
             if not (epoch % 100):

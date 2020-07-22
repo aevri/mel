@@ -61,6 +61,93 @@ def draw_moles_dist_image(moles, width, height, max_dist=32):
     return numpy.minimum(dist, max_dist)
 
 
+class IterableFrameDataset(torch.utils.data.IterableDataset):
+    def __init__(self, image_paths, tile_size, num_repeats, cache_size):
+        super().__init__()
+        self.image_path = list(image_paths)
+        self.tile_size = tile_size
+        self._transforms = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[0.1940, 0.9525, 0.1776],
+                    std=[0.3537, 0.0972, 0.3244],
+                    inplace=True,
+                ),
+            ]
+        )
+        self._expected_shape = None
+        self.num_repeats = num_repeats
+        self.cache_size = cache_size
+
+    def len(self):
+        return len(self.image_path) * self.num_repeats
+
+    # def __len__(self):
+    #     return len(self.image_path) * self.num_repeats
+
+    @functools.lru_cache(10)
+    def _getimage(self, path):
+        frame = mel.rotomap.moles.RotomapFrame(path)
+        image = frame.load_image()
+        mask = frame.load_mask()
+        image = mel.rotomap.detectmolesnn.green_mask_image(image, mask)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return self._transforms(image)
+
+    @functools.lru_cache(10)
+    def _get_expected_image(self, path, image_shape):
+        frame = mel.rotomap.moles.RotomapFrame(path)
+        return draw_moles_dist_image(
+            frame.moles, image_shape[2], image_shape[1]
+        )
+
+    def _getitem(self, key):
+        if not isinstance(key, int):
+            raise ValueError("Only int keys are supported.")
+
+        path = self.image_path[key]
+        image = self._getimage(path)
+        expected_image = self._get_expected_image(path, image.shape)
+
+        if self._expected_shape is None:
+            self._expected_shape = image.shape
+
+        if image.shape != self._expected_shape:
+            raise ValueError(
+                f"image is unexpected shape: {path} {image.shape}"
+            )
+
+        x_offset = random.randint(0, image.shape[2] - self.tile_size)
+        y_offset = random.randint(0, image.shape[1] - self.tile_size)
+
+        return {
+            "key": key,
+            "image": image[
+                :,
+                y_offset : y_offset + self.tile_size,
+                x_offset : x_offset + self.tile_size,
+            ],
+            "expected_image": expected_image[
+                numpy.newaxis,
+                y_offset : y_offset + self.tile_size,
+                x_offset : x_offset + self.tile_size,
+            ],
+            "path": str(path),
+        }
+
+    def __iter__(self):
+        # TODO: check worker_info?
+        ordering = list(range(len(self.image_path)))
+        random.shuffle(ordering)
+        while ordering:
+            for _ in range(self.num_repeats):
+                # Consider shuffling on each iteration.
+                for i in ordering[: self.cache_size]:
+                    yield self._getitem(i)
+            ordering[: self.cache_size] = []
+
+
 class FrameDataset:
     def __init__(self, image_paths, tile_size):
         self.image_path = list(image_paths)
@@ -229,11 +316,13 @@ def train_epoch(
     scheduler,
     input_keys,
     expected_output_keys,
+    num_batches,
 ):
     model.train()
     avg_loss = 0
-    num_batches = 0
-    with tqdm.auto.tqdm(dataloader, disable=False, leave=False) as batcher:
+    with tqdm.auto.tqdm(
+        dataloader, disable=False, leave=False, total=num_batches
+    ) as batcher:
         for batch in batcher:
             optimizer.zero_grad()
             for key in input_keys:
@@ -244,7 +333,6 @@ def train_epoch(
             )
             batcher.set_description(f"loss={float(loss):.4g}")
             avg_loss += loss.item()
-            num_batches += 1
             loss.backward()
             optimizer.step()
             scheduler.step()
