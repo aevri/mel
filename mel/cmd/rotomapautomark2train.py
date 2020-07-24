@@ -170,7 +170,7 @@ def train(
                 num_batches,
             )
             bar.set_description(f"Loss: {float(loss):.4g}")
-            if not (epoch % 100):
+            if not (epoch % 8):
                 tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
         tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
 
