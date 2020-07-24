@@ -77,7 +77,7 @@ def process_args(args):
     num_epochs = args.epochs
     max_lr = 0.01
     tile_size = 512
-    max_dist = 32
+    max_dist = 16
 
     train(
         model,
@@ -120,7 +120,7 @@ def train(
     frame_dataset = mel.rotomap.detectmolesnn.IterableFrameDataset(
         training_images,
         tile_size=tile_size,
-        num_repeats=10,
+        num_repeats=40,
         cache_size=40,
         max_dist=max_dist,
     )
