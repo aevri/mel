@@ -128,20 +128,9 @@ def train(
     dataloader = torch.utils.data.DataLoader(
         frame_dataset,
         batch_size=batch_size,
-        # sampler=mel.rotomap.detectmolesnn.FrameSampler(
-        #     frame_dataset, batch_size
-        # ),
     )
 
-    # print(f"dataloader len {len(dataloader)}")
-    # print(f"batch size {batch_size}")
-    # print(f"dataset len {len(frame_dataset)}")
-    # print(f"dataset len {frame_dataset.len()}")
     num_batches = math.ceil(frame_dataset.len() / batch_size)
-    # print(f"num_batches len {num_batches}")
-
-    # for i, data in enumerate(dataloader):
-    #     print(i, data["key"].shape)
 
     optimizer = torch.optim.AdamW(model.parameters())
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
