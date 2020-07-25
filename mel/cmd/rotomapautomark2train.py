@@ -78,6 +78,7 @@ def process_args(args):
     max_lr = 0.01
     tile_size = 512
     max_dist = 16
+    loss_magnitude = 10
 
     train(
         model,
@@ -88,6 +89,7 @@ def process_args(args):
         num_epochs,
         max_lr,
         max_dist,
+        loss_magnitude,
     )
 
     with open(metadata_path, "w") as f:
@@ -114,6 +116,7 @@ def train(
     num_epochs,
     max_lr,
     max_dist,
+    loss_magnitude,
 ):
     model.to(device)
 
@@ -143,7 +146,7 @@ def train(
 
     def loss_func(output, target):
         return mel.rotomap.detectmolesnn.image_loss_max_dist(
-            output, target, max_dist
+            output, target, max_dist, loss_magnitude,
         )
 
     with tqdm.auto.tqdm(range(num_epochs)) as bar:

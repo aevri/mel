@@ -898,14 +898,15 @@ def print_tensor_size(name, tensor):
     pass
 
 
-def image_loss_max_dist(in_, image_target, max_dist):
+def image_loss_max_dist(in_, image_target, max_dist, magnitude):
     image_in = in_[:, 0].unsqueeze(1)
     assert image_in.shape == image_target.shape, (
         image_in.shape,
         image_target.shape,
     )
     return torch.nn.functional.mse_loss(
-        (max_dist - image_in) ** 2, (max_dist - image_target) ** 2,
+        ((max_dist - image_in) * magnitude) ** 2,
+        ((max_dist - image_target) * magnitude) ** 2,
     )
 
 
