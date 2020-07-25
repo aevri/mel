@@ -63,7 +63,13 @@ def draw_moles_dist_image(moles, width, height, max_dist=32):
 
 class IterableFrameDataset(torch.utils.data.IterableDataset):
     def __init__(
-        self, image_paths, tile_size, num_repeats, cache_size, max_dist
+        self,
+        image_paths,
+        tile_size,
+        num_repeats,
+        cache_size,
+        max_dist,
+        num_searches,
     ):
         super().__init__()
         self.image_path = list(image_paths)
@@ -82,6 +88,7 @@ class IterableFrameDataset(torch.utils.data.IterableDataset):
         self.num_repeats = num_repeats
         self.cache_size = cache_size
         self.max_dist = max_dist
+        self.num_searches = num_searches
 
     def len(self):
         return len(self.image_path) * self.num_repeats
@@ -143,11 +150,20 @@ class IterableFrameDataset(torch.utils.data.IterableDataset):
         # TODO: check worker_info?
         ordering = list(range(len(self.image_path)))
         random.shuffle(ordering)
+        num_pixels = self.tile_size ** 2
         while ordering:
             for _ in range(self.num_repeats):
                 # Consider shuffling on each iteration.
                 for i in ordering[: self.cache_size]:
-                    yield self._getitem(i)
+                    item = None
+                    for _ in range(self.num_searches + 1):
+                        item = self._getitem(i)
+                        if (
+                            numpy.count_nonzero(item["expected_image"])
+                            < num_pixels
+                        ):
+                            break
+                    yield item
             ordering[: self.cache_size] = []
 
 
