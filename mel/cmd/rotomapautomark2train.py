@@ -126,7 +126,7 @@ def train(
         num_repeats=40,
         cache_size=40,
         max_dist=max_dist,
-        num_searches=2,
+        num_searches=10,
     )
 
     dataloader = torch.utils.data.DataLoader(
