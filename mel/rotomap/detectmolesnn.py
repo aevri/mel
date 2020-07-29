@@ -266,6 +266,33 @@ def train_epoch(
     return avg_loss / num_batches
 
 
+def validate_epoch(
+    device,
+    model,
+    dataloader,
+    loss_func,
+    input_keys,
+    expected_output_keys,
+    num_batches,
+):
+    model.train()
+    avg_loss = 0
+    with tqdm.auto.tqdm(
+        dataloader, disable=False, leave=False, total=num_batches
+    ) as batcher, torch.no_grad():
+        for batch in batcher:
+            for key in input_keys:
+                batch[key].to(device)
+            out = model(*[batch[key].to(device) for key in input_keys])
+            loss = loss_func(
+                out, *[batch[key].to(device) for key in expected_output_keys]
+            )
+            batcher.set_description(f"loss={float(loss):.4g}")
+            avg_loss += loss.item()
+
+    return avg_loss / num_batches
+
+
 def train(
     model,
     train_dataloader,
