@@ -65,8 +65,11 @@ def process_args(args):
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
 
-        model = mel.rotomap.detectmolesnn.DenseUnet(
-            channels_in=3, channels_per_layer=16, num_classes=1
+        # model = mel.rotomap.detectmolesnn.DenseUnet(
+        #     channels_in=3, channels_per_layer=16, num_classes=1
+        # )
+        model = mel.rotomap.detectmolesnn.ConstantModel(
+            constant_value=15.9999,
         )
 
     training_images = args.IMAGES

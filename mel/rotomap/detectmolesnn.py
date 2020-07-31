@@ -863,6 +863,21 @@ def make_cnn_layer(in_width, out_width, stride=2, bias=False):
     )
 
 
+class ConstantModel(torch.nn.Module):
+    def __init__(self, constant_value):
+        super().__init__()
+        self.constant_value = constant_value
+
+    def init_dict(self):
+        return {}
+
+    def forward(self, images):
+        assert len(images.shape) == 4
+        result = torch.empty([*images.shape[:3], 1])
+        result[:, :, :, :] = self.constant_value
+        return result
+
+
 class DenseUnetModel(torch.nn.Module):
     def __init__(self, channels_in, channels_per_layer):
         super().__init__()
