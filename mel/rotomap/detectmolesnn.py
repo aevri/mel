@@ -877,7 +877,7 @@ class ConstantModel(torch.nn.Module):
         shape[1] = 1
         result = torch.empty(shape)
         result[:, :, :, :] = self.constant_value
-        result.to(images.device)
+        result = result.to(images.device)
         return result
 
 
