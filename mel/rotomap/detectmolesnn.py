@@ -873,7 +873,9 @@ class ConstantModel(torch.nn.Module):
 
     def forward(self, images):
         assert len(images.shape) == 4
-        result = torch.empty([*images.shape[:3], 1])
+        shape = list(images.shape)
+        shape[1] = 1
+        result = torch.empty(shape)
         result[:, :, :, :] = self.constant_value
         return result
 
