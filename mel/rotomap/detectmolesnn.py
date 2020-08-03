@@ -247,7 +247,7 @@ def train_epoch(
     model.train()
     avg_loss = 0
     with tqdm.auto.tqdm(
-        dataloader, disable=False, leave=False, total=num_batches
+        dataloader, disable=False, leave=False, total=num_batches, smoothing=0
     ) as batcher:
         for batch in batcher:
             optimizer.zero_grad()
