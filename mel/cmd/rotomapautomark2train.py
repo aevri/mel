@@ -65,12 +65,12 @@ def process_args(args):
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
 
-        # model = mel.rotomap.detectmolesnn.DenseUnet(
-        #     channels_in=3, channels_per_layer=16, num_classes=1
-        # )
-        model = mel.rotomap.detectmolesnn.ConstantModel(
-            constant_value=15.9999,
+        model = mel.rotomap.detectmolesnn.DenseUnet(
+            channels_in=3, channels_per_layer=16, num_classes=1
         )
+        # model = mel.rotomap.detectmolesnn.ConstantModel(
+        #     constant_value=15.9999,
+        # )
 
     training_images = args.IMAGES
 
@@ -95,11 +95,11 @@ def process_args(args):
         loss_magnitude,
     )
 
-    # with open(metadata_path, "w") as f:
-    #     json.dump(model.init_dict(), f)
-    # print(f"Saved {metadata_path}")
-    # torch.save(model.state_dict(), model_path)
-    # print(f"Saved {model_path}")
+    with open(metadata_path, "w") as f:
+        json.dump(model.init_dict(), f)
+    print(f"Saved {metadata_path}")
+    torch.save(model.state_dict(), model_path)
+    print(f"Saved {model_path}")
 
     # dt_string = mel.lib.datetime.make_datetime_string(
     #     datetime.datetime.utcnow()
@@ -138,47 +138,47 @@ def train(
 
     num_batches = math.ceil(frame_dataset.len() / batch_size)
 
-    # optimizer = torch.optim.AdamW(model.parameters())
-    # scheduler = torch.optim.lr_scheduler.OneCycleLR(
-    #     optimizer,
-    #     steps_per_epoch=num_batches,
-    #     max_lr=max_lr,
-    #     epochs=num_epochs,
-    # )
+    optimizer = torch.optim.AdamW(model.parameters())
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        steps_per_epoch=num_batches,
+        max_lr=max_lr,
+        epochs=num_epochs,
+    )
 
     def loss_func(output, target):
         return mel.rotomap.detectmolesnn.image_loss_max_dist(
             output, target, max_dist, loss_magnitude,
         )
 
-    loss = mel.rotomap.detectmolesnn.validate_epoch(
-        device,
-        model,
-        dataloader,
-        loss_func,
-        ["image"],
-        ["expected_image"],
-        num_batches,
-    )
-    print(f"Loss: {float(loss):.4g}")
+    # loss = mel.rotomap.detectmolesnn.validate_epoch(
+    #     device,
+    #     model,
+    #     dataloader,
+    #     loss_func,
+    #     ["image"],
+    #     ["expected_image"],
+    #     num_batches,
+    # )
+    # print(f"Loss: {float(loss):.4g}")
 
-    # with tqdm.auto.tqdm(range(num_epochs)) as bar:
-    #     for epoch in bar:
-    #         loss = mel.rotomap.detectmolesnn.train_epoch(
-    #             device,
-    #             model,
-    #             dataloader,
-    #             loss_func,
-    #             optimizer,
-    #             scheduler,
-    #             ["image"],
-    #             ["expected_image"],
-    #             num_batches,
-    #         )
-    #         bar.set_description(f"Loss: {float(loss):.4g}")
-    #         if not (epoch % 8):
-    #             tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
-    #     tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
+    with tqdm.auto.tqdm(range(num_epochs)) as bar:
+        for epoch in bar:
+            loss = mel.rotomap.detectmolesnn.train_epoch(
+                device,
+                model,
+                dataloader,
+                loss_func,
+                optimizer,
+                scheduler,
+                ["image"],
+                ["expected_image"],
+                num_batches,
+            )
+            bar.set_description(f"Loss: {float(loss):.4g}")
+            if not (epoch % 8):
+                tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
+        tqdm.tqdm.write(f"Epoch {epoch}: loss {float(loss):.4g}")
 
 
 # -----------------------------------------------------------------------------
