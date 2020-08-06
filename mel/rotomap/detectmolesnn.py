@@ -863,10 +863,12 @@ def make_cnn_layer(in_width, out_width, stride=2, bias=False):
     )
 
 
-def make_double_cnn_layer(in_width, out_width, stride=2, bias=False):
+def make_double_cnn_layer(
+    in_width, mid_width, out_width, stride=2, bias=False
+):
     return torch.nn.Sequential(
-        make_cnn_layer(in_width, out_width, stride, bias),
-        make_cnn_layer(out_width, out_width, stride=1, bias=bias),
+        make_cnn_layer(in_width, mid_width, stride, bias),
+        make_cnn_layer(mid_width, out_width, stride=1, bias=bias),
     )
 
 
@@ -972,18 +974,22 @@ class DenseUnet(torch.nn.Module):
         self.pool = torch.nn.AvgPool2d(3, stride=2, padding=1)
 
         self.down_cnn1 = make_double_cnn_layer(
-            self.channels_in, self.channels_per_layer
+            self.channels_in, self.channels_per_layer, self.channels_per_layer
         )
         self.down_cnn2 = make_double_cnn_layer(
-            self.channels_in + self.channels_per_layer, self.channels_per_layer
+            self.channels_in + self.channels_per_layer,
+            self.channels_per_layer,
+            self.channels_per_layer,
         )
         self.down_cnn3 = make_double_cnn_layer(
             self.channels_in + self.channels_per_layer * 2,
+            self.channels_per_layer,
             self.channels_per_layer,
         )
 
         self.bottom_cnn = make_double_cnn_layer(
             self.channels_in + self.channels_per_layer * 3,
+            self.channels_per_layer,
             self.channels_per_layer,
             stride=1,
         )
@@ -994,15 +1000,18 @@ class DenseUnet(torch.nn.Module):
         self.up_cnn3 = make_double_cnn_layer(
             self.channels_in + self.channels_per_layer * 4,
             self.channels_per_layer,
+            self.channels_per_layer,
             stride=1,
         )
         self.up_cnn2 = make_double_cnn_layer(
             self.channels_in + self.channels_per_layer * 3,
             self.channels_per_layer,
+            self.channels_per_layer,
             stride=1,
         )
-        self.up_cnn1 = make_cnn_layer(
+        self.up_cnn1 = make_double_cnn_layer(
             self.channels_in + self.channels_per_layer * 2,
+            self.channels_per_layer,
             self.num_classes,
             stride=1,
         )
