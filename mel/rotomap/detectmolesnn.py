@@ -167,6 +167,36 @@ class IterableFrameDataset(torch.utils.data.IterableDataset):
             ordering[: self.cache_size] = []
 
 
+def flip8_image_view(image, flip_0_to_7):
+    """
+
+    >>> im = numpy.array([[1, 2], [3, 4]])
+    >>> import itertools
+    >>> for i, j in itertools.combinations(range(8), 2):
+    ...     assert (flip8_image_view(im, i) != flip8_image_view(im, j)).all(), (i, j)
+
+    """
+    print("-", flip_0_to_7)
+    if flip_0_to_7 % 2 == 0:
+        image = hflip_image_view(image)
+        print("h")
+    if (flip_0_to_7 // 2) % 2 == 0:
+        image = vflip_image_view(image)
+        print("v")
+    if (flip_0_to_7 // 4) % 2 == 0:
+        image = image.T
+        print("t")
+    return image
+
+
+def hflip_image_view(image):
+    return image[::, ::-1]
+
+
+def vflip_image_view(image):
+    return image[::-1, ::]
+
+
 def get_masked_image(path):
     frame = mel.rotomap.moles.RotomapFrame(path)
     image = frame.load_image()
