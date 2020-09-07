@@ -10,6 +10,9 @@ Controls:
     'c' to mark the moles as changed in the newest rotomap.
     'u' to mark the moles as unchanged in the newest rotomap.
 
+    'z' to zoom in on the left slot.
+    'x' to zoom out on the left slot.
+
     'q' to quit.
 """
 
