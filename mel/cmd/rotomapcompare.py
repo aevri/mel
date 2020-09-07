@@ -34,22 +34,22 @@ _PosInfo = collections.namedtuple('_PosInfo', 'path pos ellipse_xpos')
 
 def setup_parser(parser):
     parser.add_argument(
-        'ROTOMAP',
+        "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        nargs='+',
+        nargs="+",
         help=(
             "A list of paths to rotomaps. The last rotomap is considered "
             "'the target', and only UUIDs from that one will be compared."
-        )
+        ),
     )
     parser.add_argument(
-        '--display-width',
+        "--display-width",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--display-height',
+        "--display-height",
         type=int,
         default=None,
         help="Width of the preview display window.",
@@ -66,12 +66,12 @@ def process_args(args):
 
     for rotomap in args.ROTOMAP:
         for frame in rotomap.yield_frames():
-            if 'ellipse' not in frame.metadata:
+            if "ellipse" not in frame.metadata:
                 raise Exception(
-                    f'{frame} has no ellipse metadata, '
+                    f"{frame} has no ellipse metadata, "
                     'try running "rotomap calc-space"'
                 )
-            ellipse = frame.metadata['ellipse']
+            ellipse = frame.metadata["ellipse"]
             elspace = mel.lib.ellipsespace.Transform(ellipse)
             for uuid_, point in frame.moledata.uuid_points.items():
                 if uuid_ not in target_uuids:
@@ -113,7 +113,7 @@ def process_args(args):
     uuid_ = uuid_order[index]
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
     display = ImageCompareDisplay(
-        '.', path_images_tuple, args.display_width, args.display_height
+        ".", path_images_tuple, args.display_width, args.display_height
     )
     is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
     if is_unchanged is not None:
@@ -130,7 +130,7 @@ def process_args(args):
             display.prev_rotomap()
         elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
             display.next_rotomap()
-        elif key == ord('n'):
+        elif key == ord("n"):
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index += 1
             index %= num_uuids
@@ -142,7 +142,7 @@ def process_args(args):
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
-        elif key == ord('p'):
+        elif key == ord("p"):
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index -= 1
             index %= num_uuids
@@ -154,21 +154,21 @@ def process_args(args):
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
-        elif key == ord(' '):
+        elif key == ord(" "):
             display.swap_images()
-        elif key == ord('a'):
+        elif key == ord("a"):
             display.toggle_crosshairs()
-        elif key == ord('c'):
+        elif key == ord("c"):
             is_unchanged = False
             mark_lesion(target_rotomap, uuid_, is_unchanged=False)
             display.indicate_changed()
-        elif key == ord('u'):
+        elif key == ord("u"):
             is_unchanged = True
             mark_lesion(target_rotomap, uuid_, is_unchanged=True)
             display.indicate_changed(False)
-        elif key == ord('z'):
+        elif key == ord("z"):
             display.adjust_zoom(1.025)
-        elif key == ord('x'):
+        elif key == ord("x"):
             display.adjust_zoom(1 / 1.025)
 
 
