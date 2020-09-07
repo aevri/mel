@@ -10,9 +10,10 @@ Controls:
     'c' to mark the moles as changed in the newest rotomap.
     'u' to mark the moles as unchanged in the newest rotomap.
 
+    'l' to zoom and rotate the left slot to roughly align with the right slot.
+
     'z' to zoom in on the left slot.
     'x' to zoom out on the left slot.
-    'l' to zoom the left slot to roughly align with the right slot.
 
     'j' to rotate left on the left slot.
     'k' to rotate right on the left slot.
@@ -351,6 +352,16 @@ class ImageCompareDisplay:
         self._zooms[self._indices[0]] = right_dist / left_dist
         self._zooms[self._indices[1]] = 1.0
 
+        left_angle = mel.lib.math.angle(
+            left_posinfo.uuid_points[nearest_common_uuid] - left_target_pos
+        )
+        right_angle = mel.lib.math.angle(
+            right_posinfo.uuid_points[nearest_common_uuid] - right_target_pos
+        )
+
+        self._rotations[self._indices[0]] = right_angle - left_angle
+        self._rotations[self._indices[1]] = 1.0
+
         self._show()
 
     def _path_pos_zoom_rotation(self, index):
@@ -432,7 +443,7 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2019 Angelos Evripiotis.
+# Copyright (C) 2018-2020 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
