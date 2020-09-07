@@ -12,12 +12,14 @@ Controls:
 
     'z' to zoom in on the left slot.
     'x' to zoom out on the left slot.
+    'l' to zoom the left slot to roughly align with the right slot.
 
     'q' to quit.
 """
 
 import collections
 import functools
+import math
 
 import cv2
 import numpy
@@ -25,6 +27,7 @@ import numpy
 import mel.lib.common
 import mel.lib.datetime
 import mel.lib.image
+import mel.lib.math
 import mel.lib.moleimaging
 import mel.lib.ui
 
@@ -32,7 +35,9 @@ import mel.rotomap.display
 import mel.rotomap.moles
 
 
-_PosInfo = collections.namedtuple('_PosInfo', 'path pos ellipse_xpos')
+_PosInfo = collections.namedtuple(
+    "_PosInfo", "path pos ellipse_xpos uuid uuid_points"
+)
 
 
 def setup_parser(parser):
@@ -83,6 +88,8 @@ def process_args(args):
                     path=frame.path,
                     pos=point,
                     ellipse_xpos=elspace.to_space(point)[0],
+                    uuid=uuid_,
+                    uuid_points=frame.moledata.uuid_points,
                 )
                 uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
                     posinfo
@@ -173,6 +180,8 @@ def process_args(args):
             display.adjust_zoom(1.025)
         elif key == ord("x"):
             display.adjust_zoom(1 / 1.025)
+        elif key == ord("l"):
+            display.auto_align()
 
 
 def is_lesion_unchanged(rotomap, uuid_):
@@ -274,6 +283,56 @@ class ImageCompareDisplay:
     def adjust_zoom(self, zoom_multiplier):
         ix = self._indices[0]
         self._zooms[ix] *= zoom_multiplier
+        self._show()
+
+    def _posinfo(self, index):
+        ix = self._indices[index]
+        image_index = self._rotomap_cursors[ix]
+        return self._rotomaps[ix][image_index]
+
+    def auto_align(self):
+        left_posinfo = self._posinfo(0)
+        right_posinfo = self._posinfo(1)
+        target_uuid = left_posinfo.uuid
+        assert right_posinfo.uuid == target_uuid
+
+        common_uuids = set(left_posinfo.uuid_points) & set(
+            right_posinfo.uuid_points
+        )
+        common_uuids.remove(target_uuid)
+        if not common_uuids:
+            return
+
+        left_target_pos = [
+            pos
+            for uuid_, pos in left_posinfo.uuid_points.items()
+            if uuid_ == target_uuid
+        ][0]
+
+        nearest_common_uuid = min(
+            common_uuids,
+            key=lambda u: mel.lib.math.distance_sq_2d(
+                left_posinfo.uuid_points[u], left_target_pos
+            ),
+        )
+
+        left_dist = math.sqrt(mel.lib.math.distance_sq_2d(
+            left_posinfo.uuid_points[nearest_common_uuid], left_target_pos
+        ))
+
+        right_target_pos = [
+            pos
+            for uuid_, pos in right_posinfo.uuid_points.items()
+            if uuid_ == target_uuid
+        ][0]
+
+        right_dist = math.sqrt(mel.lib.math.distance_sq_2d(
+            right_posinfo.uuid_points[nearest_common_uuid], right_target_pos
+        ))
+
+        self._zooms[self._indices[0]] = right_dist / left_dist
+        self._zooms[self._indices[1]] = 1.0
+
         self._show()
 
     def _path_pos_zoom(self, index):
