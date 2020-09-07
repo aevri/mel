@@ -14,6 +14,9 @@ Controls:
     'x' to zoom out on the left slot.
     'l' to zoom the left slot to roughly align with the right slot.
 
+    'j' to rotate left on the left slot.
+    'k' to rotate right on the left slot.
+
     'q' to quit.
 """
 
@@ -182,6 +185,10 @@ def process_args(args):
             display.adjust_zoom(1 / 1.025)
         elif key == ord("l"):
             display.auto_align()
+        elif key == ord("j"):
+            display.adjust_rotation(2)
+        elif key == ord("k"):
+            display.adjust_rotation(-2)
 
 
 def is_lesion_unchanged(rotomap, uuid_):
@@ -227,6 +234,7 @@ class ImageCompareDisplay:
 
         self._rotomaps = path_images_tuple
         self._zooms = [1 for _ in path_images_tuple]
+        self._rotations = [0 for _ in path_images_tuple]
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
         for i, rotomap in enumerate(self._rotomaps):
@@ -285,6 +293,11 @@ class ImageCompareDisplay:
         self._zooms[ix] *= zoom_multiplier
         self._show()
 
+    def adjust_rotation(self, rotation_modifier):
+        ix = self._indices[0]
+        self._rotations[ix] += rotation_modifier
+        self._show()
+
     def _posinfo(self, index):
         ix = self._indices[index]
         image_index = self._rotomap_cursors[ix]
@@ -316,9 +329,11 @@ class ImageCompareDisplay:
             ),
         )
 
-        left_dist = math.sqrt(mel.lib.math.distance_sq_2d(
-            left_posinfo.uuid_points[nearest_common_uuid], left_target_pos
-        ))
+        left_dist = math.sqrt(
+            mel.lib.math.distance_sq_2d(
+                left_posinfo.uuid_points[nearest_common_uuid], left_target_pos
+            )
+        )
 
         right_target_pos = [
             pos
@@ -326,20 +341,24 @@ class ImageCompareDisplay:
             if uuid_ == target_uuid
         ][0]
 
-        right_dist = math.sqrt(mel.lib.math.distance_sq_2d(
-            right_posinfo.uuid_points[nearest_common_uuid], right_target_pos
-        ))
+        right_dist = math.sqrt(
+            mel.lib.math.distance_sq_2d(
+                right_posinfo.uuid_points[nearest_common_uuid],
+                right_target_pos,
+            )
+        )
 
         self._zooms[self._indices[0]] = right_dist / left_dist
         self._zooms[self._indices[1]] = 1.0
 
         self._show()
 
-    def _path_pos_zoom(self, index):
+    def _path_pos_zoom_rotation(self, index):
         image_index = self._rotomap_cursors[index]
         posinfo = self._rotomaps[index][image_index]
         zoom = self._zooms[index]
-        return posinfo.path, posinfo.pos, zoom
+        rotation = self._rotations[index]
+        return posinfo.path, posinfo.pos, zoom, rotation
 
     def _show(self):
         image_width = self._display.width // 2
@@ -354,7 +373,7 @@ class ImageCompareDisplay:
 
         images = [
             captioned_mole_image(
-                *self._path_pos_zoom(i),
+                *self._path_pos_zoom_rotation(i),
                 image_size,
                 self._should_draw_crosshairs,
                 border_colour,
@@ -366,11 +385,17 @@ class ImageCompareDisplay:
 
 
 def captioned_mole_image(
-    path, pos, zoom, size, should_draw_crosshairs, border_colour=None
+    path,
+    pos,
+    zoom,
+    rotation_degs,
+    size,
+    should_draw_crosshairs,
+    border_colour=None,
 ):
 
     image, caption_shape = _cached_captioned_mole_image(
-        str(path), tuple(pos), zoom, tuple(size)
+        str(path), tuple(pos), zoom, tuple(size), rotation_degs
     )
 
     if should_draw_crosshairs:
@@ -388,12 +413,17 @@ def captioned_mole_image(
 
 
 @functools.lru_cache()
-def _cached_captioned_mole_image(path, pos, zoom, size):
+def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs):
     image = mel.lib.image.load_image(path)
     image = mel.lib.image.scale_image(image, zoom)
     pos = tuple(int(v * zoom) for v in pos)
     size = numpy.array(size)
-    image = mel.lib.image.centered_at(image, pos, size)
+    max_size = 2 * max(size)
+    max_size = numpy.array([max_size, max_size])
+    max_size_2 = 2 * max_size
+    image = mel.lib.image.centered_at(image, pos, max_size_2)
+    image = mel.lib.image.rotated(image, rotation_degs)
+    image = mel.lib.image.centered_at(image, max_size, size)
     caption = mel.lib.image.render_text_as_image(str(path))
     return (
         mel.lib.image.montage_vertical(10, image, caption),
