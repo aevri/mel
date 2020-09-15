@@ -140,7 +140,7 @@ def make_argparse_image_moles_tree(path):
         for item in sorted(path.iterdir()):
             if item.is_dir():
                 yield from make_argparse_image_moles_tree(item)
-            else:
+            elif mel.lib.fs.is_jpeg_name(item):
                 yield from make_argparse_image_moles(item)
     else:
         yield from make_argparse_image_moles(path)
