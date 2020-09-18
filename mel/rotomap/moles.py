@@ -17,12 +17,12 @@ import mel.lib.math
 import mel.rotomap.mask
 
 
-KEY_IS_CONFIRMED = 'is_uuid_canonical'
-KEY_IS_UNCHANGED = 'is_unchanged'
+KEY_IS_CONFIRMED = "is_uuid_canonical"
+KEY_IS_UNCHANGED = "is_unchanged"
 
-IGNORE_NEW_FILENAME = 'ignore-new'
-IGNORE_MISSING_FILENAME = 'ignore-missing'
-ROTOMAP_DIR_LESIONS_FILENAME = 'lesions.json'
+IGNORE_NEW_FILENAME = "ignore-new"
+IGNORE_MISSING_FILENAME = "ignore-missing"
+ROTOMAP_DIR_LESIONS_FILENAME = "lesions.json"
 
 
 class RotomapDirectory:
@@ -36,8 +36,7 @@ class RotomapDirectory:
             )
 
         self.image_paths = [
-            str(f) for f in self.path.iterdir()
-            if mel.lib.fs.is_jpeg_name(f)
+            str(f) for f in self.path.iterdir() if mel.lib.fs.is_jpeg_name(f)
         ]
         self.image_paths.sort()
 
@@ -65,7 +64,7 @@ class RotomapDirectory:
         }
 
     def __repr__(self):
-        return f'RotomapDirectory({self.path!r})'
+        return f"RotomapDirectory({self.path!r})"
 
 
 class RotomapFrame:
@@ -74,11 +73,11 @@ class RotomapFrame:
     def __init__(self, path):
         self.path = pathlib.Path(path)
         if self.path.is_dir():
-            raise ValueError(f'Expected file, not directory: {path}')
+            raise ValueError(f"Expected file, not directory: {path}")
         if not self.path.exists():
-            raise ValueError(f'Path does not exist: {path}')
+            raise ValueError(f"Path does not exist: {path}")
         if not mel.lib.fs.is_jpeg_name(self.path):
-            raise ValueError(f'Unrecognised suffix for rotomap frame: {path}')
+            raise ValueError(f"Unrecognised suffix for rotomap frame: {path}")
 
         self.moles = load_image_moles(self.path)
         self.moledata = MoleData(self.moles)
@@ -91,7 +90,7 @@ class RotomapFrame:
         return mel.rotomap.mask.load_or_none(self.path)
 
     def has_mole_file(self):
-        return pathlib.Path(str(self.path) + '.json').exists()
+        return pathlib.Path(str(self.path) + ".json").exists()
 
     def has_mask(self):
         return mel.rotomap.mask.has_mask(self.path)
@@ -105,10 +104,10 @@ class MoleData:
 
     def __init__(self, mole_iter):
         self.moles = tuple(mole_iter)
-        self.uuids = frozenset(m['uuid'] for m in self.moles)
+        self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
         self.canonical_uuids = frozenset(
-            m['uuid'] for m in self.moles if m[KEY_IS_CONFIRMED]
+            m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
         )
         # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
@@ -203,14 +202,14 @@ def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
 
 
 def load_image_metadata(image_path):
-    metadata_path = pathlib.Path(str(image_path) + '.meta.json')
+    metadata_path = pathlib.Path(str(image_path) + ".meta.json")
 
     metadata = {}
     if metadata_path.exists():
         metadata = load_json(metadata_path)
-        if 'ellipse' in metadata:
+        if "ellipse" in metadata:
             try:
-                validate_ellipse_mask(metadata['ellipse'])
+                validate_ellipse_mask(metadata["ellipse"])
             except ValueError as e:
                 raise ValueError(f"Bad data from '{metadata_path}'.") from e
 
@@ -233,12 +232,12 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
     for m in lesions:
         if KEY_IS_UNCHANGED not in m:
             raise Exception(
-                f'Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}'
+                f"Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}"
             )
 
     for m in lesions:
-        if m['uuid'] is None:
-            raise Exception(f'Lesion UUID cannot be None: {lesions_path} {m}')
+        if m["uuid"] is None:
+            raise Exception(f"Lesion UUID cannot be None: {lesions_path} {m}")
 
     return lesions
 
@@ -258,7 +257,7 @@ def load_image_moles(image_path):
     if not pathlib.Path(image_path).exists():
         raise ValueError(f"Mole image does not exist: '{image_path}'.")
 
-    moles_path = pathlib.Path(str(image_path) + '.json')
+    moles_path = pathlib.Path(str(image_path) + ".json")
 
     moles = []
     if moles_path.exists():
@@ -267,35 +266,35 @@ def load_image_moles(image_path):
     for m in moles:
         if KEY_IS_CONFIRMED not in m:
             raise Exception(
-                f'Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}'
+                f"Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}"
             )
 
     for m in moles:
-        m['x'] = int(m['x'])
-        m['y'] = int(m['y'])
+        m["x"] = int(m["x"])
+        m["y"] = int(m["y"])
 
     for m in moles:
-        if m['uuid'] is None:
-            raise Exception(f'Mole UUID cannot be None: {moles_path} {m}')
+        if m["uuid"] is None:
+            raise Exception(f"Mole UUID cannot be None: {moles_path} {m}")
 
     return moles
 
 
 def normalise_moles(moles):
     for m in moles:
-        m['x'] = int(m['x'])
-        m['y'] = int(m['y'])
+        m["x"] = int(m["x"])
+        m["y"] = int(m["y"])
 
 
 def save_image_metadata(metadata, image_path):
-    meta_path = image_path + '.meta.json'
+    meta_path = image_path + ".meta.json"
     save_json(meta_path, metadata)
 
 
 def save_image_moles(moles, image_path):
     # Explicitly convert 'image_path' to str. It might be a pathlib.Path, which
     # doesn't support addition in this way.
-    moles_path = str(image_path) + '.json'
+    moles_path = str(image_path) + ".json"
     save_json(moles_path, moles)
 
 
@@ -305,8 +304,8 @@ def load_json(path):
 
 
 def save_json(path, data):
-    with open(path, 'w') as f:
-        json.dump(data, f, indent=4, separators=(',', ': '), sort_keys=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
 
         # There's no newline after dump(), add one here for happier viewing
         print(file=f)
@@ -324,9 +323,9 @@ def add_mole(moles, x, y, mole_uuid=None):
 
     moles.append(
         {
-            'x': x,
-            'y': y,
-            'uuid': mole_uuid,
+            "x": x,
+            "y": y,
+            "uuid": mole_uuid,
             KEY_IS_CONFIRMED: is_uuid_canonical,
         }
     )
@@ -340,8 +339,8 @@ def nearest_mole_index_distance(moles, x, y):
     nearest_index = None
     nearest_distance = None
     for i, mole in enumerate(moles):
-        dx = x - mole['x']
-        dy = y - mole['y']
+        dx = x - mole["x"]
+        dy = y - mole["y"]
         distance = math.sqrt(dx * dx + dy * dy)
         if nearest_distance is None or distance < nearest_distance:
             nearest_index = i
@@ -353,7 +352,7 @@ def nearest_mole_index_distance(moles, x, y):
 def uuid_mole_index(moles, mole_uuid):
     """Return the index of the first mole with the specified uuid."""
     for i, mole in enumerate(moles):
-        if mole['uuid'] == mole_uuid:
+        if mole["uuid"] == mole_uuid:
             return i
     return None
 
@@ -361,14 +360,14 @@ def uuid_mole_index(moles, mole_uuid):
 def set_nearest_mole_uuid(moles, x, y, mole_uuid, is_canonical=True):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
-        moles[nearest_index]['uuid'] = mole_uuid
+        moles[nearest_index]["uuid"] = mole_uuid
         moles[nearest_index][KEY_IS_CONFIRMED] = is_canonical
 
 
 def get_nearest_mole_uuid(moles, x, y):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
-        return moles[nearest_index]['uuid']
+        return moles[nearest_index]["uuid"]
 
     return None
 
@@ -377,8 +376,8 @@ def move_nearest_mole(moles, x, y):
     nearest_index = nearest_mole_index(moles, x, y)
 
     if nearest_index is not None:
-        moles[nearest_index]['x'] = x
-        moles[nearest_index]['y'] = y
+        moles[nearest_index]["x"] = x
+        moles[nearest_index]["y"] = y
 
 
 def remove_nearest_mole(moles, x, y):
@@ -389,13 +388,11 @@ def remove_nearest_mole(moles, x, y):
 
 
 def mole_list_to_pointvec(mole_list):
-    return numpy.array(
-        tuple((m['x'], m['y']) for m in mole_list)
-    )
+    return numpy.array(tuple((m["x"], m["y"]) for m in mole_list))
 
 
 def mole_to_point(mole):
-    pos = numpy.array((mole['x'], mole['y']))
+    pos = numpy.array((mole["x"], mole["y"]))
     mel.lib.math.raise_if_not_int_vector2(pos)
     return pos
 
@@ -403,7 +400,7 @@ def mole_to_point(mole):
 def to_uuid_points(moles):
     uuid_points = {}
     for m in moles:
-        uuid_points[m['uuid']] = mole_to_point(m)
+        uuid_points[m["uuid"]] = mole_to_point(m)
     return uuid_points
 
 
@@ -412,13 +409,13 @@ def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
 
     for frame in frame_iterable:
 
-        if 'ellipse' not in frame.metadata:
+        if "ellipse" not in frame.metadata:
             raise Exception(
-                f'{frame} has no ellipse metadata, '
+                f"{frame} has no ellipse metadata, "
                 'try running "rotomap calc-space"'
             )
 
-        ellipse = frame.metadata['ellipse']
+        ellipse = frame.metadata["ellipse"]
         elspace = mel.lib.ellipsespace.Transform(ellipse)
         for uuid_, pos in frame.moledata.uuid_points.items():
             if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
@@ -438,7 +435,7 @@ def load_potential_set_file(path, filename):
             lines = f.read().splitlines()
         for text in lines:
             text = text.strip()
-            if text and not text.startswith('#'):
+            if text and not text.startswith("#"):
                 ignore_set.add(text)
     return ignore_set
 

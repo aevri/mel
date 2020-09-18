@@ -42,7 +42,7 @@ def biggest_contour(image):
     )
 
     if not contours:
-        raise Exception('No contours found.')
+        raise Exception("No contours found.")
 
     max_area = 0
     max_index = None
@@ -60,10 +60,10 @@ def biggest_contour(image):
         if num_non_none:
             raise Exception(
                 "No suitable contours found. Some contours were found, "
-                "but were too short.")
+                "but were too short."
+            )
         else:
-            raise Exception(
-                "No non-None contours found.")
+            raise Exception("No non-None contours found.")
 
     return contours[max_index]
 
@@ -131,9 +131,9 @@ def find_mole_contour(contours, width_height):
         if contour is not None and len(contour) > 5:
             area = cv2.contourArea(contour)
             moments = cv2.moments(contour)
-            if moments['m00'] != 0:
-                cx = int(moments['m10'] / moments['m00'])
-                cy = int(moments['m01'] / moments['m00'])
+            if moments["m00"] != 0:
+                cx = int(moments["m10"] / moments["m00"])
+                cy = int(moments["m01"] / moments["m00"])
                 dx = centre[0] - cx
                 dy = centre[1] - cy
                 distance = (dx ** 2 + dy ** 2) ** 0.5
@@ -159,27 +159,30 @@ class MoleAcquirer(object):
     def update(self, stats):
         if stats and self._last_stats:
 
-            stats_diff = list(map(
-                lambda x, y: x - y,
-                self._last_stats,
-                stats))
+            stats_diff = list(map(lambda x, y: x - y, self._last_stats, stats))
 
-            self._last_stats = list(map(
-                lambda x, y: mel.lib.math.lerp(x, y, 0.5),
-                self._last_stats,
-                stats))
+            self._last_stats = list(
+                map(
+                    lambda x, y: mel.lib.math.lerp(x, y, 0.5),
+                    self._last_stats,
+                    stats,
+                )
+            )
 
             if self._last_stats_diff:
-                self._last_stats_diff = list(map(
-                    lambda x, y: mel.lib.math.lerp(x, y, 0.5),
-                    self._last_stats_diff,
-                    stats_diff))
+                self._last_stats_diff = list(
+                    map(
+                        lambda x, y: mel.lib.math.lerp(x, y, 0.5),
+                        self._last_stats_diff,
+                        stats_diff,
+                    )
+                )
 
-                should_lock = all(
-                    [int(x) == 0 for x in self._last_stats_diff])
+                should_lock = all([int(x) == 0 for x in self._last_stats_diff])
 
                 should_unlock = any(
-                    [abs(int(x)) > 1 for x in self._last_stats_diff])
+                    [abs(int(x)) > 1 for x in self._last_stats_diff]
+                )
 
                 if not self._is_locked and should_lock:
                     self._is_locked = True
@@ -238,8 +241,7 @@ def annotate_image(original, is_rot_sensitive):
     img = cv2.split(img)[1]
     _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
 
-    contours, _ = cv2.findContours(
-        img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     mole_contour, _ = find_mole_contour(contours, img.shape[0:2])
 

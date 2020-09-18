@@ -18,17 +18,17 @@ class Test(unittest.TestCase):
 
     def test_b_rotate_bounds(self):
         self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 0),
-            [1, 2, 3])
+            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 0), [1, 2, 3]
+        )
         self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 1),
-            [2, 3, 1])
+            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 1), [2, 3, 1]
+        )
         self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 2),
-            [3, 1, 2])
+            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 2), [3, 1, 2]
+        )
         self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 3),
-            [1, 2, 3])
+            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 3), [1, 2, 3]
+        )
         with self.assertRaises(ValueError):
             mel.rotomap.tricolour._list_rotated_left([1, 2, 3], -1)
         with self.assertRaises(ValueError):

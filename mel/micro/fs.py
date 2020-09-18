@@ -6,41 +6,41 @@ import pathlib
 
 
 Mole = collections.namedtuple(
-    'mel_micro_fs__Mole',
+    "mel_micro_fs__Mole",
     [
-        'abspath',
-        'path',
-        'refrelpath',
-        'id',
-        'need_assistance',
-        'context_image_name_tuple_tuple',  # The most local paths appear last
-        'micro_image_details',
-        'last_micro',
-        'last_micro_age_days',
+        "abspath",
+        "path",
+        "refrelpath",
+        "id",
+        "need_assistance",
+        "context_image_name_tuple_tuple",  # The most local paths appear last
+        "micro_image_details",
+        "last_micro",
+        "last_micro_age_days",
     ],
 )
 
 
 MicroImageDetail = collections.namedtuple(
-    'mel_micro_fs__MicroImageDetail', ['name', 'datetime']
+    "mel_micro_fs__MicroImageDetail", ["name", "datetime"]
 )
 
 
 class Names:
-    MICRO = '__micro__'
-    ID = '__id__'
-    NEED_ASSISTANCE = '__need_assistance__'
-    CHANGED = '__changed__'
-    NOT_CHANGED = '__not_changed__'
+    MICRO = "__micro__"
+    ID = "__id__"
+    NEED_ASSISTANCE = "__need_assistance__"
+    CHANGED = "__changed__"
+    NOT_CHANGED = "__not_changed__"
 
 
-FILES_TO_IGNORE = {'.DS_Store'}
+FILES_TO_IGNORE = {".DS_Store"}
 
 
-DIRS_TO_IGNORE = {'.git'}
+DIRS_TO_IGNORE = {".git"}
 
 
-IMAGE_SUFFIXES = {'.jpg', '.jpeg', '.png'}
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
 
 
 MOLE_DIR_ENTRIES = {
@@ -120,12 +120,12 @@ def _list_micro_dir_if_exists(path):
 
         if sub.is_dir():
             raise Exception(
-                'Sub-directory found in micro dir: {}'.format(sub.resolve())
+                "Sub-directory found in micro dir: {}".format(sub.resolve())
             )
 
         if sub.suffix.lower() not in IMAGE_SUFFIXES:
             raise Exception(
-                'Non-image found in micro dir: {}'.format(sub.resolve())
+                "Non-image found in micro dir: {}".format(sub.resolve())
             )
 
         image_names.append(sub.name)
@@ -141,8 +141,8 @@ def _list_micro_dir_if_exists(path):
 
 
 def calc_micro_datetime(micro_image_name):
-    lastmicrodtstring = micro_image_name.split('.', 1)[0]
-    dt = datetime.datetime.strptime(lastmicrodtstring, '%Y%m%dT%H%M%S')
+    lastmicrodtstring = micro_image_name.split(".", 1)[0]
+    dt = datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S")
     return dt
 
 

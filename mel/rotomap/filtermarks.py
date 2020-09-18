@@ -104,8 +104,7 @@ def process_image(image_path, moles, batch_size):
 
     metadata = moles + marks
     images = [
-        get_item_image(image, mask, item, _HALF_IMAGE_SIZE)
-        for item in metadata
+        get_item_image(image, mask, item, _HALF_IMAGE_SIZE) for item in metadata
     ]
     is_mole = [True] * len(moles) + [False] * len(marks)
     is_mole = [item for i, item in enumerate(is_mole) if images[i] is not None]
@@ -137,7 +136,7 @@ def get_item_image(image, mask, item, size):
     if not mask[y, x]:
         return None
 
-    item_image = image[y - size: y + size, x - size: x + size]
+    item_image = image[y - size : y + size, x - size : x + size]
 
     if item_image.shape != (size * 2, size * 2, 3):
         return None
@@ -220,7 +219,10 @@ def prepare_data(pretrained_data, sessions):
         data for session in sessions for data in pretrained_data[session]
     )
     return [
-        {"features": features, "is_mole": int(is_mole), }
+        {
+            "features": features,
+            "is_mole": int(is_mole),
+        }
         for image_data in image_dicts
         for features, is_mole in zip(
             image_data["features"], image_data["is_mole"]
@@ -399,7 +401,7 @@ def filter_marks(image_path, is_mole, image, moles, include_canonical):
             filtered_moles.append(m)
             continue
 
-        image_fragment = image[y - r: y + r, x - r: x + r]
+        image_fragment = image[y - r : y + r, x - r : x + r]
 
         # TODO: decide what to do about fragments that overlap the image
         # boundary.

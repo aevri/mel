@@ -23,7 +23,7 @@ def guess_datetime_from_path(path):
     """
     # TODO: try the file date if unable to determine from name
     filename = os.path.basename(path)
-    name = filename.split('.', 1)[0]
+    name = filename.split(".", 1)[0]
     return guess_datetime_from_string(name)
 
 
@@ -41,8 +41,8 @@ def guess_datetime_from_string(datetime_str):
     :returns: datetime.datetime if successful, None otherwise
     """
     format_list = [
-        'Photo %d-%m-%Y %H %M %S',
-        '%Y%m%dT%H%M%S',
+        "Photo %d-%m-%Y %H %M %S",
+        "%Y%m%dT%H%M%S",
     ]
     for fmt in format_list:
         try:

@@ -12,7 +12,7 @@ def setup_parser(parser):
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
-        'destination',
+        "destination",
         type=str,
         default=None,
         help="New path to create and store the mole to.",
@@ -32,7 +32,7 @@ def process_args(args):
 
     # display the context image in a reasonably sized window
     # TODO: extract this choice to a common place
-    window_name = 'display'
+    window_name = "display"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     window_width = 800
     window_height = 600
@@ -45,10 +45,7 @@ def process_args(args):
 
     # Put a box around mole on context image
     # TODO: extract the thickness choice to a common place
-    mel.lib.common.box_moles(
-        context_image,
-        context_mole_pos,
-        thickness=50)
+    mel.lib.common.box_moles(context_image, context_mole_pos, thickness=50)
 
     # Point to mole on detail image
     mel.lib.common.indicate_mole(detail_image, detail_mole_pos[0])

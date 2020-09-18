@@ -30,7 +30,7 @@ def process_args(args):
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
-            raise Exception('User aborted.')
+            raise Exception("User aborted.")
 
         ret, frame = cap.read()
         if not ret:

@@ -11,17 +11,16 @@ import mel.lib.ui
 
 def setup_parser(parser):
     parser.add_argument(
-        'PATH',
-        type=str,
-        help="Path to the mole to compare images from.")
+        "PATH", type=str, help="Path to the mole to compare images from."
+    )
     parser.add_argument(
-        '--display-width',
+        "--display-width",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--display-height',
+        "--display-height",
         type=int,
         default=None,
         help="Width of the preview display window.",
@@ -30,11 +29,11 @@ def setup_parser(parser):
 
 def get_comparison_images(path):
 
-    micro_path = os.path.join(path, '__micro__')
+    micro_path = os.path.join(path, "__micro__")
 
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
-    names = [x for x in os.listdir(micro_path) if x.lower().endswith('.jpg')]
+    names = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
     names.sort()
     paths = [os.path.join(micro_path, x) for x in names]
     images = [mel.lib.image.load_image(x) for x in paths]
@@ -70,7 +69,7 @@ def process_args(args):
             display.next_image()
         elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
             display.prev_image()
-        elif key == ord(' '):
+        elif key == ord(" "):
             display.swap_images()
 
 

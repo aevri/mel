@@ -14,17 +14,17 @@ def setup_parser(parser):
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
-        'destination',
+        "destination",
         type=str,
         default=None,
         help="New path to create and store the constellation to.",
     )
 
     parser.add_argument(
-        'moles',
+        "moles",
         type=str,
         default=None,
-        nargs='+',
+        nargs="+",
         help="Names of the moles to store.",
     )
 
@@ -41,11 +41,11 @@ def process_args(args):
     mole_size = 512
 
     # print out the dimensions of the images
-    print('{}: {}'.format(args.context, context_image.shape))
-    print('{}: {}'.format(args.detail, detail_image.shape))
+    print("{}: {}".format(args.context, context_image.shape))
+    print("{}: {}".format(args.detail, detail_image.shape))
 
     # display the context image in a reasonably sized window
-    window_name = 'display'
+    window_name = "display"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     window_width = 800
     window_height = 600
@@ -57,10 +57,7 @@ def process_args(args):
     )
 
     # Put a box around moles on context image
-    mel.lib.common.box_moles(
-        context_image,
-        context_mole_pos,
-        thickness=50)
+    mel.lib.common.box_moles(context_image, context_mole_pos, thickness=50)
 
     # Connect moles on cluster detail image
     cluster_detail_image = numpy.copy(detail_image)

@@ -13,49 +13,49 @@ _DEFAULT_NO_RECENT_DAYS = 15
 
 def setup_parser(parser):
     parser.add_argument(
-        '--only-no-micro',
-        action='store_true',
+        "--only-no-micro",
+        action="store_true",
         help="Only list moles that have no microscope images.",
     )
 
     assistance = parser.add_mutually_exclusive_group()
     assistance.add_argument(
-        '--without-assistance',
-        action='store_true',
+        "--without-assistance",
+        action="store_true",
         help="Only list moles that don't require assistance to capture.",
     )
     assistance.add_argument(
-        '--with-assistance',
-        action='store_true',
+        "--with-assistance",
+        action="store_true",
         help="Only list moles that require assistance to capture.",
     )
 
     parser.add_argument(
-        '--ignore-with-recent-micro',
-        '--no-recent',
+        "--ignore-with-recent-micro",
+        "--no-recent",
         default=0,
         type=int,
-        metavar='DAYS',
-        nargs='?',
-        help='Do not list moles with micro images less than this number of '
-        'days. Off by default, will assume {days} days if none '
-        'specified.'.format(days=_DEFAULT_NO_RECENT_DAYS),
+        metavar="DAYS",
+        nargs="?",
+        help="Do not list moles with micro images less than this number of "
+        "days. Off by default, will assume {days} days if none "
+        "specified.".format(days=_DEFAULT_NO_RECENT_DAYS),
     )
 
     parser.add_argument(
-        '--sort',
-        default='unsorted',
-        nargs='?',
-        choices=['lastmicro'],
-        help='Sort the moles by the date of their last micro image. '
-        'This means moles with no images are first then the oldest '
-        'images.',
+        "--sort",
+        default="unsorted",
+        nargs="?",
+        choices=["lastmicro"],
+        help="Sort the moles by the date of their last micro image. "
+        "This means moles with no images are first then the oldest "
+        "images.",
     )
 
     format_args = parser.add_mutually_exclusive_group()
 
     format_args.add_argument(
-        '--format',
+        "--format",
         default="{relpath}",
         help="Print the results with the specified format. Defaults to "
         "'{relpath}'. Available keys: relpath, lastmicro, "
@@ -63,29 +63,29 @@ def setup_parser(parser):
     )
 
     format_args.add_argument(
-        '--ages',
-        dest='format',
-        action='store_const',
-        const='{relpath} {lastmicro_age_days}',
+        "--ages",
+        dest="format",
+        action="store_const",
+        const="{relpath} {lastmicro_age_days}",
         help="Print the relative paths of the moles and their ages.",
     )
 
     format_args.add_argument(
-        '--ids',
-        dest='format',
-        action='store_const',
-        const='{relpath} {id}',
+        "--ids",
+        dest="format",
+        action="store_const",
+        const="{relpath} {id}",
         help="Print the relative paths of the moles and their ids.",
     )
 
 
 def process_args(args):
-    for mole in _yield_mole_dirs('.', args):
+    for mole in _yield_mole_dirs(".", args):
         mole_data = {
-            'relpath': mole.refrelpath,
-            'lastmicro': mole.last_micro,
-            'lastmicro_age_days': mole.last_micro_age_days,
-            'id': mole.id,
+            "relpath": mole.refrelpath,
+            "lastmicro": mole.last_micro,
+            "lastmicro_age_days": mole.last_micro_age_days,
+            "id": mole.id,
         }
 
         print(args.format.format(**mole_data))
@@ -95,7 +95,7 @@ def _yield_mole_dirs(rootpath, args):
 
     mole_iter = mel.micro.fs.yield_moles(rootpath)
 
-    if args.sort == 'lastmicro' or args.sort is None:
+    if args.sort == "lastmicro" or args.sort is None:
 
         def keyfunc(x):
             if not x.micro_image_details:

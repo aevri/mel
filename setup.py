@@ -72,9 +72,9 @@ setuptools.setup(
     ],
     extras_require={
         'dev': [
-            'autopep8',
+            'black',
             'docformatter',
-            'flake8',
+            'pyflakes',
             'pycodestyle',
             'nose',
             'vulture',

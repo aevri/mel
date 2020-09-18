@@ -7,9 +7,9 @@ import json
 
 def setup_parser(parser):
     parser.add_argument(
-        'FILE',
+        "FILE",
         type=argparse.FileType(),
-        nargs='+',
+        nargs="+",
         help="Path to the rotomap json file.",
     )
 

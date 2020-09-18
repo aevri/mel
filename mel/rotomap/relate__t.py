@@ -33,11 +33,13 @@ class Test(unittest.TestCase):
     def test_b_pick_value_from_field(self):
 
         value, error = mel.rotomap.relate.pick_value_from_field(
-            numpy.array([0, 0]),
-            [(numpy.array([0, 0]), [1, 2])])
+            numpy.array([0, 0]), [(numpy.array([0, 0]), [1, 2])]
+        )
 
         self.assertEqual(0.0, error)
         self.assertTrue(([1.0, 2.0] == value).all(), True)
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2018 Angelos Evripiotis.
 #

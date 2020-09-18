@@ -24,7 +24,7 @@ def main():
     # Work around a bug in argparse with subparsers no longer being required:
     # http://bugs.python.org/issue9253#msg186387
     subparsers.required = True
-    subparsers.dest = 'command'
+    subparsers.dest = "command"
 
     # vulture will report these as unused unless we do this
     #
@@ -34,20 +34,18 @@ def main():
     # pylint: enable=pointless-statement
 
     _setup_parser_for_module(
-        subparsers, mel.cmddebug.benchautomark, 'bench-automark'
+        subparsers, mel.cmddebug.benchautomark, "bench-automark"
     )
+    _setup_parser_for_module(subparsers, mel.cmddebug.genrepo, "gen-repo")
     _setup_parser_for_module(
-        subparsers, mel.cmddebug.genrepo, 'gen-repo'
-    )
-    _setup_parser_for_module(
-        subparsers, mel.cmddebug.rendervaluefield, 'render-valuefield'
+        subparsers, mel.cmddebug.rendervaluefield, "render-valuefield"
     )
 
     args = parser.parse_args()
     try:
         return args.func(args)
     except mel.cmd.error.UsageError as e:
-        print('Usage error:', e, file=sys.stderr)
+        print("Usage error:", e, file=sys.stderr)
         return 2
     except BrokenPipeError:
         # Silently exit on broken pipes, e.g. when our output is piped to head.
@@ -65,7 +63,7 @@ def main():
 def _setup_parser_for_module(subparsers, module, name):
     doc = module.__doc__
     doc_subject = doc.splitlines()[0]
-    doc_epilog = '\n'.join(doc.splitlines()[1:])
+    doc_epilog = "\n".join(doc.splitlines()[1:])
     parser = subparsers.add_parser(
         name,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -77,7 +75,7 @@ def _setup_parser_for_module(subparsers, module, name):
     parser.set_defaults(func=module.process_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
 
 

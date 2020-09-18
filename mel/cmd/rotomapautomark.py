@@ -10,22 +10,21 @@ import mel.rotomap.automark
 
 def setup_parser(parser):
     parser.add_argument(
-        'IMAGES',
-        nargs='+',
-        help="A list of paths to images to automark.")
+        "IMAGES", nargs="+", help="A list of paths to images to automark."
+    )
     parser.add_argument(
-        '--verbose',
-        '-v',
-        action='store_true',
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Print information about the processing.",
     )
     parser.add_argument(
-        '--only-merge',
-        action='store_true',
+        "--only-merge",
+        action="store_true",
         help="Don't add new moles, only merge in updates to existing ones.",
     )
     parser.add_argument(
-        '--error-distance',
+        "--error-distance",
         default=0,
         type=int,
         help="Radius to merge moles within.",

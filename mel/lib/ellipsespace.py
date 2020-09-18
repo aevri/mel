@@ -60,10 +60,12 @@ def to_ellipse_space(ellipse, pos):
         pos[0] * up[0] + pos[1] * up[1],
     )
 
-    return numpy.array((
-        pos[0] / rmag,
-        pos[1] / umag,
-    ))
+    return numpy.array(
+        (
+            pos[0] / rmag,
+            pos[1] / umag,
+        )
+    )
 
 
 def ellipse_center_up_right(ellipse):

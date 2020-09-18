@@ -24,12 +24,10 @@ def hex3_to_rgb4(hex_string):
         (31, 120, 180),
         (178, 223, 138),
         (51, 160, 44),
-
         (251, 154, 153),
         (227, 26, 28),
         (253, 191, 111),
         (255, 127, 0),
-
         (202, 178, 214),
         (106, 61, 154),
         (255, 255, 153),
@@ -131,7 +129,8 @@ class UuidTriColourPicker:
             self._uuid_to_colours[uuid_] = (red, yellow, red)
         else:
             self._uuid_to_colours[uuid_] = tuple(
-                self._palette[x] for x in indices)
+                self._palette[x] for x in indices
+            )
 
     def __call__(self, uuid_):
         self._ensure_uuid(uuid_)

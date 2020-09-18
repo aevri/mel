@@ -56,38 +56,38 @@ import mel.cmd.status  # noqa: E402
 
 
 COMMANDS = {
-    'root': {
-        'status': mel.cmd.status,
+    "root": {
+        "status": mel.cmd.status,
     },
-    'micro': {
-        'add-cluster': mel.cmd.addcluster,
-        'add-single': mel.cmd.addsingle,
-        'list': mel.cmd.list,
-        'add': mel.cmd.microadd,
-        'compare': mel.cmd.microcompare,
-        'view': mel.cmd.microview,
+    "micro": {
+        "add-cluster": mel.cmd.addcluster,
+        "add-single": mel.cmd.addsingle,
+        "list": mel.cmd.list,
+        "add": mel.cmd.microadd,
+        "compare": mel.cmd.microcompare,
+        "view": mel.cmd.microview,
     },
-    'rotomap': {
-        'automark': mel.cmd.rotomapautomark,
-        'automask': mel.cmd.rotomapautomask,
-        'calc-space': mel.cmd.rotomapcalcspace,
-        'compare': mel.cmd.rotomapcompare,
-        'confirm': mel.cmd.rotomapconfirm,
-        'edit': mel.cmd.rotomapedit,
-        'filter-marks': mel.cmd.rotomapfiltermarks,
-        'filter-marks-pretrain': mel.cmd.rotomapfiltermarkspretrain,
-        'filter-marks-train': mel.cmd.rotomapfiltermarkstrain,
-        'identify': mel.cmd.rotomapidentify,
-        'identify2': mel.cmd.rotomapidentify2,
-        'identify2-train': mel.cmd.rotomapidentify2train,
-        'list': mel.cmd.rotomaplist,
-        'loadsave': mel.cmd.rotomaploadsave,
-        'mark-unchanged': mel.cmd.rotomapmarkunchanged,
-        'montage-single': mel.cmd.rotomapmontagesingle,
-        'organise': mel.cmd.rotomaporganise,
-        'rm': mel.cmd.rotomaprm,
-        'udiff': mel.cmd.rotomapudiff,
-        'uuid': mel.cmd.rotomapuuid,
+    "rotomap": {
+        "automark": mel.cmd.rotomapautomark,
+        "automask": mel.cmd.rotomapautomask,
+        "calc-space": mel.cmd.rotomapcalcspace,
+        "compare": mel.cmd.rotomapcompare,
+        "confirm": mel.cmd.rotomapconfirm,
+        "edit": mel.cmd.rotomapedit,
+        "filter-marks": mel.cmd.rotomapfiltermarks,
+        "filter-marks-pretrain": mel.cmd.rotomapfiltermarkspretrain,
+        "filter-marks-train": mel.cmd.rotomapfiltermarkstrain,
+        "identify": mel.cmd.rotomapidentify,
+        "identify2": mel.cmd.rotomapidentify2,
+        "identify2-train": mel.cmd.rotomapidentify2train,
+        "list": mel.cmd.rotomaplist,
+        "loadsave": mel.cmd.rotomaploadsave,
+        "mark-unchanged": mel.cmd.rotomapmarkunchanged,
+        "montage-single": mel.cmd.rotomapmontagesingle,
+        "organise": mel.cmd.rotomaporganise,
+        "rm": mel.cmd.rotomaprm,
+        "udiff": mel.cmd.rotomapudiff,
+        "uuid": mel.cmd.rotomapuuid,
     },
 }
 
@@ -101,14 +101,12 @@ def main():
     top_subparsers = parser.add_subparsers()
 
     micro_parser = top_subparsers.add_parser(
-        'micro',
-        help='Work with microscope images.',
-        aliases=['m'])
+        "micro", help="Work with microscope images.", aliases=["m"]
+    )
 
     rotomap_parser = top_subparsers.add_parser(
-        'rotomap',
-        help='Work with rotomap images.',
-        aliases=['r', 'roto'])
+        "rotomap", help="Work with rotomap images.", aliases=["r", "roto"]
+    )
 
     micro_subparsers = micro_parser.add_subparsers()
     rotomap_subparsers = rotomap_parser.add_subparsers()
@@ -118,7 +116,7 @@ def main():
     # Work around a bug in argparse with subparsers no longer being required:
     # http://bugs.python.org/issue9253#msg186387
     subparsers.required = True
-    subparsers.dest = 'command'
+    subparsers.dest = "command"
 
     # vulture will report these as unused unless we do this
     #
@@ -128,9 +126,9 @@ def main():
     # pylint: enable=pointless-statement
 
     parser_map = {
-        'root': subparsers,
-        'micro': micro_subparsers,
-        'rotomap': rotomap_subparsers,
+        "root": subparsers,
+        "micro": micro_subparsers,
+        "rotomap": rotomap_subparsers,
     }
 
     for pname, parser2 in parser_map.items():
@@ -141,7 +139,7 @@ def main():
     try:
         return args.func(args)
     except mel.cmd.error.UsageError as e:
-        print('Usage error:', e, file=sys.stderr)
+        print("Usage error:", e, file=sys.stderr)
         return 2
     except BrokenPipeError:
         # Silently exit on broken pipes, e.g. when our output is piped to head.
@@ -159,7 +157,7 @@ def main():
 def _setup_parser_for_module(subparsers, module, name):
     doc = module.__doc__
     doc_subject = doc.splitlines()[0]
-    doc_epilog = '\n'.join(doc.splitlines()[1:])
+    doc_epilog = "\n".join(doc.splitlines()[1:])
     parser = subparsers.add_parser(
         name,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -171,7 +169,7 @@ def _setup_parser_for_module(subparsers, module, name):
     parser.set_defaults(func=module.process_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
 
 

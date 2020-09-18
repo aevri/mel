@@ -46,20 +46,20 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        'OLD',
+        "OLD",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        nargs='+',
+        nargs="+",
         help="Paths to the rotomap directories to base comparison on.",
     )
     parser.add_argument(
-        'NEW',
+        "NEW",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         help="Path to the new rotomap directory to compare with.",
     )
     parser.add_argument(
-        '--show-all',
-        '-a',
-        action='store_true',
+        "--show-all",
+        "-a",
+        action="store_true",
         help="Show all mole UUIDs, even if ignored.",
     )
 
@@ -67,7 +67,7 @@ def setup_parser(parser):
 def uuids_from_dir(rotomap_dir):
     uuid_set = set()
     for _, moles in rotomap_dir.yield_mole_lists():
-        uuid_set |= set(m['uuid'] for m in moles)
+        uuid_set |= set(m["uuid"] for m in moles)
     return uuid_set
 
 
@@ -76,7 +76,7 @@ def print_category(text, uuids):
         print(text)
         print()
         for uuid_ in uuids:
-            print(' ' * 7, uuid_)
+            print(" " * 7, uuid_)
         print()
 
 
@@ -86,7 +86,7 @@ def process_args(args):
     for dir_ in args.OLD:
         for _, mole_list in dir_.yield_mole_lists():
             for mole in mole_list:
-                uuid_to_fromdirs[mole['uuid']].add(dir_.path)
+                uuid_to_fromdirs[mole["uuid"]].add(dir_.path)
 
     from_uuids = set(uuid_to_fromdirs.keys())
 
@@ -103,28 +103,27 @@ def process_args(args):
         from_uuids, to_uuids, ignore_new, ignore_missing
     )
 
-    print_category('New moles:', diff.new)
+    print_category("New moles:", diff.new)
 
     missing_uuids = sorted(
         list(diff.missing), key=uuid_to_fromdirs.get, reverse=True
     )
     for group, ids in itertools.groupby(missing_uuids, uuid_to_fromdirs.get):
         if len(group) == len(args.OLD):
-            print_category('Not in NEW map, in all OLD maps:', ids)
+            print_category("Not in NEW map, in all OLD maps:", ids)
         else:
-            group_desc = ', '.join(str(x) for x in group)
+            group_desc = ", ".join(str(x) for x in group)
             print_category(
-                'Not in NEW map. Only in {}:'.format(group_desc), ids
+                "Not in NEW map. Only in {}:".format(group_desc), ids
             )
 
-    print_category('Old moles, also seen in NEW map:', diff.matching)
+    print_category("Old moles, also seen in NEW map:", diff.matching)
 
     if args.show_all:
-        print_category('Ignored new moles:', diff.ignored_new)
-        print_category('Would ignore new moles:', diff.would_ignore_new)
-        print_category('Ignored missing moles:', diff.ignored_missing)
-        print_category('Would ignore missing moles:',
-                       diff.would_ignore_missing)
+        print_category("Ignored new moles:", diff.ignored_new)
+        print_category("Would ignore new moles:", diff.would_ignore_new)
+        print_category("Ignored missing moles:", diff.ignored_missing)
+        print_category("Would ignore missing moles:", diff.would_ignore_missing)
 
 
 # -----------------------------------------------------------------------------

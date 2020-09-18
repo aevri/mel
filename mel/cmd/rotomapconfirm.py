@@ -5,9 +5,8 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        'JSON_FILE',
-        nargs='+',
-        help="A list of paths to image json files.")
+        "JSON_FILE", nargs="+", help="A list of paths to image json files."
+    )
 
 
 def process_args(args):
@@ -21,7 +20,7 @@ def process_args(args):
                 m[mel.rotomap.moles.KEY_IS_CONFIRMED] = True
         mel.rotomap.moles.save_json(path, moles)
 
-    print(f'Confirmed {changed_count} moles.')
+    print(f"Confirmed {changed_count} moles.")
 
 
 # -----------------------------------------------------------------------------

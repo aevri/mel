@@ -12,17 +12,16 @@ import mel.lib.image
 def determine_filename_for_ident(*source_filenames):
     if not source_filenames:
         raise ValueError(
-            '{} is not a valid list of filenames'.format(source_filenames)
+            "{} is not a valid list of filenames".format(source_filenames)
         )
 
     dates = [
-        mel.lib.datetime.guess_datetime_from_path(x)
-        for x in source_filenames
+        mel.lib.datetime.guess_datetime_from_path(x) for x in source_filenames
     ]
     valid_dates = [x for x in dates if x is not None]
     if valid_dates:
         latest_date = max(valid_dates)
-        return '{}.jpg'.format(latest_date.date().isoformat())
+        return "{}.jpg".format(latest_date.date().isoformat())
     else:
         return "ident.jpg"
 
@@ -62,15 +61,15 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
     )
 
     # main loop
-    print('Please mark all specified moles, double-click to mark.')
-    print('Press any key to abort.')
+    print("Please mark all specified moles, double-click to mark.")
+    print("Press any key to abort.")
 
     is_finished = False
     while not is_finished:
         key = cv2.waitKey(50)
 
         if key != -1:
-            raise Exception('User aborted.')
+            raise Exception("User aborted.")
 
         if len(current_mole_positions) == num_moles:
             if not detail_mole_positions:
@@ -172,7 +171,7 @@ def new_image(height, width):
 
 def copy_image_into_image(source, dest, y, x):
     shape = source.shape
-    dest[y:(y + shape[0]), x:(x + shape[1])] = source
+    dest[y : (y + shape[0]), x : (x + shape[1])] = source
 
 
 def shrink_to_max_dimension(image, max_dimension):
@@ -221,8 +220,8 @@ def user_review_image(window_name, image):
     cv2.imshow(window_name, image)
     print("Press 'q' quit, any other key to continue.")
     key = cv2.waitKey()
-    if key == ord('q'):
-        raise Exception('User aborted.')
+    if key == ord("q"):
+        raise Exception("User aborted.")
 
 
 def rotated90(image, times):
@@ -235,54 +234,54 @@ def rotated90(image, times):
 def add_context_detail_arguments(parser):
 
     parser.add_argument(
-        'context',
+        "context",
         type=str,
         default=None,
         help="Path to the context image to add.",
     )
 
     parser.add_argument(
-        'detail',
+        "detail",
         type=str,
         default=None,
         help="Path to the detail image to add.",
     )
 
     parser.add_argument(
-        '--rot90',
+        "--rot90",
         type=int,
         default=None,
         help="Rotate images 90 degrees clockwise this number of times.",
     )
 
     parser.add_argument(
-        '--rot90-context',
+        "--rot90-context",
         type=int,
         default=None,
         help="Rotate context image 90 degrees clockwise this number of times.",
     )
 
     parser.add_argument(
-        '--rot90-detail',
+        "--rot90-detail",
         type=int,
         default=None,
         help="Rotate detail image 90 degrees clockwise this number of times.",
     )
 
     parser.add_argument(
-        '--h-mirror',
+        "--h-mirror",
         action="store_true",
         help="Mirror both images horizontally.",
     )
 
     parser.add_argument(
-        '--h-mirror-context',
+        "--h-mirror-context",
         action="store_true",
         help="Mirror context image horizontally.",
     )
 
     parser.add_argument(
-        '--h-mirror-detail',
+        "--h-mirror-detail",
         action="store_true",
         help="Mirror detail image horizontally.",
     )

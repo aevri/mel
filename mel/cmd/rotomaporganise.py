@@ -10,16 +10,16 @@ import mel.lib.ui
 
 def setup_parser(parser):
     parser.add_argument(
-        'IMAGES', nargs='+', help="A list of paths to images sets or images."
+        "IMAGES", nargs="+", help="A list of paths to images sets or images."
     )
     parser.add_argument(
-        '--display-width',
+        "--display-width",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--display-height',
+        "--display-height",
         type=int,
         default=None,
         help="Width of the preview display window.",
@@ -49,8 +49,8 @@ def process_args(args):
             display.prev_image()
         elif key == mel.lib.ui.WAITKEY_BACKSPACE:
             display.delete_image()
-        elif key == ord('g'):
-            destination = input('group destination: ')
+        elif key == ord("g"):
+            destination = input("group destination: ")
             display.group_images(destination)
 
 
@@ -68,9 +68,9 @@ class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
         if self._image_list:
             if not os.path.exists(destination):
                 os.makedirs(destination)
-            for image_path in self._image_list[:self._index + 1]:
+            for image_path in self._image_list[: self._index + 1]:
                 shutil.move(image_path, destination)
-            del self._image_list[:self._index + 1]
+            del self._image_list[: self._index + 1]
             self._index = -1
             self.next_image()
 

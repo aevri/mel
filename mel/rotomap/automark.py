@@ -75,7 +75,10 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         if nextmin > max_sqdist:
             break
         matches.append(
-            (matindex_to_fromindex[from_i], matindex_to_toindex[to_i],)
+            (
+                matindex_to_fromindex[from_i],
+                matindex_to_toindex[to_i],
+            )
         )
         del matindex_to_fromindex[from_i]
         del matindex_to_toindex[to_i]

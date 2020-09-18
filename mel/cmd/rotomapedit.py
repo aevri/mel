@@ -69,46 +69,46 @@ _MAGIC_MOLE_FINDER_RADIUS = 50
 
 def setup_parser(parser):
     parser.add_argument(
-        'ROTOMAP',
+        "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        nargs='+',
+        nargs="+",
         help="A list of paths to rotomaps.",
     )
     parser.add_argument(
-        '--display-width',
+        "--display-width",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--display-height',
+        "--display-height",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--follow',
+        "--follow",
         type=str,
         default=None,
         help="UUID of a mole to follow, try to jump to it in the first set.",
     )
     parser.add_argument(
-        '--copy-to-clipboard',
-        action='store_true',
-        help='Copy UUID to the clipboard, as well as printing. Mac OSX only.',
+        "--copy-to-clipboard",
+        action="store_true",
+        help="Copy UUID to the clipboard, as well as printing. Mac OSX only.",
     )
     parser.add_argument(
-        '--advance-n-frames',
-        '--skip',
+        "--advance-n-frames",
+        "--skip",
         type=int,
-        metavar='N',
+        metavar="N",
         default=None,
         help="Start with the image with the specified index, instead of 0.",
     )
     parser.add_argument(
-        '--visit-list-file',
+        "--visit-list-file",
         type=argparse.FileType(),
-        metavar='PATH',
+        metavar="PATH",
         help=(
             "Use keys to jump through this list of this form: "
             "'path/to/jpg:hash:optional co-ords'."
@@ -118,7 +118,7 @@ def setup_parser(parser):
 
 class MoveController:
     def __init__(self):
-        self.status = 'Move mode'
+        self.status = "Move mode"
 
     def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
         editor.move_nearest_mole(mouse_x, mouse_y)
@@ -155,7 +155,7 @@ class FollowController:
                 self._prev_moles,
                 self.is_paste_mode,
             )
-        elif key == ord('p'):
+        elif key == ord("p"):
             self.is_paste_mode = not self.is_paste_mode
             self.update_status()
             editor.set_status(self.status)
@@ -163,9 +163,9 @@ class FollowController:
 
     def update_status(self):
         if self.is_paste_mode:
-            self.status = 'follow paste mode'
+            self.status = "follow paste mode"
         else:
-            self.status = 'follow mode'
+            self.status = "follow mode"
 
 
 class MoleEditController:
@@ -230,28 +230,28 @@ class MoleEditController:
                 pass
 
     def on_key(self, editor, key):
-        if key == ord('o'):
+        if key == ord("o"):
             is_follow = self.sub_controller is self.follow_controller
             if not is_follow and self.mole_uuid_list[0]:
                 self.sub_controller = self.follow_controller
                 editor.set_status(self.sub_controller.status)
             else:
                 self.sub_controller = None
-                editor.set_status('')
+                editor.set_status("")
             editor.show_current()
-        elif key == ord('m'):
+        elif key == ord("m"):
             if not self.sub_controller == self.move_controller:
                 self.sub_controller = self.move_controller
                 editor.set_status(self.sub_controller.status)
             else:
                 self.sub_controller = None
-                editor.set_status('')
+                editor.set_status("")
             editor.show_current()
-        elif key == ord('f'):
+        elif key == ord("f"):
             editor.toggle_faded_markers()
         elif key == 13:
             editor.toggle_markers()
-        elif key == ord('+'):
+        elif key == ord("+"):
             self.mole_uuid_list[0] = editor.get_mole_uuid(
                 self.mouse_x, self.mouse_y
             )
@@ -284,11 +284,11 @@ class MaskEditController:
         pass
 
     def on_key(self, editor, key):
-        if key == ord('<'):
+        if key == ord("<"):
             editor.set_smaller_masker()
-        elif key == ord('>'):
+        elif key == ord(">"):
             editor.set_larger_masker()
-        elif key == ord('.'):
+        elif key == ord("."):
             editor.set_default_masker()
 
 
@@ -302,8 +302,8 @@ class MoleMarkController:
                 if flags & cv2.EVENT_FLAG_ALTKEY:
                     nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
                     if nearest_mole is not None:
-                        nearest_mole['kind'] = 'non-mole'
-                        nearest_mole['looks_like'] = 'mole'
+                        nearest_mole["kind"] = "non-mole"
+                        nearest_mole["looks_like"] = "mole"
                         editor.moledata.save_moles()
                         editor.show_current()
                 else:
@@ -312,8 +312,8 @@ class MoleMarkController:
                 if flags & cv2.EVENT_FLAG_ALTKEY:
                     nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
                     if nearest_mole is not None:
-                        nearest_mole['kind'] = 'mole'
-                        nearest_mole['looks_like'] = 'non-mole'
+                        nearest_mole["kind"] = "mole"
+                        nearest_mole["looks_like"] = "non-mole"
                         editor.moledata.save_moles()
                         editor.show_current()
                 else:
@@ -323,18 +323,18 @@ class MoleMarkController:
             if nearest_mole is not None:
                 if flags & cv2.EVENT_FLAG_ALTKEY:
                     if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                        nearest_mole['kind'] = 'non-mole'
-                        nearest_mole['looks_like'] = 'unsure'
+                        nearest_mole["kind"] = "non-mole"
+                        nearest_mole["looks_like"] = "unsure"
                     else:
-                        nearest_mole['kind'] = 'mole'
-                        nearest_mole['looks_like'] = 'unsure'
+                        nearest_mole["kind"] = "mole"
+                        nearest_mole["looks_like"] = "unsure"
                 else:
                     if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                        nearest_mole['kind'] = 'non-mole'
-                        nearest_mole['looks_like'] = 'non-mole'
+                        nearest_mole["kind"] = "non-mole"
+                        nearest_mole["looks_like"] = "non-mole"
                     else:
-                        nearest_mole['kind'] = 'mole'
-                        nearest_mole['looks_like'] = 'mole'
+                        nearest_mole["kind"] = "mole"
+                        nearest_mole["looks_like"] = "mole"
                 editor.moledata.save_moles()
                 editor.show_current()
 
@@ -342,7 +342,7 @@ class MoleMarkController:
         pass
 
     def on_key(self, editor, key):
-        if key == ord('a'):
+        if key == ord("a"):
             is_alt = editor.marked_mole_overlay.is_accentuate_marked_mode
             editor.marked_mole_overlay.is_accentuate_marked_mode = not is_alt
             editor.show_current()
@@ -377,7 +377,6 @@ class AutomoleDebugController:
 
 
 class VisitList:
-
     def __init__(self, items):
         self._items = items
         self._index = 0
@@ -434,45 +433,45 @@ class Controller:
             editor.show_prev_map()
         elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
             editor.show_next_map()
-        elif key == ord(' '):
+        elif key == ord(" "):
             editor.show_fitted()
-        elif key == ord('0'):
+        elif key == ord("0"):
             # Switch to automole debug mode
             self.current_controller = self.automoledebug_controller
             editor.set_automoledebug_mode()
-        elif key == ord('1'):
+        elif key == ord("1"):
             # Switch to mole edit mode
             self.current_controller = self.moleedit_controller
             editor.set_editmole_mode()
-        elif key == ord('2'):
+        elif key == ord("2"):
             # Switch to mask edit mode
             self.current_controller = self.maskedit_controller
             editor.set_editmask_mode()
-        elif key == ord('3'):
+        elif key == ord("3"):
             # Switch to bounding area mode
             self.current_controller = self.boundingarea_controller
             editor.set_boundingarea_mode()
-        elif key == ord('4'):
+        elif key == ord("4"):
             # Switch to mole marking mode
             self.current_controller = self.molemark_controller
             editor.set_molemark_mode()
-        elif key == ord('b'):
+        elif key == ord("b"):
             # Go back in the visit list
             if self._visit_list:
                 to_visit = self._visit_list.back()
                 editor.visit(to_visit)
-        elif key == ord('n'):
+        elif key == ord("n"):
             # Go to the next in the visit list
             if self._visit_list:
                 to_visit = self._visit_list.forward()
                 editor.visit(to_visit)
-        elif key == ord('z'):
+        elif key == ord("z"):
             self.zoom_index += 1
             self.zoom_index %= len(self.zooms)
             zoom = self.zooms[self.zoom_index]
             editor.set_status(f"Zoom {zoom}")
             editor.set_zoom_level(zoom)
-        elif key == ord('x'):
+        elif key == ord("x"):
             self.zoom_index += len(self.zooms) - 1
             self.zoom_index %= len(self.zooms)
             zoom = self.zooms[self.zoom_index]
@@ -498,7 +497,8 @@ def process_args(args):
         editor.show_next_n(args.advance_n_frames)
 
     controller = Controller(
-        editor, args.follow, args.copy_to_clipboard, visit_list)
+        editor, args.follow, args.copy_to_clipboard, visit_list
+    )
 
     def mouse_callback(*args):
         controller.on_mouse_event(editor, *args)
@@ -506,7 +506,7 @@ def process_args(args):
     editor.display.set_mouse_callback(mouse_callback)
 
     try:
-        for key in mel.lib.ui.yield_keys_until_quitkey(error_key='Q'):
+        for key in mel.lib.ui.yield_keys_until_quitkey(error_key="Q"):
             controller.on_key(editor, key)
     except mel.lib.ui.AbortKeyInterruptError:
         return 1
@@ -540,8 +540,7 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             editor.show_zoomed_display(guess_pos[0], guess_pos[1])
 
             if is_paste_mode:
-                editor.add_mole_display(
-                    guess_pos[0], guess_pos[1], follow_uuid)
+                editor.add_mole_display(guess_pos[0], guess_pos[1], follow_uuid)
 
     return guess_pos
 

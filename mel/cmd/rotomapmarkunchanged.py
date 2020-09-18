@@ -5,9 +5,9 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        'ROTOMAP',
+        "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        nargs='+',
+        nargs="+",
         help="A list of paths to rotomaps to mark unchanged.",
     )
 
@@ -32,7 +32,7 @@ def process_args(args):
             rotomap.path, rotomap.lesions
         )
 
-    print(f'Marked {changed_count} moles as unchanged.')
+    print(f"Marked {changed_count} moles as unchanged.")
 
 
 # -----------------------------------------------------------------------------

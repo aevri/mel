@@ -5,18 +5,18 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        '--uuids',
-        '-u',
-        metavar='UUID',
-        nargs='+',
+        "--uuids",
+        "-u",
+        metavar="UUID",
+        nargs="+",
         required=True,
         help="A list of UUIDs to remove.",
     )
     parser.add_argument(
-        '--files',
-        '-f',
-        metavar='JSON_FILE',
-        nargs='+',
+        "--files",
+        "-f",
+        metavar="JSON_FILE",
+        nargs="+",
         required=True,
         help="A list of paths to image json files.",
     )
@@ -27,14 +27,11 @@ def process_args(args):
 
     for path in args.files:
         moles = mel.rotomap.moles.load_json(path)
-        new_moles = [
-            m for m in moles
-            if m['uuid'] not in args.uuids
-        ]
+        new_moles = [m for m in moles if m["uuid"] not in args.uuids]
         mel.rotomap.moles.save_json(path, new_moles)
         changed_count += len(moles) - len(new_moles)
 
-    print(f'Removed {changed_count} moles.')
+    print(f"Removed {changed_count} moles.")
 
 
 # -----------------------------------------------------------------------------

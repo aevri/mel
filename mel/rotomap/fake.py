@@ -88,7 +88,10 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
         )
         d_eye_to_mole = d_mole_to_eye * -1
         hit, p_hit = mel.rotomap.raytrace.intersect_ray_cylinder(
-            p_ray, d_eye_to_mole, p_cyl, m_cyl_radius,
+            p_ray,
+            d_eye_to_mole,
+            p_cyl,
+            m_cyl_radius,
         )
 
         if vec3.mag_sq(p_hit - p_mole) < 0.001:

@@ -9,13 +9,12 @@ import mel.rotomap.mask
 
 def setup_parser(parser):
     parser.add_argument(
-        'TARGET',
-        nargs='+',
-        help="Paths to images to automask.")
+        "TARGET", nargs="+", help="Paths to images to automask."
+    )
     parser.add_argument(
-        '--verbose',
-        '-v',
-        action='store_true',
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Print information about the processing.",
     )
 
@@ -23,10 +22,10 @@ def setup_parser(parser):
 def process_args(args):
     for path in args.TARGET:
         if args.verbose:
-            print('Target:', path)
+            print("Target:", path)
         image = mel.lib.image.load_image(path)
         mask = mel.rotomap.mask.guess_mask_otsu(image)
-        mel.lib.common.write_image(path + '.mask.png', mask)
+        mel.lib.common.write_image(path + ".mask.png", mask)
 
 
 # -----------------------------------------------------------------------------

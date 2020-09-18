@@ -24,7 +24,6 @@ _BLACK = (0, 0, 0)
 
 
 def draw_mole(image, x, y, colours):
-
     def circle(radius, col):
         cv2.circle(image, (x, y), radius, col, -1)
 
@@ -38,7 +37,6 @@ def draw_mole(image, x, y, colours):
 
 
 def draw_non_canonical_mole(image, x, y, colours):
-
     def rect(size, col):
         top_left = (x - size, y - size)
         bottom_right = (x + size, y + size)
@@ -124,7 +122,7 @@ class Display:
 
     def get_zoom_pos(self):
         if not self.is_zoomed():
-            raise Exception('Not zoomed')
+            raise Exception("Not zoomed")
         return self._zoom_pos
 
     def set_mouse_callback(self, callback):
@@ -201,7 +199,7 @@ class MoleMarkerOverlay:
         highlight_mole = None
         if self._highlight_uuid is not None:
             for m in self.moles:
-                if m['uuid'] == self._highlight_uuid:
+                if m["uuid"] == self._highlight_uuid:
                     highlight_mole = m
                     break
 
@@ -209,10 +207,10 @@ class MoleMarkerOverlay:
         if self._is_faded_markers:
             marker_image = image.copy()
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
             if mole is highlight_mole:
                 draw_crosshair(marker_image, x, y)
-            colours = self._uuid_to_tricolour(mole['uuid'])
+            colours = self._uuid_to_tricolour(mole["uuid"])
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
                 draw_mole(marker_image, x, y, colours)
             else:
@@ -251,7 +249,7 @@ class MarkedMoleOverlay:
         mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
 
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
+            x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
             cv2.circle(mask, (x, y), mask_radius, 255, -1)
 
         masked_faded = cv2.bitwise_and(image, image, mask=mask)
@@ -260,33 +258,33 @@ class MarkedMoleOverlay:
         highlight_mole = None
         if self._highlight_uuid is not None:
             for m in self.moles:
-                if m['uuid'] == self._highlight_uuid:
+                if m["uuid"] == self._highlight_uuid:
                     highlight_mole = m
                     break
 
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            kind = mole.get('kind', None)
-            looks_like = mole.get('looks_like', None)
+            x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
+            kind = mole.get("kind", None)
+            looks_like = mole.get("looks_like", None)
 
             colour = (128, 0, 0)
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
                 colour = (255, 0, 0)
-            if kind == 'mole':
-                if looks_like == 'mole':
+            if kind == "mole":
+                if looks_like == "mole":
                     colour = (255, 255, 255)
-                elif looks_like == 'non-mole':
+                elif looks_like == "non-mole":
                     colour = (255, 255, 0)
-                elif looks_like == 'unsure':
+                elif looks_like == "unsure":
                     colour = (255, 0, 128)
                 else:
                     raise Exception(f"Mole looks_like is invalid: {mole}")
-            elif kind == 'non-mole':
-                if looks_like == 'mole':
+            elif kind == "non-mole":
+                if looks_like == "mole":
                     colour = (0, 255, 255)
-                elif looks_like == 'non-mole':
+                elif looks_like == "non-mole":
                     colour = (0, 0, 255)
-                elif looks_like == 'unsure':
+                elif looks_like == "unsure":
                     colour = (128, 0, 255)
                 else:
                     raise Exception(f"Mole looks_like is invalid: {mole}")
@@ -304,11 +302,8 @@ class MarkedMoleOverlay:
         # have been marked.
 
         for mole in self.moles:
-            x, y = transform.imagexy_to_transformedxy(mole['x'], mole['y'])
-            draw_mole(
-                image,
-                x, y,
-                [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
+            x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
+            draw_mole(image, x, y, [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
 
         return image
 
@@ -463,21 +458,20 @@ class Editor:
         #
         # Anything after the expected bits is ignored.
         #
-        path, visit_uuid, *_ = visit_target_str.split(':')
+        path, visit_uuid, *_ = visit_target_str.split(":")
         print(path, visit_uuid)
 
         for _ in range(len(self.moledata_list)):
             if self.moledata.try_jump_to_path(str(path)):
                 for m in self.moledata.moles:
-                    if m['uuid'] == visit_uuid:
+                    if m["uuid"] == visit_uuid:
                         self.moledata.get_image()
                         self._follow = visit_uuid
-                        self._mole_overlay.set_highlight_uuid(
-                            self._follow)
+                        self._mole_overlay.set_highlight_uuid(self._follow)
                         self.marked_mole_overlay.set_highlight_uuid(
-                            self._follow)
-                        self.show_zoomed_display(
-                            m['x'], m['y'])
+                            self._follow
+                        )
+                        self.show_zoomed_display(m["x"], m["y"])
                         return
                 self.show_current()
                 return
@@ -496,19 +490,19 @@ class Editor:
 
         follow_mole = None
         for m in self.moledata.moles:
-            if m['uuid'] == self._follow:
+            if m["uuid"] == self._follow:
                 follow_mole = m
                 break
 
         if follow_mole is not None:
-            self.show_zoomed_display(follow_mole['x'], follow_mole['y'])
+            self.show_zoomed_display(follow_mole["x"], follow_mole["y"])
 
     def skip_to_mole(self, uuid_to_skip_to):
         original_index = self.moledata.index()
         done = False
         while not done:
             for m in self.moledata.moles:
-                if m['uuid'] == uuid_to_skip_to:
+                if m["uuid"] == uuid_to_skip_to:
                     return
             self.moledata.increment()
             self.moledata.get_image()
@@ -556,7 +550,7 @@ class Editor:
             gray_image[:, :, 2] = mask
             self.display.show_current(gray_image, None)
         elif self._mode is EditorMode.bounding_area:
-            box = self.moledata.metadata.get('ellipse', None)
+            box = self.moledata.metadata.get("ellipse", None)
             self.bounding_area_overlay.bounding_box = box
             self.display.show_current(image, self.bounding_area_overlay)
         elif self._mode is EditorMode.mole_mark:
@@ -609,16 +603,16 @@ class Editor:
         self.show_current()
 
     def _adjusted_transition(self, transition_func):
-        if self.display.is_zoomed() and 'ellipse' in self.moledata.metadata:
+        if self.display.is_zoomed() and "ellipse" in self.moledata.metadata:
             pos = self.display.get_zoom_pos()
-            ellipse = self.moledata.metadata['ellipse']
+            ellipse = self.moledata.metadata["ellipse"]
             pos = mel.lib.ellipsespace.Transform(ellipse).to_space(pos)
 
             transition_func()
             self.moledata.ensure_loaded()
 
-            if 'ellipse' in self.moledata.metadata:
-                ellipse = self.moledata.metadata['ellipse']
+            if "ellipse" in self.moledata.metadata:
+                ellipse = self.moledata.metadata["ellipse"]
                 pos = mel.lib.ellipsespace.Transform(ellipse).from_space(pos)
                 self.display.set_zoomed(pos[0], pos[1])
         else:
@@ -671,7 +665,8 @@ class Editor:
     def get_nearest_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         nearest_index = mel.rotomap.moles.nearest_mole_index(
-            self.moledata.moles, image_x, image_y)
+            self.moledata.moles, image_x, image_y
+        )
         mole = None
         if nearest_index is not None:
             mole = self.moledata.moles[nearest_index]
@@ -698,8 +693,8 @@ class Editor:
 
         i = mel.rotomap.moles.uuid_mole_index(self.moledata.moles, mole_uuid)
         if i is not None:
-            self.moledata.moles[i]['x'] = image_x
-            self.moledata.moles[i]['y'] = image_y
+            self.moledata.moles[i]["x"] = image_x
+            self.moledata.moles[i]["y"] = image_y
         else:
             mel.rotomap.moles.add_mole(
                 self.moledata.moles, image_x, image_y, mole_uuid
@@ -709,7 +704,7 @@ class Editor:
         self.show_current()
 
     def remap_uuid(self, from_uuid, to_uuid):
-        print(f'Remap globally {from_uuid} to {to_uuid}.')
+        print(f"Remap globally {from_uuid} to {to_uuid}.")
         self.moledata.remap_uuid(from_uuid, to_uuid)
         self.show_current()
 
@@ -765,8 +760,8 @@ class MoleData:
         for image_path in self._path_list:
             moles = mel.rotomap.moles.load_image_moles(image_path)
             for m in moles:
-                if m['uuid'] == from_uuid:
-                    m['uuid'] = to_uuid
+                if m["uuid"] == from_uuid:
+                    m["uuid"] = to_uuid
                     m[mel.rotomap.moles.KEY_IS_CONFIRMED] = True
             mel.rotomap.moles.save_image_moles(moles, image_path)
 

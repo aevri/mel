@@ -33,7 +33,7 @@ class AbortKeyInterruptError(Exception):
     pass
 
 
-def yield_frames_keys(video_capture, delay=50, error_key='a'):
+def yield_frames_keys(video_capture, delay=50, error_key="a"):
 
     while True:
         ret, frame = video_capture.read()
@@ -51,7 +51,7 @@ def yield_frames_keys(video_capture, delay=50, error_key='a'):
 
 
 def yield_keys_until_quitkey(
-    delay=50, quit_key='q', error_key=None, quit_func=None
+    delay=50, quit_key="q", error_key=None, quit_func=None
 ):
 
     while True:
@@ -86,7 +86,7 @@ def bring_python_to_front():
     subprocess.call(
         [
             osascript,
-            '-e',
+            "-e",
             'tell app "Finder" to set frontmost of process "Python" to true',
         ]
     )
@@ -101,7 +101,7 @@ def set_clipboard_contents(text):
 
     if not os.path.isfile(pbcopy):
         raise NotImplementedError(
-            '{} was not found, cannot write clipboard'.format(pbcopy)
+            "{} was not found, cannot write clipboard".format(pbcopy)
         )
 
     p = subprocess.Popen(
@@ -199,9 +199,7 @@ class ImageDisplay:
         # cv2.setWindowProperty(
         #     "Name", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-        self.show_image(
-            mel.lib.common.new_image(
-                self.width, self.height))
+        self.show_image(mel.lib.common.new_image(self.width, self.height))
 
     def show_image(self, image):
         self.image = mel.lib.image.letterbox(image, self.width, self.height)
@@ -234,8 +232,7 @@ class LeftRightDisplay:
     def prev_image(self):
         if self._image_list:
             num_images = len(self._image_list)
-            self._index = (self._index + num_images -
-                           1) % len(self._image_list)
+            self._index = (self._index + num_images - 1) % len(self._image_list)
         self.show()
 
     def _get_image(self, path):

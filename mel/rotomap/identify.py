@@ -102,7 +102,7 @@ class UuidToIndexTranslator:
 
     def uuid_dict_to_index_tuple(self, dict_in, tuple_len):
         if len(dict_in) < tuple_len:
-            raise ValueError('Not enough entries in dict_in')
+            raise ValueError("Not enough entries in dict_in")
         values_out = [None] * tuple_len
         for uuid_, value in dict_in.items():
             values_out[self._uuid_to_index[uuid_]] = value
@@ -152,8 +152,8 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             guess_unknown_mole = ()
         return tuple(
             sorted(
-                itertools.chain(guesses, guess_unknown_mole),
-                key=lambda x: x[1])
+                itertools.chain(guesses, guess_unknown_mole), key=lambda x: x[1]
+            )
         )
 
     return calc_guesses
@@ -263,8 +263,8 @@ class PosGuesser:
             lower_bound = self.bounder.lower_bound(new_state)
             if lower_bound < total_cost[0]:
                 raise Exception(
-                    f'lower_bound ({lower_bound}) lower than '
-                    f'previous cost ({total_cost[0]})'
+                    f"lower_bound ({lower_bound}) lower than "
+                    f"previous cost ({total_cost[0]})"
                 )
             yield (lower_bound, num_remaining - 1), tuple(new_state)
 
@@ -317,7 +317,7 @@ def take_first_or_none(iterable):
 def take_first(iterable):
     for item in iterable:
         return item
-    raise IndexError('No first item to take')
+    raise IndexError("No first item to take")
 
 
 class DuplicateDetector:
@@ -334,12 +334,12 @@ class DuplicateDetector:
 def print_state(count, total_cost, state):
     def ident_to_str(ident):
         if ident is None:
-            return '__'
+            return "__"
         else:
-            return f'{ident:>2}'
+            return f"{ident:>2}"
 
-    s = ' '.join(ident_to_str(x) for x in state)
-    print(f'{count:>6} ({s}) {total_cost}')
+    s = " ".join(ident_to_str(x) for x in state)
+    print(f"{count:>6} ({s}) {total_cost}")
 
 
 def best_match_combination(guesser, *, max_iterations=10 ** 5):
@@ -376,16 +376,14 @@ def best_match_combination(guesser, *, max_iterations=10 ** 5):
             return total_cost, state
 
         # Nope, advance states.
-        for new_cost, new_state in guesser.yield_next_states(
-            total_cost, state
-        ):
+        for new_cost, new_state in guesser.yield_next_states(total_cost, state):
             if not seen.has_seen(new_cost, new_state):
                 state_q.push(new_cost, new_state)
                 seen.see(new_cost, new_state)
 
         if not state_q:
             # This is the last option, return the best.
-            print('Final option')
+            print("Final option")
             print_state(count, total_cost, state)
             # TODO: mark new moles or update contract to say some can be None
             return best_cost, best_state
@@ -450,9 +448,9 @@ class MoleRelativeClassifier:
 
         # TODO: check that known_uuid looks like a uuid
         if known_pos.shape != (2,):
-            raise ValueError(f'known_pos must be 2d, not {known_pos.shape}')
+            raise ValueError(f"known_pos must be 2d, not {known_pos.shape}")
         if pos.shape != (2,):
-            raise ValueError(f'pos must be 2d, not {pos.shape}')
+            raise ValueError(f"pos must be 2d, not {pos.shape}")
 
         if known_uuid not in self.molepos_kernels:
             self.molepos_kernels[known_uuid] = self.calc_uuid_offset_kernels(

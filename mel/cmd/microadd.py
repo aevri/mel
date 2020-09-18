@@ -15,32 +15,32 @@ import mel.lib.ui
 
 def setup_parser(parser):
     parser.add_argument(
-        'PATH',
-        nargs='+',
+        "PATH",
+        nargs="+",
         type=str,
         help="Path to the mole to add new microscope images to.",
     )
     parser.add_argument(
-        '--display-width',
+        "--display-width",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--display-height',
+        "--display-height",
         type=int,
         default=None,
         help="Width of the preview display window.",
     )
     parser.add_argument(
-        '--min-compare-age-days',
+        "--min-compare-age-days",
         type=int,
         default=None,
         help="Minimum age of the micro image to compare with, if possible.",
     )
     parser.add_argument(
-        '--video-device-index',
-        '-D',
+        "--video-device-index",
+        "-D",
         type=int,
         default=0,
         help="The index of the device to take images from.",
@@ -61,7 +61,7 @@ def get_context_image_name(path):
     children = reversed(sorted(os.listdir(path)))
     for name in children:
         # TODO: support more than just '.jpg'
-        if name.lower().endswith('.jpg'):
+        if name.lower().endswith(".jpg"):
             return os.path.join(path, name)
 
     return None
@@ -78,7 +78,7 @@ def get_dirs_to_path(path_in):
     cwd = os.getcwd()
     path_abs = os.path.abspath(path_in)
     if cwd != os.path.commonprefix([cwd, path_abs]):
-        raise Exception('{} is not under cwd ({})'.format(path_abs, cwd))
+        raise Exception("{} is not under cwd ({})".format(path_abs, cwd))
     path_rel = os.path.relpath(path_abs, cwd)
     path_list = []
     while path_rel:
@@ -101,13 +101,12 @@ def load_context_images(path):
 def pick_comparison_path(path_list, min_compare_age_days):
     """Return the most appropriate image path to compare with, or None."""
     path_dt_list = [
-        (x, mel.lib.datetime.guess_datetime_from_path(x))
-        for x in path_list
+        (x, mel.lib.datetime.guess_datetime_from_path(x)) for x in path_list
     ]
 
     for path, dt in path_dt_list:
         if dt is None:
-            raise Exception('Could not determine date', path)
+            raise Exception("Could not determine date", path)
 
     path_dt_list.sort(key=lambda x: x[1], reverse=True)
 
@@ -124,13 +123,13 @@ def pick_comparison_path(path_list, min_compare_age_days):
 
 def get_comparison_image_path(path, min_compare_age_days):
 
-    micro_path = os.path.join(path, '__micro__')
+    micro_path = os.path.join(path, "__micro__")
     if not os.path.exists(micro_path):
         return None
 
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
-    images = [x for x in os.listdir(micro_path) if x.lower().endswith('.jpg')]
+    images = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
     path = pick_comparison_path(images, min_compare_age_days)
     if path:
         return os.path.join(micro_path, path)
@@ -151,9 +150,8 @@ def process_args(args):
         raise Exception("Could not open video capture device.")
 
     display = mel.lib.ui.MultiImageDisplay(
-        'mel micro add',
-        args.display_width,
-        args.display_height)
+        "mel micro add", args.display_width, args.display_height
+    )
 
     mel.lib.ui.bring_python_to_front()
 
@@ -190,7 +188,7 @@ def process_path(mole_path, min_compare_age_days, display, cap):
     ret, frame = cap.read()
     if not ret:
         raise Exception("Could not read frame.")
-    capindex = display.add_image(frame, 'capture')
+    capindex = display.add_image(frame, "capture")
     while not is_finished:
         frame = capture(cap, display, capindex, mole_acquirer)
         print("Press space to save and exit, 'r' to retry, 'u' to rotate 180.")
@@ -198,21 +196,21 @@ def process_path(mole_path, min_compare_age_days, display, cap):
 
         is_finished = True
         for key in mel.lib.ui.yield_keys_until_quitkey(
-            quit_key=' ', error_key='a'
+            quit_key=" ", error_key="a"
         ):
 
-            if key == ord('r'):
+            if key == ord("r"):
                 print("Retry capture")
                 is_finished = False
                 break
-            elif key == ord('u'):
+            elif key == ord("u"):
                 print("Rotated 180.")
                 frame = mel.lib.image.rotated180(frame)
                 display.update_image(frame, capindex)
 
     # write the mole image
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
-    dirname = os.path.join(mole_path, '__micro__')
+    dirname = os.path.join(mole_path, "__micro__")
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     file_path = os.path.join(dirname, filename)
@@ -227,10 +225,10 @@ def capture(cap, display, capindex, mole_acquirer):
     centre = None
     rotation = None
 
-    for frame, key in mel.lib.ui.yield_frames_keys(cap, error_key='a'):
+    for frame, key in mel.lib.ui.yield_frames_keys(cap, error_key="a"):
 
-        if key == ord('c'):
-            print('Force capturing frame.')
+        if key == ord("c"):
+            print("Force capturing frame.")
             centre = None
             rotation = None
             break

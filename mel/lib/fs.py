@@ -30,7 +30,7 @@ def yield_only_jpegs_from_dir(path):
 
 def is_jpeg_name(filename):
     lower_ext = os.path.splitext(filename)[1].lower()
-    return lower_ext in ('.jpg', '.jpeg')
+    return lower_ext in (".jpg", ".jpeg")
 
 
 class NoMelrootError(Exception):
@@ -42,7 +42,7 @@ def find_melroot():
 
     path = original_path
     while True:
-        melroot = path / 'melroot'
+        melroot = path / "melroot"
         if melroot.exists():
             return path
 

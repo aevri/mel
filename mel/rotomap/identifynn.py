@@ -581,9 +581,7 @@ def split_train_valid(rotomaps, train_split=0.8):
             for r in rotomap_list
             if all(("ellipse" not in f.metadata) for f in r.yield_frames())
         ]
-        nonempty_rotomaps = [
-            r for r in rotomap_list if r not in empty_rotomaps
-        ]
+        nonempty_rotomaps = [r for r in rotomap_list if r not in empty_rotomaps]
         num_train_rotomaps = int(len(nonempty_rotomaps) * train_split)
         num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
         if train_split != 1:
@@ -718,9 +716,7 @@ def extend_dataset_by_frame(
         [pos for uuid_, pos in frame.moledata.uuid_points.items()]
     )
 
-    dataset["uuid_index"].extend(
-        [class_to_index[uuid_] for uuid_ in uuid_list]
-    )
+    dataset["uuid_index"].extend([class_to_index[uuid_] for uuid_ in uuid_list])
 
     # pylint: disable=not-callable
     dataset["mole_count"].extend(

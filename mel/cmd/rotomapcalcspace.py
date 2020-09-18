@@ -12,13 +12,12 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        'TARGET',
-        nargs='+',
-        help="Paths to images to calculate the space of.")
+        "TARGET", nargs="+", help="Paths to images to calculate the space of."
+    )
     parser.add_argument(
-        '--verbose',
-        '-v',
-        action='store_true',
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Print information about the processing.",
     )
 
@@ -26,11 +25,11 @@ def setup_parser(parser):
 def process_args(args):
     for path in args.TARGET:
         if args.verbose:
-            print('Target:', path)
+            print("Target:", path)
 
         mask = mel.rotomap.mask.load_or_none(path)
         if mask is None:
-            print(f'{path} has no mask.', file=sys.stderr)
+            print(f"{path} has no mask.", file=sys.stderr)
             return 1
         contour = mel.lib.moleimaging.biggest_contour(mask)
         ellipse = cv2.minAreaRect(contour)
@@ -43,7 +42,7 @@ def process_args(args):
         except ValueError as e:
             raise ValueError(f"Bad data from '{path}'.") from e
 
-        metadata = {'ellipse': ellipse}
+        metadata = {"ellipse": ellipse}
         mel.rotomap.moles.save_image_metadata(metadata, path)
 
 

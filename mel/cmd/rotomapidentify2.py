@@ -7,7 +7,9 @@ import os
 
 def setup_parser(parser):
     parser.add_argument(
-        "TARGET", nargs="+", help="Paths to images to identify.",
+        "TARGET",
+        nargs="+",
+        help="Paths to images to identify.",
     )
     parser.add_argument(
         "--verbose",

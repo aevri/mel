@@ -63,8 +63,8 @@ def draw_non_canonical_mole(image, x, y, colour):
 
 
 def draw_mole(image, mole, colour):
-    x = mole['x']
-    y = mole['y']
+    x = mole["x"]
+    y = mole["y"]
     if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
         draw_canonical_mole(image, x, y, colour)
     else:
@@ -72,15 +72,15 @@ def draw_mole(image, mole, colour):
 
 
 def mole_list_to_uuid_dict(mole_list):
-    return {m['uuid']: m for m in mole_list}
+    return {m["uuid"]: m for m in mole_list}
 
 
 def apply_theory(theory, to_moles):
     theory_to_original = {}
     for mole in to_moles:
         for from_, to in theory:
-            if from_ is not None and mole['uuid'] == to:
-                mole['uuid'] = from_
+            if from_ is not None and mole["uuid"] == to:
+                mole["uuid"] = from_
                 if from_ != to:
                     theory_to_original[from_] = to
     return theory_to_original
@@ -120,9 +120,9 @@ def best_theory(from_moles, to_moles, iterate):
 
 def best_offset_theory(from_moles, to_moles):
     if not from_moles:
-        raise ValueError('from_moles is empty')
+        raise ValueError("from_moles is empty")
     if not to_moles:
-        raise ValueError('to_moles is empty')
+        raise ValueError("to_moles is empty")
 
     theory = best_offset_field_theory(from_moles, to_moles)
     if theory is None:
@@ -335,8 +335,8 @@ def best_baseless_offset_theory(from_moles, to_moles):
     best_theory_offset_dist_sq = None
     for source in from_moles:
         for dest in to_moles:
-            to_x = dest['x'] - source['x']
-            to_y = dest['y'] - source['y']
+            to_x = dest["x"] - source["x"]
+            to_y = dest["y"] - source["y"]
             offset_dist_sq = to_x * to_x + to_y * to_y
 
             theory, dist_sq = make_offset_theory(
@@ -384,23 +384,22 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     for i, a in enumerate(from_moles):
         point = mel.rotomap.moles.mole_to_point(a)
         point += offset
-        best_index, best_dist_sq = _nearest_mole_index_to_point(
-            point, to_moles)
+        best_index, best_dist_sq = _nearest_mole_index_to_point(point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
             r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
             r_point -= offset
             r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)
             if i == r_index:
-                theory.append((a['uuid'], to_moles[best_index]['uuid']))
+                theory.append((a["uuid"], to_moles[best_index]["uuid"]))
                 del to_moles[best_index]
                 dist_sq_sum += best_dist_sq
             else:
-                theory.append((a['uuid'], None))
+                theory.append((a["uuid"], None))
         else:
-            theory.append((a['uuid'], None))
+            theory.append((a["uuid"], None))
 
     for b in to_moles:
-        theory.append((None, b['uuid']))
+        theory.append((None, b["uuid"]))
 
     return theory, dist_sq_sum
 

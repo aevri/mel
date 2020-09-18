@@ -85,8 +85,7 @@ def process_args(args):
     if model_path.exists():
         if not metadata_path.exists():
             raise Exception(
-                f"Metadata for model does not exist: "
-                f"{metadata_path}"
+                f"Metadata for model does not exist: " f"{metadata_path}"
             )
         print(f"Will fine-tune {model_path}")
         print(f"           and {metadata_path}")

@@ -12,7 +12,7 @@ printf '.'
 python3 -m pylint --errors-only mel/
 
 printf '.'
-python3 -m flake8 $allscripts
+python3 -m pyflakes $allscripts
 
 printf '.'
 python3 -m vulture --exclude '*__t.py,mel/rotomap/detectmoles.py,mel/rotomap/identifynn.py' mel/

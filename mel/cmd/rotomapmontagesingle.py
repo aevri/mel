@@ -11,18 +11,17 @@ import mel.cmd.error
 def setup_parser(parser):
 
     parser.add_argument(
-        'FRAMES',
+        "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
         help="Path to the rotomap or image to copy from.",
     )
 
-    parser.add_argument(
-        'UUID', type=str, help="Unique id of the mole to copy.")
+    parser.add_argument("UUID", type=str, help="Unique id of the mole to copy.")
 
-    parser.add_argument('OUTPUT', type=str, help="Name of the image to write.")
+    parser.add_argument("OUTPUT", type=str, help="Name of the image to write.")
 
     parser.add_argument(
-        '--rot90',
+        "--rot90",
         type=int,
         default=0,
         help="Rotate images 90 degrees clockwise this number of times.",
@@ -44,7 +43,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
 
     for imagepath, moles in images_moles:
         for m in moles:
-            if m['uuid'] == uuid_:
+            if m["uuid"] == uuid_:
                 path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
@@ -62,12 +61,12 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     #
     path, mole_list = path_moles_list[len(path_moles_list) // 2]
 
-    mole_dict = {m['uuid']: m for m in mole_list}
+    mole_dict = {m["uuid"]: m for m in mole_list}
     mole = mole_dict[uuid_]
 
     context_image = mel.lib.image.load_image(path)
-    x = mole['x']
-    y = mole['y']
+    x = mole["x"]
+    y = mole["y"]
 
     # Draw a faded mark to indicate the mole. Make it faded in case we
     # accidentally cover moles or other distinguishing marks.

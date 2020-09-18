@@ -19,25 +19,25 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        '--target',
-        '-t',
-        nargs='+',
+        "--target",
+        "-t",
+        nargs="+",
         required=True,
         help="Paths to images to identify.",
     )
     parser.add_argument(
-        '--source',
-        '-s',
-        metavar='DIRECTORY',
+        "--source",
+        "-s",
+        metavar="DIRECTORY",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
-        nargs='+',
+        nargs="+",
         default=[],
         help="Paths to rotomaps to read for reference.",
     )
     parser.add_argument(
-        '--verbose',
-        '-v',
-        action='store_true',
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Print information about the processing.",
     )
 
@@ -45,7 +45,7 @@ def setup_parser(parser):
 def process_args(args):
 
     if args.verbose:
-        print('Loading from sources ..')
+        print("Loading from sources ..")
 
     training_frames = itertools.chain.from_iterable(
         x.yield_frames() for x in args.source
@@ -64,7 +64,7 @@ def process_args(args):
     target_frames = [mel.rotomap.moles.RotomapFrame(x) for x in args.target]
 
     if args.verbose:
-        print('Training ..')
+        print("Training ..")
 
     box_radius = 0.1
     warm_classifier = mel.rotomap.identify.MoleRelativeClassifier(
@@ -74,11 +74,11 @@ def process_args(args):
     possible_uuid_set = frozenset(uuid_to_frameposlist.keys())
     for frame in target_frames:
         if args.verbose:
-            print('Processing', frame.path, '..')
+            print("Processing", frame.path, "..")
 
         uuid_to_pos = mel.rotomap.identify.frame_to_uuid_to_pos(frame)
         canonical_uuid_set = frozenset(
-            mole['uuid']
+            mole["uuid"]
             for mole in frame.moles
             if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         )
@@ -98,7 +98,7 @@ def process_args(args):
 
         if not positions or len(positions) == 1:
             if args.verbose:
-                print('Not enough moles to guess for', frame.path)
+                print("Not enough moles to guess for", frame.path)
             continue
 
         calc_guesses = mel.rotomap.identify.make_calc_guesses(
@@ -129,12 +129,12 @@ def process_args(args):
         new_id_set = set(old_to_new.values())
         new_moles = copy.deepcopy(frame.moles)
         for mole in new_moles:
-            old_id = mole['uuid']
+            old_id = mole["uuid"]
             new_id = old_to_new[old_id]
             if new_id is not None:
-                mole['uuid'] = new_id
+                mole["uuid"] = new_id
             elif old_id in new_id_set:
-                raise Exception(f'{frame.path}: would duplicate {old_id}')
+                raise Exception(f"{frame.path}: would duplicate {old_id}")
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
 

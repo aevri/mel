@@ -38,7 +38,7 @@ def moles(image, mask):
                 continue
 
         mel.rotomap.moles.add_mole(moles_, int(xy[0]), int(xy[1]))
-        moles_[-1]['radius'] = point.size // 2
+        moles_[-1]["radius"] = point.size // 2
     return moles_
 
 

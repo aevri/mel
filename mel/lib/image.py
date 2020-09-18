@@ -121,7 +121,7 @@ def montage_horizontal_inner_border(divider_size, *image_list):
         ValueError: Must provide image_list
     """
     if not image_list:
-        raise ValueError('Must provide image_list')
+        raise ValueError("Must provide image_list")
 
     height = max(i.shape[0] for i in image_list)
     width = sum(i.shape[1] for i in image_list)
@@ -136,7 +136,7 @@ def montage_horizontal_inner_border(divider_size, *image_list):
         iheight = image.shape[0]
         iwidth = image.shape[1]
         y = (height - iheight) // 2
-        output[y:y + iheight, x:x + iwidth] = image[:, :]
+        output[y : y + iheight, x : x + iwidth] = image[:, :]
         x += iwidth + divider_size
 
     return output
@@ -281,8 +281,8 @@ def slice_square_or_none(image, lefttop, rightbottom):
 
     # Note that images are stored in yx order, not xy.
     return image[
-        lefttop[1]:rightbottom[1],
-        lefttop[0]:rightbottom[0],
+        lefttop[1] : rightbottom[1],
+        lefttop[0] : rightbottom[0],
     ]
 
 

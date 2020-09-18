@@ -8,7 +8,7 @@ import numpy
 
 def path(mole_image_path):
     # Path might be a pathlib.Path, so convert to string first.
-    return str(mole_image_path) + '.mask.png'
+    return str(mole_image_path) + ".mask.png"
 
 
 def load(mole_image_path):
@@ -33,9 +33,7 @@ def mask_biggest_region(mask):
     # image which have a similar colour profile. Assume that the biggest region
     # is the area that we're interested in.
 
-    contours, _ = cv2.findContours(
-        mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
-    )
+    contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     max_area = 0
     max_index = None
