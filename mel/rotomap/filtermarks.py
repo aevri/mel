@@ -428,7 +428,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     import torch
 
     resnet, num_features, transform = make_resnet_and_transform()
-    head = torch.nn.Linear(num_features, 2)
+    head = make_model(num_features)
     head.load_state_dict(torch.load(metadata_dir / model_fname))
 
     resnet.fc = head
