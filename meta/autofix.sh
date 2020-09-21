@@ -8,7 +8,7 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-black --line-length 79 $allscripts
+black --quiet --line-length 79 $allscripts
 printf "."
 
 docformatter -i $allscripts
