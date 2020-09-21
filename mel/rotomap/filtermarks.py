@@ -32,6 +32,8 @@ _HALF_IMAGE_SIZE = 16
 
 DEFAULT_BATCH_SIZE = 128
 
+_PRETRAINED_SUFFIX = ".jpg.resnet18.pt"
+
 
 @contextlib.contextmanager
 def record_input_context(module_to_record):
@@ -117,7 +119,7 @@ def process_image(image_path, moles, batch_size):
     assert len(images) == len(metadata)
     features = images_to_features(images, batch_size)
 
-    pretrained_path = image_path.with_suffix(".jpg.resnet18.pt")
+    pretrained_path = image_path.with_suffix(_PRETRAINED_SUFFIX)
     pretrained_path.write_bytes(
         pickle.dumps(
             {
@@ -268,7 +270,7 @@ def find_pretrained(melroot):
         for subpart in part.iterdir():
             subpart_paths = sorted(p for p in subpart.iterdir())
             for session in subpart_paths:
-                for pretrained_file in session.glob("*.jpg.resnet18.pt"):
+                for pretrained_file in session.glob("*" + _PRETRAINED_SUFFIX):
                     all_sessions[f"{session.stem}"].append(pretrained_file)
     return all_sessions
 
