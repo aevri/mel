@@ -540,7 +540,9 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             editor.show_zoomed_display(guess_pos[0], guess_pos[1])
 
             if is_paste_mode:
-                editor.add_mole_display(guess_pos[0], guess_pos[1], follow_uuid)
+                editor.add_mole_display(
+                    guess_pos[0], guess_pos[1], follow_uuid
+                )
 
     return guess_pos
 

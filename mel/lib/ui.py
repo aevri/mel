@@ -232,7 +232,9 @@ class LeftRightDisplay:
     def prev_image(self):
         if self._image_list:
             num_images = len(self._image_list)
-            self._index = (self._index + num_images - 1) % len(self._image_list)
+            self._index = (self._index + num_images - 1) % len(
+                self._image_list
+            )
         self.show()
 
     def _get_image(self, path):

@@ -152,7 +152,8 @@ def make_calc_guesses(positions, uuid_index_translator, pos_classifier):
             guess_unknown_mole = ()
         return tuple(
             sorted(
-                itertools.chain(guesses, guess_unknown_mole), key=lambda x: x[1]
+                itertools.chain(guesses, guess_unknown_mole),
+                key=lambda x: x[1],
             )
         )
 
@@ -376,7 +377,9 @@ def best_match_combination(guesser, *, max_iterations=10 ** 5):
             return total_cost, state
 
         # Nope, advance states.
-        for new_cost, new_state in guesser.yield_next_states(total_cost, state):
+        for new_cost, new_state in guesser.yield_next_states(
+            total_cost, state
+        ):
             if not seen.has_seen(new_cost, new_state):
                 state_q.push(new_cost, new_state)
                 seen.see(new_cost, new_state)

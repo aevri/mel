@@ -123,7 +123,9 @@ def process_args(args):
         print_category("Ignored new moles:", diff.ignored_new)
         print_category("Would ignore new moles:", diff.would_ignore_new)
         print_category("Ignored missing moles:", diff.ignored_missing)
-        print_category("Would ignore missing moles:", diff.would_ignore_missing)
+        print_category(
+            "Would ignore missing moles:", diff.would_ignore_missing
+        )
 
 
 # -----------------------------------------------------------------------------

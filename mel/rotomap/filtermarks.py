@@ -104,7 +104,8 @@ def process_image(image_path, moles, batch_size):
 
     metadata = moles + marks
     images = [
-        get_item_image(image, mask, item, _HALF_IMAGE_SIZE) for item in metadata
+        get_item_image(image, mask, item, _HALF_IMAGE_SIZE)
+        for item in metadata
     ]
     is_mole = [True] * len(moles) + [False] * len(marks)
     is_mole = [item for i, item in enumerate(is_mole) if images[i] is not None]

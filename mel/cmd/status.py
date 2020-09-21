@@ -321,7 +321,9 @@ def process_args(args):
         errors_to_notices, args.detail, colorama.Fore.MAGENTA
     )
     if args.trivia > 0:
-        print_klass_to_notices(info_to_notices, args.detail, colorama.Fore.BLUE)
+        print_klass_to_notices(
+            info_to_notices, args.detail, colorama.Fore.BLUE
+        )
         if not any_notices and info_to_notices:
             any_notices = True
 
@@ -501,7 +503,9 @@ def check_rotomap(notices, rotomap):
 
 def check_newest_rotomap(notices, rotomap):
 
-    missing_unchanged_status = RotomapMissingLesionUnchangedStatus(rotomap.path)
+    missing_unchanged_status = RotomapMissingLesionUnchangedStatus(
+        rotomap.path
+    )
 
     changed = RotomapLesionChangedAlert(rotomap.path)
 

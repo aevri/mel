@@ -384,7 +384,9 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     for i, a in enumerate(from_moles):
         point = mel.rotomap.moles.mole_to_point(a)
         point += offset
-        best_index, best_dist_sq = _nearest_mole_index_to_point(point, to_moles)
+        best_index, best_dist_sq = _nearest_mole_index_to_point(
+            point, to_moles
+        )
         if best_index is not None and best_dist_sq <= cutoff_sq:
             r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
             r_point -= offset

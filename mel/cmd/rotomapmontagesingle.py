@@ -16,7 +16,9 @@ def setup_parser(parser):
         help="Path to the rotomap or image to copy from.",
     )
 
-    parser.add_argument("UUID", type=str, help="Unique id of the mole to copy.")
+    parser.add_argument(
+        "UUID", type=str, help="Unique id of the mole to copy."
+    )
 
     parser.add_argument("OUTPUT", type=str, help="Name of the image to write.")
 
