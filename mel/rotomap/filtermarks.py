@@ -51,8 +51,8 @@ def record_input_context(module_to_record):
 
 def make_resnet_and_transform():
     # After experimentation, it seems that we can get away with using resnet18
-    # as opposed to the deeper models. This sacrifices a little accuracy but
-    # seems to improve the running time of this command somewhat.
+    # instead of deeper models. This doesn't seem to make much difference to
+    # the quality of the results. It does improve the running time somewhat.
 
     import torchvision
 
