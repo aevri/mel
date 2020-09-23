@@ -56,6 +56,18 @@ def make_resnet_and_transform():
 
     import torchvision
 
+    # We assume that the pretrained model that we get from PyTorch will never
+    # change. Otherwise we'll have to re-train our models on top of it when it
+    # does. It seems to not change, but this doesn't seem to be documented
+    # anyhere. Here is the upstream commit where this version was introduced:
+    #
+    #   https://github.com/pytorch/vision/commit/
+    #     9ec78dab219b950887bcf5988ced1f3e7229765b
+    #
+    assert torchvision.models.resnet.model_urls["resnet18"].endswith(
+        "resnet18-5c106cde.pth"
+    )
+
     resnet = torchvision.models.resnet18(pretrained=True)
     resnet.eval()
     num_features = 512
