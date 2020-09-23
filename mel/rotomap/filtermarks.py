@@ -103,7 +103,7 @@ def images_to_features(images, batch_size):
 def pretrain_image(image_path, moles, batch_size):
     image, mask = open_image_for_classifier(image_path)
 
-    loaded_moles = mel.rotomap.moles.load_image_moles(image_path)
+    loaded_moles = moles
     guessed_moles = mel.rotomap.detectmoles.moles(image, mask)
 
     moles_and_marks = mel.rotomap.automark.merge_in_radiuses(
