@@ -104,12 +104,20 @@ def run_smoke_test():
         target_image_files = list(target_rotomap_2.glob("*.jpg"))
         target_json_files = list(target_rotomap_2.glob("*.jpg.json"))
 
+        expect_ok("mel", "rotomap", "automask", *target_image_files)
+        expect_ok(
+            "mel", "rotomap", "filter-marks-pretrain", *target_image_files
+        )
+        expect_ok(
+            "mel", "rotomap", "filter-marks-train", "--train-proportion", "1"
+        )
+
         for json_file in target_json_files:
             json_file.rename(json_file.with_suffix(".json.bak"))
 
-        expect_ok("mel", "rotomap", "automask", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
         expect_ok("mel", "rotomap", "automark", *target_image_files)
+        expect_ok("mel", "rotomap", "filter-marks", *target_image_files)
         expect_ok("mel", "rotomap", "identify2", *target_image_files)
 
         for json_file in target_json_files:
