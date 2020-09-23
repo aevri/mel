@@ -1,5 +1,6 @@
 """Train 'filter-marks'."""
 
+import argparse
 import json
 
 import torch
@@ -10,6 +11,20 @@ import mel.rotomap.filtermarks
 
 # TODO: Check for masking errors, where the mole is obscured by the mask.
 # TODO: Make the mask green.
+
+
+def proportion_arg(x):
+    try:
+        x = float(x)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{x}' is not a float")
+
+    if not (0.0 < x <= 1.0):
+        raise argparse.ArgumentTypeError(
+            f"'{x}' is not in range 0.0 < x <= 1.0"
+        )
+
+    return x
 
 
 def setup_parser(parser):
@@ -51,6 +66,17 @@ def setup_parser(parser):
         ),
     )
 
+    parser.add_argument(
+        "--train-proportion",
+        "-t",
+        type=proportion_arg,
+        default=0.9,
+        help=(
+            "Proportion (0.0 < x <= 1.0) of data to use for training. "
+            "Defaults to 0.9."
+        ),
+    )
+
 
 def process_args(args):
 
@@ -64,7 +90,7 @@ def process_args(args):
     pretrained_paths = mel.rotomap.filtermarks.find_pretrained(melroot)
     pretrained_data = mel.rotomap.filtermarks.load_pretrained(pretrained_paths)
     training_data, validation_data = mel.rotomap.filtermarks.split_data(
-        pretrained_data
+        pretrained_data, args.train_proportion
     )
     print(f"Loaded {len(training_data):,} training examples.")
     print(f"Loaded {len(validation_data):,} validation examples.")
@@ -81,13 +107,14 @@ def process_args(args):
         learning_rate=args.learning_rate,
     )
 
-    print(f"{'threshold':<12} {'precision':<12} {'recall':<12}")
-    for e in evaluators:
-        print(
-            f"{e.threshold:<12} "
-            f"{int(e.precision()):<12} "
-            f"{int(e.recall()):<12}"
-        )
+    if args.train_proportion < 1:
+        print(f"{'threshold':<12} {'precision':<12} {'recall':<12}")
+        for e in evaluators:
+            print(
+                f"{e.threshold:<12} "
+                f"{int(e.precision()):<12} "
+                f"{int(e.recall()):<12}"
+            )
 
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")

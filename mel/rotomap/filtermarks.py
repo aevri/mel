@@ -257,7 +257,7 @@ def prepare_data(pretrained_data, sessions):
 def split_data(pretrained_data, training_split=0.8):
     sessions = list(pretrained_data.keys())
     num_sessions = len(sessions)
-    if num_sessions < 2:
+    if training_split != 1 and num_sessions < 2:
         raise ValueError("Must have at least two sessions in order to split")
     num_training_sessions = int(num_sessions * training_split)
     num_validation_sessions = num_sessions - num_training_sessions
