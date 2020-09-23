@@ -63,8 +63,8 @@ setuptools.setup(
     install_requires=[
         # 'opencv',  # Not a possibility as yet.
         'scipy',
-        'torch~=1.4.0',
-        'torchvision~=0.5.0',
+        'torch~=1.6.0',
+        'torchvision~=0.7.0',
         'tqdm',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
         'pillow',
