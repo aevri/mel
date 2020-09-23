@@ -48,7 +48,7 @@ def process_args(args):
     for image_mole_iter in tqdm.tqdm(args.FRAMES):
         for image_path, moles in image_mole_iter:
             try:
-                mel.rotomap.filtermarks.process_image(
+                mel.rotomap.filtermarks.pretrain_image(
                     image_path, moles, args.batch_size
                 )
             except Exception:

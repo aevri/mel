@@ -100,7 +100,7 @@ def images_to_features(images, batch_size):
     return features
 
 
-def process_image(image_path, moles, batch_size):
+def pretrain_image(image_path, moles, batch_size):
     image, mask = open_image_for_classifier(image_path)
 
     loaded_moles = mel.rotomap.moles.load_image_moles(image_path)
