@@ -85,6 +85,11 @@ def make_resnet_and_transform():
 def images_to_features(images, batch_size):
     import torch.utils.data
 
+    if not images:
+        # pylint: disable=not-callable
+        return torch.tensor([])
+        # pylint: enable=not-callable
+
     resnet, num_features, transform = make_resnet_and_transform()
     batcher = torch.utils.data.DataLoader(
         [transform(i) for i in images], batch_size=batch_size
