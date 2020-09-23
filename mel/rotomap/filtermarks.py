@@ -214,6 +214,10 @@ class Evaluator:
 def make_model(num_features):
     import torch
 
+    # After experimenting with a 3-layer head, it seems that this simpler
+    # option is just as good. Wit the 3-layer head it becomes possible to
+    # over-fit, which doesn't seem to be so much the case with this single
+    # layer.
     return torch.nn.Linear(num_features, 2)
 
 
