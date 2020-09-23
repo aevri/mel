@@ -220,12 +220,16 @@ class Evaluator:
     def precision(self):
         if not self.num_predicted_moles:
             raise ValueError("No predicted moles.")
-        return 100 * self.num_moles_correct / self.num_predicted_moles
+        return (
+            100
+            * self.num_moles_correct.item()
+            / self.num_predicted_moles.item()
+        )
 
     def recall(self):
         if not self.num_moles:
             raise ValueError("No moles.")
-        return 100 * self.num_moles_correct / self.num_moles
+        return 100 * self.num_moles_correct.item() / self.num_moles.item()
 
 
 def make_model(num_features):
