@@ -35,6 +35,9 @@ class Notification:
     def format(self, detail_level):
         return str(self.path)
 
+    def hint(self):
+        return None
+
 
 class AlertNotification(Notification):
     pass
@@ -167,6 +170,12 @@ class MicroMissingIdInfo(InfoNotification):
 
     def format(self, detail_level):
         return f"{self.path}"
+
+    def hint(self):
+        return (
+            "Copy the id from the appropriate rotomap, or "
+            "use e.g. `uuidgen` to generate a new id."
+        )
 
 
 class RotomapMissingMoleInfo(InfoNotification):
@@ -334,6 +343,8 @@ def process_args(args):
         )
         if not any_notices and info_to_notices:
             any_notices = True
+    if any_notices:
+        print()
 
     return any_notices
 
@@ -345,6 +356,11 @@ def print_klass_to_notices(klass_to_notices, detail_level, fore):
         print(fore, klass.__name__, colorama.Fore.RESET)
         for notice in notice_list:
             print(textwrap.indent(notice.format(detail_level), "  "))
+            hint = notice.hint()
+            if hint is not None:
+                hint = f"({hint})"
+                print()
+                print(textwrap.indent(textwrap.fill(hint), "  "))
 
 
 def check_rotomaps(path, notices):
