@@ -161,6 +161,14 @@ class UnexpectedDirInfo(InfoNotification):
     pass
 
 
+class MicroMissingIdInfo(InfoNotification):
+    def __init__(self, path):
+        super().__init__(path)
+
+    def format(self, detail_level):
+        return f"{self.path}"
+
+
 class RotomapMissingMoleInfo(InfoNotification):
     def __init__(self, path):
         super().__init__(path)
@@ -571,6 +579,12 @@ def check_micro(path, notices):
                             if (mole.path / changed_path).exists():
                                 notices.append(
                                     MicroLesionChangedAlert(mole.path, mole.id)
+                                )
+                            if mole.id is None:
+                                notices.append(
+                                    MicroMissingIdInfo(
+                                        mole.path / mel.micro.fs.Names.ID
+                                    )
                                 )
                     else:
                         notices.append(UnexpectedFileInfo(minor_part))
