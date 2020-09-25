@@ -3,8 +3,6 @@
 import argparse
 import json
 
-import torch
-
 import mel.lib.common
 import mel.rotomap.filtermarks
 
@@ -79,6 +77,9 @@ def setup_parser(parser):
 
 
 def process_args(args):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
 
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH

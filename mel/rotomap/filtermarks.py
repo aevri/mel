@@ -7,7 +7,6 @@ import pickle
 
 import cv2
 import numpy
-import torch
 from tqdm import tqdm
 
 import mel.lib.fs
@@ -54,6 +53,8 @@ def make_resnet_and_transform():
     # instead of deeper models. This doesn't seem to make much difference to
     # the quality of the results. It does improve the running time somewhat.
 
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     import torchvision
 
     # We assume that the pretrained model that we get from PyTorch will never
@@ -83,6 +84,8 @@ def make_resnet_and_transform():
 
 
 def images_to_features(images, batch_size):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     import torch.utils.data
 
     if not images:
@@ -174,6 +177,10 @@ def train(
     scheduler,
     evaluators,
 ):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     with tqdm(
         total=len(train_dataloader) * epochs + len(valid_dataloader),
         smoothing=0,
@@ -204,6 +211,10 @@ def train(
 
 class Evaluator:
     def __init__(self, threshold):
+        # Import this as lazily as possible as it takes a while to import, so
+        # that we only pay the import cost when we use it.
+        import torch
+
         self.threshold = threshold
         self.num_moles = 0
         self.num_predicted_moles = 0
@@ -233,6 +244,8 @@ class Evaluator:
 
 
 def make_model(num_features):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     import torch
 
     # After experimenting with a 3-layer head, it seems that this simpler
@@ -308,6 +321,8 @@ def make_model_and_fit(
     num_epochs,
     learning_rate,
 ):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     import torch
 
     training_batcher = torch.utils.data.DataLoader(
@@ -452,6 +467,8 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     # this point it is only experimental functionality, so importing late
     # like this allows folks not using it to avoid the extra burden.
 
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     import torch
 
     resnet, num_features, transform = make_resnet_and_transform()
