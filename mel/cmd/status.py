@@ -22,10 +22,18 @@ import os
 import sys
 import textwrap
 
+from enum import IntEnum
+
 import colorama
 
 import mel.lib.fs
 import mel.rotomap.moles
+
+
+class ImportanceLevel(IntEnum):
+    # Alert = -1
+    # Error = 0
+    Info = 1
 
 
 class Notification:
@@ -299,7 +307,7 @@ def process_args(args):
 
     rotomaps_path = melroot / mel.lib.fs.ROTOMAPS_PATH
     if rotomaps_path.exists():
-        check_rotomaps(rotomaps_path, notice_list)
+        check_rotomaps(rotomaps_path, notice_list, args.trivia)
     else:
         notice_list.append(NoBaseDirInfo(mel.lib.fs.ROTOMAPS_PATH))
 
@@ -363,7 +371,7 @@ def print_klass_to_notices(klass_to_notices, detail_level, fore):
                 print(textwrap.indent(textwrap.fill(hint), "  "))
 
 
-def check_rotomaps(path, notices):
+def check_rotomaps(path, notices, importance_level):
     # incoming_path = path / 'incoming'
     parts_path = path / "parts"
     if parts_path.exists():
@@ -392,7 +400,9 @@ def check_rotomaps(path, notices):
             if major_part.is_dir():
                 for minor_part in major_part.iterdir():
                     if minor_part.is_dir():
-                        check_rotomap_minor_part(minor_part, notices)
+                        check_rotomap_minor_part(
+                            minor_part, notices, importance_level
+                        )
                     else:
                         notices.append(UnexpectedFileInfo(minor_part))
             else:
@@ -401,12 +411,12 @@ def check_rotomaps(path, notices):
         notices.append(NoBaseDirInfo(parts_path))
 
 
-def check_rotomap_minor_part(path, notices):
+def check_rotomap_minor_part(path, notices, importance_level):
     rotomap_list = make_rotomap_list(path, notices)
     check_rotomap_list(notices, rotomap_list)
 
     for rotomap in rotomap_list:
-        check_rotomap(notices, rotomap)
+        check_rotomap(notices, rotomap, importance_level)
 
     if rotomap_list:
         check_newest_rotomap(notices, rotomap_list[-1])
@@ -479,7 +489,7 @@ def check_rotomap_list(notices, rotomap_list):
         notices.append(missing_notification)
 
 
-def check_rotomap(notices, rotomap):
+def check_rotomap(notices, rotomap, importance_level):
 
     unconfirmed = RotomapUnconfirmedMoleInfo(rotomap.path)
     duplicates = RotomapDuplicateUuidError(rotomap.path)
@@ -501,31 +511,32 @@ def check_rotomap(notices, rotomap):
     if unconfirmed.frame_to_uuid_list:
         notices.append(unconfirmed)
 
-    missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
-    missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
-    missing_space_info = RotomapMissingSpaceInfo(rotomap.path)
+    if importance_level >= ImportanceLevel.Info:
+        missing_mole_file_info = RotomapMissingMoleFileInfo(rotomap.path)
+        missing_mask_info = RotomapMissingMaskInfo(rotomap.path)
+        missing_space_info = RotomapMissingSpaceInfo(rotomap.path)
 
-    try:
-        for frame in rotomap.yield_frames():
-            if not frame.has_mole_file():
-                missing_mole_file_info.frame_list.append(frame.path)
-            if not frame.has_mask():
-                missing_mask_info.frame_list.append(frame.path)
-            if "ellipse" not in frame.metadata:
-                missing_space_info.frame_list.append(frame.path)
-    except Exception as e:
-        notices.append(RotomapNotLoadable(rotomap.path, e))
+        try:
+            for frame in rotomap.yield_frames():
+                if not frame.has_mole_file():
+                    missing_mole_file_info.frame_list.append(frame.path)
+                if not frame.has_mask():
+                    missing_mask_info.frame_list.append(frame.path)
+                if "ellipse" not in frame.metadata:
+                    missing_space_info.frame_list.append(frame.path)
+        except Exception as e:
+            notices.append(RotomapNotLoadable(rotomap.path, e))
 
-    for i in rotomap.path.iterdir():
-        if i.is_dir():
-            notices.append(UnexpectedDirInfo(i))
+        for i in rotomap.path.iterdir():
+            if i.is_dir():
+                notices.append(UnexpectedDirInfo(i))
 
-    if missing_mole_file_info.frame_list:
-        notices.append(missing_mole_file_info)
-    if missing_mask_info.frame_list:
-        notices.append(missing_mask_info)
-    if missing_space_info.frame_list:
-        notices.append(missing_space_info)
+        if missing_mole_file_info.frame_list:
+            notices.append(missing_mole_file_info)
+        if missing_mask_info.frame_list:
+            notices.append(missing_mask_info)
+        if missing_space_info.frame_list:
+            notices.append(missing_space_info)
 
 
 def check_newest_rotomap(notices, rotomap):
