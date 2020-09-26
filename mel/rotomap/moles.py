@@ -22,6 +22,7 @@ KEY_IS_UNCHANGED = "is_unchanged"
 
 IGNORE_NEW_FILENAME = "ignore-new"
 IGNORE_MISSING_FILENAME = "ignore-missing"
+IGNORE_CHANGED_FILENAME = "ignore-changed"
 ROTOMAP_DIR_LESIONS_FILENAME = "lesions.json"
 
 

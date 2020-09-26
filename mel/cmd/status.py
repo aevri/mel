@@ -558,6 +558,10 @@ def check_newest_rotomap(notices, rotomap):
         for lesion in rotomap.lesions
     }
 
+    ignore_changed = mel.rotomap.moles.load_potential_set_file(
+        rotomap.path, mel.rotomap.moles.IGNORE_CHANGED_FILENAME
+    )
+
     for u in uuids:
         if u not in uuid_to_unchanged_status:
             if u in ignore_new:
@@ -571,7 +575,8 @@ def check_newest_rotomap(notices, rotomap):
             missing_unchanged_status.uuid_list.append(u)
             continue
         elif not unchanged_status:
-            changed.uuid_list.append(u)
+            if u not in ignore_changed:
+                changed.uuid_list.append(u)
             continue
 
     if missing_unchanged_status.uuid_list:
