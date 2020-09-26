@@ -402,8 +402,18 @@ def check_rotomaps(path, notices):
 
 
 def check_rotomap_minor_part(path, notices):
-    rotomap_list = []
+    rotomap_list = make_rotomap_list(path, notices)
+    check_rotomap_list(notices, rotomap_list)
 
+    for rotomap in rotomap_list:
+        check_rotomap(notices, rotomap)
+
+    if rotomap_list:
+        check_newest_rotomap(notices, rotomap_list[-1])
+
+
+def make_rotomap_list(path, notices):
+    rotomap_list = []
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
             try:
@@ -416,15 +426,8 @@ def check_rotomap_minor_part(path, notices):
                 )
         else:
             notices.append(UnexpectedFileInfo(rotomap_path))
-
     rotomap_list.sort(key=lambda x: x.path)
-    check_rotomap_list(notices, rotomap_list)
-
-    for rotomap in rotomap_list:
-        check_rotomap(notices, rotomap)
-
-    if rotomap_list:
-        check_newest_rotomap(notices, rotomap_list[-1])
+    return rotomap_list
 
 
 def uuids_from_dir(rotomap_dir):
