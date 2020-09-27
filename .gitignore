@@ -3,7 +3,6 @@
 tags
 .clirope/
 mel.egg-info/
-mel/rotomap/lowerbound*.so
 build/
 Pipfile
 Pipfile.lock

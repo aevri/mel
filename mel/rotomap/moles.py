@@ -2,7 +2,6 @@
 
 
 import argparse
-import collections
 import json
 import math
 import pathlib
@@ -87,8 +86,8 @@ class RotomapFrame:
     def load_image(self):
         return mel.lib.image.load_image(self.path)
 
-    def load_mask(self):
-        return mel.rotomap.mask.load_or_none(self.path)
+    # def load_mask(self):
+    #     return mel.rotomap.mask.load_or_none(self.path)
 
     def has_mole_file(self):
         return pathlib.Path(str(self.path) + ".json").exists()
@@ -107,9 +106,9 @@ class MoleData:
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
-        self.canonical_uuids = frozenset(
-            m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
-        )
+        # self.canonical_uuids = frozenset(
+        #     m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
+        # )
         # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
 
@@ -403,29 +402,6 @@ def to_uuid_points(moles):
     for m in moles:
         uuid_points[m["uuid"]] = mole_to_point(m)
     return uuid_points
-
-
-def frames_to_uuid_frameposlist(frame_iterable, canonical_only=False):
-    uuid_to_frameposlist = collections.defaultdict(list)
-
-    for frame in frame_iterable:
-
-        if "ellipse" not in frame.metadata:
-            raise Exception(
-                f"{frame} has no ellipse metadata, "
-                'try running "rotomap calc-space"'
-            )
-
-        ellipse = frame.metadata["ellipse"]
-        elspace = mel.lib.ellipsespace.Transform(ellipse)
-        for uuid_, pos in frame.moledata.uuid_points.items():
-            if canonical_only and uuid_ not in frame.moledata.canonical_uuids:
-                continue
-            uuid_to_frameposlist[uuid_].append(
-                (str(frame), elspace.to_space(pos))
-            )
-
-    return uuid_to_frameposlist
 
 
 def load_potential_set_file(path, filename):

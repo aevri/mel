@@ -34,12 +34,6 @@ def get_args(cls, dist, header=None):
 setuptools.command.easy_install.ScriptWriter.get_args = get_args
 # -----------------------------------------------------------------------------
 
-lowerbound = setuptools.Extension(
-    'mel.rotomap.lowerbound',
-    sources=['lowerbound.cpp'],
-    extra_compile_args=['-std=c++11'],
-)
-
 setuptools.setup(
     name='mel',
     url='https://github.com/aevri/mel',
@@ -62,7 +56,6 @@ setuptools.setup(
     },
     install_requires=[
         # 'opencv',  # Not a possibility as yet.
-        'scipy',
         'torch~=1.6.0',
         'torchvision~=0.7.0',
         'tqdm',
@@ -81,6 +74,5 @@ setuptools.setup(
             'pylint',
         ]
     },
-    ext_modules=[lowerbound],
     python_requires='>=3.6',
 )
