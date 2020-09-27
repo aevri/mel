@@ -1,4 +1,19 @@
-"""Train to guess which mole is which in a rotomap image."""
+"""Train to guess which mole is which in a rotomap image.
+
+It can be helpful to pre-train a model on a reasonable amount of fake data
+before fine-tuning it on your own data. This is especially helpful when you
+don't have much data of your own yet. For example:
+
+    mkdir temp
+    cd temp
+    mel-debug gen-repo --num-rotomaps 10 --num-parts 10 .
+    mel rotomap automask rotomaps/parts/*/*/*/*.jpg
+    mel rotomap calc-space rotomaps/parts/*/*/*/*.jpg
+    mel rotomap identify2-train --forget-moles
+
+Then you can copy the model out of the fake repo, and then train it again on
+your data.
+"""
 
 import argparse
 import json
