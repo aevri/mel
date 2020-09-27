@@ -38,4 +38,4 @@ printf "unit tests: "
 ./meta/unit_tests.sh || die 'Unit tests failed.'
 
 printf "system tests: "
-./meta/system_tests.py || die 'System tests failed.'
+pytest -v || die 'System tests failed.'

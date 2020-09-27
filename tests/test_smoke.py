@@ -1,12 +1,10 @@
 #! /usr/bin/env python3
-"""Test mel from a user's perspective."""
+"""Smoke-test mel from the CLI, make sure nothing errors out."""
 
-import argparse
 import contextlib
 import os
 import pathlib
 import subprocess
-import sys
 import tempfile
 
 import mel.cmd.mel
@@ -18,36 +16,7 @@ class ExpectationError(Exception):
         self.completed_process = completed_process
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
-
-    # cd to the root of the repository, so all the paths are relative to that
-    rootdir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    os.chdir(rootdir)
-
-    try:
-        run_tests()
-    except ExpectationError as e:
-        print()
-        print(e)
-        print("-- stdout:")
-        print(e.completed_process.stdout)
-        print("-- stderr:")
-        print(e.completed_process.stderr)
-        print("--")
-        return 1
-
-    print("OK")
-
-
-def run_tests():
-    run_mel_help_tests()
-    run_mel_debug_help_tests()
-    run_smoke_test()
-
-
-def run_mel_help_tests():
+def test_mel_help():
 
     mel_cmd = "mel"
 
@@ -64,7 +33,7 @@ def run_mel_help_tests():
         expect_ok(mel_cmd, "rotomap", subcommand, "-h")
 
 
-def run_mel_debug_help_tests():
+def test_mel_debug_help():
 
     mel_cmd = "mel-debug"
 
@@ -81,7 +50,7 @@ def run_mel_debug_help_tests():
         expect_ok(mel_cmd, s, "-h")
 
 
-def run_smoke_test():
+def test_smoke():
     with chtempdir_context():
         expect_ok("mel-debug", "gen-repo", ".")
         target_part = pathlib.Path("rotomaps/parts/LeftLeg/Lower")
@@ -165,12 +134,8 @@ def expect_returncode(expected_code, command):
         )
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-
-
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2019 Angelos Evripiotis.
+# Copyright (C) 2015-2020 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

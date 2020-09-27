@@ -72,6 +72,7 @@ setuptools.setup(
             'nose',
             'vulture',
             'pylint',
+            'pytest',
         ]
     },
     python_requires='>=3.6',
