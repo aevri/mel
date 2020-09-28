@@ -10,12 +10,6 @@ import tempfile
 import mel.cmd.mel
 
 
-class ExpectationError(Exception):
-    def __init__(self, message, completed_process):
-        super(ExpectationError, self).__init__(message)
-        self.completed_process = completed_process
-
-
 def test_mel_help():
 
     mel_cmd = "mel"
@@ -112,26 +106,12 @@ def chtempdir_context():
 
 
 def expect_ok(*args):
-    return expect_returncode(0, args)
+    subprocess.check_call(args)
 
 
-def expect_returncode(expected_code, command):
-    print(".", end="", flush=True)
-
-    result = subprocess.run(
-        command,
-        universal_newlines=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    if result.returncode != expected_code:
-        raise ExpectationError(
-            "'{cmd}' returned {rc}, expected {erc}".format(
-                cmd=command, rc=result.returncode, erc=expected_code
-            ),
-            result,
-        )
+def expect_returncode(expected_code, *args):
+    return_code = subprocess.call(args)
+    assert return_code == expected_code
 
 
 # -----------------------------------------------------------------------------
