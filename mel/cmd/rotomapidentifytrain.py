@@ -9,7 +9,7 @@ don't have much data of your own yet. For example:
     mel-debug gen-repo --num-rotomaps 10 --num-parts 10 .
     mel rotomap automask rotomaps/parts/*/*/*/*.jpg
     mel rotomap calc-space rotomaps/parts/*/*/*/*.jpg
-    mel rotomap identify2-train --forget-moles
+    mel rotomap identify-train --forget-moles
 
 Then you can copy the model out of the fake repo, and then train it again on
 your data.

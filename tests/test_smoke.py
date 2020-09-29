@@ -61,7 +61,7 @@ def test_smoke():
         expect_ok("mel", "rotomap", "automask", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
 
-        expect_ok("mel", "rotomap", "identify2-train")
+        expect_ok("mel", "rotomap", "identify-train")
 
         target_rotomap_2 = target_part / "2018_01_01"
         target_image_files = list(target_rotomap_2.glob("*.jpg"))
@@ -81,7 +81,7 @@ def test_smoke():
         expect_ok("mel", "rotomap", "automark", *target_image_files)
         expect_ok("mel", "rotomap", "filter-marks", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
-        expect_ok("mel", "rotomap", "identify2", *target_image_files)
+        expect_ok("mel", "rotomap", "identify", *target_image_files)
 
         for json_file in target_json_files:
             json_file.with_suffix(".json.bak").rename(json_file)
