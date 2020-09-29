@@ -152,12 +152,12 @@ class MoleListDiff:
 
         self.new = (new_uuids - old_uuids) - ignore_new
         self.missing = (old_uuids - new_uuids) - ignore_missing
-        self.matching = old_uuids & new_uuids
+        # self.matching = old_uuids & new_uuids
 
-        self.ignored_new = (new_uuids - old_uuids) & ignore_new
-        self.ignored_missing = (old_uuids - new_uuids) & ignore_missing
-        self.would_ignore_new = ignore_new - (new_uuids - old_uuids)
-        self.would_ignore_missing = ignore_missing - (old_uuids - new_uuids)
+        # self.ignored_new = (new_uuids - old_uuids) & ignore_new
+        # self.ignored_missing = (old_uuids - new_uuids) & ignore_missing
+        # self.would_ignore_new = ignore_new - (new_uuids - old_uuids)
+        # self.would_ignore_missing = ignore_missing - (old_uuids - new_uuids)
 
 
 def normalised_ellipse_mask(ellipse):
