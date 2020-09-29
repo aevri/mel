@@ -60,7 +60,6 @@ setuptools.setup(
         'torchvision~=0.7.0',
         'tqdm',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
-        'pillow',
         'colorama',
     ],
     extras_require={
