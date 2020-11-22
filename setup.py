@@ -61,6 +61,7 @@ setuptools.setup(
         'tqdm',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
         'colorama',
+        'pygame',
     ],
     extras_require={
         'dev': [

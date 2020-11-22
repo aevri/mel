@@ -3,8 +3,10 @@
 import os
 import shutil
 
+
 import mel.lib.common
 import mel.lib.fs
+import mel.lib.fullscreenui
 import mel.lib.ui
 
 
@@ -12,49 +14,38 @@ def setup_parser(parser):
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images sets or images."
     )
-    parser.add_argument(
-        "--display-width",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
-    parser.add_argument(
-        "--display-height",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
 
 
 def process_args(args):
-
-    display = OrganiserDisplay(
-        "rotomap organise",
-        mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES),
-        args.display_width,
-        args.display_height,
-    )
-
-    mel.lib.ui.bring_python_to_front()
 
     print("Press left arrow or right arrow to change image.")
     print("Press backspace to delete image.")
     print("Press 'g' to group images before current to a folder.")
     print("Press 'q' to quit.")
 
-    for key in mel.lib.ui.yield_keys_until_quitkey():
-        if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-            display.next_image()
-        elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-            display.prev_image()
-        elif key == mel.lib.ui.WAITKEY_BACKSPACE:
-            display.delete_image()
-        elif key == ord("g"):
-            destination = input("group destination: ")
-            display.group_images(destination)
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
+    with mel.lib.fullscreenui.fullscreen_context() as surface:
+        display = OrganiserDisplay(
+            surface, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
+        )
+
+        for event in mel.lib.fullscreenui.yield_events_until_quit():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    display.next_image()
+                elif event.key == pygame.K_LEFT:
+                    display.prev_image()
+                elif event.key == pygame.K_BACKSPACE:
+                    display.delete_image()
+                elif event.key == pygame.K_g:
+                    destination = input("group destination: ")
+                    display.group_images(destination)
 
 
-class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
+class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
     """Display images in a window, supply controls for organising."""
 
     def delete_image(self):
@@ -76,7 +67,7 @@ class OrganiserDisplay(mel.lib.ui.LeftRightDisplay):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2019 Angelos Evripiotis.
+# Copyright (C) 2016-2020 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
