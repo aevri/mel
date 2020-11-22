@@ -8,6 +8,7 @@ import cv2
 import numpy
 
 import mel.lib.common
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.ui
 import mel.rotomap.detectmoles
@@ -68,21 +69,10 @@ def draw_crosshair(image, x, y):
 
 
 class Display:
-    def __init__(self, width, height):
-        self._name = str(id(self))
+    def __init__(self, surface):
+        self._image_display = mel.lib.fullscreenui.Display(surface)
 
-        if width is None or height is None:
-            full_width_height = mel.lib.ui.guess_fullscreen_width_height()
-            if width is None:
-                width = full_width_height[0]
-            if height is None:
-                height = full_width_height[1]
-
-        self._rect = numpy.array((width, height))
-
-        cv2.namedWindow(self._name)
-        cv2.namedWindow(self._name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self._name, *self._rect)
+        self._rect = numpy.array((surface.get_width(), surface.get_height()))
 
         self._transform = None
 
@@ -103,7 +93,7 @@ class Display:
         if overlay is not None:
             image = overlay(image, self._transform)
 
-        cv2.imshow(self._name, image)
+        self._image_display.show_opencv_image(image)
 
     def set_fitted(self):
         self._is_zoomed = False
@@ -125,19 +115,12 @@ class Display:
             raise Exception("Not zoomed")
         return self._zoom_pos
 
-    def set_mouse_callback(self, callback):
-        cv2.setMouseCallback(self._name, callback)
-
-    def clear_mouse_callback(self):
-        cv2.setMouseCallback(
-            self._name, mel.lib.common.make_null_mouse_callback()
-        )
-
     def windowxy_to_imagexy(self, window_x, window_y):
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
     def set_title(self, title):
-        cv2.setWindowTitle(self._name, title)
+        # cv2.setWindowTitle(self._name, title)
+        pass
 
 
 def make_composite_overlay(*overlays):
@@ -401,9 +384,9 @@ class EditorMode(enum.Enum):
 
 
 class Editor:
-    def __init__(self, directory_list, width, height):
+    def __init__(self, directory_list, surface):
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
-        self.display = Display(width, height)
+        self.display = Display(surface)
         self.moledata_list = [MoleData(x.image_paths) for x in directory_list]
 
         self._mode = EditorMode.edit_mole

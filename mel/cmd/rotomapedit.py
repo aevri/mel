@@ -48,10 +48,10 @@ In 'mole marking' mode:
 
 import argparse
 
-import cv2
 import numpy
 
 import mel.lib.common
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.math
 import mel.lib.ui
@@ -73,18 +73,6 @@ def setup_parser(parser):
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
         nargs="+",
         help="A list of paths to rotomaps.",
-    )
-    parser.add_argument(
-        "--display-width",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
-    parser.add_argument(
-        "--display-height",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
     )
     parser.add_argument(
         "--follow",
@@ -148,14 +136,24 @@ class FollowController:
         self._prev_moles = editor.moledata.moles
 
     def on_key(self, editor, key):
-        if key in mel.lib.ui.WAITKEY_ARROWS:
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        arrows = [
+            pygame.K_UP,
+            pygame.K_DOWN,
+            pygame.K_LEFT,
+            pygame.K_RIGHT,
+        ]
+        if key in arrows:
             update_follow(
                 editor,
                 self.mole_uuid_list[0],
                 self._prev_moles,
                 self.is_paste_mode,
             )
-        elif key == ord("p"):
+        elif key == pygame.K_p:
             self.is_paste_mode = not self.is_paste_mode
             self.update_status()
             editor.set_status(self.status)
@@ -183,24 +181,33 @@ class MoleEditController:
 
         self.copy_to_clipboard = copy_to_clipboard
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        self.mouse_x = mouse_x
-        self.mouse_y = mouse_y
-        if event == cv2.EVENT_LBUTTONDOWN:
-            self.on_lbutton_down(editor, mouse_x, mouse_y, flags)
-        if event == cv2.EVENT_RBUTTONDOWN:
-            self.on_rbutton_down(editor, mouse_x, mouse_y, flags)
+    def on_mouse_event(self, editor, event):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
 
-    def on_lbutton_down(self, editor, mouse_x, mouse_y, flags):
-        if flags & cv2.EVENT_FLAG_ALTKEY:
-            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+        self.mouse_x, self.mouse_y = pygame.mouse.get_pos()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                self.on_lbutton_down(editor, self.mouse_x, self.mouse_y)
+            elif event.button == 3:
+                self.on_rbutton_down(editor, self.mouse_x, self.mouse_y)
+
+    def on_lbutton_down(self, editor, mouse_x, mouse_y):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        key_mods = pygame.key.get_mods()
+        if key_mods & pygame.KMOD_ALT:
+            if key_mods & pygame.KMOD_SHIFT:
                 self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                 print(self.mole_uuid_list[0])
                 if self.copy_to_clipboard:
                     mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
             else:
                 editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
-        elif flags & cv2.EVENT_FLAG_SHIFTKEY:
+        elif key_mods & pygame.KMOD_SHIFT:
             editor.remove_mole(mouse_x, mouse_y)
         else:
             if self.sub_controller:
@@ -210,11 +217,16 @@ class MoleEditController:
                     return
             editor.add_mole(mouse_x, mouse_y)
 
-    def on_rbutton_down(self, editor, mouse_x, mouse_y, flags):
-        if flags & cv2.EVENT_FLAG_ALTKEY:
-            if flags & cv2.EVENT_FLAG_SHIFTKEY:
+    def on_rbutton_down(self, editor, mouse_x, mouse_y):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        key_mods = pygame.key.get_mods()
+        if key_mods & pygame.KMOD_ALT:
+            if key_mods & pygame.KMOD_SHIFT:
                 editor.confirm_mole(mouse_x, mouse_y)
-        elif flags & cv2.EVENT_FLAG_SHIFTKEY:
+        elif key_mods & pygame.KMOD_SHIFT:
             editor.set_mole_uuid(
                 mouse_x,
                 mouse_y,
@@ -230,7 +242,11 @@ class MoleEditController:
                 pass
 
     def on_key(self, editor, key):
-        if key == ord("o"):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if key == pygame.K_o:
             is_follow = self.sub_controller is self.follow_controller
             if not is_follow and self.mole_uuid_list[0]:
                 self.sub_controller = self.follow_controller
@@ -239,7 +255,7 @@ class MoleEditController:
                 self.sub_controller = None
                 editor.set_status("")
             editor.show_current()
-        elif key == ord("m"):
+        elif key == pygame.K_m:
             if not self.sub_controller == self.move_controller:
                 self.sub_controller = self.move_controller
                 editor.set_status(self.sub_controller.status)
@@ -247,17 +263,20 @@ class MoleEditController:
                 self.sub_controller = None
                 editor.set_status("")
             editor.show_current()
-        elif key == ord("f"):
+        elif key == pygame.K_f:
             editor.toggle_faded_markers()
-        elif key == 13:
+        elif key == pygame.K_RETURN:
             editor.toggle_markers()
-        elif key == ord("+"):
+        elif key == pygame.K_PLUS:
             self.mole_uuid_list[0] = editor.get_mole_uuid(
                 self.mouse_x, self.mouse_y
             )
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
                 mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
+        elif key == pygame.K_i:
+            # editor.moledata.moles
+            pass
 
         if self.sub_controller:
             try:
@@ -272,23 +291,36 @@ class MaskEditController:
     def __init__(self):
         pass
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        enable = not (flags & cv2.EVENT_FLAG_SHIFTKEY)
-        if event == cv2.EVENT_MOUSEMOVE:
-            if flags & cv2.EVENT_FLAG_LBUTTON:
+    def on_mouse_event(self, editor, event):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        key_mods = pygame.key.get_mods()
+        enable = not (key_mods & pygame.KMOD_SHIFT)
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION):
+            # is_mouse_button_pressed = pygame.mouse.get_pressed(num_buttons=3)
+            is_mouse_button_pressed = pygame.mouse.get_pressed()
+            if is_mouse_button_pressed[0]:
                 editor.set_mask(mouse_x, mouse_y, enable)
-        elif event == cv2.EVENT_LBUTTONDOWN:
-            editor.set_mask(mouse_x, mouse_y, enable)
 
     def pre_key(self, editor, key):
         pass
 
     def on_key(self, editor, key):
-        if key == ord("<"):
-            editor.set_smaller_masker()
-        elif key == ord(">"):
-            editor.set_larger_masker()
-        elif key == ord("."):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        key_mods = pygame.key.get_mods()
+        shift = key_mods & pygame.KMOD_SHIFT
+        if shift:
+            if key == pygame.K_COMMA:
+                editor.set_smaller_masker()
+            elif key == pygame.K_PERIOD:
+                editor.set_larger_masker()
+        elif key == pygame.K_PERIOD:
             editor.set_default_masker()
 
 
@@ -296,10 +328,20 @@ class MoleMarkController:
     def __init__(self):
         pass
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if flags & cv2.EVENT_FLAG_SHIFTKEY:
-                if flags & cv2.EVENT_FLAG_ALTKEY:
+    def on_mouse_event(self, editor, event):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if event.type != pygame.MOUSEBUTTONDOWN:
+            return
+
+        key_mods = pygame.key.get_mods()
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        if event.button == 1:
+            if key_mods & pygame.KMOD_SHIFT:
+                if key_mods & pygame.KMOD_ALT:
                     nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
                     if nearest_mole is not None:
                         nearest_mole["kind"] = "non-mole"
@@ -309,7 +351,7 @@ class MoleMarkController:
                 else:
                     editor.remove_mole(mouse_x, mouse_y)
             else:
-                if flags & cv2.EVENT_FLAG_ALTKEY:
+                if key_mods & pygame.KMOD_ALT:
                     nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
                     if nearest_mole is not None:
                         nearest_mole["kind"] = "mole"
@@ -318,18 +360,18 @@ class MoleMarkController:
                         editor.show_current()
                 else:
                     editor.add_mole(mouse_x, mouse_y)
-        elif event == cv2.EVENT_RBUTTONDOWN:
+        elif event.button == 3:
             nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
             if nearest_mole is not None:
-                if flags & cv2.EVENT_FLAG_ALTKEY:
-                    if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                if key_mods & pygame.KMOD_ALT:
+                    if key_mods & pygame.KMOD_SHIFT:
                         nearest_mole["kind"] = "non-mole"
                         nearest_mole["looks_like"] = "unsure"
                     else:
                         nearest_mole["kind"] = "mole"
                         nearest_mole["looks_like"] = "unsure"
                 else:
-                    if flags & cv2.EVENT_FLAG_SHIFTKEY:
+                    if key_mods & pygame.KMOD_SHIFT:
                         nearest_mole["kind"] = "non-mole"
                         nearest_mole["looks_like"] = "non-mole"
                     else:
@@ -342,7 +384,11 @@ class MoleMarkController:
         pass
 
     def on_key(self, editor, key):
-        if key == ord("a"):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if key == pygame.K_a:
             is_alt = editor.marked_mole_overlay.is_accentuate_marked_mode
             editor.marked_mole_overlay.is_accentuate_marked_mode = not is_alt
             editor.show_current()
@@ -352,7 +398,7 @@ class BoundingAreaController:
     def __init__(self):
         pass
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+    def on_mouse_event(self, editor, event):
         pass
 
     def pre_key(self, editor, key):
@@ -366,7 +412,7 @@ class AutomoleDebugController:
     def __init__(self):
         pass
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
+    def on_mouse_event(self, editor, event):
         pass
 
     def pre_key(self, editor, key):
@@ -412,66 +458,74 @@ class Controller:
         self.zooms = [1.0, 0.75, 0.5, 0.25, 2.0, 1.75, 1.5]
         self.zoom_index = 0
 
-    def on_mouse_event(self, editor, event, mouse_x, mouse_y, flags, param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if flags & cv2.EVENT_FLAG_CTRLKEY:
+    def on_mouse_event(self, editor, event):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            key_mods = pygame.key.get_mods()
+            if key_mods & pygame.KMOD_CTRL:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
                 editor.show_zoomed(mouse_x, mouse_y)
                 return
 
-        self.current_controller.on_mouse_event(
-            editor, event, mouse_x, mouse_y, flags, param
-        )
+        self.current_controller.on_mouse_event(editor, event)
 
     def on_key(self, editor, key):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
         self.current_controller.pre_key(editor, key)
 
-        if key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+        if key == pygame.K_LEFT:
             editor.show_prev()
-        elif key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+        elif key == pygame.K_RIGHT:
             editor.show_next()
-        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+        elif key == pygame.K_UP:
             editor.show_prev_map()
-        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+        elif key == pygame.K_DOWN:
             editor.show_next_map()
-        elif key == ord(" "):
+        elif key == pygame.K_SPACE:
             editor.show_fitted()
-        elif key == ord("0"):
+        elif key == pygame.K_0:
             # Switch to automole debug mode
             self.current_controller = self.automoledebug_controller
             editor.set_automoledebug_mode()
-        elif key == ord("1"):
+        elif key == pygame.K_1:
             # Switch to mole edit mode
             self.current_controller = self.moleedit_controller
             editor.set_editmole_mode()
-        elif key == ord("2"):
+        elif key == pygame.K_2:
             # Switch to mask edit mode
             self.current_controller = self.maskedit_controller
             editor.set_editmask_mode()
-        elif key == ord("3"):
+        elif key == pygame.K_3:
             # Switch to bounding area mode
             self.current_controller = self.boundingarea_controller
             editor.set_boundingarea_mode()
-        elif key == ord("4"):
+        elif key == pygame.K_4:
             # Switch to mole marking mode
             self.current_controller = self.molemark_controller
             editor.set_molemark_mode()
-        elif key == ord("b"):
+        elif key == pygame.K_b:
             # Go back in the visit list
             if self._visit_list:
                 to_visit = self._visit_list.back()
                 editor.visit(to_visit)
-        elif key == ord("n"):
+        elif key == pygame.K_n:
             # Go to the next in the visit list
             if self._visit_list:
                 to_visit = self._visit_list.forward()
                 editor.visit(to_visit)
-        elif key == ord("z"):
+        elif key == pygame.K_z:
             self.zoom_index += 1
             self.zoom_index %= len(self.zooms)
             zoom = self.zooms[self.zoom_index]
             editor.set_status(f"Zoom {zoom}")
             editor.set_zoom_level(zoom)
-        elif key == ord("x"):
+        elif key == pygame.K_x:
             self.zoom_index += len(self.zooms) - 1
             self.zoom_index %= len(self.zooms)
             zoom = self.zooms[self.zoom_index]
@@ -482,36 +536,32 @@ class Controller:
 
 
 def process_args(args):
-
-    editor = mel.rotomap.display.Editor(
-        args.ROTOMAP, args.display_width, args.display_height
-    )
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
 
     visit_list = []
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    mel.lib.ui.bring_python_to_front()
+    with mel.lib.fullscreenui.fullscreen_context() as screen:
+        editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
-    if args.advance_n_frames:
-        editor.show_next_n(args.advance_n_frames)
+        if args.advance_n_frames:
+            editor.show_next_n(args.advance_n_frames)
 
-    controller = Controller(
-        editor, args.follow, args.copy_to_clipboard, visit_list
-    )
+        controller = Controller(
+            editor, args.follow, args.copy_to_clipboard, visit_list
+        )
 
-    def mouse_callback(*args):
-        controller.on_mouse_event(editor, *args)
-
-    editor.display.set_mouse_callback(mouse_callback)
-
-    try:
-        for key in mel.lib.ui.yield_keys_until_quitkey(error_key="Q"):
-            controller.on_key(editor, key)
-    except mel.lib.ui.AbortKeyInterruptError:
-        return 1
-    finally:
-        editor.display.clear_mouse_callback()
+        for event in mel.lib.fullscreenui.yield_events_until_quit():
+            if event.type == pygame.KEYDOWN:
+                controller.on_key(editor, event.key)
+            elif event.type in (
+                pygame.MOUSEBUTTONDOWN,
+                pygame.MOUSEMOTION,
+            ):
+                controller.on_mouse_event(editor, event)
 
 
 def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
