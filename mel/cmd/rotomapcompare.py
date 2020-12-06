@@ -123,28 +123,48 @@ def process_args(args):
     uuid_order = list(uuid_to_rotomaps_imagepos_list)
     uuid_order.sort(key=unchanged_status_keyfunc)
 
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
+    path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
+    with mel.lib.fullscreenui.fullscreen_context() as surface:
+        display = ImageCompareDisplay(surface, path_images_tuple)
+
+        on_keydown = _make_on_keydown(
+            display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
+        )
+
+        for event in mel.lib.fullscreenui.yield_events_until_quit():
+            if event.type == pygame.KEYDOWN:
+                on_keydown(event)
+
+
+def _make_on_keydown(
+    display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
+):
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
     index = 0
     uuid_ = uuid_order[index]
-    path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
-    display = ImageCompareDisplay(
-        ".", path_images_tuple, args.display_width, args.display_height
-    )
     is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
     if is_unchanged is not None:
         display.indicate_changed(not is_unchanged)
 
-    mel.lib.ui.bring_python_to_front()
-
-    for key in mel.lib.ui.yield_keys_until_quitkey():
-        if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
+    def on_keydown(event):
+        key = event.key
+        nonlocal index
+        if key == pygame.K_RIGHT:
             display.next_image()
-        elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
+        elif key == pygame.K_LEFT:
             display.prev_image()
-        elif key == mel.lib.ui.WAITKEY_UP_ARROW:
+        elif key == pygame.K_UP:
             display.prev_rotomap()
-        elif key == mel.lib.ui.WAITKEY_DOWN_ARROW:
+        elif key == pygame.K_DOWN:
             display.next_rotomap()
-        elif key == ord("n"):
+        elif key == pygame.K_n:
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index += 1
             index %= num_uuids
@@ -156,7 +176,7 @@ def process_args(args):
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
-        elif key == ord("p"):
+        elif key == pygame.K_p:
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index -= 1
             index %= num_uuids
@@ -168,28 +188,30 @@ def process_args(args):
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
-        elif key == ord(" "):
+        elif key == pygame.K_SPACE:
             display.swap_images()
-        elif key == ord("a"):
+        elif key == pygame.K_a:
             display.toggle_crosshairs()
-        elif key == ord("c"):
+        elif key == pygame.K_c:
             is_unchanged = False
             mark_lesion(target_rotomap, uuid_, is_unchanged=False)
             display.indicate_changed()
-        elif key == ord("u"):
+        elif key == pygame.K_u:
             is_unchanged = True
             mark_lesion(target_rotomap, uuid_, is_unchanged=True)
             display.indicate_changed(False)
-        elif key == ord("z"):
+        elif key == pygame.K_z:
             display.adjust_zoom(1.025)
-        elif key == ord("x"):
+        elif key == pygame.K_x:
             display.adjust_zoom(1 / 1.025)
-        elif key == ord("l"):
+        elif key == pygame.K_l:
             display.auto_align()
-        elif key == ord("j"):
+        elif key == pygame.K_j:
             display.adjust_rotation(2)
-        elif key == ord("k"):
+        elif key == pygame.K_k:
             display.adjust_rotation(-2)
+
+    return on_keydown
 
 
 def is_lesion_unchanged(rotomap, uuid_):
@@ -218,9 +240,9 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, name, path_images_tuple, width=None, height=None):
+    def __init__(self, surface, path_images_tuple):
         self._should_draw_crosshairs = True
-        self._display = mel.lib.ui.ImageDisplay(name, width, height)
+        self._display = mel.lib.fullscreenui.Display(surface)
         self.reset(path_images_tuple)
 
     def reset(self, path_images_tuple):
@@ -392,7 +414,7 @@ class ImageCompareDisplay:
             for i in self._indices
         ]
         montage = mel.lib.image.montage_horizontal(10, *images)
-        self._display.show_image(montage)
+        self._display.show_opencv_image(montage)
 
 
 def captioned_mole_image(

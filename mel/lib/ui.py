@@ -16,8 +16,6 @@ import mel.lib.image
 # There may be some platform dependence, these codes were observed on Mac OSX.
 WAITKEY_LEFT_ARROW = 2
 WAITKEY_RIGHT_ARROW = 3
-WAITKEY_UP_ARROW = 0
-WAITKEY_DOWN_ARROW = 1
 
 
 class AbortKeyInterruptError(Exception):
