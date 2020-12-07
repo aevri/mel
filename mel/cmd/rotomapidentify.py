@@ -22,15 +22,13 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    # Some of are expensive imports, so to keep program start-up time lower,
-    # import them only when necessary.
 
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
     metadata_path = model_dir / "identify.json"
 
-    class_to_index, metadata, part_to_index, classes, in_fields, out_fields, model = setup_model(metadata_path, model_path)
+    identifier = MoleIdentifier(metadata_path, model_path)
 
     for target in args.TARGET:
         if args.verbose:
@@ -39,77 +37,77 @@ def process_args(args):
         # part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
         frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
 
-        new_moles = get_new_moles(class_to_index, frame, metadata, part_to_index, classes, in_fields, out_fields, model)
+        new_moles = identifier.get_new_moles(frame)
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
 
 
-def get_new_moles(class_to_index, frame, metadata, part_to_index, classes, in_fields, out_fields, model):
-    import torch
-    import torch.utils.data
+class MoleIdentifier:
+    def __init__(self, metadata_path, model_path):
+        # Some of these imports are expensive, so to keep program start-up time
+        # lower, import them only when necessary.
+        import torch
+        import mel.rotomap.identifynn
 
-    import mel.rotomap.identifynn
-    class_to_index2 = class_to_index.copy()
-    for m in frame.moles:
-        uuid_ = m["uuid"]
-        if uuid_ not in class_to_index2:
-            class_to_index2[uuid_] = -1
+        with open(metadata_path) as f:
+            self.metadata = json.load(f)
 
-    datadict = collections.defaultdict(list)
-    mel.rotomap.identifynn.extend_dataset_by_frame(
-        dataset=datadict,
-        frame=frame,
-        image_size=metadata["image_size"],
-        part_to_index=part_to_index,
-        do_channels=False,
-        channel_cache=None,
-        class_to_index=class_to_index2,
-        escale=1.0,
-        etranslate=0.0,
-    )
+        model_args = self.metadata["model_args"]
+        self.part_to_index = self.metadata["part_to_index"]
+        self.classes = self.metadata["classes"]
+        self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
 
-    dataset = mel.rotomap.identifynn.RotomapsDataset(
-        datadict,
-        classes=classes,
-        class_to_index=class_to_index2,
-        in_fields=in_fields,
-        out_fields=out_fields,
-    )
+        self.in_fields = ["part_index"]
+        self.in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
+        self.out_fields = ["uuid_index", "mole_count"]
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+        self.model = mel.rotomap.identifynn.Model(**model_args)
+        self.model.load_state_dict(torch.load(model_path))
 
-    new_moles = list(frame.moles)
-    model.eval()
-    with torch.no_grad():
-        for i, xb, _ in dataloader:
-            if new_moles[i][mel.rotomap.moles.KEY_IS_CONFIRMED]:
-                continue
-            out = model(xb)
-            preds = torch.argmax(out[0], dim=1)
-            new_moles[i]["uuid"] = classes[preds]
-    return new_moles
+    def get_new_moles(self, frame):
+        import torch
+        import torch.utils.data
 
+        import mel.rotomap.identifynn
+        class_to_index2 = self.class_to_index.copy()
+        for m in frame.moles:
+            uuid_ = m["uuid"]
+            if uuid_ not in class_to_index2:
+                class_to_index2[uuid_] = -1
 
-def setup_model(metadata_path, model_path):
-    import torch
-    import torch.utils.data
+        datadict = collections.defaultdict(list)
+        mel.rotomap.identifynn.extend_dataset_by_frame(
+            dataset=datadict,
+            frame=frame,
+            image_size=self.metadata["image_size"],
+            part_to_index=self.part_to_index,
+            do_channels=False,
+            channel_cache=None,
+            class_to_index=class_to_index2,
+            escale=1.0,
+            etranslate=0.0,
+        )
 
-    import mel.rotomap.identifynn
-    with open(metadata_path) as f:
-        metadata = json.load(f)
+        dataset = mel.rotomap.identifynn.RotomapsDataset(
+            datadict,
+            classes=self.classes,
+            class_to_index=class_to_index2,
+            in_fields=self.in_fields,
+            out_fields=self.out_fields,
+        )
 
-    model_args = metadata["model_args"]
-    part_to_index = metadata["part_to_index"]
-    classes = metadata["classes"]
-    class_to_index = {cls: i for i, cls in enumerate(classes)}
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
 
-    in_fields = ["part_index"]
-    in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
-    out_fields = ["uuid_index", "mole_count"]
-
-    model = mel.rotomap.identifynn.Model(**model_args)
-    model.load_state_dict(torch.load(model_path))
-    return class_to_index, metadata, part_to_index, classes, in_fields, out_fields, model
+        new_moles = list(frame.moles)
+        self.model.eval()
+        with torch.no_grad():
+            for i, xb, _ in dataloader:
+                if new_moles[i][mel.rotomap.moles.KEY_IS_CONFIRMED]:
+                    continue
+                out = self.model(xb)
+                preds = torch.argmax(out[0], dim=1)
+                new_moles[i]["uuid"] = self.classes[preds]
+        return new_moles
 
 
 # -----------------------------------------------------------------------------
