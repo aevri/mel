@@ -40,7 +40,9 @@ class MoleIdentifier:
         self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
 
         self.in_fields = ["part_index"]
-        self.in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
+        self.in_fields.extend(
+            ["molemap", "molemap_detail_2", "molemap_detail_4"]
+        )
         self.out_fields = ["uuid_index", "mole_count"]
 
         self.model = mel.rotomap.identifynn.Model(**model_args)
@@ -51,6 +53,7 @@ class MoleIdentifier:
         import torch.utils.data
 
         import mel.rotomap.identifynn
+
         class_to_index2 = self.class_to_index.copy()
         for m in frame.moles:
             uuid_ = m["uuid"]
