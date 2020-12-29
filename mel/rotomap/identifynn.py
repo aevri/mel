@@ -29,7 +29,6 @@ class MoleIdentifier:
         # Some of these imports are expensive, so to keep program start-up time
         # lower, import them only when necessary.
         import torch
-        import mel.rotomap.identifynn
 
         with open(metadata_path) as f:
             self.metadata = json.load(f)
@@ -50,9 +49,6 @@ class MoleIdentifier:
 
     def get_new_moles(self, frame):
         import torch
-        import torch.utils.data
-
-        import mel.rotomap.identifynn
 
         class_to_index2 = self.class_to_index.copy()
         for m in frame.moles:
