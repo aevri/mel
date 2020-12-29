@@ -22,14 +22,7 @@ def setup_parser(parser):
 
 
 def process_args(args):
-
-    melroot = mel.lib.fs.find_melroot()
-    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
-    model_path = model_dir / "identify.pth"
-    metadata_path = model_dir / "identify.json"
-
-    identifier = MoleIdentifier(metadata_path, model_path)
-
+    identifier = make_identifier()
     for target in args.TARGET:
         if args.verbose:
             print("Processing", target, "..")
@@ -40,6 +33,14 @@ def process_args(args):
         new_moles = identifier.get_new_moles(frame)
 
         mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+
+
+def make_identifier():
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "identify.pth"
+    metadata_path = model_dir / "identify.json"
+    return MoleIdentifier(metadata_path, model_path)
 
 
 class MoleIdentifier:
