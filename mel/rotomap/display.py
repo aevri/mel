@@ -720,6 +720,10 @@ class MoleData:
         self.ensure_loaded()
         return self.image
 
+    def reload(self):
+        self._loaded_index = None
+        self.ensure_loaded()
+
     def ensure_loaded(self):
 
         if self._loaded_index == self._list_index:

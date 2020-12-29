@@ -29,6 +29,7 @@ In 'mole edit' mode:
     Alt-click on a point to paste the copied uuid.
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
+    Press 'i' to 'rotomap identify' in the current image.
     Press enter to toggle mole markers.
 
 In 'mask edit' mode:
@@ -47,6 +48,7 @@ In 'mole marking' mode:
 """
 
 import argparse
+import os.path
 
 import numpy
 
@@ -275,8 +277,19 @@ class MoleEditController:
             if self.copy_to_clipboard:
                 mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
-            # editor.moledata.moles
-            pass
+            # Auto-identify
+            #
+            # Import mel.rotomap.identifynn as late as possible, because it has
+            # some expensive dependencies.
+            import mel.rotomap.identifynn
+
+            identifier = mel.rotomap.identifynn.make_identifier()
+            target = editor.moledata.current_image_path()
+            frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
+            new_moles = identifier.get_new_moles(frame)
+            mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+            editor.moledata.reload()
+            editor.show_current()
 
         if self.sub_controller:
             try:
