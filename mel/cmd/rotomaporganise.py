@@ -7,7 +7,6 @@ import shutil
 import mel.lib.common
 import mel.lib.fs
 import mel.lib.fullscreenui
-import mel.lib.ui
 
 
 def setup_parser(parser):
