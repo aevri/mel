@@ -56,24 +56,24 @@ setuptools.setup(
     },
     install_requires=[
         # 'opencv',  # Not a possibility as yet.
-        'torch~=1.6.0',
-        'torchvision~=0.7.0',
-        'tqdm',
-        'six>=1.12',  # Oddly we get a version that's too old otherwise.
         'colorama',
         'pygame',
+        'six>=1.12',  # Oddly we get a version that's too old otherwise.
+        'torchvision~=0.7.0',
+        'torch~=1.6.0',
+        'tqdm',
     ],
     extras_require={
         'dev': [
             'black',
             'docformatter',
             'isort',
-            'pyflakes',
-            'pycodestyle',
             'nose',
-            'vulture',
+            'pycodestyle',
+            'pyflakes',
             'pylint',
             'pytest',
+            'vulture',
         ]
     },
     python_requires='>=3.6',
