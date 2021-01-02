@@ -82,10 +82,10 @@ def process_args(args):
     # import them only when necessary.
     import torch.utils.data
 
-    import mel.rotomap.moles
     import mel.lib.ellipsespace
     import mel.lib.fs
     import mel.rotomap.identifynn
+    import mel.rotomap.moles
 
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
