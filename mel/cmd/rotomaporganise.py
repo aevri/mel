@@ -3,7 +3,6 @@
 import os
 import shutil
 
-
 import mel.lib.common
 import mel.lib.fs
 import mel.lib.fullscreenui

@@ -10,7 +10,6 @@ import mel.lib.math
 import mel.rotomap.moles
 import mel.rotomap.tricolour
 
-
 _DEBUG_RENDERER = mel.lib.debugrenderer.GlobalContext()
 
 # After experimentation with 'mel-debug bench-relate --reset-uuids 1', it turns

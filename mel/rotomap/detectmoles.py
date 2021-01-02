@@ -5,7 +5,6 @@ import numpy
 
 import mel.rotomap.moles
 
-
 # Magic number to specify how close to the edge of an inclusion mask we can be
 # before we should discard detected blobs. Generally it seems that we get a lot
 # of falso positives near those edges.

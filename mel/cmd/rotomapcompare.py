@@ -34,10 +34,8 @@ import mel.lib.image
 import mel.lib.math
 import mel.lib.moleimaging
 import mel.lib.ui
-
 import mel.rotomap.display
 import mel.rotomap.moles
-
 
 _PosInfo = collections.namedtuple(
     "_PosInfo", "path pos ellipse_xpos uuid uuid_points"

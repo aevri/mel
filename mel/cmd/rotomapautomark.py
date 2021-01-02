@@ -1,11 +1,10 @@
 """Automatically mark moles on rotomap images."""
 
 import mel.lib.image
-
+import mel.rotomap.automark
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
-import mel.rotomap.automark
 
 
 def setup_parser(parser):

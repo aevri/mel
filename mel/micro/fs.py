@@ -4,7 +4,6 @@ import collections
 import datetime
 import pathlib
 
-
 Mole = collections.namedtuple(
     "mel_micro_fs__Mole",
     [

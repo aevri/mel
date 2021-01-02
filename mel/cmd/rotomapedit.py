@@ -57,12 +57,10 @@ import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.math
 import mel.lib.ui
-
 import mel.rotomap.display
 import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
-
 
 # Radius within which we should look for moles, in later work perhaps we'll
 # make this configurable by the user.

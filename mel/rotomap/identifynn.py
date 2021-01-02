@@ -1,7 +1,7 @@
 """Identify which moles are which, using neural nets."""
 import collections
 import contextlib
-
+import json
 import time
 
 import numpy
@@ -10,10 +10,9 @@ import torchvision
 import tqdm
 
 import mel.lib.ellipsespace
-import mel.rotomap.moles
-import json
 import mel.lib.fs
 import mel.rotomap.identifynn
+import mel.rotomap.moles
 
 
 def make_identifier():

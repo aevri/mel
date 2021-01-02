@@ -11,7 +11,6 @@ import mel.lib.vec3 as vec3
 import mel.rotomap.moles
 import mel.rotomap.raytrace
 
-
 # Note that we'll use these prefixes to make things easier to name:
 #
 # - p_: 'point'

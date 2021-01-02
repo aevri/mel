@@ -4,7 +4,6 @@ import math
 
 import numpy
 
-
 RADS_TO_DEGS = 180 / math.pi
 
 

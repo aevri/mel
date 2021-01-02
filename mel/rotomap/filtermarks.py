@@ -10,10 +10,9 @@ import numpy
 from tqdm import tqdm
 
 import mel.lib.fs
+import mel.rotomap.automark
 import mel.rotomap.mask
 import mel.rotomap.moles
-import mel.rotomap.automark
-
 
 # The architecture we are using is 'resnet', which has a final layer size of
 # 7 by 7. The image will go through a progressive series of halvings as it

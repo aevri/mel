@@ -11,7 +11,6 @@ import cv2
 import mel.lib.common
 import mel.lib.image
 
-
 # Codes as returned by waitkey().
 # There may be some platform dependence, these codes were observed on Mac OSX.
 WAITKEY_LEFT_ARROW = 2

@@ -6,7 +6,6 @@ import json
 import mel.lib.common
 import mel.rotomap.filtermarks
 
-
 # TODO: Check for masking errors, where the mole is obscured by the mask.
 # TODO: Make the mask green.
 

@@ -3,9 +3,8 @@
 import sys
 
 import mel.lib.fs
-
-import mel.rotomap.moles
 import mel.rotomap.filtermarks
+import mel.rotomap.moles
 
 
 def setup_parser(parser):

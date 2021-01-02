@@ -3,10 +3,8 @@
 import pathlib
 import random
 
-import mel.lib.common
-
 import mel.cmd.error
-
+import mel.lib.common
 import mel.rotomap.fake
 
 

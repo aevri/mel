@@ -16,7 +16,6 @@ import mel.rotomap.moles
 import mel.rotomap.relate
 import mel.rotomap.tricolour
 
-
 DEFAULT_MASKER_RADIUS = 200
 
 _WHITE = (255, 255, 255)

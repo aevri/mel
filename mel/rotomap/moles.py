@@ -12,9 +12,7 @@ import numpy
 import mel.lib.fs
 import mel.lib.image
 import mel.lib.math
-
 import mel.rotomap.mask
-
 
 KEY_IS_CONFIRMED = "is_uuid_canonical"
 KEY_IS_UNCHANGED = "is_unchanged"

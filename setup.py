@@ -67,6 +67,7 @@ setuptools.setup(
         'dev': [
             'black',
             'docformatter',
+            'isort',
             'pyflakes',
             'pycodestyle',
             'nose',

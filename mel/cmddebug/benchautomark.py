@@ -2,12 +2,12 @@
 
 import numpy
 
+import mel.cmd.error
 import mel.lib.common
 import mel.lib.image
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
-import mel.cmd.error
 
 
 def setup_parser(parser):

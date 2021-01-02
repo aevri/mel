@@ -6,7 +6,6 @@ import numpy as np
 
 import mel.lib.vec3 as vec3
 
-
 # Note that we'll use these prefixes to make things easier to name:
 #
 # - p_: 'point'

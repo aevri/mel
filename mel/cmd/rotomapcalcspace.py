@@ -6,7 +6,6 @@ import cv2
 
 import mel.lib.ellipsespace
 import mel.lib.moleimaging
-
 import mel.rotomap.moles
 
 

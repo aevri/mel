@@ -14,5 +14,8 @@ printf "."
 docformatter -i $allscripts
 printf "."
 
+isort --quiet --apply $allscripts
+printf "."
+
 echo
 trap - EXIT

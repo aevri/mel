@@ -8,7 +8,6 @@ import cv2
 import mel.lib.common
 import mel.lib.image
 
-
 _PYGAME_HAD_EXCLUSIVE_INIT = False
 
 

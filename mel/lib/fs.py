@@ -3,7 +3,6 @@
 import os
 import pathlib
 
-
 DEFAULT_CLASSIFIER_PATH = "classifiers"
 DEFAULT_MOLE_MARK_MODEL_NAME = "mole_mark_model"
 DEFAULT_MOLE_MARK_DATACONFIG_NAME = "mole_mark_dataconfig.pkl"

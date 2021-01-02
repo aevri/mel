@@ -4,13 +4,11 @@
 import argparse
 import sys
 
-import mel.lib.ui
-
 import mel.cmd.error
-
 import mel.cmddebug.benchautomark
 import mel.cmddebug.genrepo
 import mel.cmddebug.rendervaluefield
+import mel.lib.ui
 
 
 def main():

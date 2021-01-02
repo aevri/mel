@@ -31,7 +31,6 @@ import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
 import mel.cmd.status
 
-
 COMMANDS = {
     "root": {
         "status": mel.cmd.status,

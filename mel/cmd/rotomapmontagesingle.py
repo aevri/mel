@@ -2,10 +2,10 @@
 
 import cv2
 
+import mel.cmd.error
 import mel.lib.common
 import mel.lib.image
 import mel.rotomap.moles
-import mel.cmd.error
 
 
 def setup_parser(parser):

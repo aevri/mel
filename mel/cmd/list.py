@@ -2,7 +2,6 @@
 
 import mel.micro.fs
 
-
 # If we're trying to stick to 'Every mole compared every month', we won't want
 # to accidentally exclude moles that were compared just under a month ago.
 # Setting the default to roughly half a month should lean towards
