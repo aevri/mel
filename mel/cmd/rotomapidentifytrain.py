@@ -17,6 +17,7 @@ your data.
 
 import argparse
 import json
+import os
 
 
 def proportion_arg(x):
@@ -102,6 +103,15 @@ def process_args(args):
             raise Exception(
                 f"Metadata for model does not exist: " f"{metadata_path}"
             )
+
+        if not os.access(model_path, os.W_OK):
+            print("No permission to write to", model_path)
+            return 1
+
+        if not os.access(metadata_path, os.W_OK):
+            print("No permission to write to", metadata_path)
+            return 1
+
         print(f"Will fine-tune {model_path}")
         print(f"           and {metadata_path}")
 
@@ -120,6 +130,9 @@ def process_args(args):
     else:
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
+
+    if not model_dir.exists():
+        model_dir.mkdir()
 
     data_config = {
         "rotomaps": ("all"),
@@ -160,8 +173,6 @@ def process_args(args):
 
     model = results["model"]
 
-    if not model_dir.exists():
-        model_dir.mkdir()
     if args.forget_moles:
         model.clear_non_cnn()
         results["part_to_index"] = {}
