@@ -22,6 +22,7 @@ import mel.cmd.rotomapfiltermarkspretrain
 import mel.cmd.rotomapfiltermarkstrain
 import mel.cmd.rotomapidentify
 import mel.cmd.rotomapidentifytrain
+import mel.cmd.rotomapidentifytraintune
 import mel.cmd.rotomaplist
 import mel.cmd.rotomaploadsave
 import mel.cmd.rotomapmarkunchanged
@@ -55,6 +56,7 @@ COMMANDS = {
         "filter-marks-train": mel.cmd.rotomapfiltermarkstrain,
         "identify": mel.cmd.rotomapidentify,
         "identify-train": mel.cmd.rotomapidentifytrain,
+        "identify-train-tune": mel.cmd.rotomapidentifytraintune,
         "list": mel.cmd.rotomaplist,
         "loadsave": mel.cmd.rotomaploadsave,
         "mark-unchanged": mel.cmd.rotomapmarkunchanged,
