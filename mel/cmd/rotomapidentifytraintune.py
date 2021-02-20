@@ -12,8 +12,48 @@ def setup_parser(parser):
     )
 
 
+_DATA = None
+
+
 def process_args(args):
     import optuna
+
+    import mel.rotomap.moles
+    import mel.lib.ellipsespace
+    import mel.lib.fs
+    import mel.rotomap.identifynn
+
+    melroot = mel.lib.fs.find_melroot()
+
+    image_size = 32
+    batch_size = 100
+    train_proportion = 0.9
+    data_config = {
+        "rotomaps": ("all"),
+        # "rotomaps": ("subpart", "LeftLeg", "Lower"),
+        "train_proportion": train_proportion,
+        "image_size": image_size,
+        "batch_size": batch_size,
+        "do_augmentation": False,
+        "do_channels": False,
+    }
+    print("Making data ..")
+    (
+        train_dataset,
+        valid_dataset,
+        train_dataloader,
+        valid_dataloader,
+        part_to_index,
+    ) = mel.rotomap.identifynn.make_data(melroot, data_config)
+    num_parts = len(part_to_index)
+    num_classes = len(train_dataset.classes)
+    global _DATA
+    _DATA = (
+        train_dataloader,
+        valid_dataloader,
+        num_parts,
+        num_classes,
+    )
 
     pruner = optuna.pruners.MedianPruner()
     study = optuna.create_study(direction="maximize", pruner=pruner)
@@ -40,45 +80,21 @@ def objective(trial):
 
     # from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
-    import mel.rotomap.moles
-    import mel.lib.ellipsespace
-    import mel.lib.fs
     import mel.rotomap.identifynn
 
-
-    melroot = mel.lib.fs.find_melroot()
-
-    image_size = 32
     cnn_width = trial.suggest_int("cnn_width", 4, 1024, log=True)
     cnn_depth = trial.suggest_int("cnn_depth", 1, 8)
     num_cnns = 3
     channels_in = 2
-    batch_size = 100
-    train_proportion = 0.9
-    # epochs = 100
-    epochs = 1
+    epochs = 100
+    # epochs = 1
 
-    data_config = {
-        # "rotomaps": ("all"),
-        "rotomaps": ("subpart", "LeftLeg", "Lower"),
-        "train_proportion": train_proportion,
-        "image_size": image_size,
-        "batch_size": batch_size,
-        "do_augmentation": False,
-        "do_channels": False,
-    }
-
-    print("Making data ..")
     (
-        train_dataset,
-        valid_dataset,
         train_dataloader,
         valid_dataloader,
-        part_to_index,
-    ) = mel.rotomap.identifynn.make_data(melroot, data_config)
-
-    num_parts = len(part_to_index)
-    num_classes = len(train_dataset.classes)
+        num_parts,
+        num_classes,
+    ) = _DATA
 
     model_args = dict(
         cnn_width=cnn_width,
