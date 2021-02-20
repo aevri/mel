@@ -13,13 +13,30 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    pass
+    import optuna
+
+    pruner = optuna.pruners.MedianPruner()
+    study = optuna.create_study(direction="maximize", pruner=pruner)
+    # study.optimize(objective, n_trials=100, timeout=500 * 60)
+    study.optimize(objective, n_trials=10, timeout=500 * 60)
+
+    print("Number of finished trials: {}".format(len(study.trials)))
+
+    print("Best trial:")
+    trial = study.best_trial
+
+    print("  Value: {}".format(trial.value))
+
+    print("  Params: ")
+    for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
 
 
 def objective(trial):
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
+    from optuna.integration import PyTorchLightningPruningCallback
 
     # from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
@@ -28,16 +45,18 @@ def objective(trial):
     import mel.lib.fs
     import mel.rotomap.identifynn
 
+
     melroot = mel.lib.fs.find_melroot()
 
     image_size = 32
-    cnn_width = 128
-    cnn_depth = 4
+    cnn_width = trial.suggest_int("cnn_width", 4, 1024, log=True)
+    cnn_depth = trial.suggest_int("cnn_depth", 1, 8)
     num_cnns = 3
     channels_in = 2
     batch_size = 100
     train_proportion = 0.9
-    epochs = 100
+    # epochs = 100
+    epochs = 1
 
     data_config = {
         # "rotomaps": ("all"),
@@ -82,11 +101,16 @@ def objective(trial):
         ),
     )
 
-    trainer = pl.Trainer(max_epochs=epochs)
+    trainer = pl.Trainer(
+        max_epochs=epochs,
+        callbacks=[PyTorchLightningPruningCallback(trial, monitor="accuracy")],
+    )
     if not valid_dataloader:
         valid_dataloader = None
 
     trainer.fit(pl_model, train_dataloader, valid_dataloader)
+
+    return trainer.callback_metrics["accuracy"].item()
 
 
 # -----------------------------------------------------------------------------
