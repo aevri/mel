@@ -109,7 +109,7 @@ def objective(trial):
 
     import mel.rotomap.identifynn
 
-    cnn_width = trial.suggest_int("cnn_width", 4, 1024, log=True)
+    cnn_width = trial.suggest_int("cnn_width", 4, 256, log=True)
     cnn_depth = trial.suggest_int("cnn_depth", 1, 8)
     num_cnns = 3
     channels_in = 2
