@@ -1,5 +1,7 @@
 """Find the best hyper-parameters for identify-train."""
 
+import pathlib
+import pickle
 import warnings
 
 
@@ -24,6 +26,19 @@ def process_args(args):
     import mel.rotomap.identifynn
 
     melroot = mel.lib.fs.find_melroot()
+
+    study_name = "mel-rotomap-identify-train-tune"
+    pruner = optuna.pruners.MedianPruner()
+    study_path = pathlib.Path(f"{study_name}.pickle")
+    if study_path.exists():
+        with study_path.open("rb") as f:
+            study = pickle.load(f)
+        print("Loaded:", study_path)
+        report_study(study)
+    else:
+        study = optuna.create_study(
+            direction="maximize", pruner=pruner, study_name=study_name
+        )
 
     image_size = 32
     batch_size = 100
@@ -55,12 +70,24 @@ def process_args(args):
         num_classes,
     )
 
-    pruner = optuna.pruners.MedianPruner()
-    study = optuna.create_study(direction="maximize", pruner=pruner)
-    # study.optimize(objective, n_trials=100, timeout=500 * 60)
-    study.optimize(objective, n_trials=10, timeout=500 * 60)
+    while True:
+        try:
+            trial = study.ask()
+            study.tell(trial, objective(trial))
+        except KeyboardInterrupt:
+            print("Interrupted.")
+            break
+        with study_path.open("wb") as f:
+            pickle.dump(study, f)
+        print("Wrote:", study_path)
 
+    report_study(study)
+
+
+def report_study(study):
     print("Number of finished trials: {}".format(len(study.trials)))
+    for trial in study.trials:
+        print(trial.number, trial.state)
 
     print("Best trial:")
     trial = study.best_trial
@@ -88,6 +115,9 @@ def objective(trial):
     channels_in = 2
     epochs = 100
     # epochs = 1
+
+    print("cnn_width:", cnn_width)
+    print("cnn_depth:", cnn_depth)
 
     (
         train_dataloader,
@@ -125,6 +155,9 @@ def objective(trial):
         valid_dataloader = None
 
     trainer.fit(pl_model, train_dataloader, valid_dataloader)
+
+    if trainer.interrupted:
+        raise KeyboardInterrupt()
 
     return trainer.callback_metrics["accuracy"].item()
 
