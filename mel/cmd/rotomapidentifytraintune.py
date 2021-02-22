@@ -79,6 +79,7 @@ def process_args(args):
             break
         with study_path.open("wb") as f:
             pickle.dump(study, f)
+        report_study(study)
         print("Wrote:", study_path)
 
     report_study(study)
