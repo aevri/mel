@@ -71,12 +71,21 @@ def process_args(args):
     )
 
     while True:
+        trial = study.ask()
+        values = None
+        state = optuna.trial.TrialState.COMPLETE
         try:
-            trial = study.ask()
-            study.tell(trial, objective(trial))
+            values = objective(trial)
         except KeyboardInterrupt:
             print("Interrupted.")
             break
+        except optuna.exceptions.TrialPruned:
+            state = optuna.trial.TrialState.PRUNED
+        # except Exception:
+        #     state = TrialState.FAIL
+
+        study.tell(trial, values=values, state=state)
+
         with study_path.open("wb") as f:
             pickle.dump(study, f)
         report_study(study)
