@@ -44,8 +44,8 @@ def process_args(args):
     batch_size = 100
     train_proportion = 0.9
     data_config = {
-        "rotomaps": ("all"),
-        # "rotomaps": ("subpart", "LeftLeg", "Lower"),
+        # "rotomaps": ("all"),
+        "rotomaps": ("subpart", "LeftLeg", "Lower"),
         "train_proportion": train_proportion,
         "image_size": image_size,
         "batch_size": batch_size,
@@ -128,8 +128,8 @@ def objective(trial):
     cnn_depth = trial.suggest_int("cnn_depth", 1, 8)
     num_cnns = 3
     channels_in = 2
-    epochs = 100
-    # epochs = 1
+    # epochs = 100
+    epochs = 1
 
     print("cnn_width:", cnn_width)
     print("cnn_depth:", cnn_depth)
