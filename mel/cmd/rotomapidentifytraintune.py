@@ -97,7 +97,12 @@ def process_args(args):
 def report_study(study):
     print("Number of finished trials: {}".format(len(study.trials)))
     for trial in study.trials:
-        print(trial.number, trial.state)
+        print(
+            f"{trial.number:3}",
+            f"{trial.state:20}",
+            f"acc:{trial.value:5.1%}",
+            trial.params,
+        )
 
     print("Best trial:")
     trial = study.best_trial
