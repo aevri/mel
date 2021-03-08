@@ -1,5 +1,6 @@
 """Find the best hyper-parameters for identify-train."""
 
+import json
 import pathlib
 import pickle
 import warnings
@@ -17,6 +18,17 @@ def setup_parser(parser):
 _DATA = None
 
 
+STUDY_NAME = "mel-rotomap-identify-train-tune"
+
+
+class NothingToResume(Exception):
+    pass
+
+
+class CouldNotResume(Exception):
+    pass
+
+
 def process_args(args):
     import optuna
 
@@ -27,9 +39,8 @@ def process_args(args):
 
     melroot = mel.lib.fs.find_melroot()
 
-    study_name = "mel-rotomap-identify-train-tune"
     pruner = optuna.pruners.MedianPruner()
-    study_path = pathlib.Path(f"{study_name}.pickle")
+    study_path = pathlib.Path(f"{STUDY_NAME}.pickle")
     if study_path.exists():
         with study_path.open("rb") as f:
             study = pickle.load(f)
@@ -37,7 +48,7 @@ def process_args(args):
         report_study(study)
     else:
         study = optuna.create_study(
-            direction="maximize", pruner=pruner, study_name=study_name
+            direction="maximize", pruner=pruner, study_name=STUDY_NAME
         )
 
     image_size = 32
@@ -69,6 +80,15 @@ def process_args(args):
         num_parts,
         num_classes,
     )
+
+    params_path = pathlib.Path(f"{STUDY_NAME}.json")
+    if not params_path.exists():
+        raise NothingToResume("No params file.")
+
+    try:
+        objective_resume(trial)
+    except NothingToResume:
+        pass
 
     while True:
         trial = study.ask()
@@ -162,13 +182,77 @@ def objective(trial):
         ),
     )
 
-    trainer = pl.Trainer(
-        max_epochs=epochs,
-        callbacks=[PyTorchLightningPruningCallback(trial, monitor="accuracy")],
+    pruning = PyTorchLightningPruningCallback(trial, monitor="accuracy")
+
+    checkpoint = pl.callbacks.ModelCheckpoint(
+        dirpath=".",
+        filename=STUDY_NAME,
     )
+
+    trainer = pl.Trainer(max_epochs=epochs, callbacks=[pruning, checkpoint])
+
     if not valid_dataloader:
         valid_dataloader = None
 
+    trainer.fit(pl_model, train_dataloader, valid_dataloader)
+
+    if trainer.interrupted:
+        raise KeyboardInterrupt()
+
+    return trainer.callback_metrics["accuracy"].item()
+
+
+def objective_resume(trial):
+    # Some of are expensive imports, so to keep program start-up time lower,
+    # import them only when necessary.
+    import pytorch_lightning as pl
+    import mel.rotomap.identifynn
+
+    params_path = pathlib.Path(f"{STUDY_NAME}.json")
+    if not params_path.exists():
+        raise NothingToResume("No params file.")
+
+    checkpoint_path = pathlib.Path(f"{STUDY_NAME}.ckpt")
+    if not checkpoint_path.exists():
+        raise CouldNotResume("No checkpoint file.")
+
+    old_params = json.loads(params_path.read_text())
+
+    cnn_width = trial.suggest_int("cnn_width", 4, 256, log=True)
+    cnn_depth = trial.suggest_int("cnn_depth", 1, 8)
+
+    if old_params["cnn_width"] != cnn_width:
+        raise CouldNotResume("cnn_width mismatch", old_params, cnn_width)
+    if old_params["cnn_depth"] != cnn_depth:
+        raise CouldNotResume("cnn_depth mismatch", old_params, cnn_depth)
+
+    num_cnns = 3
+    channels_in = 2
+
+    print("cnn_width:", cnn_width)
+    print("cnn_depth:", cnn_depth)
+
+    (
+        train_dataloader,
+        valid_dataloader,
+        num_parts,
+        num_classes,
+    ) = _DATA
+
+    model_args = dict(
+        cnn_width=cnn_width,
+        cnn_depth=cnn_depth,
+        num_parts=num_parts,
+        num_classes=num_classes,
+        num_cnns=num_cnns,
+        channels_in=channels_in,
+    )
+
+    pl_model = mel.rotomap.identifynn.LightningModel(
+        model_args, trainable_conv=True
+    )
+
+    trainer = pl.Trainer(resume_from_checkpoint=str(checkpoint_path))
     trainer.fit(pl_model, train_dataloader, valid_dataloader)
 
     if trainer.interrupted:
