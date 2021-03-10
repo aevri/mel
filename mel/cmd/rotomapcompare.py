@@ -120,6 +120,7 @@ def process_args(args):
 
     uuid_order = list(uuid_to_rotomaps_imagepos_list)
     uuid_order.sort(key=unchanged_status_keyfunc)
+    uuid_ = uuid_order[0]
 
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -192,10 +193,12 @@ def _make_on_keydown(
             display.toggle_crosshairs()
         elif key == pygame.K_c:
             is_unchanged = False
+            uuid_ = uuid_order[index]
             mark_lesion(target_rotomap, uuid_, is_unchanged=False)
             display.indicate_changed()
         elif key == pygame.K_u:
             is_unchanged = True
+            uuid_ = uuid_order[index]
             mark_lesion(target_rotomap, uuid_, is_unchanged=True)
             display.indicate_changed(False)
         elif key == pygame.K_z:
