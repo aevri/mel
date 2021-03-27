@@ -57,7 +57,7 @@ def fullscreen_context():
     pygame.display.set_caption("mel")
     surface = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
     try:
-        yield surface
+        yield Display(surface)
     finally:
         pygame.quit()
 
@@ -87,13 +87,13 @@ class Display:
 class LeftRightDisplay:
     """Display images in a window, supply controls for navigating."""
 
-    def __init__(self, surface, image_list):
+    def __init__(self, screen, image_list):
         if not image_list:
             raise ValueError(
                 "image_list must be a list with at least one image."
             )
 
-        self.display = Display(surface)
+        self.display = screen
         self._image_list = image_list
         self._index = 0
         self.show()

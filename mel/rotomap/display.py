@@ -67,10 +67,10 @@ def draw_crosshair(image, x, y):
 
 
 class Display:
-    def __init__(self, surface):
-        self._image_display = mel.lib.fullscreenui.Display(surface)
+    def __init__(self, screen):
+        self._image_display = screen
 
-        self._rect = numpy.array((surface.get_width(), surface.get_height()))
+        self._rect = numpy.array((screen.width, screen.height))
 
         self._transform = None
 
@@ -382,9 +382,9 @@ class EditorMode(enum.Enum):
 
 
 class Editor:
-    def __init__(self, directory_list, surface):
+    def __init__(self, directory_list, screen):
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
-        self.display = Display(surface)
+        self.display = Display(screen)
         self.moledata_list = [MoleData(x.image_paths) for x in directory_list]
 
         self._mode = EditorMode.edit_mole

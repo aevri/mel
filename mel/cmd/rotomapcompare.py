@@ -126,8 +126,8 @@ def process_args(args):
     import pygame
 
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
-    with mel.lib.fullscreenui.fullscreen_context() as surface:
-        display = ImageCompareDisplay(surface, path_images_tuple)
+    with mel.lib.fullscreenui.fullscreen_context() as screen:
+        display = ImageCompareDisplay(screen, path_images_tuple)
 
         on_keydown = _make_on_keydown(
             display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
@@ -240,9 +240,9 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, surface, path_images_tuple):
+    def __init__(self, screen, path_images_tuple):
         self._should_draw_crosshairs = True
-        self._display = mel.lib.fullscreenui.Display(surface)
+        self._display = screen
         self.reset(path_images_tuple)
 
     def reset(self, path_images_tuple):

@@ -25,9 +25,9 @@ def process_args(args):
     # startup-text where it is not actually used.
     import pygame
 
-    with mel.lib.fullscreenui.fullscreen_context() as surface:
+    with mel.lib.fullscreenui.fullscreen_context() as screen:
         display = OrganiserDisplay(
-            surface, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
+            screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
         )
 
         pygame.display.update()
