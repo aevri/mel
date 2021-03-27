@@ -15,10 +15,14 @@ class AbortKeyInterruptError(Exception):
     pass
 
 
-def yield_events_until_quit(quit_key="q", error_key=None, quit_func=None):
+def yield_events_until_quit(
+    display, *, quit_key="q", error_key=None, quit_func=None
+):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
+
+    display.update_screen_if_needed()
 
     while True:
         for event in pygame.event.get():
@@ -28,6 +32,7 @@ def yield_events_until_quit(quit_key="q", error_key=None, quit_func=None):
                 if event.key == pygame.K_q:
                     return
             yield event
+            display.update_screen_if_needed()
 
         if quit_func is not None and quit_func():
             return
@@ -75,6 +80,7 @@ class Display:
         self.width = surface.get_width()
         self.height = surface.get_height()
         self.surface.fill((0, 0, 0))
+        self.is_dirty = True
 
     def show_opencv_image(self, image):
         image = mel.lib.image.letterbox(image, self.width, self.height)
@@ -82,6 +88,16 @@ class Display:
         image = image.swapaxes(0, 1)
         image = self._pygame.surfarray.make_surface(image)
         self.surface.blit(image, [0, 0])
+        self.is_dirty = True
+
+    def update_screen_if_needed(self):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if self.is_dirty:
+            pygame.display.update()
+        self.is_dirty = False
 
 
 class LeftRightDisplay:

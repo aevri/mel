@@ -565,17 +565,14 @@ def process_args(args):
             editor, args.follow, args.copy_to_clipboard, visit_list
         )
 
-        pygame.display.update()
-        for event in mel.lib.fullscreenui.yield_events_until_quit():
+        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
             if event.type == pygame.KEYDOWN:
                 controller.on_key(editor, event.key)
-                pygame.display.update()
             elif event.type in (
                 pygame.MOUSEBUTTONDOWN,
                 pygame.MOUSEMOTION,
             ):
                 controller.on_mouse_event(editor, event)
-                pygame.display.update()
 
 
 def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
