@@ -30,6 +30,7 @@ def process_args(args):
             surface, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
         )
 
+        pygame.display.update()
         for event in mel.lib.fullscreenui.yield_events_until_quit():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
@@ -41,6 +42,7 @@ def process_args(args):
                 elif event.key == pygame.K_g:
                     destination = input("group destination: ")
                     display.group_images(destination)
+                pygame.display.update()
 
 
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):

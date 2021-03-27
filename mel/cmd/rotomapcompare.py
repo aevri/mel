@@ -133,9 +133,11 @@ def process_args(args):
             display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
         )
 
+        pygame.display.update()
         for event in mel.lib.fullscreenui.yield_events_until_quit():
             if event.type == pygame.KEYDOWN:
                 on_keydown(event)
+                pygame.display.update()
 
 
 def _make_on_keydown(

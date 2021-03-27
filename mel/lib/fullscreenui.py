@@ -82,7 +82,6 @@ class Display:
         image = image.swapaxes(0, 1)
         image = self._pygame.surfarray.make_surface(image)
         self.surface.blit(image, [0, 0])
-        self._pygame.display.update()
 
 
 class LeftRightDisplay:
