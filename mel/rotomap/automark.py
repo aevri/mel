@@ -74,6 +74,8 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         nextmin = sqdistmat[from_i, to_i]
         if nextmin > max_sqdist:
             break
+        # It seems pylint doesn't know about numpy indexing.
+        # pylint: disable=invalid-sequence-index
         matches.append(
             (
                 matindex_to_fromindex[from_i],
@@ -84,6 +86,7 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         del matindex_to_toindex[to_i]
         sqdistmat = numpy.delete(sqdistmat, from_i, axis=0)
         sqdistmat = numpy.delete(sqdistmat, to_i, axis=1)
+        # pylint: enable=invalid-sequence-index
 
     # print()
 
