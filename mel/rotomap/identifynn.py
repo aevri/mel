@@ -306,6 +306,38 @@ def make_dataset(
     return dataset
 
 
+class LightningDataModule(pl.LightningDataModule):
+    def __init__(self, repo_path, data_config):
+        super().__init__()
+        self.repo_path = repo_path
+        self.data_config = data_config
+
+    def prepare_data(self):
+        # There's no per-machine initialisation we need to do.
+        pass
+
+    def setup(self):
+        (
+            self.train_dataset,
+            self.valid_dataset,
+            _,
+            _,
+            self.part_to_index,
+        ) = make_data(self.repo_path, self.data_config)
+
+    def train_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.train_dataset,
+            batch_size=self.data_config["batch_size"],
+            shuffle=True,
+        )
+
+    def val_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.valid_dataset, batch_size=self.data_config["batch_size"]
+        )
+
+
 def make_data(repo_path, data_config, channel_cache=None):
 
     parts_path = repo_path / "rotomaps" / "parts"
