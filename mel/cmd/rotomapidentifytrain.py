@@ -212,6 +212,17 @@ def process_args(args):
     if not valid_dataloader:
         valid_dataloader = None
 
+    lr_find = False
+    if lr_find:
+        lr_finder = trainer.tuner.lr_find(
+            pl_model, train_dataloader, valid_dataloader
+        )
+        suggested_lr = lr_finder.suggestion()
+        print("Suggested lr:", suggested_lr)
+        pl_model = mel.rotomap.identifynn.LightningModel(
+            init_model_args, not args.no_train_conv, lr=suggested_lr
+        )
+
     trainer.fit(pl_model, train_dataloader, valid_dataloader)
 
     model = pl_model.model
