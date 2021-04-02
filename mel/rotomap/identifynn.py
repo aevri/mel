@@ -5,7 +5,6 @@ import json
 import numpy
 import pytorch_lightning as pl
 import torch.utils.data
-import torchvision
 import tqdm
 
 import mel.lib.ellipsespace
@@ -129,10 +128,6 @@ class RotomapsClassMapping:
 
         self.classes = sorted(list(all_uuids))
         self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
-
-
-def resize(image, image_size):
-    return torchvision.transforms.Resize(image_size)(image)
 
 
 class LightningModel(pl.LightningModule):
