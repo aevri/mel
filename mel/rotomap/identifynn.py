@@ -1,8 +1,6 @@
 """Identify which moles are which, using neural nets."""
 import collections
-import contextlib
 import json
-import time
 
 import numpy
 import pytorch_lightning as pl
@@ -91,66 +89,6 @@ class MoleIdentifier:
         return new_moles
 
 
-def fit(
-    epochs,
-    train_dataloader,
-    valid_dataloader,
-    model,
-    train_record,
-    valid_record,
-    *,
-    opt=None,
-    loss_func=None,
-    scheduler=None,
-):
-
-    if opt is None:
-        opt = torch.optim.Adam(model.parameters())
-
-    if loss_func is None:
-        loss_func = torch.nn.CrossEntropyLoss()
-
-    iters_per_epoch = len(train_dataloader) * 2 + len(valid_dataloader)
-
-    with tqdm.tqdm(total=iters_per_epoch * epochs, smoothing=0) as pbar:
-        for _ in range(epochs):
-            model.train()
-            for i, xb, yb in train_dataloader:
-                opt.zero_grad()
-                out = model(xb)
-                loss = loss_func(out, yb)
-
-                loss.backward()
-                opt.step()
-                if scheduler is not None:
-                    scheduler.step()
-
-                pbar.update(1)
-
-            model.eval()
-            with torch.no_grad():
-                with train_record.batch_ctx():
-                    for i, xb, yb in train_dataloader:
-                        out = model(xb)
-                        loss = loss_func(out, yb)
-                        train_record.batch(i, yb, out, loss)
-                        pbar.update(1)
-
-            model.eval()
-            with torch.no_grad():
-                with valid_record.batch_ctx():
-                    for i, xb, yb in valid_dataloader:
-                        out = model(xb)
-                        loss = loss_func(out, yb)
-                        valid_record.batch(i, yb, out, loss)
-                        pbar.update(1)
-
-            if valid_dataloader:
-                pbar.set_description(
-                    f"valid: {int(valid_record.acc[-1] * 100)}%"
-                )
-
-
 def make_convnet2d(width, depth, channels_in):
     return torch.nn.Sequential(
         torch.nn.BatchNorm2d(channels_in),
@@ -178,73 +116,6 @@ class Lambda(torch.nn.Module):
 
     def forward(self, x):
         return self.func(x)
-
-
-class FitRecord:
-    def __init__(self):
-        self.loss = []
-        self.acc = []
-        self.most_confused = collections.Counter()
-        self._in_batch = False
-        self._reset_batch()
-
-    def _reset_batch(self):
-        assert not self._in_batch
-        self._batch_len = 0
-        self._batch_total_loss = 0
-        self._batch_total_correct = 0
-        self._batch_total_items = 0
-        self._batch_most_confused = collections.Counter()
-
-    def to_dict(self):
-        return {
-            "loss": self.loss,
-            "acc": self.acc,
-            "most_confused": self.most_confused,
-        }
-
-    @staticmethod
-    def from_dict(d):
-        result = FitRecord()
-        result.loss = d["loss"]
-        result.acc = d["acc"]
-        result.most_confused = d["most_confused"]
-        return result
-
-    @contextlib.contextmanager
-    def batch_ctx(self):
-        self._reset_batch()
-        self._in_batch = True
-        try:
-            yield
-        finally:
-            self._in_batch = False
-        if self._batch_len:
-            self.record(
-                self._batch_total_loss / self._batch_len,
-                self._batch_total_correct / self._batch_total_items,
-                self._batch_most_confused,
-            )
-
-    def batch(self, i, yb, out, loss):
-        if not self._in_batch:
-            raise ValueError("Must be called within a batch_ctx.")
-        self._batch_total_loss += loss.item()
-        preds = torch.argmax(out[0], dim=1)
-        correct = (preds == yb[0]).float().sum()
-        self._batch_most_confused += collections.Counter(
-            tuple(sorted((p.item(), label.item())))
-            for p, label in zip(preds, yb[0])
-            if p != label
-        )
-        self._batch_total_correct += correct
-        self._batch_total_items += len(i)
-        self._batch_len += 1
-
-    def record(self, loss, acc, most_confused):
-        self.loss.append(float(loss))
-        self.acc.append(float(acc))
-        self.most_confused = most_confused
 
 
 class RotomapsClassMapping:
@@ -311,120 +182,6 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
-
-
-def make_model_and_fit(
-    train_dataset,
-    valid_dataset,
-    train_dataloader,
-    valid_dataloader,
-    part_to_index,
-    model_config,
-    train_config,
-    old_results=None,
-):
-
-    train_fit_record = FitRecord()
-    valid_fit_record = FitRecord()
-
-    model_args = dict(
-        cnn_width=model_config["cnn_width"],
-        cnn_depth=model_config["cnn_depth"],
-        num_parts=len(part_to_index),
-        num_classes=len(train_dataset.classes),
-        num_cnns=3,
-        channels_in=2,
-    )
-
-    if old_results is not None:
-        model = old_results["model"]
-        old_part_to_index = old_results["part_to_index"]
-        old_classes = old_results["classes"]
-        old_model_args = old_results["model_args"]
-        if (
-            old_part_to_index != part_to_index
-            or old_classes != train_dataset.classes
-        ):
-            # TODO: support copying over embeddings and other bits that are the
-            # same, and don't need to be re-learned.
-            old_model_args["num_parts"] = model_args["num_parts"]
-            old_model_args["num_classes"] = model_args["num_classes"]
-            model.reset_num_parts_classes(
-                new_num_parts=old_model_args["num_parts"],
-                new_num_classes=old_model_args["num_classes"],
-            )
-        if old_model_args != model_args:
-            raise Exception(
-                f"Old model args not compatible.\n"
-                f"old: {old_model_args}\n"
-                f"new: {model_args}\n"
-            )
-    else:
-        model = Model(**model_args)
-
-    timer = Timer()
-
-    def loss_func(model_out, out_data):
-        assert len(out_data) == 2
-        f = torch.nn.functional
-        return (
-            f.cross_entropy(model_out[0], out_data[0])
-            # + f.mse_loss(model_out[1], out_data[1])
-            # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
-        )
-
-    params = [
-        {"params": model.embedding.parameters()},
-        {"params": model.fc.parameters()},
-    ]
-
-    # Note that the static analysis tool 'vulture' doesn't seem to be happy
-    # with setting requires_grad but not reading it here. The only workaround
-    # appears to be ignoring the whole file.
-
-    if train_config["train_conv"]:
-        for p in model.conv.parameters():
-            p.requires_grad = True
-        params.append({"params": model.conv.parameters()})
-    else:
-        for p in model.conv.parameters():
-            p.requires_grad = False
-
-    opt = torch.optim.AdamW(
-        params=params,
-        weight_decay=train_config["weight_decay"],
-    )
-
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        opt,
-        max_lr=train_config["learning_rate"],
-        epochs=train_config["epochs"],
-        steps_per_epoch=len(train_dataloader),
-    )
-
-    fit(
-        train_config["epochs"],
-        train_dataloader,
-        valid_dataloader,
-        model,
-        train_fit_record,
-        valid_fit_record,
-        opt=opt,
-        loss_func=loss_func,
-        scheduler=scheduler,
-    )
-
-    results = {
-        "elapsed": timer.elapsed(),
-        "train_fit_record": train_fit_record.to_dict(),
-        "valid_fit_record": valid_fit_record.to_dict(),
-        "model": model,
-        "model_args": model_args,
-        "part_to_index": part_to_index,
-        "classes": train_dataset.classes,
-    }
-
-    return results
 
 
 def yield_frame_mole_maps_detail(
@@ -796,15 +553,6 @@ def get_all_rotomaps(parts_path):
                     mel.rotomap.moles.RotomapDirectory(p)
                 )
     return all_rotomaps
-
-
-class Timer:
-    def __init__(self):
-        self.then = time.time()
-
-    def elapsed(self):
-        now = time.time()
-        return now - self.then
 
 
 class RotomapsDataset:
