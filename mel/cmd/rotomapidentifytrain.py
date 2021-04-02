@@ -162,6 +162,7 @@ def process_args(args):
 
     data_config = {
         "rotomaps": ("all"),
+        # "rotomaps": ("subpart", "LeftLeg", "Lower"),
         "train_proportion": args.train_proportion,
         "image_size": image_size,
         "batch_size": args.batch_size,
