@@ -575,7 +575,38 @@ def extend_dataset_by_frame(
         return
 
     uuid_points = list(frame.moledata.uuid_points.items())
+    ellipse = frame.metadata["ellipse"]
+    part_name = frame_to_part_name(frame)
+    part_index = part_to_index[part_name]
 
+    extend_dataset_by_frame_data(
+        dataset,
+        uuid_points,
+        ellipse,
+        part_index,
+        image_size,
+        part_to_index,
+        do_channels,
+        channel_cache,
+        class_to_index,
+        escale,
+        etranslate,
+    )
+
+
+def extend_dataset_by_frame_data(
+    dataset,
+    uuid_points,
+    ellipse,
+    part_index,
+    image_size,
+    part_to_index,
+    do_channels,
+    channel_cache,
+    class_to_index,
+    escale,
+    etranslate,
+):
     uuid_list = [uuid_ for uuid_, pos in uuid_points]
     dataset["uuid"].extend(uuid_list)
 
@@ -594,14 +625,11 @@ def extend_dataset_by_frame(
     def extend_dataset(field_name, dataset_part):
         dataset[field_name].extend(unzip_dataset_part(uuid_list, dataset_part))
 
-    part_name = frame_to_part_name(frame)
-    part_index = part_to_index[part_name]
     extend_dataset("part_index", [(uuid_, part_index) for uuid_ in uuid_list])
 
     if do_channels:
         assert False, "Implement augmentations"
     else:
-        ellipse = frame.metadata["ellipse"]
         extend_dataset(
             "molemap",
             yield_frame_mole_maps(
