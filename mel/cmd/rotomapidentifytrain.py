@@ -18,6 +18,7 @@ your data.
 import argparse
 import json
 import os
+import warnings
 
 
 def proportion_arg(x):
@@ -81,7 +82,8 @@ def setup_parser(parser):
 def process_args(args):
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
-    import torch.utils.data
+    import pytorch_lightning as pl
+    import torch
 
     import mel.lib.ellipsespace
     import mel.lib.fs
@@ -96,8 +98,10 @@ def process_args(args):
     image_size = 32
     cnn_width = 128
     cnn_depth = 4
+    num_cnns = 3
+    channels_in = 2
 
-    old_results = None
+    old_metadata = None
     if model_path.exists():
         if not metadata_path.exists():
             raise Exception(
@@ -116,17 +120,30 @@ def process_args(args):
         print(f"           and {metadata_path}")
 
         with open(metadata_path) as f:
-            old_results = json.load(f)
-        old_results["model"] = mel.rotomap.identifynn.Model(
-            **old_results["model_args"]
+            old_metadata = json.load(f)
+
+        def check_old_matches_new(name, old, new):
+            if old != new:
+                raise Exception(
+                    f"Old {name} is not the same.\n"
+                    f"old: {old}\n"
+                    f"new: {new}\n"
+                )
+
+        old_model_args = old_metadata["model_args"]
+        check_old_matches_new(
+            "cnn width", old_model_args["cnn_width"], cnn_width
         )
-        old_results["model"].load_state_dict(torch.load(model_path))
-        if old_results["image_size"] != image_size:
-            raise Exception(
-                f"Old image size is not the same.\n"
-                f"old: {old_results['image_size']}\n"
-                f"new: {image_size}\n"
-            )
+        check_old_matches_new(
+            "cnn depth", old_model_args["cnn_depth"], cnn_depth
+        )
+        check_old_matches_new("num cnns", old_model_args["num_cnns"], num_cnns)
+        check_old_matches_new(
+            "channels_in", old_model_args["channels_in"], channels_in
+        )
+        check_old_matches_new(
+            "image size", old_metadata["image_size"], image_size
+        )
     else:
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
@@ -144,56 +161,101 @@ def process_args(args):
     }
 
     print("Making data ..")
-    data = mel.rotomap.identifynn.make_data(melroot, data_config)
+    (
+        train_dataset,
+        _,
+        train_dataloader,
+        valid_dataloader,
+        part_to_index,
+    ) = mel.rotomap.identifynn.make_data(melroot, data_config)
 
-    model_config = {
-        "cnn_width": cnn_width,
-        "cnn_depth": cnn_depth,
-    }
+    num_parts = len(part_to_index)
+    num_classes = len(train_dataset.classes)
 
-    weight_decay = 0.01
-    learning_rate = 0.01
-
-    train_config = {
-        "epochs": args.epochs,
-        "learning_rate": learning_rate,
-        "weight_decay": weight_decay,
-        "train_conv": not args.no_train_conv,
-    }
-
-    results = mel.rotomap.identifynn.make_model_and_fit(
-        *data, model_config, train_config, old_results
+    model_args = dict(
+        cnn_width=cnn_width,
+        cnn_depth=cnn_depth,
+        num_parts=num_parts,
+        num_classes=num_classes,
+        num_cnns=num_cnns,
+        channels_in=channels_in,
     )
 
-    if data_config["train_proportion"] != 1:
-        valid_fit_record = mel.rotomap.identifynn.FitRecord.from_dict(
-            results["valid_fit_record"]
-        )
-        print(valid_fit_record.acc[-1])
+    init_model_args = model_args
+    if old_metadata is not None:
+        init_model_args = old_metadata["model_args"]
 
-    model = results["model"]
+    pl_model = mel.rotomap.identifynn.LightningModel(
+        init_model_args, not args.no_train_conv
+    )
+
+    metadata = {
+        "model_args": model_args,
+        "part_to_index": part_to_index,
+        "classes": train_dataset.classes,
+        "image_size": image_size,
+    }
+
+    if old_metadata is not None:
+        pl_model.model.load_state_dict(torch.load(model_path))
+        _fixup_old_model(old_metadata, metadata, pl_model.model)
+
+    warnings.filterwarnings(
+        "ignore",
+        message=(
+            r"The dataloader, \w+ dataloader( 0)?, "
+            "does not have many workers which may be a bottleneck."
+        ),
+    )
+
+    trainer = pl.Trainer(max_epochs=args.epochs)
+    if not valid_dataloader:
+        valid_dataloader = None
+
+    trainer.fit(pl_model, train_dataloader, valid_dataloader)
+
+    model = pl_model.model
 
     if args.forget_moles:
         model.clear_non_cnn()
-        results["part_to_index"] = {}
-        results["classes"] = []
-        results["model_args"]["num_parts"] = 0
-        results["model_args"]["num_classes"] = 0
+        metadata["model_args"]["num_parts"] = 0
+        metadata["model_args"]["num_classes"] = 0
+        metadata["part_to_index"] = {}
+        metadata["classes"] = []
+
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
+
     with open(metadata_path, "w") as f:
-        metadata = {
-            "model_args": results["model_args"],
-            "part_to_index": results["part_to_index"],
-            "classes": results["classes"],
-            "image_size": image_size,
-        }
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
 
 
+def _fixup_old_model(old_metadata, new_metadata, model):
+    old_model_args = old_metadata["model_args"]
+    new_model_args = new_metadata["model_args"]
+    if (
+        old_metadata["part_to_index"] != new_metadata["part_to_index"]
+        or old_metadata["classes"] != new_metadata["classes"]
+    ):
+        # TODO: support copying over embeddings and other bits that are the
+        # same, and don't need to be re-learned.
+        model.reset_num_parts_classes(
+            new_num_parts=new_model_args["num_parts"],
+            new_num_classes=new_model_args["num_classes"],
+        )
+        old_model_args["num_parts"] = new_model_args["num_parts"]
+        old_model_args["num_classes"] = new_model_args["num_classes"]
+    if old_model_args != new_model_args:
+        raise Exception(
+            f"Old model args not compatible.\n"
+            f"old: {old_model_args}\n"
+            f"new: {new_model_args}\n"
+        )
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2019 Angelos Evripiotis.
+# Copyright (C) 2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

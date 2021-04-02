@@ -5,6 +5,7 @@ import json
 import time
 
 import numpy
+import pytorch_lightning as pl
 import torch.utils.data
 import torchvision
 import tqdm
@@ -261,6 +262,55 @@ class RotomapsClassMapping:
 
 def resize(image, image_size):
     return torchvision.transforms.Resize(image_size)(image)
+
+
+class LightningModel(pl.LightningModule):
+    def __init__(self, model_args, trainable_conv, lr=1e-3):
+        super().__init__()
+        model = Model(**model_args)
+        self.lr = lr
+
+        if not trainable_conv:
+            for p in model.conv.parameters():
+                p.requires_grad = False
+
+        self.model = model
+
+    def forward(self, data):
+        return self.model(data)
+
+    @staticmethod
+    def _loss_func(model_out, out_data):
+        assert len(out_data) == 2
+        f = torch.nn.functional
+        return (
+            f.cross_entropy(model_out[0], out_data[0])
+            # + f.mse_loss(model_out[1], out_data[1])
+            # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
+        )
+
+    def training_step(self, batch, batch_idx):
+        i, xb, yb = batch
+        out = self.model(xb)
+        loss = self._loss_func(out, yb)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        i, xb, yb = batch
+        out = self.model(xb)
+        loss = self._loss_func(out, yb)
+        self.log("val_loss", loss, prog_bar=True)
+
+        preds = torch.argmax(out[0], dim=1)
+        correct = (preds == yb[0]).float().sum()
+        accuracy = correct / len(preds)
+        self.log("accuracy", accuracy, prog_bar=True)
+
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        return optimizer
 
 
 def make_model_and_fit(

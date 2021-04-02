@@ -58,6 +58,7 @@ setuptools.setup(
         # 'opencv',  # Not a possibility as yet.
         'colorama',
         'pygame',
+        'pytorch-lightning',
         'six>=1.12',  # Oddly we get a version that's too old otherwise.
         'torchvision~=0.7.0',
         'torch~=1.6.0',
