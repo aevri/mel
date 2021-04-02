@@ -180,15 +180,14 @@ class LightningModel(pl.LightningModule):
 
 
 def yield_frame_mole_maps_detail(
-    frame, final_image_size, zoom, escale, etranslate
+    ellipse, uuid_points, final_image_size, zoom, escale, etranslate
 ):
-    ellipse = frame.metadata["ellipse"]
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
     image_size = final_image_size * zoom
 
     frame_map = torch.zeros(1, image_size, image_size)
-    for uuid_, pos in frame.moledata.uuid_points.items():
+    for uuid_, pos in uuid_points:
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
         ipos *= image_size * 0.3 * escale
@@ -199,7 +198,7 @@ def yield_frame_mole_maps_detail(
     max_point = image_size - final_image_size
     half_final_image_size = final_image_size // 2
 
-    for uuid_, pos in frame.moledata.uuid_points.items():
+    for uuid_, pos in uuid_points:
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
@@ -223,12 +222,13 @@ def yield_frame_mole_maps_detail(
         yield uuid_, result
 
 
-def yield_frame_mole_maps(frame, image_size, escale, etranslate):
-    ellipse = frame.metadata["ellipse"]
+def yield_frame_mole_maps(
+    ellipse, uuid_points, image_size, escale, etranslate
+):
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
     frame_map = torch.zeros(1, image_size, image_size)
-    for uuid_, pos in frame.moledata.uuid_points.items():
+    for uuid_, pos in uuid_points:
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
         ipos *= image_size * 0.3 * escale
@@ -236,7 +236,7 @@ def yield_frame_mole_maps(frame, image_size, escale, etranslate):
         ipos += etranslate
         splat5(frame_map[0], ipos[0], ipos[1])
 
-    for uuid_, pos in frame.moledata.uuid_points.items():
+    for uuid_, pos in uuid_points:
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
@@ -246,13 +246,6 @@ def yield_frame_mole_maps(frame, image_size, escale, etranslate):
         splat5(mole_mark[0], ipos[0], ipos[1])
 
         yield uuid_, torch.cat((frame_map, mole_mark))
-
-
-def yield_frame_part_index(frame, part_to_index):
-    part_name = frame_to_part_name(frame)
-    part_index = part_to_index[part_name]
-    for uuid_, pos in frame.moledata.uuid_points.items():
-        yield uuid_, part_index
 
 
 def frame_to_part_name(frame):
@@ -581,12 +574,12 @@ def extend_dataset_by_frame(
     if "ellipse" not in frame.metadata:
         return
 
-    uuid_list = [uuid_ for uuid_, pos in frame.moledata.uuid_points.items()]
+    uuid_points = list(frame.moledata.uuid_points.items())
+
+    uuid_list = [uuid_ for uuid_, pos in uuid_points]
     dataset["uuid"].extend(uuid_list)
 
-    dataset["pos"].extend(
-        [pos for uuid_, pos in frame.moledata.uuid_points.items()]
-    )
+    dataset["pos"].extend([pos for uuid_, pos in uuid_points])
 
     dataset["uuid_index"].extend(
         [class_to_index[uuid_] for uuid_ in uuid_list]
@@ -601,25 +594,30 @@ def extend_dataset_by_frame(
     def extend_dataset(field_name, dataset_part):
         dataset[field_name].extend(unzip_dataset_part(uuid_list, dataset_part))
 
-    extend_dataset("part_index", yield_frame_part_index(frame, part_to_index))
+    part_name = frame_to_part_name(frame)
+    part_index = part_to_index[part_name]
+    extend_dataset("part_index", [(uuid_, part_index) for uuid_ in uuid_list])
 
     if do_channels:
         assert False, "Implement augmentations"
     else:
+        ellipse = frame.metadata["ellipse"]
         extend_dataset(
             "molemap",
-            yield_frame_mole_maps(frame, image_size, escale, etranslate),
+            yield_frame_mole_maps(
+                ellipse, uuid_points, image_size, escale, etranslate
+            ),
         )
         extend_dataset(
             "molemap_detail_2",
             yield_frame_mole_maps_detail(
-                frame, image_size, 2, escale, etranslate
+                ellipse, uuid_points, image_size, 2, escale, etranslate
             ),
         )
         extend_dataset(
             "molemap_detail_4",
             yield_frame_mole_maps_detail(
-                frame, image_size, 4, escale, etranslate
+                ellipse, uuid_points, image_size, 4, escale, etranslate
             ),
         )
 
