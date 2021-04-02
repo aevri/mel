@@ -92,6 +92,8 @@ def process_args(args):
     import pytorch_lightning as pl
     import torch
 
+    # from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+
     import mel.lib.ellipsespace
     import mel.lib.fs
     import mel.rotomap.identifynn
@@ -215,6 +217,7 @@ def process_args(args):
         ),
     )
 
+    # trainer = pl.Trainer(callbacks=[EarlyStopping(monitor='val_loss')])
     trainer = pl.Trainer(max_epochs=args.epochs)
     if not valid_dataloader:
         valid_dataloader = None
