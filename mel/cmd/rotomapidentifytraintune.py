@@ -199,7 +199,7 @@ def process_args(args):
     print("Making data ..")
     (
         train_dataset,
-        valid_dataset,
+        _,
         train_dataloader,
         valid_dataloader,
         part_to_index,
