@@ -57,6 +57,7 @@ setuptools.setup(
     install_requires=[
         # 'opencv',  # Not a possibility as yet.
         'colorama',
+        'optuna',
         'pygame',
         'pytorch-lightning',
         'torchvision',
