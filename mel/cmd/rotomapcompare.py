@@ -51,18 +51,6 @@ def setup_parser(parser):
             "'the target', and only UUIDs from that one will be compared."
         ),
     )
-    parser.add_argument(
-        "--display-width",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
-    parser.add_argument(
-        "--display-height",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
 
 
 def process_args(args):
