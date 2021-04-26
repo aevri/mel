@@ -4,26 +4,14 @@ import os
 
 import mel.lib.common
 import mel.lib.datetime
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.moleimaging
-import mel.lib.ui
 
 
 def setup_parser(parser):
     parser.add_argument(
         "PATH", type=str, help="Path to the mole to compare images from."
-    )
-    parser.add_argument(
-        "--display-width",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
-    parser.add_argument(
-        "--display-height",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
     )
 
 
@@ -54,35 +42,37 @@ def process_args(args):
     if not images:
         raise Exception("No microscope images at {}".format(args.PATH))
 
-    display = ImageCompareDisplay(
-        args.PATH, images, args.display_width, args.display_height
-    )
-
-    mel.lib.ui.bring_python_to_front()
-
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")
     print("Press 'q' to quit.")
 
-    for key in mel.lib.ui.yield_keys_until_quitkey():
-        if key == mel.lib.ui.WAITKEY_RIGHT_ARROW:
-            display.next_image()
-        elif key == mel.lib.ui.WAITKEY_LEFT_ARROW:
-            display.prev_image()
-        elif key == ord(" "):
-            display.swap_images()
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
+    with mel.lib.fullscreenui.fullscreen_context() as screen:
+        display = ImageCompareDisplay(screen, args.PATH, images)
+
+        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    display.next_image()
+                elif event.key == pygame.K_LEFT:
+                    display.prev_image()
+                elif event.key == pygame.K_SPACE:
+                    display.swap_images()
 
 
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, name, image_list, width=None, height=None):
+    def __init__(self, screen, name, image_list):
         if not image_list:
             raise ValueError(
                 "image_list must be a list with at least one image."
             )
 
-        self._display = mel.lib.ui.ImageDisplay(name, width, height)
+        self._display = screen
         self._image_list = image_list
         self._display_list = [image_list[0], image_list[-1]]
         self._index = 0
@@ -105,11 +95,11 @@ class ImageCompareDisplay:
 
     def _show_display_list(self):
         montage = mel.lib.image.montage_horizontal(10, *self._display_list)
-        self._display.show_image(montage)
+        self._display.show_opencv_image(montage)
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
