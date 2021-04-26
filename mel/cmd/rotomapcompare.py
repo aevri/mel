@@ -33,7 +33,6 @@ import mel.lib.datetime
 import mel.lib.image
 import mel.lib.math
 import mel.lib.moleimaging
-import mel.lib.ui
 import mel.rotomap.display
 import mel.rotomap.moles
 
@@ -466,7 +465,7 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2020 Angelos Evripiotis.
+# Copyright (C) 2018-2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

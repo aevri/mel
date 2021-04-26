@@ -3,7 +3,6 @@
 import mel.lib.common
 import mel.lib.fs
 import mel.lib.image
-import mel.lib.ui
 import mel.rotomap.mask
 
 
@@ -29,7 +28,7 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018-2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
