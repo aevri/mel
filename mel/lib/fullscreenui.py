@@ -7,20 +7,49 @@ import cv2
 
 import mel.lib.common
 import mel.lib.image
+import mel.lib.ui
 
 _PYGAME_HAD_EXCLUSIVE_INIT = False
 
 
-class AbortKeyInterruptError(Exception):
-    pass
+def yield_frames_keys(video_capture, display, error_key):
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
+    while True:
+        ret, frame = video_capture.read()
+        if not ret:
+            raise Exception("Could not read frame.")
+
+        keys = []
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN:
+                keys.append(event.key)
+
+        display.update_screen_if_needed()
+
+        if keys:
+            for key in keys:
+                if key == error_key:
+                    raise mel.lib.ui.AbortKeyInterruptError()
+                else:
+                    yield frame, key
+        else:
+            yield frame, None
 
 
 def yield_events_until_quit(
-    display, *, quit_key="q", error_key=None, quit_func=None
+    display, *, quit_key=None, quit_func=None, error_key=None
 ):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
+
+    if quit_key is None:
+        quit_key = pygame.K_q
 
     display.update_screen_if_needed()
 
@@ -29,8 +58,10 @@ def yield_events_until_quit(
             if event.type == pygame.QUIT:
                 return
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
+                if event.key == quit_key:
                     return
+                elif error_key is not None and event.key == error_key:
+                    raise mel.lib.ui.AbortKeyInterruptError()
             yield event
             display.update_screen_if_needed()
 
@@ -142,8 +173,57 @@ class LeftRightDisplay:
             )
 
 
+class MultiImageDisplay:
+    def __init__(self, display):
+        self._display = display
+        self.reset()
+
+    def reset(self):
+        self._images_names = []
+        self._border_width = 50
+        self._layout = [[]]
+
+    def add_image(self, image, name=None):
+        self._images_names.append((image, name))
+        index = len(self._images_names) - 1
+        self._layout[-1].append(index)
+        self.refresh()
+        return index
+
+    def new_row(self):
+        assert self._layout[-1]
+        self._layout.append([])
+
+    def update_image(self, image, index):
+        name = self._images_names[index][1]
+        self._images_names[index] = (image, name)
+        self.refresh()
+
+    def refresh(self):
+        row_image_list = []
+
+        for row in self._layout:
+            row_image = None
+            for index in row:
+                image, _ = self._images_names[index]
+                if row_image is None:
+                    row_image = image
+                else:
+                    row_image = mel.lib.image.montage_horizontal(
+                        self._border_width, row_image, image
+                    )
+            row_image_list.append(row_image)
+
+        if len(row_image_list) == 1:
+            montage_image = row_image_list[0]
+        else:
+            montage_image = mel.lib.image.montage_vertical(0, *row_image_list)
+
+        self._display.show_opencv_image(montage_image)
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2020-2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

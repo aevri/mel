@@ -8,9 +8,9 @@ import numpy
 
 import mel.lib.common
 import mel.lib.datetime
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.moleimaging
-import mel.lib.ui
 
 
 def setup_parser(parser):
@@ -19,18 +19,6 @@ def setup_parser(parser):
         nargs="+",
         type=str,
         help="Path to the mole to add new microscope images to.",
-    )
-    parser.add_argument(
-        "--display-width",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
-    )
-    parser.add_argument(
-        "--display-height",
-        type=int,
-        default=None,
-        help="Width of the preview display window.",
     )
     parser.add_argument(
         "--min-compare-age-days",
@@ -149,28 +137,31 @@ def process_args(args):
     if not cap.isOpened():
         raise Exception("Could not open video capture device.")
 
-    display = mel.lib.ui.MultiImageDisplay(
-        "mel micro add", args.display_width, args.display_height
-    )
+    with mel.lib.fullscreenui.fullscreen_context() as screen:
+        display = mel.lib.fullscreenui.MultiImageDisplay(screen)
 
-    mel.lib.ui.bring_python_to_front()
-
-    for mole_path in args.PATH:
-        print(mole_path)
-        display.reset()
-        process_path(mole_path, args.min_compare_age_days, display, cap)
+        for mole_path in args.PATH:
+            print(mole_path)
+            display.reset()
+            process_path(mole_path, args.min_compare_age_days, display, cap)
 
 
 def process_path(mole_path, min_compare_age_days, display, cap):
+
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
     comparison_image_data = load_comparison_image(
         mole_path, min_compare_age_days
     )
 
     if comparison_image_data is not None:
-        comparison_path, comparison_image = comparison_image_data
-        display.set_title(comparison_path)
+        _, comparison_image = comparison_image_data
+        # display.set_title(comparison_path)
     else:
-        display.set_title(mole_path)
+        # display.set_title(mole_path)
+        pass
 
     context_images = load_context_images(mole_path)
     for image in context_images:
@@ -195,18 +186,20 @@ def process_path(mole_path, min_compare_age_days, display, cap):
         print("Press 'a' to abort without saving and exit with an error code.")
 
         is_finished = True
-        for key in mel.lib.ui.yield_keys_until_quitkey(
-            quit_key=" ", error_key="a"
+        for event in mel.lib.fullscreenui.yield_events_until_quit(
+            display._display,
+            quit_key=pygame.K_SPACE,
+            error_key=pygame.K_a,
         ):
-
-            if key == ord("r"):
-                print("Retry capture")
-                is_finished = False
-                break
-            elif key == ord("u"):
-                print("Rotated 180.")
-                frame = mel.lib.image.rotated180(frame)
-                display.update_image(frame, capindex)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    print("Retry capture")
+                    is_finished = False
+                    break
+                elif event.key == pygame.K_u:
+                    print("Rotated 180.")
+                    frame = mel.lib.image.rotated180(frame)
+                    display.update_image(frame, capindex)
 
     # write the mole image
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
@@ -219,15 +212,20 @@ def process_path(mole_path, min_compare_age_days, display, cap):
 
 def capture(cap, display, capindex, mole_acquirer):
 
+    # Import pygame as late as possible, to avoid displaying its
+    # startup-text where it is not actually used.
+    import pygame
+
     # loop until the user presses a key
     print("Press 'c' to force capture a frame, 'a' to abort.")
 
     centre = None
     rotation = None
 
-    for frame, key in mel.lib.ui.yield_frames_keys(cap, error_key="a"):
-
-        if key == ord("c"):
+    for frame, key in mel.lib.fullscreenui.yield_frames_keys(
+        cap, display._display, error_key=pygame.K_a
+    ):
+        if key == pygame.K_c:
             print("Force capturing frame.")
             centre = None
             rotation = None
@@ -259,7 +257,7 @@ def capture(cap, display, capindex, mole_acquirer):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2021 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
