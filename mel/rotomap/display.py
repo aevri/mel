@@ -116,7 +116,7 @@ class Display:
     def windowxy_to_imagexy(self, window_x, window_y):
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
-    def set_title(self, title):
+    def set_title(self, _):
         # cv2.setWindowTitle(self._name, title)
         pass
 
