@@ -33,3 +33,13 @@ trap - EXIT
 #     conda install gcc opencv
 #     sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
 #
+
+# Pipenv experiment:
+#
+#   pipenv install --site-packages -e .[dev]
+#
+
+# Pipx experiment
+#
+#   pipx install --system-site-packages -e .[dev]
+#
