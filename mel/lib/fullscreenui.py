@@ -17,10 +17,21 @@ def yield_frames_keys(video_capture, display, error_key):
     # startup-text where it is not actually used.
     import pygame
 
+    # Occasionally it seems that .read() will return False when things are
+    # otherwise OK, and we can continue afterwards. This doesn't happen often,
+    # so we don't need to retry much. We also probably don't want to retry
+    # indefinitely, freezing the program.
+    retries = 5
+
     while True:
         ret, frame = video_capture.read()
-        if not ret:
-            raise Exception("Could not read frame.")
+        while not ret:
+            if retries:
+                print("WARNING: Could not read video frame, will retry.")
+                ret, frame = video_capture.read()
+                retries -= 1
+            else:
+                raise Exception("Could not read video frame.")
 
         keys = []
         for event in pygame.event.get():
