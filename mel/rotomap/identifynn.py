@@ -671,7 +671,10 @@ def frame_to_framedata(frame, part_to_index):
     if "ellipse" not in frame.metadata:
         return
 
-    uuid_points = list(frame.moledata.uuid_points.items())
+    uuid_points = list(
+        (m["uuid"], mel.rotomap.moles.mole_to_point(m))
+        for m in frame.moledata.moles
+    )
     ellipse = frame.metadata["ellipse"]
     part_name = frame_to_part_name(frame)
     part_index = part_to_index[part_name]
