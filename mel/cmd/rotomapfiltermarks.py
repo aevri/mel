@@ -11,7 +11,6 @@ def setup_parser(parser):
 
     parser.add_argument(
         "FRAMES",
-        type=mel.rotomap.moles.make_argparse_image_moles,
         nargs="+",
         help="Path to rotomap or image to filter.",
     )
@@ -65,6 +64,11 @@ def setup_parser(parser):
         help="Use this threshold on softmax",
     )
 
+    parser.add_argument(
+        "--extra-stem",
+        help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
+    )
+
 
 def process_args(args):
     try:
@@ -84,30 +88,39 @@ def process_args(args):
     )
     if args.verbose:
         print("done", file=sys.stderr)
-    for image_mole_iter in args.FRAMES:
-        for image_path, moles in image_mole_iter:
-            if args.verbose:
-                print(image_path, file=sys.stderr)
-            image, _ = mel.rotomap.filtermarks.open_image_for_classifier(
-                image_path
+
+    image_moles_iter = (
+        (
+            image_path,
+            mel.rotomap.moles.load_image_moles(
+                image_path, extra_stem=args.extra_stem
+            ),
+        )
+        for image_path in args.FRAMES
+    )
+    for image_path, moles in image_moles_iter:
+        if args.verbose:
+            print(image_path, file=sys.stderr)
+        image, _ = mel.rotomap.filtermarks.open_image_for_classifier(
+            image_path
+        )
+        try:
+            filtered_moles = mel.rotomap.filtermarks.filter_marks(
+                is_mole, image, moles, args.include_canonical
             )
-            try:
-                filtered_moles = mel.rotomap.filtermarks.filter_marks(
-                    is_mole, image, moles, args.include_canonical
-                )
-            except Exception as e:
-                raise Exception(
-                    "Error while processing {}".format(image_path)
-                ) from e
+        except Exception as e:
+            raise Exception(
+                "Error while processing {}".format(image_path)
+            ) from e
 
-            num_filtered = len(moles) - len(filtered_moles)
-            if args.verbose:
-                print(
-                    f"Filtered {num_filtered} unlikely moles.", file=sys.stderr
-                )
+        num_filtered = len(moles) - len(filtered_moles)
+        if args.verbose:
+            print(f"Filtered {num_filtered} unlikely moles.", file=sys.stderr)
 
-            if not args.dry_run and num_filtered:
-                mel.rotomap.moles.save_image_moles(filtered_moles, image_path)
+        if not args.dry_run and num_filtered:
+            mel.rotomap.moles.save_image_moles(
+                filtered_moles, image_path, extra_stem=args.extra_stem
+            )
 
 
 # -----------------------------------------------------------------------------

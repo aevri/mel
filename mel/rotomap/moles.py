@@ -251,11 +251,14 @@ def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions):
     save_json(lesions_path, lesions)
 
 
-def load_image_moles(image_path):
+def load_image_moles(image_path, *, extra_stem=None):
     if not pathlib.Path(image_path).exists():
         raise ValueError(f"Mole image does not exist: '{image_path}'.")
 
-    moles_path = pathlib.Path(str(image_path) + ".json")
+    suffix = ".json"
+    if extra_stem is not None:
+        suffix = f".{extra_stem}.json"
+    moles_path = pathlib.Path(str(image_path) + suffix)
 
     moles = []
     if moles_path.exists():
