@@ -28,6 +28,10 @@ def setup_parser(parser):
         type=int,
         help="Radius to merge moles within.",
     )
+    parser.add_argument(
+        "--extra-stem",
+        help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
+    )
 
 
 def process_args(args):
@@ -46,7 +50,9 @@ def process_args(args):
             only_merge=args.only_merge,
         )
 
-        mel.rotomap.moles.save_image_moles(moles, path)
+        mel.rotomap.moles.save_image_moles(
+            moles, path, extra_stem=args.extra_stem
+        )
 
 
 # -----------------------------------------------------------------------------
