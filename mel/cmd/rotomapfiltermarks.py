@@ -93,7 +93,7 @@ def process_args(args):
             )
             try:
                 filtered_moles = mel.rotomap.filtermarks.filter_marks(
-                    image_path, is_mole, image, moles, args.include_canonical
+                    is_mole, image, moles, args.include_canonical
                 )
             except Exception as e:
                 raise Exception(

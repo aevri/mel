@@ -428,7 +428,7 @@ def select_marks(moles_and_marks):
     return marks
 
 
-def filter_marks(image_path, is_mole, image, moles, include_canonical):
+def filter_marks(is_mole, image, moles, include_canonical):
     """Return a list of moles with the unlikely ones filtered out."""
 
     filtered_moles = []
