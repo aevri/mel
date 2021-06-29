@@ -25,6 +25,7 @@ import mel.cmd.rotomapidentifytrain
 import mel.cmd.rotomaplist
 import mel.cmd.rotomaploadsave
 import mel.cmd.rotomapmarkunchanged
+import mel.cmd.rotomapmergeextrastem
 import mel.cmd.rotomapmontagesingle
 import mel.cmd.rotomaporganise
 import mel.cmd.rotomaprm
@@ -58,6 +59,7 @@ COMMANDS = {
         "list": mel.cmd.rotomaplist,
         "loadsave": mel.cmd.rotomaploadsave,
         "mark-unchanged": mel.cmd.rotomapmarkunchanged,
+        "merge-extra-stem": mel.cmd.rotomapmergeextrastem,
         "montage-single": mel.cmd.rotomapmontagesingle,
         "organise": mel.cmd.rotomaporganise,
         "rm": mel.cmd.rotomaprm,
