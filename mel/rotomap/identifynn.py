@@ -273,6 +273,7 @@ def make_dataset(
     channel_cache,
     class_mapping,
     augmentations,
+    extra_stem=None,
 ):
 
     if augmentations is None:
@@ -284,24 +285,31 @@ def make_dataset(
 
     num_augmentations = 2
 
+    extra_stem_list = [None]
+    if extra_stem:
+        extra_stem_list.append(extra_stem)
+
     dataset = collections.defaultdict(list)
-    with tqdm.tqdm(total=total_frames * len(augmentations)) as pbar:
+    with tqdm.tqdm(
+        total=total_frames * len(augmentations) * len(extra_stem_list)
+    ) as pbar:
         for rotomap in rotomaps:
-            for frame in rotomap.yield_frames():
-                for escale, etranslate in augmentations:
-                    extend_dataset_by_frame_augmentations(
-                        dataset,
-                        frame,
-                        image_size,
-                        part_to_index,
-                        do_channels,
-                        channel_cache,
-                        class_mapping.class_to_index,
-                        escale,
-                        etranslate,
-                        num_augmentations,
-                    )
-                    pbar.update(1)
+            for extra_stem in extra_stem_list:
+                for frame in rotomap.yield_frames(extra_stem=extra_stem):
+                    for escale, etranslate in augmentations:
+                        extend_dataset_by_frame_augmentations(
+                            dataset,
+                            frame,
+                            image_size,
+                            part_to_index,
+                            do_channels,
+                            channel_cache,
+                            class_mapping.class_to_index,
+                            escale,
+                            etranslate,
+                            num_augmentations,
+                        )
+                        pbar.update(1)
 
     return dataset
 
@@ -361,6 +369,7 @@ def make_data(repo_path, data_config, channel_cache=None):
             channel_cache,
             class_mapping,
             augmentations=augmentations,
+            extra_stem=data_config["extra_stem"],
         ),
         classes=class_mapping.classes,
         class_to_index=class_mapping.class_to_index,
@@ -376,6 +385,7 @@ def make_data(repo_path, data_config, channel_cache=None):
             channel_cache,
             class_mapping,
             augmentations=None,
+            extra_stem=data_config["extra_stem"],
         ),
         classes=class_mapping.classes,
         class_to_index=class_mapping.class_to_index,

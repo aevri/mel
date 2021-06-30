@@ -77,6 +77,10 @@ def setup_parser(parser):
             "which will then be fine-tuned to a new set of moles."
         ),
     )
+    parser.add_argument(
+        "--extra-stem",
+        help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
+    )
 
 
 def process_args(args):
@@ -158,6 +162,7 @@ def process_args(args):
         "batch_size": 100,
         "do_augmentation": False,
         "do_channels": False,
+        "extra_stem": args.extra_stem,
     }
 
     print("Making data ..")

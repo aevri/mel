@@ -50,9 +50,9 @@ class RotomapDirectory:
         for imagepath in self.image_paths:
             yield imagepath, load_image_moles(imagepath)
 
-    def yield_frames(self):
+    def yield_frames(self, *, extra_stem=None):
         for imagepath in self.image_paths:
-            yield RotomapFrame(imagepath)
+            yield RotomapFrame(imagepath, extra_stem=extra_stem)
 
     def calc_uuids(self):
         return {
@@ -68,7 +68,7 @@ class RotomapDirectory:
 class RotomapFrame:
     """Image and mole data for a single image in a rotomap."""
 
-    def __init__(self, path):
+    def __init__(self, path, *, extra_stem=None):
         self.path = pathlib.Path(path)
         if self.path.is_dir():
             raise ValueError(f"Expected file, not directory: {path}")
@@ -77,7 +77,7 @@ class RotomapFrame:
         if not mel.lib.fs.is_jpeg_name(self.path):
             raise ValueError(f"Unrecognised suffix for rotomap frame: {path}")
 
-        self.moles = load_image_moles(self.path)
+        self.moles = load_image_moles(self.path, extra_stem=extra_stem)
         self.moledata = MoleData(self.moles)
         self.metadata = load_image_metadata(self.path)
 
