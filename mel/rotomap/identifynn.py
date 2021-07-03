@@ -1,7 +1,6 @@
 """Identify which moles are which, using neural nets."""
 import collections
 import json
-import random
 
 import numpy
 import pytorch_lightning as pl
@@ -283,8 +282,6 @@ def make_dataset(
     for rotomap in rotomaps:
         total_frames += len(rotomap.image_paths)
 
-    num_augmentations = 2
-
     extra_stem_list = [None]
     if extra_stem:
         extra_stem_list.append(extra_stem)
@@ -297,7 +294,7 @@ def make_dataset(
             for extra_stem in extra_stem_list:
                 for frame in rotomap.yield_frames(extra_stem=extra_stem):
                     for escale, etranslate in augmentations:
-                        extend_dataset_by_frame_augmentations(
+                        extend_dataset_by_frame(
                             dataset,
                             frame,
                             image_size,
@@ -307,7 +304,6 @@ def make_dataset(
                             class_mapping.class_to_index,
                             escale,
                             etranslate,
-                            num_augmentations,
                         )
                         pbar.update(1)
 
@@ -572,50 +568,6 @@ class RotomapsDataset:
 
     def __len__(self):
         return len(self._data[self._in_fields[0]])
-
-
-def extend_dataset_by_frame_augmentations(
-    dataset,
-    frame,
-    image_size,
-    part_to_index,
-    do_channels,
-    channel_cache,
-    class_to_index,
-    escale,
-    etranslate,
-    num_augmentations,
-):
-    if "ellipse" not in frame.metadata:
-        return
-
-    framedata = frame_to_framedata(frame, part_to_index)
-    uuid_points, ellipse, part_index = framedata
-
-    def extend(uuid_points):
-        extend_dataset_by_frame_data(
-            dataset,
-            uuid_points,
-            ellipse,
-            part_index,
-            image_size,
-            do_channels,
-            channel_cache,
-            class_to_index,
-            escale,
-            etranslate,
-        )
-
-    extend(uuid_points)
-
-    indices_to_delete = list(range(len(uuid_points)))
-    random.shuffle(indices_to_delete)
-    for _ in range(num_augmentations):
-        new_uuid_points = list(uuid_points)
-        if indices_to_delete:
-            index_to_delete = indices_to_delete.pop()
-            del new_uuid_points[index_to_delete]
-        extend(new_uuid_points)
 
 
 def extend_dataset_by_frame(
