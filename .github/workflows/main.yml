@@ -23,7 +23,7 @@ jobs:
         run: |
           pip3 install -e .[dev]
           pip3 install opencv-python
-          pip3 check
+          #pip3 check
 
       - name: Test
         run: ./meta/run_tests.sh
