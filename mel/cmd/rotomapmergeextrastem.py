@@ -66,11 +66,13 @@ def _merge(from_moles, to_moles, error_distance):
     for to_m in to_moles:
         old_uuid = to_m["uuid"]
         new_uuid = old_to_new_uuids.get(old_uuid, None)
-        if new_uuid is None:
-            continue
         mole = copy.deepcopy(to_m)
-        mole["uuid"] = new_uuid
-        mole[mel.rotomap.moles.KEY_IS_CONFIRMED] = True
+        if new_uuid is None:
+            mole["uuid"] = mel.rotomap.moles.make_new_uuid()
+            mole[mel.rotomap.moles.KEY_IS_CONFIRMED] = False
+        else:
+            mole["uuid"] = new_uuid
+            mole[mel.rotomap.moles.KEY_IS_CONFIRMED] = True
         results.append(mole)
 
     return results
