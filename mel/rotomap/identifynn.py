@@ -199,6 +199,8 @@ def yield_frame_mole_maps_detail(
     half_final_image_size = final_image_size // 2
 
     for uuid_, pos in uuid_points:
+        if uuid_ is None:
+            continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
@@ -237,6 +239,8 @@ def yield_frame_mole_maps(
         splat5(frame_map[0], ipos[0], ipos[1])
 
     for uuid_, pos in uuid_points:
+        if uuid_ is None:
+            continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
         ipos = numpy.array(epos)
@@ -602,6 +606,14 @@ def frame_to_framedata(frame, part_to_index):
         return
 
     uuid_points = list(frame.moledata.uuid_points.items())
+    is_confirmed = {
+        mole["uuid"]: mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
+        for mole in frame.moledata.moles
+    }
+    uuid_points = [
+        (uuid_ if is_confirmed[uuid_] else None, point)
+        for uuid_, point in uuid_points
+    ]
     ellipse = frame.metadata["ellipse"]
     part_name = frame_to_part_name(frame)
     part_index = part_to_index[part_name]
@@ -621,10 +633,12 @@ def extend_dataset_by_frame_data(
     escale,
     etranslate,
 ):
-    uuid_list = [uuid_ for uuid_, pos in uuid_points]
+    uuid_list = [uuid_ for uuid_, pos in uuid_points if uuid_ is not None]
     dataset["uuid"].extend(uuid_list)
 
-    dataset["pos"].extend([pos for uuid_, pos in uuid_points])
+    dataset["pos"].extend(
+        [pos for uuid_, pos in uuid_points if uuid_ is not None]
+    )
 
     dataset["uuid_index"].extend(
         [class_to_index[uuid_] for uuid_ in uuid_list]
@@ -662,6 +676,14 @@ def extend_dataset_by_frame_data(
                 ellipse, uuid_points, image_size, 4, escale, etranslate
             ),
         )
+
+    assert len(dataset["uuid"]) == len(dataset["pos"])
+    assert len(dataset["uuid"]) == len(dataset["uuid_index"])
+    assert len(dataset["uuid"]) == len(dataset["mole_count"])
+    assert len(dataset["uuid"]) == len(dataset["part_index"])
+    assert len(dataset["uuid"]) == len(dataset["molemap"])
+    assert len(dataset["uuid"]) == len(dataset["molemap_detail_2"])
+    assert len(dataset["uuid"]) == len(dataset["molemap_detail_4"])
 
 
 class Model(torch.nn.Module):
