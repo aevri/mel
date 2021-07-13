@@ -4,7 +4,7 @@ Mel
 Work-in-progress tools to help identify new and changing moles on the skin with
 the goal of early detection of melanoma skin cancer.
 
-[![Build Status](https://travis-ci.org/aevri/mel.svg?branch=master)](https://travis-ci.org/aevri/mel)
+![Tests](https://github.com/aevri/mel/actions/workflows/main.yml/badge.svg)
 
 The [Mayo Clinic][1] says:
 > The first melanoma signs and symptoms often are:
