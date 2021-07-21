@@ -458,7 +458,31 @@ def draw_add(tensor, x, y, value):
     tensor[y][x] += value
 
 
+def split_train_valid_last(rotomaps):
+    train_rotomaps = []
+    valid_rotomaps = []
+    for part, rotomap_list in rotomaps.items():
+        empty_rotomaps = [
+            r
+            for r in rotomap_list
+            if all(("ellipse" not in f.metadata) for f in r.yield_frames())
+        ]
+        nonempty_rotomaps = [
+            r for r in rotomap_list if r not in empty_rotomaps
+        ]
+        nonempty_rotomaps.sort(key=lambda x: x.path)
+        num_train_rotomaps = max(0, len(nonempty_rotomaps) - 1)
+        num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
+        assert num_valid_rotomaps
+        train_rotomaps.extend(nonempty_rotomaps[:num_train_rotomaps])
+        valid_rotomaps.extend(nonempty_rotomaps[num_train_rotomaps:])
+    print(valid_rotomaps)
+    return train_rotomaps, valid_rotomaps
+
+
 def split_train_valid(rotomaps, train_split=0.8):
+    if train_split == -1:
+        return split_train_valid_last(rotomaps)
     train_rotomaps = []
     valid_rotomaps = []
     for part, rotomap_list in rotomaps.items():
