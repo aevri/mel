@@ -64,6 +64,7 @@ class MoleIdentifier:
             class_to_index=class_to_index2,
             escale=1.0,
             etranslate=0.0,
+            drop_noncanonical_moles=False,
         )
 
         dataset = mel.rotomap.identifynn.RotomapsDataset(
@@ -181,7 +182,13 @@ class LightningModel(pl.LightningModule):
 
 
 def yield_frame_mole_maps_detail(
-    ellipse, uuid_points, final_image_size, zoom, escale, etranslate
+    ellipse,
+    uuid_points,
+    final_image_size,
+    zoom,
+    escale,
+    etranslate,
+    drop_none_uuids,
 ):
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
@@ -200,7 +207,7 @@ def yield_frame_mole_maps_detail(
     half_final_image_size = final_image_size // 2
 
     for uuid_, pos in uuid_points:
-        if uuid_ is None:
+        if drop_none_uuids and uuid_ is None:
             continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
@@ -226,7 +233,12 @@ def yield_frame_mole_maps_detail(
 
 
 def yield_frame_mole_maps(
-    ellipse, uuid_points, image_size, escale, etranslate
+    ellipse,
+    uuid_points,
+    image_size,
+    escale,
+    etranslate,
+    drop_none_uuids,
 ):
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
@@ -240,7 +252,7 @@ def yield_frame_mole_maps(
         splat5(frame_map[0], ipos[0], ipos[1])
 
     for uuid_, pos in uuid_points:
-        if uuid_ is None:
+        if drop_none_uuids and uuid_ is None:
             continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
@@ -309,6 +321,7 @@ def make_dataset(
                             class_mapping.class_to_index,
                             escale,
                             etranslate,
+                            drop_noncanonical_moles=False,
                         )
                         pbar.update(1)
 
@@ -609,6 +622,7 @@ def extend_dataset_by_frame(
     class_to_index,
     escale,
     etranslate,
+    drop_noncanonical_moles,
 ):
     if "ellipse" not in frame.metadata:
         return
@@ -623,6 +637,7 @@ def extend_dataset_by_frame(
         class_to_index,
         escale,
         etranslate,
+        drop_noncanonical_moles,
     )
 
 
@@ -657,16 +672,28 @@ def extend_dataset_by_frame_data(
     class_to_index,
     escale,
     etranslate,
+    drop_none_uuids,
 ):
-    uuid_list = [uuid_ for uuid_, pos in uuid_points if uuid_ is not None]
+    uuid_list = [
+        uuid_
+        for uuid_, pos in uuid_points
+        if not (drop_none_uuids and uuid_ is None)
+    ]
     dataset["uuid"].extend(uuid_list)
 
     dataset["pos"].extend(
-        [pos for uuid_, pos in uuid_points if uuid_ is not None]
+        [
+            pos
+            for uuid_, pos in uuid_points
+            if not (drop_none_uuids and uuid_ is None)
+        ]
     )
 
     dataset["uuid_index"].extend(
-        [class_to_index[uuid_] for uuid_ in uuid_list]
+        [
+            (class_to_index[uuid_] if uuid_ is not None else -1)
+            for uuid_ in uuid_list
+        ]
     )
 
     # pylint: disable=not-callable
@@ -686,19 +713,36 @@ def extend_dataset_by_frame_data(
         extend_dataset(
             "molemap",
             yield_frame_mole_maps(
-                ellipse, uuid_points, image_size, escale, etranslate
+                ellipse,
+                uuid_points,
+                image_size,
+                escale,
+                etranslate,
+                drop_none_uuids,
             ),
         )
         extend_dataset(
             "molemap_detail_2",
             yield_frame_mole_maps_detail(
-                ellipse, uuid_points, image_size, 2, escale, etranslate
+                ellipse,
+                uuid_points,
+                image_size,
+                2,
+                escale,
+                etranslate,
+                drop_none_uuids,
             ),
         )
         extend_dataset(
             "molemap_detail_4",
             yield_frame_mole_maps_detail(
-                ellipse, uuid_points, image_size, 4, escale, etranslate
+                ellipse,
+                uuid_points,
+                image_size,
+                4,
+                escale,
+                etranslate,
+                drop_none_uuids,
             ),
         )
 
