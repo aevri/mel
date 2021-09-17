@@ -75,6 +75,7 @@ class MoleIdentifier:
         )
 
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+        assert len(dataloader) == len(frame.moles)
 
         new_moles = list(frame.moles)
         self.model.eval()
@@ -629,7 +630,7 @@ def frame_to_framedata(frame, part_to_index):
     if "ellipse" not in frame.metadata:
         return
 
-    uuid_points = list(frame.moledata.uuid_points.items())
+    uuid_points = list(frame.moledata.uuid_points_list)
     is_confirmed = {
         mole["uuid"]: mole[mel.rotomap.moles.KEY_IS_CONFIRMED]
         for mole in frame.moledata.moles

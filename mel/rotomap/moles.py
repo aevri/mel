@@ -104,6 +104,9 @@ class MoleData:
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
+        self.uuid_points_list = [
+            (m["uuid"], mole_to_point(m)) for m in self.moles
+        ]
         # self.canonical_uuids = frozenset(
         #     m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
         # )
