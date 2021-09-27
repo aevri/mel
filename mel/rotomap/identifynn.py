@@ -321,7 +321,7 @@ def make_dataset(
                             class_mapping.class_to_index,
                             escale,
                             etranslate,
-                            drop_noncanonical_moles=False,
+                            drop_noncanonical_moles=True,
                         )
                         pbar.update(1)
 
@@ -490,7 +490,6 @@ def split_train_valid_last(rotomaps):
         assert num_valid_rotomaps
         train_rotomaps.extend(nonempty_rotomaps[:num_train_rotomaps])
         valid_rotomaps.extend(nonempty_rotomaps[num_train_rotomaps:])
-    print(valid_rotomaps)
     return train_rotomaps, valid_rotomaps
 
 
@@ -693,6 +692,7 @@ def extend_dataset_by_frame_data(
         [
             (class_to_index[uuid_] if uuid_ is not None else -1)
             for uuid_ in uuid_list
+            if not (drop_none_uuids and uuid_ is None)
         ]
     )
 
