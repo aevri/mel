@@ -107,6 +107,13 @@ class MoleData:
         self.uuid_points_list = [
             (m["uuid"], mole_to_point(m)) for m in self.moles
         ]
+
+        # vulture will report this as unused unless we do this
+        #
+        # pylint: disable=pointless-statement
+        self.uuid_points_list
+        # pylint: enable=pointless-statement
+
         # self.canonical_uuids = frozenset(
         #     m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
         # )
