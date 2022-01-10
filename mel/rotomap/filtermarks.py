@@ -2,6 +2,7 @@
 
 import collections
 import contextlib
+import json
 import os
 import pickle
 
@@ -47,6 +48,16 @@ def record_input_context(module_to_record):
         yield activations
 
 
+def get_resnet_weights_version():
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torchvision
+
+    resnet_url = torchvision.models.resnet.model_urls["resnet18"]
+    weights_version = resnet_url.split("/")[-1]
+    return weights_version
+
+
 def make_resnet_and_transform():
     # After experimentation, it seems that we can get away with using resnet18
     # instead of deeper models. This doesn't seem to make much difference to
@@ -56,17 +67,19 @@ def make_resnet_and_transform():
     # we only pay the import cost when we use it.
     import torchvision
 
-    # We assume that the pretrained model that we get from PyTorch will never
-    # change. Otherwise we'll have to re-train our models on top of it when it
-    # does. It seems to not change, but this doesn't seem to be documented
+    # We assume that the pretrained model that we get from PyTorch will change
+    # rarely. We'll have to re-train our models on top of it when it does. It
+    # seems to not change often, but this doesn't seem to be documented
     # anyhere. Here is the upstream commit where this version was introduced:
     #
     #   https://github.com/pytorch/vision/commit/
     #     9ec78dab219b950887bcf5988ced1f3e7229765b
     #
-    assert torchvision.models.resnet.model_urls["resnet18"].endswith(
-        "resnet18-5c106cde.pth"
-    )
+    # The weights changed again after some time in this commit:
+    #
+    #   https://github.com/pytorch/vision/commit/
+    #     7d955df73fe0e9b47f7d6c77c699324b256fc41f
+    #
 
     resnet = torchvision.models.resnet18(pretrained=True)
     resnet.eval()
@@ -138,6 +151,8 @@ def pretrain_image(image_path, moles, batch_size):
     assert len(images) == len(metadata)
     features = images_to_features(images, batch_size)
 
+    weights_version = get_resnet_weights_version()
+
     pretrained_path = image_path.with_suffix(_PRETRAINED_SUFFIX)
     pretrained_path.write_bytes(
         pickle.dumps(
@@ -146,6 +161,7 @@ def pretrain_image(image_path, moles, batch_size):
                 "is_mole": is_mole,
                 "metadata": metadata,
                 "path": image_path,
+                "weights_version": weights_version,
             }
         )
     )
@@ -295,8 +311,20 @@ def load_pretrained(pretrained_paths):
         for path in path_list
     ]
     pretrained_data = collections.defaultdict(list)
+    current_weights_version = get_resnet_weights_version()
     for session, path in work_items:
-        pretrained_data[session].append(pickle.loads(path.read_bytes()))
+        loaded_data = pickle.loads(path.read_bytes())
+        pretrained_weights_version = loaded_data["weights_version"]
+        if pretrained_weights_version != current_weights_version:
+            raise Exception(
+                (
+                    "Pretrained weights version mismatch."
+                    "Please pretrain again.\n"
+                    f"Pretrained: {pretrained_weights_version}\n"
+                    f"Current: {current_weights_version}"
+                )
+            )
+        pretrained_data[session].append(loaded_data)
     return pretrained_data
 
 
@@ -474,6 +502,22 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     head = make_model(num_features)
     head.load_state_dict(torch.load(metadata_dir / model_fname))
 
+    metadata_path = (metadata_dir / model_fname).with_suffix(".json")
+    metadata = json.loads(metadata_path.read_text())
+
+    trained_version = metadata["resnet_weights_version"]
+    current_version = get_resnet_weights_version()
+
+    if trained_version != current_version:
+        raise Exception(
+            (
+                "Pretrained weights version mismatch."
+                "Please pretrain again.\n"
+                f"Pretrained: {trained_version}\n"
+                f"Current: {current_version}"
+            )
+        )
+
     resnet.fc = head
 
     softmax = torch.nn.Softmax(dim=1)
@@ -497,7 +541,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2022 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

@@ -119,13 +119,15 @@ def process_args(args):
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
-        metadata = {}
+        metadata = {
+            "resnet_weights_version": mel.rotomap.filtermarks.get_resnet_weights_version()
+        }
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2022 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
