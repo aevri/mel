@@ -84,7 +84,7 @@ torchvision==0.9.1
 tqdm==4.60.0
 typing-extensions==3.10.0.0
 untokenize==0.1.1
-urllib3==1.26.4
+urllib3==1.26.5
 userpath==1.7.0
 virtualenv==20.4.6
 virtualenv-clone==0.5.4
