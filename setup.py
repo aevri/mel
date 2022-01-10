@@ -59,7 +59,7 @@ setuptools.setup(
         'colorama',
         'pygame',
         'pytorch-lightning',
-        'torchvision<0.10.0',  # resnet weights changed
+        'torchvision<0.12.0',  # resnet weights changed
         'torch',
         'tqdm',
     ],

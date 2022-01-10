@@ -80,7 +80,7 @@ tensorboard-plugin-wit==1.8.0
 toml==0.10.2
 torch==1.8.1
 torchmetrics==0.3.2
-torchvision==0.9.1
+torchvision==0.11.2
 tqdm==4.60.0
 typing-extensions==3.10.0.0
 untokenize==0.1.1
