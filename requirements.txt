@@ -60,7 +60,7 @@ rope==0.19.0
 ropemode==0.5
 ropevim==0.8.1
 rsa==4.8
-six==1.15.0
+six==1.16.0
 tbb==2021.4.0
 tensorboard==2.7.0
 tensorboard-data-server==0.6.1
