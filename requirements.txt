@@ -43,7 +43,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pybind11==2.6.2
 pycodestyle==2.8.0
-pyDeprecate==0.3.1
+pyDeprecate==0.3.2
 pyflakes==2.4.0
 pygame==2.1.2
 pylint==2.12.2
