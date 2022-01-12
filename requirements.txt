@@ -49,7 +49,7 @@ pygame==2.1.2
 pylint==2.12.2
 pyparsing==3.0.6
 PyQt5==5.15.6
-PyQt5-sip==12.8.1
+PyQt5-sip==12.9.0
 pytest==6.2.5
 pytorch-lightning==1.5.8
 PyYAML==6.0
