@@ -8,9 +8,9 @@ async-timeout==4.0.2
 attrs==21.4.0
 black==21.5b0
 cachetools==4.2.4
-certifi==2020.12.5
+certifi==2021.10.8
 charset-normalizer==2.0.10
-click==7.1.2
+click==8.0.3
 colorama==0.4.4
 docformatter==1.4
 frozenlist==1.2.0
