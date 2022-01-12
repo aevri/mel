@@ -41,7 +41,7 @@ protobuf==3.19.3
 py==1.11.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pybind11==2.6.2
+pybind11==2.9.0
 pycodestyle==2.8.0
 pyDeprecate==0.3.2
 pyflakes==2.4.0
@@ -49,7 +49,7 @@ pygame==2.1.2
 pylint==2.12.2
 pyparsing==3.0.6
 PyQt5==5.15.6
-PyQt5-sip==12.8.1
+PyQt5-sip==12.9.0
 pytest==6.2.5
 pytorch-lightning==1.5.8
 PyYAML==6.0
