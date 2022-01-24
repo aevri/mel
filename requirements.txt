@@ -14,7 +14,7 @@ click==8.0.3
 colorama==0.4.4
 docformatter==1.4
 frozenlist==1.2.0
-fsspec==2021.11.1
+fsspec==2022.1.0
 future==0.18.2
 google-auth==2.3.3
 google-auth-oauthlib==0.4.6
