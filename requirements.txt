@@ -47,7 +47,7 @@ pyDeprecate==0.3.2
 pyflakes==2.4.0
 pygame==2.1.2
 pylint==2.12.2
-pyparsing==3.0.6
+pyparsing==3.0.7
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 pytest==6.2.5
