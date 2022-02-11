@@ -62,7 +62,7 @@ ropevim==0.8.1
 rsa==4.8
 six==1.16.0
 tbb==2021.5.1
-tensorboard==2.7.0
+tensorboard==2.8.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
 toml==0.10.2
@@ -73,7 +73,7 @@ tqdm==4.62.3
 typing_extensions==4.0.1
 untokenize==0.1.1
 urllib3==1.26.8
-userpath==1.7.0
+userpath==1.8.0
 virtualenv==20.13.0
 virtualenv-clone==0.5.7
 vulture==2.3
