@@ -77,7 +77,7 @@ userpath==1.8.0
 virtualenv==20.13.0
 virtualenv-clone==0.5.7
 vulture==2.3
-Werkzeug==2.0.2
+Werkzeug==2.0.3
 wrapt==1.13.3
 yarl==1.7.2
 zipp==3.7.0
