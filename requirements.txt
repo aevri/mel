@@ -51,7 +51,7 @@ pyparsing==3.0.7
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 pytest==6.2.5
-pytorch-lightning==1.5.9
+pytorch-lightning==1.5.10
 PyYAML==6.0
 regex==2022.1.18
 requests==2.27.1
