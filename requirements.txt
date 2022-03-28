@@ -74,7 +74,7 @@ typing_extensions==4.0.1
 untokenize==0.1.1
 urllib3==1.26.8
 userpath==1.8.0
-virtualenv==20.13.0
+virtualenv==20.14.0
 virtualenv-clone==0.5.7
 vulture==2.3
 Werkzeug==2.0.3
