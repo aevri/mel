@@ -51,7 +51,7 @@ pyparsing==3.0.7
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 pytest==6.2.5
-pytorch-lightning==1.5.9
+pytorch-lightning==1.5.10
 PyYAML==6.0
 regex==2022.1.18
 requests==2.27.1
@@ -78,6 +78,6 @@ virtualenv==20.13.0
 virtualenv-clone==0.5.7
 vulture==2.3
 Werkzeug==2.0.3
-wrapt==1.13.3
+wrapt==1.14.0
 yarl==1.7.2
 zipp==3.7.0
