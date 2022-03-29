@@ -9,7 +9,7 @@ attrs==21.4.0
 black==21.5b0
 cachetools==5.0.0
 certifi==2021.10.8
-charset-normalizer==2.0.10
+charset-normalizer==2.0.12
 click==8.0.3
 colorama==0.4.4
 docformatter==1.4
@@ -51,7 +51,7 @@ pyparsing==3.0.7
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 pytest==6.2.5
-pytorch-lightning==1.5.9
+pytorch-lightning==1.5.10
 PyYAML==6.0
 regex==2022.1.18
 requests==2.27.1
