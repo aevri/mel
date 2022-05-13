@@ -4,6 +4,7 @@ import collections
 import contextlib
 import json
 import os
+import pathlib
 import pickle
 
 import cv2
@@ -15,23 +16,11 @@ import mel.rotomap.automark
 import mel.rotomap.mask
 import mel.rotomap.moles
 
-# The architecture we are using is 'resnet', which has a final layer size of
-# 7 by 7. The image will go through a progressive series of halvings as it
-# passes through the layers.
-#
-# Often, we pick a number from the series "7 * (2 ** i)" as the length of
-# each side. Folks seem to pick "i = 5", so the size is 224.
-#
-# This seems to be a common magic number for input image size, for other
-# architectures too.
-#
-# After experimentation, it seems that 32 is a good full-size.
 _HALF_IMAGE_SIZE = 16
-
 
 DEFAULT_BATCH_SIZE = 128
 
-_PRETRAINED_SUFFIX = ".jpg.resnet18.pt"
+_PRETRAINED_SUFFIX = ".jpg.efficientnet_b0.pt"
 
 
 @contextlib.contextmanager
@@ -48,42 +37,28 @@ def record_input_context(module_to_record):
         yield activations
 
 
-def get_resnet_weights_version():
+def get_model_weights_version():
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torchvision
 
-    resnet_url = torchvision.models.resnet.model_urls["resnet18"]
-    weights_version = resnet_url.split("/")[-1]
+    model_url = torchvision.models.efficientnet.model_urls["efficientnet_b0"]
+    weights_version = model_url.split("/")[-1]
     return weights_version
 
 
-def make_resnet_and_transform():
-    # After experimentation, it seems that we can get away with using resnet18
-    # instead of deeper models. This doesn't seem to make much difference to
-    # the quality of the results. It does improve the running time somewhat.
+def make_model_and_transform():
+    # After experimentation, it seems that we can get away with using this
+    # model instead of deeper models. This doesn't seem to make much difference
+    # to the quality of the results. It does improve the running time somewhat.
 
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torchvision
 
-    # We assume that the pretrained model that we get from PyTorch will change
-    # rarely. We'll have to re-train our models on top of it when it does. It
-    # seems to not change often, but this doesn't seem to be documented
-    # anyhere. Here is the upstream commit where this version was introduced:
-    #
-    #   https://github.com/pytorch/vision/commit/
-    #     9ec78dab219b950887bcf5988ced1f3e7229765b
-    #
-    # The weights changed again after some time in this commit:
-    #
-    #   https://github.com/pytorch/vision/commit/
-    #     7d955df73fe0e9b47f7d6c77c699324b256fc41f
-    #
-
-    resnet = torchvision.models.resnet18(pretrained=True)
-    resnet.eval()
-    num_features = 512
+    model = torchvision.models.efficientnet_b0(pretrained=True)
+    model.eval()
+    num_features = 1280
     transform = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToTensor(),
@@ -92,7 +67,7 @@ def make_resnet_and_transform():
             ),
         ]
     )
-    return resnet, num_features, transform
+    return model, num_features, transform
 
 
 def images_to_features(images, batch_size):
@@ -105,15 +80,15 @@ def images_to_features(images, batch_size):
         return torch.tensor([])
         # pylint: enable=not-callable
 
-    resnet, num_features, transform = make_resnet_and_transform()
+    model, num_features, transform = make_model_and_transform()
     batcher = torch.utils.data.DataLoader(
         [transform(i) for i in images], batch_size=batch_size
     )
 
-    with record_input_context(resnet.fc) as fc_in:
+    with record_input_context(model.classifier[1]) as fc_in:
         with torch.no_grad():
             for batch in batcher:
-                resnet(batch)
+                model(batch)
 
     features = torch.cat([batch[0].flatten(1) for batch in fc_in])
     assert features.shape == (len(images), num_features), features.shape
@@ -121,6 +96,7 @@ def images_to_features(images, batch_size):
 
 
 def pretrain_image(image_path, moles, batch_size):
+    image_path = pathlib.Path(image_path)
     image, mask = open_image_for_classifier(image_path)
 
     loaded_moles = moles
@@ -151,7 +127,7 @@ def pretrain_image(image_path, moles, batch_size):
     assert len(images) == len(metadata)
     features = images_to_features(images, batch_size)
 
-    weights_version = get_resnet_weights_version()
+    weights_version = get_model_weights_version()
 
     pretrained_path = image_path.with_suffix(_PRETRAINED_SUFFIX)
     pretrained_path.write_bytes(
@@ -311,7 +287,7 @@ def load_pretrained(pretrained_paths):
         for path in path_list
     ]
     pretrained_data = collections.defaultdict(list)
-    current_weights_version = get_resnet_weights_version()
+    current_weights_version = get_model_weights_version()
     for session, path in work_items:
         loaded_data = pickle.loads(path.read_bytes())
         pretrained_weights_version = loaded_data["weights_version"]
@@ -498,15 +474,15 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     # we only pay the import cost when we use it.
     import torch
 
-    resnet, num_features, transform = make_resnet_and_transform()
+    model, num_features, transform = make_model_and_transform()
     head = make_model(num_features)
     head.load_state_dict(torch.load(metadata_dir / model_fname))
 
     metadata_path = (metadata_dir / model_fname).with_suffix(".json")
     metadata = json.loads(metadata_path.read_text())
 
-    trained_version = metadata["resnet_weights_version"]
-    current_version = get_resnet_weights_version()
+    trained_version = metadata["model_weights_version"]
+    current_version = get_model_weights_version()
 
     if trained_version != current_version:
         raise Exception(
@@ -518,7 +494,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
             )
         )
 
-    resnet.fc = head
+    model.classifier[1] = head
 
     softmax = torch.nn.Softmax(dim=1)
 
@@ -529,7 +505,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
         with torch.no_grad():
             for i, batch in enumerate(batcher):
                 assert i == 0
-                class_scores = softmax(resnet(batch))
+                class_scores = softmax(model(batch))
 
         assert class_scores.shape == (1, 2)
 
