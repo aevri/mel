@@ -55,12 +55,12 @@ setuptools.setup(
         ]
     },
     install_requires=[
-        # 'opencv',  # Not a possibility as yet.
         'colorama',
+        'opencv-python',
         'pygame',
         'pytorch-lightning',
-        'torchvision',
         'torch',
+        'torchvision',
         'tqdm',
     ],
     extras_require={
