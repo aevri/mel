@@ -474,10 +474,6 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     # we only pay the import cost when we use it.
     import torch
 
-    model, num_features, transform = make_model_and_transform()
-    head = make_model(num_features)
-    head.load_state_dict(torch.load(metadata_dir / model_fname))
-
     metadata_path = (metadata_dir / model_fname).with_suffix(".json")
     metadata = json.loads(metadata_path.read_text())
 
@@ -493,6 +489,10 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
                 f"Current: {current_version}"
             )
         )
+
+    model, num_features, transform = make_model_and_transform()
+    head = make_model(num_features)
+    head.load_state_dict(torch.load(metadata_dir / model_fname))
 
     model.classifier[1] = head
 
