@@ -17,7 +17,6 @@ jobs:
         run: |
           pip3 install -r requirements.txt
           pip3 install -e .[dev] --no-deps
-          pip3 install opencv-python
           #pip3 check
 
       - name: Test
