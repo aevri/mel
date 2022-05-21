@@ -116,7 +116,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
 
         hit_x_dist = radius * hit_angle
         hit_y_dist = vec3.ycol(p_hit) - mole_y_pos
-        hit_sq_dist = (hit_x_dist ** 2) + (hit_y_dist ** 2)
+        hit_sq_dist = (hit_x_dist**2) + (hit_y_dist**2)
         is_in_mole = hit_sq_dist < mole_radius_sq
 
         curr_dark_param = np.where(is_in_mole, 1, 0)

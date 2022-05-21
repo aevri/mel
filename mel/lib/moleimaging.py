@@ -136,7 +136,7 @@ def find_mole_contour(contours, width_height):
                 cy = int(moments["m01"] / moments["m00"])
                 dx = centre[0] - cx
                 dy = centre[1] - cy
-                distance = (dx ** 2 + dy ** 2) ** 0.5
+                distance = (dx**2 + dy**2) ** 0.5
                 if mole_area and area > 10 * mole_area:
                     mole_contour = contour
                     mole_area = area
