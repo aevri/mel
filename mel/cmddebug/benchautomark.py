@@ -133,7 +133,7 @@ def match_moles(from_moles, to_moles, error_distance):
 
 
 def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
-    max_sqdist = error_distance ** 2
+    max_sqdist = error_distance**2
 
     # pylint: disable=no-member
     # Avoid this error:
