@@ -168,6 +168,25 @@ def montage_vertical(border_size, *image_list):
     )
 
 
+def measure_text_height_width(
+    text, font_face=None, font_scale=None, thickness=None
+):
+    if font_face is None:
+        font_face = cv2.FONT_HERSHEY_DUPLEX
+    if font_scale is None:
+        font_scale = 1
+    if thickness is None:
+        thickness = 1
+
+    (width, height), baseline = cv2.getTextSize(
+        text, font_face, font_scale, thickness
+    )
+
+    baseline += thickness
+
+    return height + baseline, width
+
+
 def render_text_as_image(
     text, font_face=None, font_scale=None, thickness=None, color=None
 ):

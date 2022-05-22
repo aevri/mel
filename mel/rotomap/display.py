@@ -71,8 +71,15 @@ class Display:
         self._image_display = screen
 
         self._rect = numpy.array((screen.width, screen.height))
+        title_height, _ = mel.lib.image.measure_text_height_width("abc")
+        self._spacer_height = 10
+        self._image_rect = self._rect - numpy.array(
+            (0, title_height + self._spacer_height)
+        )
 
         self._transform = None
+
+        self._title = ""
 
         self._zoom_pos = None
         self._is_zoomed = False
@@ -82,15 +89,17 @@ class Display:
 
         if self._is_zoomed:
             self._transform = ZoomedImageTransform(
-                image, self._zoom_pos, self._rect, scale=self._zoom_level
+                image, self._zoom_pos, self._image_rect, scale=self._zoom_level
             )
         else:
-            self._transform = FittedImageTransform(image, self._rect)
+            self._transform = FittedImageTransform(image, self._image_rect)
 
         image = self._transform.render()
         if overlay is not None:
             image = overlay(image, self._transform)
 
+        caption = mel.lib.image.render_text_as_image(self._title)
+        image = mel.lib.image.montage_vertical(10, image, caption)
         self._image_display.show_opencv_image(image)
 
     def set_fitted(self):
@@ -116,9 +125,8 @@ class Display:
     def windowxy_to_imagexy(self, window_x, window_y):
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
-    def set_title(self, _):
-        # cv2.setWindowTitle(self._name, title)
-        pass
+    def set_title(self, title):
+        self._title = title
 
 
 def make_composite_overlay(*overlays):
