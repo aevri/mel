@@ -122,6 +122,7 @@ class Display:
         self.width = surface.get_width()
         self.height = surface.get_height()
         self.surface.fill((0, 0, 0))
+        self._title = None
         self.is_dirty = True
 
     def show_opencv_image(self, image):
@@ -175,7 +176,12 @@ class LeftRightDisplay:
     def show(self):
         if self._image_list:
             path = self._image_list[self._index]
-            self.display.show_opencv_image(self._get_image(path))
+            caption = mel.lib.image.render_text_as_image(str(path))
+            image = mel.lib.image.letterbox(
+                self._get_image(path), self.display.width, self.display.height
+            )
+            image = mel.lib.image.montage_vertical(10, image, caption)
+            self.display.show_opencv_image(image)
         else:
             self.display.show_opencv_image(
                 mel.lib.common.new_image(
