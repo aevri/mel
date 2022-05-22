@@ -30,6 +30,7 @@ In 'mole edit' mode:
     Press 'o' to toggle follow mode.
     Press 'm' to toggle move mode.
     Press 'i' to 'rotomap identify' in the current image.
+    Press 'c' to to confirm all moles in the current image.
     Press enter to toggle mole markers.
 
 In 'mask edit' mode:
@@ -288,6 +289,8 @@ class MoleEditController:
             mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
             editor.moledata.reload()
             editor.show_current()
+        elif key == pygame.K_c:
+            editor.confirm_all()
 
         if self.sub_controller:
             try:
