@@ -724,6 +724,7 @@ class MoleData:
         self._mask_path = None
         self._path_list = path_list
         self._list_index = 0
+        self.image_path = self._path_list[self._list_index]
         self._num_images = len(self._path_list)
         self._loaded_index = None
         self.ensure_loaded()
@@ -743,6 +744,7 @@ class MoleData:
 
         image_path = self._path_list[self._list_index]
         self.image = self._load_image(image_path)
+        self.image_path = image_path
 
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
         self.metadata = mel.rotomap.moles.load_image_metadata(image_path)
