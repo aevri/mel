@@ -579,9 +579,7 @@ def process_args(args):
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    timelog_path = mel.lib.fs.find_melroot() / "timelog.csv"
-
-    with mel.lib.common.timelogger_context(timelog_path) as logger:
+    with mel.lib.common.timelogger_context() as logger:
         with mel.lib.fullscreenui.fullscreen_context() as screen:
             editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
