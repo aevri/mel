@@ -350,7 +350,8 @@ class TimeLogger:
 
 
 @contextlib.contextmanager
-def timelogger_context(path):
+def timelogger_context():
+    path = mel.lib.fs.find_melroot() / "timelog.csv"
     if not path.exists():
         path.write_text("command,mode,path,start,elapsed_secs\n")
     with path.open("a") as f:
