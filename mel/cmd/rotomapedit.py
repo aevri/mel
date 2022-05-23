@@ -49,11 +49,15 @@ In 'mole marking' mode:
 """
 
 import argparse
+import contextlib
+import csv
+import datetime
 import os.path
 
 import numpy
 
 import mel.lib.common
+import mel.lib.fs
 import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.math
@@ -456,10 +460,53 @@ class VisitList:
         return bool(self._items)
 
 
+class TimeLogger:
+    def __init__(self, csv_writer):
+        self._writer = csv_writer
+        self._command = "rotomap-edit"
+        self._mode = ""
+        self._path = ""
+        self._start = self._now()
+
+    def _now(self):
+        return datetime.datetime.now(datetime.timezone.utc)
+
+    def reset(self, *, command=None, mode=None, path=None):
+        now = self._now()
+        elapsed = int((now - self._start).total_seconds())
+        self._writer.writerow(
+            [self._command, self._mode, self._path, self._start, elapsed]
+        )
+        self._start = now
+        if mode is not None:
+            self._mode = mode
+        if command is not None:
+            self._command = command
+        if path is not None:
+            self._path = path
+
+    def close(self):
+        self.reset()
+
+
+@contextlib.contextmanager
+def timelogger_context(path):
+    if not path.exists():
+        path.write_text("command,mode,path,start,elapsed_secs\n")
+    with path.open("a") as f:
+        csv_writer = csv.writer(f, dialect="unix", quoting=csv.QUOTE_MINIMAL)
+        logger = TimeLogger(csv_writer)
+        with contextlib.closing(logger):
+            yield logger
+
+
 class Controller:
-    def __init__(self, editor, follow, copy_to_clipboard, visit_list):
+    def __init__(self, editor, follow, copy_to_clipboard, visit_list, logger):
         self._visit_list = VisitList(visit_list)
 
+        self._logger = logger
+        logger.reset(path=editor.moledata.image_path, mode="editmole")
+        self._melroot = mel.lib.fs.find_melroot()
         self.moleedit_controller = MoleEditController(
             editor, follow, copy_to_clipboard
         )
@@ -486,6 +533,14 @@ class Controller:
 
         self.current_controller.on_mouse_event(editor, event)
 
+    def _reset_logger_new_image(self, editor):
+        self._logger.reset(
+            path=os.path.relpath(
+                os.path.abspath(editor.moledata.image_path),
+                start=self._melroot,
+            )
+        )
+
     def on_key(self, editor, key):
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
@@ -495,33 +550,42 @@ class Controller:
 
         if key == pygame.K_LEFT:
             editor.show_prev()
+            self._reset_logger_new_image(editor)
         elif key == pygame.K_RIGHT:
             editor.show_next()
+            self._reset_logger_new_image(editor)
         elif key == pygame.K_UP:
             editor.show_prev_map()
+            self._reset_logger_new_image(editor)
         elif key == pygame.K_DOWN:
             editor.show_next_map()
+            self._reset_logger_new_image(editor)
         elif key == pygame.K_SPACE:
             editor.show_fitted()
         elif key == pygame.K_0:
             # Switch to automole debug mode
             self.current_controller = self.automoledebug_controller
             editor.set_automoledebug_mode()
+            self._logger.reset(mode="debug")
         elif key == pygame.K_1:
             # Switch to mole edit mode
             self.current_controller = self.moleedit_controller
             editor.set_editmole_mode()
+            self._logger.reset(mode="editmole")
         elif key == pygame.K_2:
             # Switch to mask edit mode
             self.current_controller = self.maskedit_controller
             editor.set_editmask_mode()
+            self._logger.reset(mode="editmask")
         elif key == pygame.K_3:
             # Switch to bounding area mode
             self.current_controller = self.boundingarea_controller
             editor.set_boundingarea_mode()
+            self._logger.reset(mode="boundingarea")
         elif key == pygame.K_4:
             # Switch to mole marking mode
             self.current_controller = self.molemark_controller
+            self._logger.reset(mode="molemark")
             editor.set_molemark_mode()
         elif key == pygame.K_b:
             # Go back in the visit list
@@ -558,24 +622,27 @@ def process_args(args):
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    with mel.lib.fullscreenui.fullscreen_context() as screen:
-        editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
+    timelog_path = mel.lib.fs.find_melroot() / "timelog.csv"
 
-        if args.advance_n_frames:
-            editor.show_next_n(args.advance_n_frames)
+    with timelogger_context(timelog_path) as logger:
+        with mel.lib.fullscreenui.fullscreen_context() as screen:
+            editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
-        controller = Controller(
-            editor, args.follow, args.copy_to_clipboard, visit_list
-        )
+            if args.advance_n_frames:
+                editor.show_next_n(args.advance_n_frames)
 
-        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-            if event.type == pygame.KEYDOWN:
-                controller.on_key(editor, event.key)
-            elif event.type in (
-                pygame.MOUSEBUTTONDOWN,
-                pygame.MOUSEMOTION,
-            ):
-                controller.on_mouse_event(editor, event)
+            controller = Controller(
+                editor, args.follow, args.copy_to_clipboard, visit_list, logger
+            )
+
+            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+                if event.type == pygame.KEYDOWN:
+                    controller.on_key(editor, event.key)
+                elif event.type in (
+                    pygame.MOUSEBUTTONDOWN,
+                    pygame.MOUSEMOTION,
+                ):
+                    controller.on_mouse_event(editor, event)
 
 
 def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
