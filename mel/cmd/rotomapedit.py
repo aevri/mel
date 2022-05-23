@@ -49,9 +49,6 @@ In 'mole marking' mode:
 """
 
 import argparse
-import contextlib
-import csv
-import datetime
 import os.path
 
 import numpy
@@ -460,46 +457,6 @@ class VisitList:
         return bool(self._items)
 
 
-class TimeLogger:
-    def __init__(self, csv_writer):
-        self._writer = csv_writer
-        self._command = "rotomap-edit"
-        self._mode = ""
-        self._path = ""
-        self._start = self._now()
-
-    def _now(self):
-        return datetime.datetime.now(datetime.timezone.utc)
-
-    def reset(self, *, command=None, mode=None, path=None):
-        now = self._now()
-        elapsed = int((now - self._start).total_seconds())
-        self._writer.writerow(
-            [self._command, self._mode, self._path, self._start, elapsed]
-        )
-        self._start = now
-        if mode is not None:
-            self._mode = mode
-        if command is not None:
-            self._command = command
-        if path is not None:
-            self._path = path
-
-    def close(self):
-        self.reset()
-
-
-@contextlib.contextmanager
-def timelogger_context(path):
-    if not path.exists():
-        path.write_text("command,mode,path,start,elapsed_secs\n")
-    with path.open("a") as f:
-        csv_writer = csv.writer(f, dialect="unix", quoting=csv.QUOTE_MINIMAL)
-        logger = TimeLogger(csv_writer)
-        with contextlib.closing(logger):
-            yield logger
-
-
 class Controller:
     def __init__(self, editor, follow, copy_to_clipboard, visit_list, logger):
         self._visit_list = VisitList(visit_list)
@@ -624,7 +581,7 @@ def process_args(args):
 
     timelog_path = mel.lib.fs.find_melroot() / "timelog.csv"
 
-    with timelogger_context(timelog_path) as logger:
+    with mel.lib.common.timelogger_context(timelog_path) as logger:
         with mel.lib.fullscreenui.fullscreen_context() as screen:
             editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
