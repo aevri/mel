@@ -1,5 +1,8 @@
 """A big ball of mud to hold common functionality pending a re-org."""
 
+import contextlib
+import csv
+import datetime
 import os
 
 import cv2
@@ -317,8 +320,48 @@ def process_context_detail_args(args):
     return context_image, detail_image
 
 
+class TimeLogger:
+    def __init__(self, csv_writer):
+        self._writer = csv_writer
+        self._command = "rotomap-edit"
+        self._mode = ""
+        self._path = ""
+        self._start = self._now()
+
+    def _now(self):
+        return datetime.datetime.now(datetime.timezone.utc)
+
+    def reset(self, *, command=None, mode=None, path=None):
+        now = self._now()
+        elapsed = int((now - self._start).total_seconds())
+        self._writer.writerow(
+            [self._command, self._mode, self._path, self._start, elapsed]
+        )
+        self._start = now
+        if mode is not None:
+            self._mode = mode
+        if command is not None:
+            self._command = command
+        if path is not None:
+            self._path = path
+
+    def close(self):
+        self.reset()
+
+
+@contextlib.contextmanager
+def timelogger_context(path):
+    if not path.exists():
+        path.write_text("command,mode,path,start,elapsed_secs\n")
+    with path.open("a") as f:
+        csv_writer = csv.writer(f, dialect="unix", quoting=csv.QUOTE_MINIMAL)
+        logger = TimeLogger(csv_writer)
+        with contextlib.closing(logger):
+            yield logger
+
+
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2022 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
