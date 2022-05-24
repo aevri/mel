@@ -321,9 +321,9 @@ def process_context_detail_args(args):
 
 
 class TimeLogger:
-    def __init__(self, csv_writer):
+    def __init__(self, csv_writer, command):
         self._writer = csv_writer
-        self._command = "rotomap-edit"
+        self._command = command
         self._mode = ""
         self._path = ""
         self._start = self._now()
@@ -350,13 +350,13 @@ class TimeLogger:
 
 
 @contextlib.contextmanager
-def timelogger_context():
+def timelogger_context(command):
     path = mel.lib.fs.find_melroot() / "timelog.csv"
     if not path.exists():
         path.write_text("command,mode,path,start,elapsed_secs\n")
     with path.open("a") as f:
         csv_writer = csv.writer(f, dialect="unix", quoting=csv.QUOTE_MINIMAL)
-        logger = TimeLogger(csv_writer)
+        logger = TimeLogger(csv_writer, command)
         with contextlib.closing(logger):
             yield logger
 
