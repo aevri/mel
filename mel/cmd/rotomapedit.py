@@ -462,7 +462,6 @@ class Controller:
         self._visit_list = VisitList(visit_list)
 
         self._logger = logger
-        logger.reset(path=editor.moledata.image_path, mode="editmole")
         self._melroot = mel.lib.fs.find_melroot()
         self.moleedit_controller = MoleEditController(
             editor, follow, copy_to_clipboard
@@ -472,9 +471,12 @@ class Controller:
         self.boundingarea_controller = BoundingAreaController()
         self.automoledebug_controller = AutomoleDebugController()
         self.current_controller = self.moleedit_controller
+        logger.reset(mode="editmole")
 
         self.zooms = [1.0, 0.75, 0.5, 0.25, 2.0, 1.75, 1.5]
         self.zoom_index = 0
+
+        self._reset_logger_new_image(editor)
 
     def on_mouse_event(self, editor, event):
         # Import pygame as late as possible, to avoid displaying its
