@@ -35,8 +35,8 @@ Things you can use now
 ----------------------
 
 ["Mel Zero"](mel_zero.md) - no executables, just documentation of how to create
-and maintain a mole catalog manually using commonly available pre-existing
-software and hardware.
+and maintain a mole catalog manually using a smartphone, a laptop, and a USB
+microscope.
 
 License
 -------
