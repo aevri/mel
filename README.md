@@ -38,6 +38,12 @@ Things you can use now
 and maintain a mole catalog manually using a smartphone, a laptop, and a USB
 microscope.
 
+"Mel One" - the code in this repository provides WIP rough tools for maintaining a mole catalog using two complimentary techniques. Moles are assigned UUIDs so they map across techniques:
+
+- **Roto-mapping**: Detect new moles with the `mel rotomap *` commands. Using the idea of 'photographing a rotating cylinder and cycling through the photographs' as a cheap way of presenting an interactive 3D model, treat parts of the body as if they were a cylinder and create photosets of them. Provide support for manually and automatically marking moles in the images and mapping known ones to a UUID using some basic deep learning. Also provide support for manually comparing moles, but this better done with microscope images.
+
+- **Microscope imaging**: Detect changes in moles with the `mel micro *` commands. These help you quickly capture and manually compare images of known moles with a USB microscope.
+
 License
 -------
 
