@@ -25,26 +25,44 @@ def process_args(args):
     # startup-text where it is not actually used.
     import pygame
 
-    with mel.lib.fullscreenui.fullscreen_context() as screen:
-        display = OrganiserDisplay(
-            screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
-        )
-
-        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    display.next_image()
-                elif event.key == pygame.K_LEFT:
-                    display.prev_image()
-                elif event.key == pygame.K_BACKSPACE:
-                    display.delete_image()
-                elif event.key == pygame.K_g:
-                    destination = input("group destination: ")
-                    display.group_images(destination)
+    with mel.lib.common.timelogger_context("rotomap-organise") as logger:
+        with mel.lib.fullscreenui.fullscreen_context() as screen:
+            display = OrganiserDisplay(
+                logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
+            )
+            display.reset_logger()
+            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT:
+                        display.next_image()
+                        display.reset_logger()
+                    elif event.key == pygame.K_LEFT:
+                        display.prev_image()
+                        display.reset_logger()
+                    elif event.key == pygame.K_BACKSPACE:
+                        display.delete_image()
+                    elif event.key == pygame.K_g:
+                        logger.reset(mode="group")
+                        destination = input("group destination: ")
+                        display.group_images(destination)
 
 
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
     """Display images in a window, supply controls for organising."""
+
+    def __init__(self, logger, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._melroot = mel.lib.fs.find_melroot()
+        self._logger = logger
+
+    def reset_logger(self):
+        self._logger.reset(
+            mode="view",
+            path=os.path.relpath(
+                os.path.abspath(self.image_path),
+                start=self._melroot,
+            ),
+        )
 
     def delete_image(self):
         if self._image_list:
@@ -62,6 +80,7 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
             del self._image_list[: self._index + 1]
             self._index = -1
             self.next_image()
+            self.reset_logger()
 
 
 # -----------------------------------------------------------------------------

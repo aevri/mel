@@ -153,6 +153,7 @@ class LeftRightDisplay:
             )
 
         self.display = screen
+        self.image_path = None
         self._image_list = image_list
         self._index = 0
         self.show()
@@ -176,6 +177,7 @@ class LeftRightDisplay:
     def show(self):
         if self._image_list:
             path = self._image_list[self._index]
+            self.image_path = path
             caption = mel.lib.image.render_text_as_image(str(path))
             image = mel.lib.image.letterbox(
                 self._get_image(path), self.display.width, self.display.height
@@ -183,6 +185,7 @@ class LeftRightDisplay:
             image = mel.lib.image.montage_vertical(10, image, caption)
             self.display.show_opencv_image(image)
         else:
+            self.image_path = None
             self.display.show_opencv_image(
                 mel.lib.common.new_image(
                     self.display.height, self.display.width
