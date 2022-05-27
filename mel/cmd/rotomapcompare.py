@@ -24,6 +24,7 @@ Controls:
 import collections
 import functools
 import math
+import os
 
 import cv2
 import numpy
@@ -114,16 +115,22 @@ def process_args(args):
     import pygame
 
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
-    with mel.lib.fullscreenui.fullscreen_context() as screen:
-        display = ImageCompareDisplay(screen, path_images_tuple)
+    with mel.lib.common.timelogger_context("rotomap-compare") as logger:
+        with mel.lib.fullscreenui.fullscreen_context() as screen:
+            display = ImageCompareDisplay(
+                logger, screen, path_images_tuple, uuid_
+            )
 
-        on_keydown = _make_on_keydown(
-            display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
-        )
+            on_keydown = _make_on_keydown(
+                display,
+                uuid_order,
+                target_rotomap,
+                uuid_to_rotomaps_imagepos_list,
+            )
 
-        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-            if event.type == pygame.KEYDOWN:
-                on_keydown(event)
+            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+                if event.type == pygame.KEYDOWN:
+                    on_keydown(event)
 
 
 def _make_on_keydown(
@@ -158,7 +165,7 @@ def _make_on_keydown(
             path_images_tuple = tuple(
                 uuid_to_rotomaps_imagepos_list[uuid_].values()
             )
-            display.reset(path_images_tuple)
+            display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
@@ -170,7 +177,7 @@ def _make_on_keydown(
             path_images_tuple = tuple(
                 uuid_to_rotomaps_imagepos_list[uuid_].values()
             )
-            display.reset(path_images_tuple)
+            display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
                 display.indicate_changed(not is_unchanged)
@@ -228,12 +235,29 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, screen, path_images_tuple):
+    def __init__(self, logger, screen, path_images_tuple, uuid_):
+        self._logger = logger
+        self._image_path = None
+        self._uuid = None
         self._should_draw_crosshairs = True
         self._display = screen
-        self.reset(path_images_tuple)
+        self._melroot = mel.lib.fs.find_melroot()
+        self.reset(path_images_tuple, uuid_)
 
-    def reset(self, path_images_tuple):
+    def _reset_logger(self):
+        self._logger.reset(
+            mode="compare",
+            path=str(
+                os.path.relpath(
+                    os.path.abspath(self._image_path),
+                    start=self._melroot,
+                )
+            )
+            + ":"
+            + self._uuid,
+        )
+
+    def reset(self, path_images_tuple, uuid_):
         if not path_images_tuple:
             raise ValueError(
                 "path_images_tuple must be a tuple with at least one thing."
@@ -243,6 +267,7 @@ class ImageCompareDisplay:
             if not group:
                 raise ValueError("path_images_tuple not have empty groups.")
 
+        self._uuid = uuid_
         self._rotomaps = path_images_tuple
         self._zooms = [1 for _ in path_images_tuple]
         self._rotations = [0 for _ in path_images_tuple]
@@ -260,6 +285,7 @@ class ImageCompareDisplay:
         self._should_indicate_changed = None
 
         self._show()
+        self._reset_logger()
 
     def next_image(self):
         ix = self._indices[0]
@@ -401,6 +427,7 @@ class ImageCompareDisplay:
             )
             for i in self._indices
         ]
+        self._image_path = self._path_pos_zoom_rotation(self._indices[-1])[0]
         montage = mel.lib.image.montage_horizontal(10, *images)
         self._display.show_opencv_image(montage)
 
