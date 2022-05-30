@@ -12,6 +12,9 @@ import torch
 import torchvision
 import tqdm
 
+import pytorch_lightning as pl
+from torch.nn import functional as F
+
 # import PIL
 
 import mel.lib.math
@@ -1913,6 +1916,45 @@ def image_locations_to_squished_big_tiles(
     assert tiles.shape[-2] == tile_size
 
     return tiles
+
+
+def locations_image(moles, image_width, image_height):
+    image = mel.lib.common.new_image(image_height, image_width)
+
+    mole_points = [
+        (m["x"], m["y"])
+        for m in moles
+        if "looks_like" not in m or m["looks_like"] == "mole"
+    ]
+
+    for x, y in mole_points:
+        mel.lib.common.draw_circle(image, x, y, 32, (0, 0, 255))
+
+    return image
+
+
+class CackModel(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.cnn = torch.nn.Conv2d(
+            in_channels=3, out_channels=1, kernel_size=3, padding=1
+        )
+
+    def forward(self, x):
+        return torch.relu(self.cnn(x))
+
+    def training_step(self, batch, batch_nb):
+        # x, y = batch
+        # loss = F.cross_entropy(self(x), y)
+        x = batch
+        result = self(x)
+        target = x[:, 2:3]
+        assert result.shape == target.shape, (result.shape, target.shape)
+        loss = F.cross_entropy(result, target)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=0.02)
 
 
 def locations_to_expected_output(image_locations, moles, tile_size=32):
