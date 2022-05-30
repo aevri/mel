@@ -101,15 +101,19 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
     return context_mole_positions, detail_mole_positions
 
 
+def draw_circle(image, x, y, radius, bgr):
+    cv2.circle(image, (x, y), radius, bgr, -1)
+
+
 def make_mole_capture_callback(window_name, image, radius, mole_positions):
-    def draw_circle(event, x, y, _flags, _param):
+    def draw(event, x, y, _flags, _param):
         del _flags, _param
         if event == cv2.EVENT_LBUTTONDOWN:
-            cv2.circle(image, (x, y), radius, (255, 0, 0), -1)
+            draw_circle(image, x, y, radius, (255, 0, 0))
             mole_positions.append((x, y, radius))
             cv2.imshow(window_name, image)
 
-    return draw_circle
+    return draw
 
 
 def make_null_mouse_callback():
