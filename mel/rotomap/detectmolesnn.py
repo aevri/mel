@@ -614,7 +614,10 @@ class NeighboursLinearSigmoidModel2(torch.nn.Module):
         )
 
         self.integrator = torch.nn.Sequential(
-            torch.nn.Linear(num_intermediate * 9, num_intermediate,),
+            torch.nn.Linear(
+                num_intermediate * 9,
+                num_intermediate,
+            ),
             torch.nn.BatchNorm1d(num_intermediate),
             torch.nn.ReLU(inplace=True),
             *[
@@ -657,7 +660,10 @@ class NeighboursLinearSigmoidModel2(torch.nn.Module):
             self._num_intermediate,
         )
         integrated = self.integrator(torch.cat(interpretations, dim=1))
-        assert integrated.shape == (len(activations), self._num_intermediate,)
+        assert integrated.shape == (
+            len(activations),
+            self._num_intermediate,
+        )
         # neighbours = torch.flatten(neighbour_activations, start_dim=1)
         # assert neighbours.shape == (
         #     len(neighbour_activations),
@@ -766,7 +772,16 @@ class LinearSigmoidModel(torch.nn.Module):
 
 def get_neighbors(location, tile_size):
     offsets = torch.tensor(
-        [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1],]
+        [
+            [-1, -1],
+            [0, -1],
+            [1, -1],
+            [-1, 0],
+            [1, 0],
+            [-1, 1],
+            [0, 1],
+            [1, 1],
+        ]
     )
     return (offsets * tile_size) + location
 
@@ -1675,9 +1690,9 @@ def central_activations(layer, tile_magnification):
 def unique_locations(locations):
     """
 
-        >>> a = torch.tensor([[0, 0], [0, 0]])
-        >>> unique_locations(a)
-        tensor([[0, 0]])
+    >>> a = torch.tensor([[0, 0], [0, 0]])
+    >>> unique_locations(a)
+    tensor([[0, 0]])
 
     """
     new_locations = set(int_tensor2d_to_tuple(locations))
@@ -1687,17 +1702,17 @@ def unique_locations(locations):
 def add_neighbour_locations(locations, tile_size):
     """
 
-        >>> a = torch.tensor([[0, 0]])
-        >>> add_neighbour_locations(a, 1)
-        tensor([[ 0,  0],
-                [-1, -1],
-                [ 0, -1],
-                [ 1, -1],
-                [-1,  0],
-                [ 1,  0],
-                [-1,  1],
-                [ 0,  1],
-                [ 1,  1]])
+    >>> a = torch.tensor([[0, 0]])
+    >>> add_neighbour_locations(a, 1)
+    tensor([[ 0,  0],
+            [-1, -1],
+            [ 0, -1],
+            [ 1, -1],
+            [-1,  0],
+            [ 1,  0],
+            [-1,  1],
+            [ 0,  1],
+            [ 1,  1]])
 
     """
     new_locations = [locations]
@@ -1709,9 +1724,9 @@ def add_neighbour_locations(locations, tile_size):
 def int_tensor1d_to_tuple(tensor1d):
     """
 
-        >>> a = torch.tensor([1, 2])
-        >>> int_tensor1d_to_tuple(a)
-        (1, 2)
+    >>> a = torch.tensor([1, 2])
+    >>> int_tensor1d_to_tuple(a)
+    (1, 2)
 
     """
     if tensor1d.dtype != torch.int64:
@@ -1724,9 +1739,9 @@ def int_tensor1d_to_tuple(tensor1d):
 def int_tensor2d_to_tuple(tensor2d):
     """
 
-        >>> a = torch.tensor([[1, 2], [3, 4]])
-        >>> int_tensor2d_to_tuple(a)
-        ((1, 2), (3, 4))
+    >>> a = torch.tensor([[1, 2], [3, 4]])
+    >>> int_tensor2d_to_tuple(a)
+    ((1, 2), (3, 4))
 
     """
     if tensor2d.dtype != torch.int64:
@@ -1826,7 +1841,8 @@ def drop_green_and_edge_big_locations(
         y2 = loc[1] + forward_offset_y
         # x1, y1 = loc
         t = image[
-            y1:y2, x1:x2,
+            y1:y2,
+            x1:x2,
         ]
         if (t[:, :] == green).all():
             continue
