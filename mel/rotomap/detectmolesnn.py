@@ -1949,22 +1949,38 @@ def locations_image(moles, image_width, image_height):
     return image
 
 
+class Swish(torch.nn.Module):
+    def forward(self, x):
+        return x * torch.sigmoid(x)
+
+
 class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.cnn = torch.nn.Conv2d(
-            in_channels=3, out_channels=1, kernel_size=3, padding=1
+        self.nn = torch.nn.Sequential(
+            torch.nn.Conv2d(
+                in_channels=3, out_channels=3, kernel_size=1, padding=0
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3, out_channels=3, kernel_size=1, padding=0
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3, out_channels=1, kernel_size=1, padding=0
+            ),
+            Swish(),
         )
 
     def forward(self, x):
-        return torch.relu(self.cnn(x))
+        return self.nn(x)
 
     def training_step(self, batch, batch_nb):
-        # x, y = batch
-        # loss = F.cross_entropy(self(x), y)
-        x = batch
+        x, y = batch
         result = self(x)
-        target = x[:, 2:3]
+        target = y[:, 2:3]
         assert result.shape == target.shape, (result.shape, target.shape)
         loss = F.cross_entropy(result, target)
         return loss
