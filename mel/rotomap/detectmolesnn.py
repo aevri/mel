@@ -1957,32 +1957,35 @@ class Swish(torch.nn.Module):
 class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.nn = torch.nn.Sequential(
-            torch.nn.Conv2d(
-                in_channels=3, out_channels=3, kernel_size=1, padding=0
-            ),
-            Swish(),
-            torch.nn.BatchNorm2d(3),
-            torch.nn.Conv2d(
-                in_channels=3, out_channels=3, kernel_size=1, padding=0
-            ),
-            Swish(),
-            torch.nn.BatchNorm2d(3),
-            torch.nn.Conv2d(
-                in_channels=3, out_channels=1, kernel_size=1, padding=0
-            ),
-            Swish(),
+        self.l1_bn = torch.nn.BatchNorm2d(7)
+        self.l2_cnn = torch.nn.Conv2d(
+            in_channels=7, out_channels=3, kernel_size=1, padding=0
+        )
+        self.l3_swish = Swish()
+        self.l4_bn = torch.nn.BatchNorm2d(3)
+        self.l5_cnn = torch.nn.Conv2d(
+            in_channels=3, out_channels=3, kernel_size=1, padding=0
+        )
+        self.l6_swish = Swish()
+        self.l7_bn = torch.nn.BatchNorm2d(3)
+        self.l8_cnn = torch.nn.Conv2d(
+            in_channels=3, out_channels=1, kernel_size=1, padding=0
         )
 
     def forward(self, x):
-        return self.nn(x)
+        x1_bn = self.l1_bn(x)
+        x4_bn = self.l4_bn(self.l3_swish(self.l2_cnn(x1_bn)))
+        x7_bn = self.l7_bn(self.l6_swish(self.l5_cnn(x4_bn)))
+        return self.l8_cnn(x7_bn)
+
 
     def training_step(self, batch, batch_nb):
         x, y = batch
         result = self(x)
         target = y[:, 2:3]
         assert result.shape == target.shape, (result.shape, target.shape)
-        loss = F.cross_entropy(result, target)
+        # loss = F.cross_entropy(result, target)
+        loss = F.mse_loss(result, target)
         return loss
 
     def configure_optimizers(self):
