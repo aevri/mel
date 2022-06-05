@@ -78,6 +78,8 @@ print(result.shape)
 plt.imshow(result.detach().numpy()[0][0])
 # -
 
+plt.imshow(image[:, :, 2])
+
 torch.unique(result)
 
 plt.figure(figsize=(20, 20))
@@ -87,12 +89,8 @@ x4_out = model.l4_bn(model.l3_swish(model.l2_cnn(x1_out)))
 x7_in = torch.cat([x1_out, x4_out], dim=1)
 x7_out = model.l7_bn(model.l6_swish(model.l5_cnn(x7_in)))
 x8_in = torch.cat([x7_in, x7_out], dim=1)
-#x9_out = model.l9_relu(model.l8_cnn(x8_in))
+#x9_out = model.l9_sigmoid(model.l8_cnn(x8_in))
 x9_out = model.l8_cnn(x8_in)
 result = x9_out
 print(result.shape)
 plt.imshow(result.detach().numpy()[0][0])
-
-data.unsqueeze(0).shape
-
-plt.imshow(image[:, :, 2])

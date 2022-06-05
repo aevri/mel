@@ -1971,7 +1971,7 @@ class CackModel(pl.LightningModule):
         self.l8_cnn = torch.nn.Conv2d(
             in_channels=13, out_channels=1, kernel_size=1, padding=0
         )
-        self.l9_relu = torch.nn.ReLU()
+        self.l9_sigmoid = torch.nn.Sigmoid()
 
     def forward(self, x):
         x1_out = self.l1_bn(x)
@@ -1979,7 +1979,7 @@ class CackModel(pl.LightningModule):
         x7_in = torch.cat([x1_out, x4_out], dim=1)
         x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
         x8_in = torch.cat([x7_in, x7_out], dim=1)
-        return self.l9_relu(self.l8_cnn(x8_in))
+        return self.l9_sigmoid(self.l8_cnn(x8_in))
 
 
     def training_step(self, batch, batch_nb):
