@@ -61,7 +61,7 @@ model = mel.rotomap.detectmolesnn.CackModel()
 to_tensor = torchvision.transforms.ToTensor()
 # -
 
-data = torch.vstack([to_tensor(i), to_tensor(i_hsv), to_tensor(mask)])
+data = model.images_to_data(i, mask)
 train_dl = torch.utils.data.DataLoader([(data, to_tensor(image))], batch_size=1)
 trainer = pl.Trainer(
     max_epochs=300,

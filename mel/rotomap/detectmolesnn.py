@@ -1973,6 +1973,13 @@ class CackModel(pl.LightningModule):
         )
         self.l9_sigmoid = torch.nn.Sigmoid()
 
+    @staticmethod
+    def images_to_data(photo, mask):
+        photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+        return torch.vstack(
+            [to_tensor(photo), to_tensor(photo_hsv), to_tensor(mask)]
+        )
+
     def forward(self, x):
         x1_out = self.l1_bn(x)
         x4_out = self.l4_bn(self.l3_swish(self.l2_cnn(x1_out)))
