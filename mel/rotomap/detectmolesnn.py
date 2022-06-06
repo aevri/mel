@@ -1957,19 +1957,19 @@ class Swish(torch.nn.Module):
 class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.l1_bn = torch.nn.BatchNorm2d(14)
+        self.l1_bn = torch.nn.BatchNorm2d(7)
         self.l2_cnn = torch.nn.Conv2d(
-            in_channels=14, out_channels=3, kernel_size=1, padding=0
+            in_channels=7, out_channels=3, kernel_size=1, padding=0
         )
         self.l3_swish = Swish()
         self.l4_bn = torch.nn.BatchNorm2d(3)
         self.l5_cnn = torch.nn.Conv2d(
-            in_channels=17, out_channels=3, kernel_size=1, padding=0
+            in_channels=10, out_channels=3, kernel_size=1, padding=0
         )
         self.l6_swish = Swish()
         self.l7_bn = torch.nn.BatchNorm2d(3)
         self.l8_cnn = torch.nn.Conv2d(
-            in_channels=20, out_channels=1, kernel_size=1, padding=0
+            in_channels=13, out_channels=1, kernel_size=1, padding=0
         )
         self.l9_sigmoid = torch.nn.Sigmoid()
 
