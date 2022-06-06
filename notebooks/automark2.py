@@ -71,7 +71,7 @@ to_tensor = torchvision.transforms.ToTensor()
 data = model.images_to_data(i, mask)
 train_dl = torch.utils.data.DataLoader([(data, to_tensor(image))], batch_size=1)
 trainer = pl.Trainer(
-    max_epochs=300,
+    max_epochs=1000,
 )
 
 trainer.fit(model, train_dl)
