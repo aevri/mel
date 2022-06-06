@@ -1973,6 +1973,8 @@ class CackModel(pl.LightningModule):
         )
         self.l9_sigmoid = torch.nn.Sigmoid()
 
+        self.frame = 0
+
     @staticmethod
     def images_to_data(photo, mask):
         photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
@@ -1988,10 +1990,14 @@ class CackModel(pl.LightningModule):
         x8_in = torch.cat([x7_in, x7_out], dim=1)
         return self.l9_sigmoid(self.l8_cnn(x8_in))
 
-
     def training_step(self, batch, batch_nb):
         x, y = batch
         result = self(x)
+        cv2.imwrite(
+            f"model_001_{self.frame:04}.jpg",
+            result.detach().numpy()[0][0] * 255,
+        )
+        self.frame += 1
         target = y[:, 2:3]
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = F.cross_entropy(result, target)
