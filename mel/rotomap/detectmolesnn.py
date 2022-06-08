@@ -1957,6 +1957,8 @@ class Swish(torch.nn.Module):
 class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
+        self.learning_rate = 0.02
+        self.epochs = 300
         self.l1_bn = torch.nn.BatchNorm2d(14)
         self.l2_cnn = torch.nn.Conv2d(
             in_channels=14, out_channels=3, kernel_size=1, padding=0
@@ -2015,7 +2017,24 @@ class CackModel(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=0.02)
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            anneal_strategy="linear",
+            div_factor=100,
+            steps_per_epoch=1,
+            epochs=self.epochs,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
 
 
 def locations_to_expected_output(image_locations, moles, tile_size=32):
