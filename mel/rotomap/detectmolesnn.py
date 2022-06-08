@@ -1959,19 +1959,19 @@ class CackModel(pl.LightningModule):
         super().__init__()
         self.learning_rate = 0.02
         self.epochs = 300
-        self.l1_bn = torch.nn.BatchNorm2d(14)
+        self.l1_bn = torch.nn.BatchNorm2d(7)
         self.l2_cnn = torch.nn.Conv2d(
-            in_channels=14, out_channels=3, kernel_size=1, padding=0
+            in_channels=7, out_channels=3, kernel_size=1, padding=0
         )
         self.l3_swish = Swish()
         self.l4_bn = torch.nn.BatchNorm2d(3)
         self.l5_cnn = torch.nn.Conv2d(
-            in_channels=17, out_channels=3, kernel_size=1, padding=0
+            in_channels=10, out_channels=3, kernel_size=1, padding=0
         )
         self.l6_swish = Swish()
         self.l7_bn = torch.nn.BatchNorm2d(3)
         self.l8_cnn = torch.nn.Conv2d(
-            in_channels=20, out_channels=1, kernel_size=1, padding=0
+            in_channels=13, out_channels=1, kernel_size=1, padding=0
         )
         self.l9_sigmoid = torch.nn.Sigmoid()
 
@@ -1980,18 +1980,8 @@ class CackModel(pl.LightningModule):
     @staticmethod
     def images_to_data(photo, mask):
         photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
-        blur_photo = cv2.blur(photo, (20, 20))
-        blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
-        blur_mask = cv2.blur(mask, (20, 20))
         return torch.vstack(
-            [
-                to_tensor(photo),
-                to_tensor(photo_hsv),
-                to_tensor(mask),
-                to_tensor(blur_photo),
-                to_tensor(blur_photo_hsv),
-                to_tensor(blur_mask),
-            ]
+            [to_tensor(photo), to_tensor(photo_hsv), to_tensor(mask)]
         )
 
     def forward(self, x):
