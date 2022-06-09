@@ -1953,6 +1953,8 @@ class Swish(torch.nn.Module):
     def forward(self, x):
         return x * torch.sigmoid(x)
 
+import wandb
+
 
 class CackModel(pl.LightningModule):
     def __init__(self):
@@ -2004,6 +2006,8 @@ class CackModel(pl.LightningModule):
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = F.cross_entropy(result, target)
         loss = F.mse_loss(result, target)
+        # self.log("train/loss", loss)
+        wandb.log({"train/loss": loss})
         return loss
 
     def configure_optimizers(self):

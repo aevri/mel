@@ -68,10 +68,15 @@ model = mel.rotomap.detectmolesnn.CackModel()
 to_tensor = torchvision.transforms.ToTensor()
 # -
 
+import wandb
+wandb.finish()
+wandb_logger = pl.loggers.WandbLogger(project="mel-automark2", name="dense, 1cyclelr")
+wandb_logger.watch(model, log="all")
 data = model.images_to_data(i, mask)
 train_dl = torch.utils.data.DataLoader([(data, to_tensor(image))], batch_size=1)
 trainer = pl.Trainer(
     max_epochs=model.epochs,
+    logger=wandb_logger,
 )
 
 trainer.fit(model, train_dl)
