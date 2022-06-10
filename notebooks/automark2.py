@@ -32,12 +32,12 @@ plt.figure(figsize=(20, 20))
 # OpenCV images are BGR, whereas matplotlib expects RGB.
 plt.imshow(cv2.cvtColor(i, cv2.COLOR_BGR2RGB))
 
-# + active=""
-# # Make sure the image is nice and large in the notebook.
-# plt.figure(figsize=(20, 20))
-#
-# # OpenCV images are BGR, whereas matplotlib expects RGB.
-# plt.imshow(cv2.blur(cv2.cvtColor(i, cv2.COLOR_BGR2RGB), (20, 20)))
+# +
+# Make sure the image is nice and large in the notebook.
+plt.figure(figsize=(20, 20))
+
+# OpenCV images are BGR, whereas matplotlib expects RGB.
+plt.imshow(cv2.blur(cv2.cvtColor(i, cv2.COLOR_BGR2RGB), (64, 64)))
 
 # + active=""
 # plt.imshow(mask)
