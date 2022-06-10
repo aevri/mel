@@ -91,6 +91,8 @@ print(result.shape)
 plt.imshow(result.detach().numpy()[0][0])
 # -
 
+wandb.finish()
+
 plt.imshow(image[:, :, 2])
 
 torch.unique(result)
