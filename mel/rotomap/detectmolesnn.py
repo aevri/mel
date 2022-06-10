@@ -1959,7 +1959,7 @@ import wandb
 class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.learning_rate = 0.05
+        self.learning_rate = 0.075
         self.epochs = 600
         self.l1_bn = torch.nn.BatchNorm2d(7)
         self.l2_cnn = torch.nn.Conv2d(
@@ -2018,7 +2018,6 @@ class CackModel(pl.LightningModule):
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
             self.optimizer,
             max_lr=self.learning_rate,
-            anneal_strategy="linear",
             steps_per_epoch=1,
             epochs=self.epochs,
         )
