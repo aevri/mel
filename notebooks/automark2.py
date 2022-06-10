@@ -32,15 +32,16 @@ plt.figure(figsize=(20, 20))
 # OpenCV images are BGR, whereas matplotlib expects RGB.
 plt.imshow(cv2.cvtColor(i, cv2.COLOR_BGR2RGB))
 
-# +
-# Make sure the image is nice and large in the notebook.
-plt.figure(figsize=(20, 20))
+# + active=""
+# # Make sure the image is nice and large in the notebook.
+# plt.figure(figsize=(20, 20))
+#
+# # OpenCV images are BGR, whereas matplotlib expects RGB.
+# plt.imshow(cv2.blur(cv2.cvtColor(i, cv2.COLOR_BGR2RGB), (20, 20)))
 
-# OpenCV images are BGR, whereas matplotlib expects RGB.
-plt.imshow(cv2.blur(cv2.cvtColor(i, cv2.COLOR_BGR2RGB), (20, 20)))
+# + active=""
+# plt.imshow(mask)
 # -
-
-plt.imshow(mask)
 
 import mel.lib.common
 
@@ -53,10 +54,10 @@ plt.imshow(cv2.cvtColor(image // 2 + i // 2, cv2.COLOR_BGR2RGB))
 
 i_hsv = cv2.cvtColor(i, cv2.COLOR_BGR2HSV)
 
-# +
-plt.figure(figsize=(20, 20))
-
-plt.imshow(i_hsv)
+# + active=""
+# plt.figure(figsize=(20, 20))
+#
+# plt.imshow(i_hsv)
 
 # +
 # Model, data, loss fn, optimizer.
