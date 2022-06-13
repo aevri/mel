@@ -2008,7 +2008,7 @@ class CackModel(pl.LightningModule):
         x, y = batch
         result = self(x)
         cv2.imwrite(
-            f"model_001_{self.frame:04}.jpg",
+            f"model_001_{self.frame:04}.png",
             result.detach().numpy()[0][0] * 255,
         )
         self.frame += 1
