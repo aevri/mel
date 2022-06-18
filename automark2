@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+"""Train 'automark2'."""
+
+import argparse
+import pathlib
+import sys
+
+import cv2
+
+import mel.rotomap.moles
+import mel.lib.common
+import mel.rotomap.detectmolesnn
+
+
+def load_raw_data():
+    data_path = pathlib.Path("/Volumes/angelos-mel/angelos_mel/rotomaps/parts")
+    assert data_path.exists()
+    rotomap_directory = mel.rotomap.moles.RotomapDirectory(
+        data_path / "LeftArm/Upper/2017_04_19/"
+    )
+    frame = next(rotomap_directory.yield_frames())
+    photo = frame.load_image()
+
+    mask = frame.load_mask()
+
+    image_height, image_width = photo.shape[0:2]
+
+    return photo, mask
+
+
+def make_model():
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "automark2.pth"
+    # metadata_path = model_dir / "automark2.json"
+
+    model = mel.rotomap.detectmolesnn.CackModel()
+    model.load_state_dict(torch.load(model_path))
+
+    return model
+
+
+def write_result(result, path):
+    cv2.imwrite(path, result.detach().numpy()[0][0] * 255)
+
+
+def main():
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+    argparse.ArgumentParser().parse_args()
+    photo, mask = load_raw_data()
+    model = make_model()
+    data_x = model.images_to_data(photo, mask)
+    dataloader = torch.utils.data.DataLoader(data_x.unsqueeze(0), batch_size=1)
+    assert len(dataloader) == 1
+    model.eval()
+    with torch.no_grad():
+        for x in dataloader:
+            data_y = model(x)
+    write_result(data_y, "out.png")
+
+
+if __name__ == "__main__":
+    sys.exit(main())
