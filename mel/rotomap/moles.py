@@ -85,8 +85,8 @@ class RotomapFrame:
     def load_image(self):
         return mel.lib.image.load_image(self.path)
 
-    # def load_mask(self):
-    #     return mel.rotomap.mask.load_or_none(self.path)
+    def load_mask(self):
+        return mel.rotomap.mask.load_or_none(self.path)
 
     def has_mole_file(self):
         if self.extra_stem is None:
