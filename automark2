@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Train 'automark2'."""
+"""Detect moles in an image."""
 
 import argparse
 import pathlib
