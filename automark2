@@ -62,6 +62,12 @@ def main():
     with torch.no_grad():
         for x in dataloader:
             data_y = model(x)
+
+    threshold = 0.5
+    data_y[data_y < threshold] = 0
+    data_y[data_y >= threshold] = 1
+    data_y[0][0][mask == 0] = 0
+
     write_result(data_y, "out.png")
 
 
