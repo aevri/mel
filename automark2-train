@@ -1,10 +1,12 @@
 #! /usr/bin/env python
+"""Train 'automark2'."""
+
+import argparse
+import json
 import pathlib
 import sys
 
 import pytorch_lightning as pl
-import torchvision
-import torch
 import wandb
 
 
@@ -13,49 +15,74 @@ import mel.lib.common
 import mel.rotomap.detectmolesnn
 
 
-def main():
+def load_raw_data():
     data_path = pathlib.Path("/Volumes/angelos-mel/angelos_mel/rotomaps/parts")
     assert data_path.exists()
-    d = mel.rotomap.moles.RotomapDirectory(
+    rotomap_directory = mel.rotomap.moles.RotomapDirectory(
         data_path / "LeftArm/Upper/2017_04_19/"
     )
-    f = next(d.yield_frames())
-    i = f.load_image()
+    frame = next(rotomap_directory.yield_frames())
+    photo = frame.load_image()
 
-    mask = f.load_mask()
+    mask = frame.load_mask()
 
-    image_height, image_width = i.shape[0:2]
-    image = mel.rotomap.detectmolesnn.locations_image(
-        f.moles, image_width, image_height
+    image_height, image_width = photo.shape[0:2]
+    locations_image = mel.rotomap.detectmolesnn.locations_image(
+        frame.moles, image_width, image_height
     )
 
-    model = mel.rotomap.detectmolesnn.CackModel()
+    return photo, mask, locations_image
+
+
+def main():
+    argparse.ArgumentParser().parse_args()
+
+    experiment_name = (
+        "dense_1cyclelr_600epochs_075lr_defaultdiv_defaultanneal_blur64"
+    )
+
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+    import torchvision
+
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "automark2.pth"
+    metadata_path = model_dir / "automark2.json"
+    print(f"Will save to {model_path}")
+    print(f"         and {metadata_path}")
+
+    photo, mask, locations_image = load_raw_data()
     to_tensor = torchvision.transforms.ToTensor()
 
-    wandb.finish()
+    model = mel.rotomap.detectmolesnn.CackModel()
+
     wandb_logger = pl.loggers.WandbLogger(
-        project="mel-automark2",
-        name="dense_1cyclelr_600epochs_075lr_defaultdiv_defaultanneal_blur64",
+        project="mel-automark2", name=experiment_name
     )
     wandb_logger.watch(model, log="all")
-    data = model.images_to_data(i, mask)
-    train_dl = torch.utils.data.DataLoader(
-        [(data, to_tensor(image))], batch_size=1
-    )
+
+    data_x = model.images_to_data(photo, mask)
+    data_y = to_tensor(locations_image)
+    train_dl = torch.utils.data.DataLoader([(data_x, data_y)], batch_size=1)
+
     trainer = pl.Trainer(
         max_epochs=model.epochs,
         logger=wandb_logger,
     )
 
+    metadata = {}
+
     trainer.fit(model, train_dl)
 
-    model.eval()
-
-    # Save output image.
-    # result = model(data.unsqueeze(0))
-    # plt.imshow(result.detach().numpy()[0][0])
-
+    torch.save(model.state_dict(), model_path)
     wandb.finish()
+
+    print(f"Saved {model_path}")
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f)
+        print(f"Saved {metadata_path}")
 
 
 if __name__ == "__main__":
