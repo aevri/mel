@@ -71,7 +71,6 @@ class CackModel(pl.LightningModule):
         super().__init__()
         self.learning_rate = 0.075
         self.epochs = 600
-        self.epochs = 1
         self.l1_bn = torch.nn.BatchNorm2d(14)
         self.l2_cnn = torch.nn.Conv2d(
             in_channels=14, out_channels=3, kernel_size=1, padding=0
