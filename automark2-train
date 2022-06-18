@@ -37,6 +37,8 @@ def load_raw_data():
 def main():
     argparse.ArgumentParser().parse_args()
 
+    enable_wandb = False
+
     experiment_name = (
         "dense_1cyclelr_600epochs_075lr_defaultdiv_defaultanneal_blur64"
     )
@@ -58,26 +60,32 @@ def main():
 
     model = mel.rotomap.detectmolesnn.CackModel()
 
-    wandb_logger = pl.loggers.WandbLogger(
-        project="mel-automark2", name=experiment_name
-    )
-    wandb_logger.watch(model, log="all")
+    if enable_wandb:
+        wandb_logger = pl.loggers.WandbLogger(
+            project="mel-automark2", name=experiment_name
+        )
+        wandb_logger.watch(model, log="all")
 
     data_x = model.images_to_data(photo, mask)
     data_y = to_tensor(locations_image)
     train_dl = torch.utils.data.DataLoader([(data_x, data_y)], batch_size=1)
 
-    trainer = pl.Trainer(
-        max_epochs=model.epochs,
-        logger=wandb_logger,
-    )
+    if enable_wandb:
+        trainer = pl.Trainer(
+            max_epochs=model.epochs,
+            logger=wandb_logger,
+        )
+    else:
+        trainer = pl.Trainer(max_epochs=model.epochs)
 
     metadata = {}
 
     trainer.fit(model, train_dl)
 
     torch.save(model.state_dict(), model_path)
-    wandb.finish()
+
+    if enable_wandb:
+        wandb.finish()
 
     print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
