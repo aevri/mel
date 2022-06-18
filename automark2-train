@@ -73,6 +73,7 @@ def main():
     if enable_wandb:
         trainer = pl.Trainer(
             max_epochs=model.epochs,
+            log_every_n_steps=1,
             logger=wandb_logger,
         )
     else:
