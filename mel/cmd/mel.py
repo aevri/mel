@@ -15,6 +15,7 @@ import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomask
 import mel.cmd.rotomapcalcspace
 import mel.cmd.rotomapcompare
+import mel.cmd.rotomapcompareextrastem
 import mel.cmd.rotomapconfirm
 import mel.cmd.rotomapedit
 import mel.cmd.rotomapfiltermarks
@@ -49,6 +50,7 @@ COMMANDS = {
         "automask": mel.cmd.rotomapautomask,
         "calc-space": mel.cmd.rotomapcalcspace,
         "compare": mel.cmd.rotomapcompare,
+        "compare-extra-stem": mel.cmd.rotomapcompareextrastem,
         "confirm": mel.cmd.rotomapconfirm,
         "edit": mel.cmd.rotomapedit,
         "filter-marks": mel.cmd.rotomapfiltermarks,
