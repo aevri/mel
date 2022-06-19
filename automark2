@@ -2,7 +2,6 @@
 """Detect moles in an image."""
 
 import argparse
-import pathlib
 import sys
 
 import cv2
@@ -13,20 +12,20 @@ import mel.lib.common
 import mel.rotomap.detectmolesnn
 
 
-def load_raw_data():
-    data_path = pathlib.Path("/Volumes/angelos-mel/angelos_mel/rotomaps/parts")
-    assert data_path.exists()
-    rotomap_directory = mel.rotomap.moles.RotomapDirectory(
-        data_path / "LeftArm/Upper/2017_04_19/"
+def setup_parser(parser):
+    parser.add_argument(
+        "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
-    frame = next(rotomap_directory.yield_frames())
-    photo = frame.load_image()
-
-    mask = frame.load_mask()
-
-    image_height, image_width = photo.shape[0:2]
-
-    return photo, mask
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print information about the processing.",
+    )
+    parser.add_argument(
+        "--extra-stem",
+        help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
+    )
 
 
 def make_model():
@@ -50,13 +49,24 @@ def write_result(result, path):
 
 
 def main():
+    parser = setup_parser(argparse.ArgumentParser())
+    args = parser.parse_args()
+
+    model = make_model()
+
+    for path in args.IMAGES:
+        if args.verbose:
+            print(path)
+        process_path(args, path, model)
+
+
+def process_path(args, path, model):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
 
-    argparse.ArgumentParser().parse_args()
-    photo, mask = load_raw_data()
-    model = make_model()
+    photo = mel.lib.image.load_image(path)
+    mask = mel.rotomap.mask.load(path)
     data_x = model.images_to_data(photo, mask)
     dataloader = torch.utils.data.DataLoader(data_x.unsqueeze(0), batch_size=1)
     assert len(dataloader) == 1
@@ -70,8 +80,35 @@ def main():
     data_y[data_y >= threshold] = 1
     data_y[0][0][mask == 0] = 0
 
-    write_result(data_y, "out.png")
-    write_contour_image(data_y, "contour.png")
+    # write_result(data_y, "out.png")
+    # write_contour_image(data_y, "contour.png")
+
+    pos_xy = pos_xy_from_contours(data_y)
+    moles = moles_from_posxy(pos_xy)
+    mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
+
+
+def moles_from_posxy(pos_xy):
+    moles = []
+    for x, y in pos_xy:
+        mel.rotomap.moles.add_mole(moles, int(x), int(y))
+
+
+def pos_xy_from_contours(result):
+    image = result.detach().numpy()[0][0] * 255
+    image = np.uint8(image)
+    _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    pos_xy = []
+    for contour in contours:
+        if contour is not None and len(contour) > 5:
+            # area = cv2.contourArea(contour)
+            moments = cv2.moments(contour)
+            if moments["m00"] != 0:
+                cx = int(moments["m10"] / moments["m00"])
+                cy = int(moments["m01"] / moments["m00"])
+                pos_xy.append((cx, cy))
+    return pos_xy
 
 
 def write_contour_image(result, path):
