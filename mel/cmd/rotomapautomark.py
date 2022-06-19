@@ -41,7 +41,9 @@ def process_args(args):
         image = mel.lib.image.load_image(path)
         mask = mel.rotomap.mask.load(path)
         guessed_moles = mel.rotomap.detectmoles.moles(image, mask)
-        loaded_moles = mel.rotomap.moles.load_image_moles(path)
+        loaded_moles = mel.rotomap.moles.load_image_moles(
+            path, extra_stem=args.extra_stem
+        )
 
         moles = mel.rotomap.automark.merge_in_radiuses(
             loaded_moles,
