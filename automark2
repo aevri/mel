@@ -6,6 +6,7 @@ import pathlib
 import sys
 
 import cv2
+import numpy as np
 
 import mel.rotomap.moles
 import mel.lib.common
@@ -74,10 +75,15 @@ def main():
 
 
 def write_contour_image(result, path):
+    image = contour_image(result)
+    cv2.imwrite(path, image)
+
+
+def contour_image(result):
     image = result.detach().numpy()[0][0] * 255
-    contours, _ = cv2.findContours(
-        image.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
-    )
+    image = np.uint8(image)
+    _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
         if contour is not None and len(contour) > 5:
             # area = cv2.contourArea(contour)
@@ -85,9 +91,8 @@ def write_contour_image(result, path):
             if moments["m00"] != 0:
                 cx = int(moments["m10"] / moments["m00"])
                 cy = int(moments["m01"] / moments["m00"])
-                mel.lib.common.draw_circle(
-                    mel.lib.common.draw_circle(image, cx, cy, 16, (128,))
-                )
+                mel.lib.common.draw_circle(image, cx, cy, 16, (128,))
+    return image
 
 
 if __name__ == "__main__":
