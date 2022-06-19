@@ -12,7 +12,8 @@ import mel.lib.common
 import mel.rotomap.detectmolesnn
 
 
-def setup_parser(parser):
+def setup_parser():
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
@@ -26,6 +27,7 @@ def setup_parser(parser):
         "--extra-stem",
         help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
     )
+    return parser
 
 
 def make_model():
@@ -49,7 +51,7 @@ def write_result(result, path):
 
 
 def main():
-    parser = setup_parser(argparse.ArgumentParser())
+    parser = setup_parser()
     args = parser.parse_args()
 
     model = make_model()
@@ -92,6 +94,7 @@ def moles_from_posxy(pos_xy):
     moles = []
     for x, y in pos_xy:
         mel.rotomap.moles.add_mole(moles, int(x), int(y))
+    return moles
 
 
 def pos_xy_from_contours(result):
