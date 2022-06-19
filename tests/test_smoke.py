@@ -103,6 +103,9 @@ def test_smoke():
             *target_image_files
         )
         expect_ok(
+            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
+        )
+        expect_ok(
             "mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files
         )
         expect_ok("mel", "rotomap", "identify-train", "--extra-stem", "smoke")
