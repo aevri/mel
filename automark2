@@ -52,6 +52,7 @@ def main():
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
+
     argparse.ArgumentParser().parse_args()
     photo, mask = load_raw_data()
     model = make_model()
@@ -69,6 +70,24 @@ def main():
     data_y[0][0][mask == 0] = 0
 
     write_result(data_y, "out.png")
+    write_contour_image(data_y, "contour.png")
+
+
+def write_contour_image(result, path):
+    image = result.detach().numpy()[0][0] * 255
+    contours, _ = cv2.findContours(
+        image.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
+    )
+    for contour in contours:
+        if contour is not None and len(contour) > 5:
+            # area = cv2.contourArea(contour)
+            moments = cv2.moments(contour)
+            if moments["m00"] != 0:
+                cx = int(moments["m10"] / moments["m00"])
+                cy = int(moments["m01"] / moments["m00"])
+                mel.lib.common.draw_circle(
+                    mel.lib.common.draw_circle(image, cx, cy, 16, (128,))
+                )
 
 
 if __name__ == "__main__":
