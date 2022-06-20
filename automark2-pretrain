@@ -1,0 +1,97 @@
+#! /usr/bin/env python
+"""Pre-train 'automark2'."""
+
+import argparse
+import gzip
+import sys
+
+import cv2
+import torch
+import torchvision
+
+from tqdm import tqdm
+
+import mel.rotomap.moles
+import mel.lib.common
+import mel.rotomap.detectmolesnn
+
+
+def setup_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("OUT", help="The file to write to.")
+    parser.add_argument(
+        "IMAGES", nargs="+", help="A list of paths to images to process."
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print information about the processing.",
+    )
+    return parser
+
+
+def main():
+    parser = setup_parser()
+    args = parser.parse_args()
+
+    # csv_out = csv.writer(args.OUT, dialect="unix", quoting=csv.QUOTE_MINIMAL)
+
+    data = {"x_data": None, "y_data": None}
+
+    zipout = gzip.open(args.OUT, "wb", compresslevel=6)
+
+    is_first = True
+    for path in tqdm(args.IMAGES):
+        if args.verbose:
+            print(path)
+        x_data, y_data = rotoimage_to_xy_tensors(path)
+        if is_first:
+            data["x_data"] = x_data
+            data["y_data"] = y_data
+        else:
+            data["x_data"] = torch.cat([x_data, data["x_data"]])
+            data["y_data"] = torch.cat([y_data, data["y_data"]])
+
+    print(data["x_data"].dtype, data["x_data"].shape)
+    print(data["y_data"].dtype, data["y_data"].shape)
+
+    torch.save(data, zipout)
+    zipout.close()
+
+
+def rotoimage_to_xy_tensors(path):
+    to_tensor = torchvision.transforms.ToTensor()
+
+    photo = mel.lib.image.load_image(path)
+    mask = mel.rotomap.mask.load(path)
+    photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+    blur_photo = cv2.blur(photo, (64, 64))
+    blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
+    blur_mask = cv2.blur(mask, (64, 64))
+    x_data = torch.vstack(
+        [
+            to_tensor(x)
+            for x in [
+                photo,
+                photo_hsv,
+                mask,
+                blur_photo,
+                blur_photo_hsv,
+                blur_mask,
+            ]
+        ]
+    )
+
+    moles = mel.rotomap.moles.load_image_moles(path)
+    image_height, image_width = photo.shape[0:2]
+    locations_image = mel.rotomap.detectmolesnn.locations_image(
+        moles, image_width, image_height
+    )
+    y_data = to_tensor(locations_image)
+
+    return x_data, y_data
+
+
+if __name__ == "__main__":
+    sys.exit(main())

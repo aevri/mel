@@ -1,5 +1,7 @@
 """Detect moles in an image, using deep neural nets."""
 
+import dataclasses
+
 import cv2
 import torch
 import torchvision
@@ -21,6 +23,16 @@ TILE_MAGNIFICATION = 1
 
 to_tensor = torchvision.transforms.ToTensor()
 
+
+# ismole
+# photo_red
+# photo_green
+# photo_blue
+# mask
+# blur64_red
+# blur64_green
+# blur64_blue
+# blur64_mask
 
 class ConstantModel(torch.nn.Module):
     def __init__(self, constant_value):
