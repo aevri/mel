@@ -15,6 +15,10 @@ def setup_parser(parser):
         action="store_true",
         help="Print information about the processing.",
     )
+    parser.add_argument(
+        "--extra-stem",
+        help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
+    )
 
 
 def process_args(args):
@@ -27,11 +31,15 @@ def process_args(args):
             print("Processing", target, "..")
 
         # part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
-        frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
+        frame = mel.rotomap.moles.RotomapFrame(
+            os.path.abspath(target), extra_stem=args.extra_stem
+        )
 
         new_moles = identifier.get_new_moles(frame)
 
-        mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
+        mel.rotomap.moles.save_image_moles(
+            new_moles, str(frame.path), extra_stem=args.extra_stem
+        )
 
 
 # -----------------------------------------------------------------------------

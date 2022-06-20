@@ -70,6 +70,7 @@ class RotomapFrame:
 
     def __init__(self, path, *, extra_stem=None):
         self.path = pathlib.Path(path)
+        self.extra_stem = extra_stem
         if self.path.is_dir():
             raise ValueError(f"Expected file, not directory: {path}")
         if not self.path.exists():
@@ -88,7 +89,10 @@ class RotomapFrame:
     #     return mel.rotomap.mask.load_or_none(self.path)
 
     def has_mole_file(self):
-        return pathlib.Path(str(self.path) + ".json").exists()
+        if self.extra_stem is None:
+            return pathlib.Path(f"{self.path}.json").exists()
+        else:
+            return pathlib.Path(f"{self.path}.{self.extra_stem}.json").exists()
 
     def has_mask(self):
         return mel.rotomap.mask.has_mask(self.path)
