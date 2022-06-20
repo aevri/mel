@@ -1,9 +1,7 @@
-# This is a basic workflow to help you get started with Actions
-
 name: tests
 
 # 'workflow_dispatch' is manually from the Actions tab
-on: [push, pull_request, workflow_dispatch]
+on: [push, workflow_dispatch]
 
 jobs:
   build:
