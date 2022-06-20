@@ -86,6 +86,27 @@ def test_smoke():
         for json_file in target_json_files:
             json_file.with_suffix(".json.bak").rename(json_file)
 
+        expect_ok(
+            "mel",
+            "rotomap",
+            "automark",
+            "--extra-stem",
+            "smoke",
+            *target_image_files
+        )
+        expect_ok(
+            "mel",
+            "rotomap",
+            "filter-marks",
+            "--extra-stem",
+            "smoke",
+            *target_image_files
+        )
+        expect_ok(
+            "mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files
+        )
+        expect_ok("mel", "rotomap", "identify-train", "--extra-stem", "smoke")
+
         expect_ok("mel", "rotomap", "confirm", *target_json_files)
         expect_ok("mel", "rotomap", "mark-unchanged", target_rotomap_2)
         expect_ok("mel", "rotomap", "list", *target_json_files)
