@@ -23,6 +23,11 @@ def setup_parser(parser):
         type=int,
         help="Radius to merge moles within.",
     )
+    parser.add_argument(
+        "--compare-uuids",
+        action="store_true",
+        help="Also compare UUIDs for matching.",
+    )
 
 
 def process_args(args):
@@ -49,9 +54,19 @@ def process_args(args):
                 len(_missing_uuids),
                 len(added_uuids),
             )
-        total_matched += len(match_uuids)
-        total_missing += len(_missing_uuids)
-        total_added += len(added_uuids)
+        if args.compare_uuids:
+            total_missing += len(_missing_uuids)
+            total_added += len(added_uuids)
+            for from_uuid, to_uuid in match_uuids:
+                if from_uuid == to_uuid:
+                    total_matched += 1
+                else:
+                    total_missing += 1
+                    total_added += 1
+        else:
+            total_matched += len(match_uuids)
+            total_missing += len(_missing_uuids)
+            total_added += len(added_uuids)
     print("matched:", total_matched)
     print("missing:", total_missing)
     print("added:", total_added)
