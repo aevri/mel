@@ -1,7 +1,5 @@
 """Detect moles in an image, using deep neural nets."""
 
-import dataclasses
-
 import cv2
 import torch
 import torchvision
@@ -33,6 +31,28 @@ to_tensor = torchvision.transforms.ToTensor()
 # blur64_green
 # blur64_blue
 # blur64_mask
+
+
+def pixelise(image):
+    """Convert a CHW image into NCHW NxCx1x1 tiles.
+
+    Examples:
+
+        >>> import torch
+        >>> t = torch.tensor([[[1, 2, 3]]], names=list("CHW"))
+        >>> p = torch.tensor([[[[1]]], [[[2]]], [[[3]]]], names=list("NCHW"))
+        >>> torch.equal(pixelise(t), p)
+        True
+
+    """
+    if "CHW" != "".join(image.names):
+        raise ValueError("Tensor names must be CHW, got:", image.names)
+    num_channels = image.shape[0]
+    p_image = (
+        image.rename(None).reshape([num_channels, -1, 1, 1]).movedim(0, 1)
+    )
+    return p_image.rename(*list("NCHW"))
+
 
 class ConstantModel(torch.nn.Module):
     def __init__(self, constant_value):
