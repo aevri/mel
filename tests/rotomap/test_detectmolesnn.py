@@ -6,6 +6,22 @@ import torch
 import mel.rotomap.detectmolesnn
 
 
+def test_shuffled_images_sync_3x1x1x1():
+    p = torch.tensor(
+        [
+            [[[1]]],
+            [[[2]]],
+            [[[3]]],
+        ],
+        names=list("NCHW"),
+    )
+    p2 = mel.rotomap.detectmolesnn.shuffled_images_sync(p)[0]
+    assert p2.shape == p.shape
+    assert torch.equal(
+        p2.rename(None).flatten().sort().values, torch.tensor([1, 2, 3])
+    )
+
+
 def test_pixelise_2x2x3():
     t = torch.tensor(
         [

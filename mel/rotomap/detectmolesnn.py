@@ -33,6 +33,29 @@ to_tensor = torchvision.transforms.ToTensor()
 # blur64_mask
 
 
+def shuffled_images_sync(*images):
+    if not images:
+        raise ValueError("No images supplied")
+    for img in images:
+        if "NCHW" != "".join(img.names):
+            raise ValueError("Image names must be NCHW, got:", img.names)
+    if not all(img.shape[0] == images[0].shape[0] for img in images):
+        raise ValueError(
+            "Images must have the same number of fragments.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[2:4] == (1, 1) for img in images):
+        raise ValueError(
+            "Images must be 1x1 tiles.",
+            [img.shape for img in images],
+        )
+    indices = torch.randperm(images[0].shape[0])
+    return [
+        img.rename(None).index_select(0, indices).rename(*list("NCHW"))
+        for img in images
+    ]
+
+
 def select_not_masked(image, mask):
     if "NCHW" != "".join(image.names):
         raise ValueError("Image names must be NCHW, got:", image.names)

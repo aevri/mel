@@ -45,6 +45,9 @@ def main():
         m_data = mel.rotomap.detectmolesnn.pixelise(m_data)
         x_data = mel.rotomap.detectmolesnn.select_not_masked(x_data, m_data)
         y_data = mel.rotomap.detectmolesnn.select_not_masked(y_data, m_data)
+        x_data, y_data = mel.rotomap.detectmolesnn.shuffled_images_sync(
+            x_data, y_data
+        )
         x_data.rename_(None)
         y_data.rename_(None)
         data = {"x_data": x_data, "y_data": y_data}
