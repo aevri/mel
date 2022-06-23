@@ -33,6 +33,19 @@ to_tensor = torchvision.transforms.ToTensor()
 # blur64_mask
 
 
+def select_not_masked(image, mask):
+    if "NCHW" != "".join(image.names):
+        raise ValueError("Image names must be NCHW, got:", image.names)
+    if "NCHW" != "".join(mask.names):
+        raise ValueError("Mask names must be NCHW, got:", mask.names)
+    if 1 != mask.shape[1]:
+        raise ValueError("Mask must have one channel, got shape:", mask.shape)
+    mask_indices = mask.rename(None).nonzero()[:, 0]
+    return (
+        image.rename(None).index_select(0, mask_indices).rename(*list("NCHW"))
+    )
+
+
 def pixelise(image):
     """Convert a CHW image into NCHW NxCx1x1 tiles.
 
