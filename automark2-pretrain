@@ -18,7 +18,6 @@ import mel.rotomap.detectmolesnn
 
 def setup_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("OUT", help="The file to write to.")
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to process."
     )
@@ -35,32 +34,23 @@ def main():
     parser = setup_parser()
     args = parser.parse_args()
 
-    # csv_out = csv.writer(args.OUT, dialect="unix", quoting=csv.QUOTE_MINIMAL)
-
-    data = {"x_data": None, "y_data": None}
-
-    zipout = gzip.open(args.OUT, "wb", compresslevel=6)
-
-    is_first = True
     for path in tqdm(args.IMAGES):
+        outpath = path + ".automark2.pt"
         if args.verbose:
-            print(path)
-        x_data, y_data = rotoimage_to_xy_tensors(path)
-        if is_first:
-            data["x_data"] = x_data
-            data["y_data"] = y_data
-        else:
-            data["x_data"] = torch.cat([x_data, data["x_data"]])
-            data["y_data"] = torch.cat([y_data, data["y_data"]])
-
-    print(data["x_data"].dtype, data["x_data"].shape)
-    print(data["y_data"].dtype, data["y_data"].shape)
-
-    torch.save(data, zipout)
-    zipout.close()
+            print(outpath)
+        zipout = gzip.open(outpath, "wb", compresslevel=6)
+        x_data, y_data, m_data = rotoimage_to_xym_tensors(path)
+        x_data = mel.rotomap.detectmolesnn.pixelise(x_data)
+        y_data = mel.rotomap.detectmolesnn.pixelise(y_data)
+        m_data = mel.rotomap.detectmolesnn.pixelise(m_data)
+        x_data.rename_(None)
+        y_data.rename_(None)
+        data = {"x_data": x_data, "y_data": y_data}
+        torch.save(data, zipout)
+        zipout.close()
 
 
-def rotoimage_to_xy_tensors(path):
+def rotoimage_to_xym_tensors(path):
     to_tensor = torchvision.transforms.ToTensor()
 
     photo = mel.lib.image.load_image(path)
@@ -75,7 +65,6 @@ def rotoimage_to_xy_tensors(path):
             for x in [
                 photo,
                 photo_hsv,
-                mask,
                 blur_photo,
                 blur_photo_hsv,
                 blur_mask,
@@ -89,8 +78,17 @@ def rotoimage_to_xy_tensors(path):
         moles, image_width, image_height
     )
     y_data = to_tensor(locations_image)
+    y_data = y_data[2:3].clone()
+    assert y_data.shape[0] == 1, y_data.shape
 
-    return x_data, y_data
+    m_data = to_tensor(mask)
+    assert m_data.shape == y_data.shape, m_data.shape
+
+    return (
+        x_data.rename(*list("CHW")),
+        y_data.rename(*list("CHW")),
+        m_data.rename(*list("CHW")),
+    )
 
 
 if __name__ == "__main__":
