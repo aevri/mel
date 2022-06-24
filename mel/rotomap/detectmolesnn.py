@@ -1,8 +1,13 @@
 """Detect moles in an image, using deep neural nets."""
 
+
+import gzip
+import sys
+
 import cv2
 import torch
 import torchvision
+import tqdm
 
 import pytorch_lightning as pl
 from torch.nn import functional as F
@@ -31,6 +36,27 @@ to_tensor = torchvision.transforms.ToTensor()
 # blur64_green
 # blur64_blue
 # blur64_mask
+
+
+def dice_loss(prediction, target):
+    images = [prediction, target]
+    for img in images:
+        if "NCHW" != "".join(img.names):
+            raise ValueError("Image names must be NCHW, got:", img.names)
+    if not all(img.shape[0] == images[0].shape[0] for img in images):
+        raise ValueError(
+            "Images must have the same number of fragments.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[2:4] == (1, 1) for img in images):
+        raise ValueError(
+            "Images must be 1x1 tiles.",
+            [img.shape for img in images],
+        )
+
+    intersection = (prediction * target).sum()
+    total = prediction.sum() + target.sum()
+    return (2 * intersection) / total
 
 
 def shuffled_images_sync(*images):
@@ -138,41 +164,41 @@ class CackModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.learning_rate = 0.075
-        self.epochs = 600
-        self.l1_bn = torch.nn.BatchNorm2d(14)
+        self.total_steps = 600
+        self.l1_bn = torch.nn.BatchNorm2d(13)
         self.l2_cnn = torch.nn.Conv2d(
-            in_channels=14, out_channels=3, kernel_size=1, padding=0
+            in_channels=13, out_channels=3, kernel_size=1, padding=0
         )
         self.l3_swish = Swish()
         self.l4_bn = torch.nn.BatchNorm2d(3)
         self.l5_cnn = torch.nn.Conv2d(
-            in_channels=17, out_channels=3, kernel_size=1, padding=0
+            in_channels=16, out_channels=3, kernel_size=1, padding=0
         )
         self.l6_swish = Swish()
         self.l7_bn = torch.nn.BatchNorm2d(3)
         self.l8_cnn = torch.nn.Conv2d(
-            in_channels=20, out_channels=1, kernel_size=1, padding=0
+            in_channels=19, out_channels=1, kernel_size=1, padding=0
         )
         self.l9_sigmoid = torch.nn.Sigmoid()
 
         self.frame = 0
 
-    @staticmethod
-    def images_to_data(photo, mask):
-        photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
-        blur_photo = cv2.blur(photo, (64, 64))
-        blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
-        blur_mask = cv2.blur(mask, (64, 64))
-        return torch.vstack(
-            [
-                to_tensor(photo),
-                to_tensor(photo_hsv),
-                to_tensor(mask),
-                to_tensor(blur_photo),
-                to_tensor(blur_photo_hsv),
-                to_tensor(blur_mask),
-            ]
-        )
+    # @staticmethod
+    # def images_to_data(photo, mask):
+    #     photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+    #     blur_photo = cv2.blur(photo, (64, 64))
+    #     blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
+    #     blur_mask = cv2.blur(mask, (64, 64))
+    #     return torch.vstack(
+    #         [
+    #             to_tensor(photo),
+    #             to_tensor(photo_hsv),
+    #             to_tensor(mask),
+    #             to_tensor(blur_photo),
+    #             to_tensor(blur_photo_hsv),
+    #             to_tensor(blur_mask),
+    #         ]
+    #     )
 
     def forward(self, x):
         x1_out = self.l1_bn(x)
@@ -207,8 +233,7 @@ class CackModel(pl.LightningModule):
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
             self.optimizer,
             max_lr=self.learning_rate,
-            steps_per_epoch=1,
-            epochs=self.epochs,
+            total_steps=self.total_steps,
         )
 
         sched = {
@@ -216,6 +241,69 @@ class CackModel(pl.LightningModule):
             "interval": "step",
         }
         return [self.optimizer], [sched]
+
+
+def collate(pretrained_list):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
+    data_list = []
+
+    for path in pretrained_list:
+        zipin = gzip.open(path, "rb")
+        data_list.append(torch.load(zipin))
+
+    return (
+        torch.cat([d["x_data"] for d in data_list]),
+        torch.cat([d["y_data"] for d in data_list]),
+    )
+
+
+
+
+class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
+    def __init__(self, process_position: int = 0):
+        super().__init__()
+        self._process_position = process_position
+        self._enabled = True
+        self.main_progress_bar = None
+
+    def __getstate__(self):
+        # can't pickle the tqdm objects
+        state = self.__dict__.copy()
+        state["main_progress_bar"] = None
+        return state
+
+    @property
+    def process_position(self) -> int:
+        return self._process_position
+
+    def disable(self) -> None:
+        self._enabled = False
+
+    def enable(self) -> None:
+        self._enabled = True
+
+    def on_train_start(self, trainer, pl_module):
+        super().on_train_start(trainer, pl_module)
+        self.main_progress_bar = tqdm.tqdm(
+            desc="Total Epochs",
+            initial=trainer.current_epoch,
+            total=trainer.max_epochs,
+            position=(2 * self.process_position),
+            disable=False,
+            leave=True,
+            dynamic_ncols=True,
+            file=sys.stdout,
+            smoothing=0,
+        )
+
+    def on_train_end(self, trainer, pl_module):
+        self.main_progress_bar.close()
+
+    def on_epoch_end(self, trainer, pl_module):
+        self.main_progress_bar.update(1)
 
 
 # -----------------------------------------------------------------------------

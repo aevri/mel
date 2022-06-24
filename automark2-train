@@ -2,7 +2,6 @@
 """Train 'automark2'."""
 
 import argparse
-import gzip
 import json
 import sys
 
@@ -63,17 +62,20 @@ def main():
         wandb_logger.watch(model, log="all")
 
     train_dl = torch.utils.data.DataLoader(
-        args.train, batch_size=20, shuffle=True, collate_fn=collate
+        args.train,
+        batch_size=2,
+        shuffle=True,
+        collate_fn=mel.rotomap.detectmolesnn.collate,
     )
 
+    trainer_kwargs = {
+        "max_steps": model.total_steps,
+        "log_every_n_steps": 1,
+        "callbacks": [mel.rotomap.detectmolesnn.GlobalProgressBar()],
+    }
     if enable_wandb:
-        trainer = pl.Trainer(
-            max_epochs=model.epochs,
-            log_every_n_steps=1,
-            logger=wandb_logger,
-        )
-    else:
-        trainer = pl.Trainer(max_epochs=model.epochs)
+        trainer_kwargs["logger"] = wandb_logger
+    trainer = pl.Trainer(**trainer_kwargs)
 
     metadata = {}
 
@@ -88,23 +90,6 @@ def main():
     with open(metadata_path, "w") as f:
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
-
-
-def collate(pretrained_list):
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-    import torch
-
-    data_list = []
-
-    for path in pretrained_list:
-        zipin = gzip.open(path, "rb")
-        data_list.append(torch.load(zipin))
-
-    return {
-        "x": torch.cat(d["data_x"] for d in data_list),
-        "y": torch.cat(d["data_y"] for d in data_list),
-    }
 
 
 if __name__ == "__main__":
