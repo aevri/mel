@@ -190,7 +190,8 @@ class CackModel(pl.LightningModule):
             result.detach().numpy()[0][0] * 255,
         )
         self.frame += 1
-        target = y[:, 2:3]
+        # target = y[:, 2:3]
+        target = y
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = F.cross_entropy(result, target)
         loss = F.mse_loss(result, target)
