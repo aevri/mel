@@ -162,7 +162,7 @@ class Swish(torch.nn.Module):
         return x * torch.sigmoid(x)
 
 
-class CackModel(pl.LightningModule):
+class Dense1x1(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.learning_rate = 0.075
@@ -243,6 +243,60 @@ class CackModel(pl.LightningModule):
             "interval": "step",
         }
         return [self.optimizer], [sched]
+
+
+class Threshold1x1(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.learning_rate = 0.075
+        self.total_steps = 600
+
+        self.min_sat = torch.nn.Parameter(torch.tensor(0.0))
+        self.max_sat = torch.nn.Parameter(torch.tensor(1.0))
+
+    def forward(self, x):
+        if len(x.shape) != 4:
+            raise ValueError("Expected NCHW.")
+
+        sat_channel = 4
+
+        y = x[:, sat_channel : sat_channel + 1, :, :] - self.min_sat
+        y /= self.max_sat
+        y = torch.sigmoid(y)
+
+        assert len(y.shape) == len(x.shape), (x.shape, y.shape)
+
+        return y
+
+    def training_step(self, batch, batch_nb):
+        x, y = batch
+        result = self(x)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        loss = F.mse_loss(result, target)
+        self.log("train/loss", loss)
+        return loss
+
+    def configure_optimizers(self):
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.total_steps,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
+
+
+class CackModel(Threshold1x1):
+    pass
 
 
 def collate(pretrained_list):
