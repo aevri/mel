@@ -3,6 +3,7 @@
 
 import argparse
 import gzip
+import pickle
 import sys
 
 import cv2
@@ -54,7 +55,7 @@ def main():
         x_data.rename_(None)
         y_data.rename_(None)
         data = {"x_data": x_data, "y_data": y_data}
-        torch.save(data, zipout)
+        torch.save(data, zipout, pickle_protocol=pickle.HIGHEST_PROTOCOL)
         zipout.close()
 
 
