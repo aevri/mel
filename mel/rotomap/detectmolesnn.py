@@ -274,7 +274,7 @@ class Threshold1x1(pl.LightningModule):
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
         loss = F.mse_loss(result, target)
-        self.log("train/loss", loss)
+        self.log("train/loss", loss.detach())
         return loss
 
     def configure_optimizers(self):
