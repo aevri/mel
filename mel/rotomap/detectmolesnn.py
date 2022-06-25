@@ -342,9 +342,9 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
     def on_train_start(self, trainer, pl_module):
         super().on_train_start(trainer, pl_module)
         self.main_progress_bar = tqdm.tqdm(
-            desc="Total Epochs",
-            initial=trainer.current_epoch,
-            total=trainer.max_epochs,
+            desc="Total Steps",
+            initial=0,
+            total=trainer.max_steps,
             position=(2 * self.process_position),
             disable=False,
             leave=True,
@@ -356,7 +356,7 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
     def on_train_end(self, trainer, pl_module):
         self.main_progress_bar.close()
 
-    def on_epoch_end(self, trainer, pl_module):
+    def on_train_batch_end(self, *_args, **_kwargs):
         self.main_progress_bar.update(1)
 
 
