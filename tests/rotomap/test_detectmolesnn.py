@@ -6,6 +6,52 @@ import torch
 import mel.rotomap.detectmolesnn
 
 
+def test_dice_loss_happy():
+    prediction = torch.tensor(
+        [
+            [[[1]]],
+            [[[0]]],
+            [[[0]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    target = torch.tensor(
+        [
+            [[[1]]],
+            [[[0]]],
+            [[[1]]],
+            [[[0]]],
+        ],
+        names=list("NCHW"),
+    )
+    loss = mel.rotomap.detectmolesnn.dice_loss(prediction, target)
+    assert loss == (2 * 1) / (2 + 2)
+
+
+def test_dice_loss_domain():
+    prediction = torch.tensor(
+        [
+            [[[1.1]]],
+            [[[0]]],
+            [[[0]]],
+            [[[-0.1]]],
+        ],
+        names=list("NCHW"),
+    )
+    target = torch.tensor(
+        [
+            [[[1]]],
+            [[[0]]],
+            [[[1]]],
+            [[[0]]],
+        ],
+        names=list("NCHW"),
+    )
+    with pytest.raises(ValueError):
+        mel.rotomap.detectmolesnn.dice_loss(prediction, target)
+
+
 def test_shuffled_images_sync_3x1x1x1():
     p = torch.tensor(
         [

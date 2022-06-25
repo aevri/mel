@@ -67,9 +67,7 @@ def process_path(args, path, model):
     # we only pay the import cost when we use it.
     import torch
 
-    photo = mel.lib.image.load_image(path)
-    mask = mel.rotomap.mask.load(path)
-    data_x = model.images_to_data(photo, mask)
+    data_x, data_m = rotoimage_to_xm_tensors(path)
     dataloader = torch.utils.data.DataLoader(data_x.unsqueeze(0), batch_size=1)
     assert len(dataloader) == 1
     model.eval()
@@ -80,7 +78,7 @@ def process_path(args, path, model):
     threshold = 0.5
     data_y[data_y < threshold] = 0
     data_y[data_y >= threshold] = 1
-    data_y[0][0][mask == 0] = 0
+    data_y[0][0][data_m == 0] = 0
 
     # write_result(data_y, "out.png")
     # write_contour_image(data_y, "contour.png")
@@ -89,6 +87,41 @@ def process_path(args, path, model):
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
 
+
+def rotoimage_to_xm_tensors(path):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+    import torchvision
+
+    to_tensor = torchvision.transforms.ToTensor()
+
+    photo = mel.lib.image.load_image(path)
+    mask = mel.rotomap.mask.load(path)
+    photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+    blur_photo = cv2.blur(photo, (64, 64))
+    blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
+    blur_mask = cv2.blur(mask, (64, 64))
+    x_data = torch.vstack(
+        [
+            to_tensor(x)
+            for x in [
+                photo,
+                photo_hsv,
+                blur_photo,
+                blur_photo_hsv,
+                blur_mask,
+            ]
+        ]
+    )
+
+    m_data = to_tensor(mask)
+    assert m_data.shape[0] == 1, m_data.shape
+
+    return (
+        x_data.rename(*list("CHW")),
+        m_data.rename(*list("CHW")),
+    )
 
 def moles_from_posxy(pos_xy):
     moles = []

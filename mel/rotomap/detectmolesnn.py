@@ -53,6 +53,8 @@ def dice_loss(prediction, target):
             "Images must be 1x1 tiles.",
             [img.shape for img in images],
         )
+    if any((img > 1).any() or (img < 0).any() for img in images):
+        raise ValueError("Pixel value must be [0, 1].")
 
     intersection = (prediction * target).sum()
     total = prediction.sum() + target.sum()
@@ -258,8 +260,6 @@ def collate(pretrained_list):
         torch.cat([d["x_data"] for d in data_list]),
         torch.cat([d["y_data"] for d in data_list]),
     )
-
-
 
 
 class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
