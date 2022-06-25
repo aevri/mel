@@ -2,6 +2,7 @@
 
 
 import gzip
+import io
 import sys
 
 import cv2
@@ -308,7 +309,10 @@ def collate(pretrained_list):
 
     for path in pretrained_list:
         zipin = gzip.open(path, "rb")
-        data_list.append(torch.load(zipin))
+        # See https://github.com/pytorch/pytorch/issues/55777
+        # Oddly much faster to load from BytesIO instead of zip directly.
+        bytesin = io.BytesIO(zipin.read())
+        data_list.append(torch.load(bytesin))
 
     return (
         torch.cat([d["x_data"] for d in data_list]),
