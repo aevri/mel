@@ -68,7 +68,9 @@ def process_path(args, path, model):
     import torch
 
     data_x, data_m = rotoimage_to_xm_tensors(path)
-    dataloader = torch.utils.data.DataLoader(data_x.unsqueeze(0), batch_size=1)
+    dataloader = torch.utils.data.DataLoader(
+        data_x.rename(None).unsqueeze(0), batch_size=1
+    )
     assert len(dataloader) == 1
     model.eval()
     with torch.no_grad():
@@ -78,7 +80,7 @@ def process_path(args, path, model):
     threshold = 0.5
     data_y[data_y < threshold] = 0
     data_y[data_y >= threshold] = 1
-    data_y[0][0][data_m == 0] = 0
+    data_y[0][0][data_m.rename(None)[0] == 0] = 0
 
     # write_result(data_y, "out.png")
     # write_contour_image(data_y, "contour.png")
@@ -122,6 +124,7 @@ def rotoimage_to_xm_tensors(path):
         x_data.rename(*list("CHW")),
         m_data.rename(*list("CHW")),
     )
+
 
 def moles_from_posxy(pos_xy):
     moles = []
