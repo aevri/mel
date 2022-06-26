@@ -333,7 +333,7 @@ class Threshold1x1(pl.LightningModule):
         return [self.optimizer], [sched]
 
 
-class CackModel(Threshold1x1):
+class CackModel(Dense1x1):
     pass
 
 
