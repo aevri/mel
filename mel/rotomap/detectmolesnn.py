@@ -5,7 +5,6 @@ import gzip
 import io
 import sys
 
-import cv2
 import torch
 import torchvision
 import tqdm
@@ -200,111 +199,11 @@ class Swish(torch.nn.Module):
         return x * torch.sigmoid(x)
 
 
-class Dense1x1(pl.LightningModule):
+class Model(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.learning_rate = 0.075
         self.total_steps = 600
-        self.l1_bn = torch.nn.BatchNorm2d(13)
-        self.l2_cnn = torch.nn.Conv2d(
-            in_channels=13, out_channels=3, kernel_size=1, padding=0
-        )
-        self.l3_swish = Swish()
-        self.l4_bn = torch.nn.BatchNorm2d(3)
-        self.l5_cnn = torch.nn.Conv2d(
-            in_channels=16, out_channels=3, kernel_size=1, padding=0
-        )
-        self.l6_swish = Swish()
-        self.l7_bn = torch.nn.BatchNorm2d(3)
-        self.l8_cnn = torch.nn.Conv2d(
-            in_channels=19, out_channels=1, kernel_size=1, padding=0
-        )
-        self.l9_sigmoid = torch.nn.Sigmoid()
-
-        self.frame = 0
-
-    # @staticmethod
-    # def images_to_data(photo, mask):
-    #     photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
-    #     blur_photo = cv2.blur(photo, (64, 64))
-    #     blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
-    #     blur_mask = cv2.blur(mask, (64, 64))
-    #     return torch.vstack(
-    #         [
-    #             to_tensor(photo),
-    #             to_tensor(photo_hsv),
-    #             to_tensor(mask),
-    #             to_tensor(blur_photo),
-    #             to_tensor(blur_photo_hsv),
-    #             to_tensor(blur_mask),
-    #         ]
-    #     )
-
-    def forward(self, x):
-        x1_out = self.l1_bn(x)
-        x4_out = self.l4_bn(self.l3_swish(self.l2_cnn(x1_out)))
-        x7_in = torch.cat([x1_out, x4_out], dim=1)
-        x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
-        x8_in = torch.cat([x7_in, x7_out], dim=1)
-        return self.l9_sigmoid(self.l8_cnn(x8_in))
-
-    def training_step(self, batch, batch_nb):
-        x, y = batch
-        result = self(x)
-        cv2.imwrite(
-            f"model_001_{self.frame:04}.png",
-            result.detach().numpy()[0][0] * 255,
-        )
-        self.frame += 1
-        # target = y[:, 2:3]
-        target = y
-        assert result.shape == target.shape, (result.shape, target.shape)
-        # loss = F.cross_entropy(result, target)
-        loss = F.mse_loss(result, target)
-        self.log("train/loss", loss)
-        # wandb.log({"train/loss": loss})
-        return loss
-
-    def configure_optimizers(self):
-        self.optimizer = torch.optim.AdamW(
-            self.parameters(), self.learning_rate
-        )
-
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            self.optimizer,
-            max_lr=self.learning_rate,
-            total_steps=self.total_steps,
-        )
-
-        sched = {
-            "scheduler": self.scheduler,
-            "interval": "step",
-        }
-        return [self.optimizer], [sched]
-
-
-class Threshold1x1(pl.LightningModule):
-    def __init__(self):
-        super().__init__()
-        self.learning_rate = 0.075
-        self.total_steps = 600
-
-        self.min_sat = torch.nn.Parameter(torch.tensor(0.0))
-        self.max_sat = torch.nn.Parameter(torch.tensor(1.0))
-
-    def forward(self, x):
-        if len(x.shape) != 4:
-            raise ValueError("Expected NCHW.")
-
-        sat_channel = 4
-
-        y = x[:, sat_channel : sat_channel + 1, :, :] - self.min_sat
-        y /= self.max_sat
-        y = torch.sigmoid(y)
-
-        assert len(y.shape) == len(x.shape), (x.shape, y.shape)
-
-        return y
 
     def training_step(self, batch, batch_nb):
         x, y = batch
@@ -331,6 +230,57 @@ class Threshold1x1(pl.LightningModule):
             "interval": "step",
         }
         return [self.optimizer], [sched]
+
+
+class Dense1x1(Model):
+    def __init__(self):
+        super().__init__()
+        self.l1_bn = torch.nn.BatchNorm2d(13)
+        self.l2_cnn = torch.nn.Conv2d(
+            in_channels=13, out_channels=3, kernel_size=1, padding=0
+        )
+        self.l3_swish = Swish()
+        self.l4_bn = torch.nn.BatchNorm2d(3)
+        self.l5_cnn = torch.nn.Conv2d(
+            in_channels=16, out_channels=3, kernel_size=1, padding=0
+        )
+        self.l6_swish = Swish()
+        self.l7_bn = torch.nn.BatchNorm2d(3)
+        self.l8_cnn = torch.nn.Conv2d(
+            in_channels=19, out_channels=1, kernel_size=1, padding=0
+        )
+        self.l9_sigmoid = torch.nn.Sigmoid()
+
+        self.frame = 0
+
+    def forward(self, x):
+        x1_out = self.l1_bn(x)
+        x4_out = self.l4_bn(self.l3_swish(self.l2_cnn(x1_out)))
+        x7_in = torch.cat([x1_out, x4_out], dim=1)
+        x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
+        x8_in = torch.cat([x7_in, x7_out], dim=1)
+        return self.l9_sigmoid(self.l8_cnn(x8_in))
+
+
+class Threshold1x1(Model):
+    def __init__(self):
+        super().__init__()
+        self.min_sat = torch.nn.Parameter(torch.tensor(0.0))
+        self.max_sat = torch.nn.Parameter(torch.tensor(1.0))
+
+    def forward(self, x):
+        if len(x.shape) != 4:
+            raise ValueError("Expected NCHW.")
+
+        sat_channel = 4
+
+        y = x[:, sat_channel : sat_channel + 1, :, :] - self.min_sat
+        y /= self.max_sat
+        y = torch.sigmoid(y)
+
+        assert len(y.shape) == len(x.shape), (x.shape, y.shape)
+
+        return y
 
 
 class CackModel(Dense1x1):
