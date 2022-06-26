@@ -6,6 +6,51 @@ import torch
 import mel.rotomap.detectmolesnn
 
 
+def test_sorted_unique_images_sync():
+    a = torch.tensor(
+        [
+            [[[1]]],
+            [[[0]]],
+            [[[0]]],
+            [[[1]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    b = torch.tensor(
+        [
+            [[[1]]],
+            [[[0]]],
+            [[[1]]],
+            [[[0]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    a2 = torch.tensor(
+        [
+            [[[0]]],
+            [[[0]]],
+            [[[1]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    b2 = torch.tensor(
+        [
+            [[[0]]],
+            [[[1]]],
+            [[[0]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    a_out, b_out = mel.rotomap.detectmolesnn.sorted_unique_images_sync(a, b)
+    print(a_out)
+    assert torch.equal(a_out, a2)
+    assert torch.equal(b_out, b2)
+
+
 def test_dice_loss_happy():
     prediction = torch.tensor(
         [

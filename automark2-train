@@ -66,7 +66,7 @@ def main():
         batch_size=2,
         shuffle=True,
         collate_fn=mel.rotomap.detectmolesnn.collate,
-        num_workers=3,
+        # num_workers=3,
     )
 
     trainer_kwargs = {

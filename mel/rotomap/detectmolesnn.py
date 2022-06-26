@@ -62,6 +62,43 @@ def dice_loss(prediction, target):
     return (2 * intersection) / total
 
 
+def sorted_unique_images_sync(image_a, image_b):
+    images = [image_a, image_b]
+    for img in images:
+        if "NCHW" != "".join(img.names):
+            raise ValueError("Image names must be NCHW, got:", img.names)
+    if not all(img.shape[0] == images[0].shape[0] for img in images):
+        raise ValueError(
+            "Images must have the same number of fragments.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[2:4] == (1, 1) for img in images):
+        raise ValueError(
+            "Images must be 1x1 tiles.",
+            [img.shape for img in images],
+        )
+
+    temp = torch.cat([image_a.rename(None), image_b.rename(None)], dim=1)
+    assert temp.shape == (
+        image_a.shape[0],
+        image_a.shape[1] + image_b.shape[1],
+        image_a.shape[2],
+        image_a.shape[3],
+    )
+    temp = torch.unique(temp, dim=0)
+    assert temp.shape[1:] == (
+        image_a.shape[1] + image_b.shape[1],
+        image_a.shape[2],
+        image_a.shape[3],
+    )
+
+    image_a, image_b = torch.split(
+        temp, [image_a.shape[1], image_b.shape[1]], dim=1
+    )
+
+    return image_a.rename(*list("NCHW")), image_b.rename(*list("NCHW"))
+
+
 def shuffled_images_sync(*images):
     if not images:
         raise ValueError("No images supplied")
