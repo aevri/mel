@@ -53,7 +53,11 @@ def main():
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
-    model = mel.rotomap.detectmolesnn.CackModel()
+
+    batch_size = 40
+    total_steps = len(args.train) / batch_size
+
+    model = mel.rotomap.detectmolesnn.CackModel(total_steps=total_steps)
 
     if enable_wandb:
         wandb_logger = pl.loggers.WandbLogger(

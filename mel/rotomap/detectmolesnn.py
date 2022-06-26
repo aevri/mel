@@ -200,10 +200,10 @@ class Swish(torch.nn.Module):
 
 
 class Model(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, total_steps):
         super().__init__()
         self.learning_rate = 0.075
-        self.total_steps = 600
+        self.total_steps = total_steps
 
     def training_step(self, batch, batch_nb):
         x, y = batch
@@ -233,8 +233,8 @@ class Model(pl.LightningModule):
 
 
 class Dense1x1(Model):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
         self.l1_bn = torch.nn.BatchNorm2d(13)
         self.l2_cnn = torch.nn.Conv2d(
             in_channels=13, out_channels=3, kernel_size=1, padding=0
@@ -263,8 +263,8 @@ class Dense1x1(Model):
 
 
 class Threshold1x1(Model):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
         self.min_sat = torch.nn.Parameter(torch.tensor(0.0))
         self.max_sat = torch.nn.Parameter(torch.tensor(1.0))
 
