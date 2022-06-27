@@ -67,7 +67,7 @@ def main():
 
     train_dl = torch.utils.data.DataLoader(
         args.train,
-        batch_size=2,
+        batch_size=batch_size,
         shuffle=True,
         collate_fn=mel.rotomap.detectmolesnn.collate,
         # num_workers=3,
