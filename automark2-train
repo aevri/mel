@@ -77,6 +77,7 @@ def main():
         "max_steps": model.total_steps,
         "log_every_n_steps": 1,
         "callbacks": [mel.rotomap.detectmolesnn.GlobalProgressBar()],
+        "enable_checkpointing": False,
     }
     if enable_wandb:
         trainer_kwargs["logger"] = wandb_logger
