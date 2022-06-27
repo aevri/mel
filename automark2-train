@@ -55,7 +55,7 @@ def main():
 
 
     batch_size = 40
-    total_steps = len(args.train) / batch_size
+    total_steps = 1 + (len(args.train) // batch_size)
 
     model = mel.rotomap.detectmolesnn.CackModel(total_steps=total_steps)
 
