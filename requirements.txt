@@ -10,7 +10,7 @@ pygame==2.1.2
 pylint==2.14.3
 pytest==7.1.2
 pytorch-lightning==1.6.4
-torch==1.11.0
+torch==1.12.0
 torchvision==0.12.0
 tqdm==4.64.0
 vulture==2.4
