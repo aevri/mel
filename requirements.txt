@@ -7,7 +7,7 @@ opencv-python==4.6.0.66
 pycodestyle==2.8.0
 pyflakes==2.4.0
 pygame==2.1.2
-pylint==2.14.3
+pylint==2.14.4
 pytest==7.1.2
 pytorch-lightning==1.6.4
 torch==1.12.0
