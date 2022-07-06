@@ -53,7 +53,7 @@ def main():
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
-    batch_size = 40
+    batch_size = 1
     total_steps = 1 + (len(args.train) // batch_size)
 
     model = mel.rotomap.detectmolesnn.CackModel(total_steps=total_steps)
@@ -78,12 +78,17 @@ def main():
         "callbacks": [mel.rotomap.detectmolesnn.GlobalProgressBar()],
         "enable_checkpointing": False,
         "accelerator": "auto",
+        "auto_lr_find": True,
     }
     if enable_wandb:
         trainer_kwargs["logger"] = wandb_logger
     trainer = pl.Trainer(**trainer_kwargs)
 
     metadata = {}
+
+    print("Pre-tune learning rate:", model.learning_rate)
+    trainer.tune(model, train_dl)
+    print("Post-tune learning rate:", model.learning_rate)
 
     trainer.fit(model, train_dl)
 
