@@ -58,7 +58,10 @@ def dice_loss(prediction, target):
 
     intersection = (prediction * target).sum()
     total = prediction.sum() + target.sum()
-    return (2 * intersection) / total
+    loss = 1 - ((2 * intersection) / total)
+    assert loss >= 0
+    assert loss <= 1
+    return loss
 
 
 def sorted_unique_images_sync(image_a, image_b):

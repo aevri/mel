@@ -51,7 +51,7 @@ def test_sorted_unique_images_sync():
     assert torch.equal(b_out, b2)
 
 
-def test_dice_loss_happy():
+def test_dice_loss_happy_half():
     prediction = torch.tensor(
         [
             [[[1]]],
@@ -72,6 +72,31 @@ def test_dice_loss_happy():
     )
     loss = mel.rotomap.detectmolesnn.dice_loss(prediction, target)
     assert loss == (2 * 1) / (2 + 2)
+    assert loss == 0.5
+
+
+def test_dice_loss_happy_seventh():
+    prediction = torch.tensor(
+        [
+            [[[1]]],
+            [[[1]]],
+            [[[1]]],
+            [[[0]]],
+        ],
+        names=list("NCHW"),
+    )
+    target = torch.tensor(
+        [
+            [[[1]]],
+            [[[1]]],
+            [[[1]]],
+            [[[1]]],
+        ],
+        names=list("NCHW"),
+    )
+    loss = mel.rotomap.detectmolesnn.dice_loss(prediction, target)
+    assert torch.isclose(loss, torch.Tensor([1 / 7])), (loss, 1 / 7)
+    assert torch.isclose(loss, torch.Tensor([1 - ((2 * 3 * 1) / (3 + 4))]))
 
 
 def test_dice_loss_domain():
