@@ -245,7 +245,7 @@ class Model(pl.LightningModule):
         assert result.shape == target.shape, (result.shape, target.shape)
         loss = dice_loss(result, target)
         self.log("train/loss", loss.detach())
-        return loss
+        return {"loss": loss, "pres": precision_ish(result, target)}
 
     def configure_optimizers(self):
         self.optimizer = torch.optim.AdamW(
