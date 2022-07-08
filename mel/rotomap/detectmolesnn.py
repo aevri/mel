@@ -68,6 +68,32 @@ def dice_loss(prediction, target):
     return loss
 
 
+def precision_ish(prediction, target):
+    images = [prediction, target]
+    if not all(len(img.shape) == 4 for img in images):
+        raise ValueError(
+            "Images must be of rank 4.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[0] == images[0].shape[0] for img in images):
+        raise ValueError(
+            "Images must have the same number of fragments.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[2:4] == (1, 1) for img in images):
+        raise ValueError(
+            "Images must be 1x1 tiles.",
+            [img.shape for img in images],
+        )
+    if any((img > 1).any() or (img < 0).any() for img in images):
+        raise ValueError("Pixel value must be [0, 1].")
+
+    result = (prediction * target).sum() / prediction.sum()
+    assert result >= 0
+    assert result <= 1
+    return result
+
+
 def sorted_unique_images_sync(image_a, image_b):
     images = [image_a, image_b]
     for img in images:
