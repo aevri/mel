@@ -10,7 +10,6 @@ import torchvision
 import tqdm
 
 import pytorch_lightning as pl
-from torch.nn import functional as F
 
 # import PIL
 # import wandb
@@ -40,9 +39,9 @@ to_tensor = torchvision.transforms.ToTensor()
 
 def dice_loss(prediction, target):
     images = [prediction, target]
-    for img in images:
-        if "NCHW" != "".join(img.names):
-            raise ValueError("Image names must be NCHW, got:", img.names)
+    # for img in images:
+    #     if "NCHW" != "".join(img.names):
+    #         raise ValueError("Image names must be NCHW, got:", img.names)
     if not all(img.shape[0] == images[0].shape[0] for img in images):
         raise ValueError(
             "Images must have the same number of fragments.",
@@ -213,7 +212,7 @@ class Model(pl.LightningModule):
         result = self(x)
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
-        loss = F.mse_loss(result, target)
+        loss = dice_loss(result, target)
         self.log("train/loss", loss.detach())
         return loss
 
