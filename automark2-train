@@ -78,7 +78,7 @@ def main():
         "callbacks": [mel.rotomap.detectmolesnn.GlobalProgressBar()],
         "enable_checkpointing": False,
         "accelerator": "auto",
-        "auto_lr_find": True,
+        # "auto_lr_find": True,
     }
     if enable_wandb:
         trainer_kwargs["logger"] = wandb_logger
@@ -86,9 +86,9 @@ def main():
 
     metadata = {}
 
-    print("Pre-tune learning rate:", model.learning_rate)
-    trainer.tune(model, train_dl)
-    print("Post-tune learning rate:", model.learning_rate)
+    # print("Pre-tune learning rate:", model.learning_rate)
+    # trainer.tune(model, train_dl)
+    # print("Post-tune learning rate:", model.learning_rate)
 
     trainer.fit(model, train_dl)
 
