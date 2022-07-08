@@ -1,0 +1,47 @@
+#! /usr/bin/env python
+"""Show information about the model."""
+
+import argparse
+import sys
+
+import cv2
+import mel.rotomap.moles
+import mel.lib.common
+import mel.rotomap.detectmolesnn
+
+
+def setup_parser():
+    parser = argparse.ArgumentParser()
+    return parser
+
+
+def make_model():
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "automark2.pth"
+    # metadata_path = model_dir / "automark2.json"
+
+    model = mel.rotomap.detectmolesnn.CackModel(total_steps=0)
+    model.load_state_dict(torch.load(model_path))
+
+    return model
+
+
+def write_result(result, path):
+    cv2.imwrite(path, result.detach().numpy()[0][0] * 255)
+
+
+def main():
+    parser = setup_parser()
+    parser.parse_args()
+
+    model = make_model()
+    model.print_details()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

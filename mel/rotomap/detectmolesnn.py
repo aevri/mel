@@ -231,6 +231,13 @@ class Model(pl.LightningModule):
         }
         return [self.optimizer], [sched]
 
+    def print_details(self):
+        print(self)
+        print()
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                print(name, param.data.shape)
+
 
 class Dense1x1(Model):
     def __init__(self, total_steps):
@@ -260,6 +267,33 @@ class Dense1x1(Model):
         x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
         x8_in = torch.cat([x7_in, x7_out], dim=1)
         return self.l9_sigmoid(self.l8_cnn(x8_in))
+
+    def print_details(self):
+        super().print_details()
+
+        channel_names = [
+            "photo_B",
+            "photo_G",
+            "photo_R",
+            "photo_hsv_H",
+            "photo_hsv_S",
+            "photo_hsv_V",
+            "blur_photo_B",
+            "blur_photo_G",
+            "blur_photo_R",
+            "blur_photo_hsv_H",
+            "blur_photo_hsv_S",
+            "blur_photo_hsv_V",
+            "blur_mask",
+        ]
+
+        for cnn in [self.l2_cnn, self.l5_cnn, self.l8_cnn]:
+            print()
+            for i, name in enumerate(channel_names):
+                print(f"{name:20} ", end="")
+                for output in cnn.weight:
+                    print(f"{output[i][0][0].item(): .3f}  ", end="")
+                print()
 
 
 class Threshold1x1(Model):
