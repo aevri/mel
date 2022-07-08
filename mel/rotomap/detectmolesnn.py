@@ -383,7 +383,11 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
     def on_train_end(self, trainer, pl_module):
         self.main_progress_bar.close()
 
-    def on_train_batch_end(self, *_args, **_kwargs):
+    def on_train_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx
+    ):
+        loss = outputs["loss"].item()
+        self.main_progress_bar.set_description(f"loss:{loss:0.4g}")
         self.main_progress_bar.update(1)
 
 
