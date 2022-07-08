@@ -42,6 +42,11 @@ def dice_loss(prediction, target):
     # for img in images:
     #     if "NCHW" != "".join(img.names):
     #         raise ValueError("Image names must be NCHW, got:", img.names)
+    if not all(len(img.shape) == 4 for img in images):
+        raise ValueError(
+            "Images must be of rank 4.",
+            [img.shape for img in images],
+        )
     if not all(img.shape[0] == images[0].shape[0] for img in images):
         raise ValueError(
             "Images must have the same number of fragments.",
