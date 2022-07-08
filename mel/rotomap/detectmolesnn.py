@@ -391,8 +391,10 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx
     ):
-        loss = outputs["loss"].item()
-        self.main_progress_bar.set_description(f"loss:{loss:0.4g}")
+        desc = " ".join(
+            f"{name}:{val.item():.0%}" for name, val in outputs.items()
+        )
+        self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
 
 
