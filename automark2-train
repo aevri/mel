@@ -53,7 +53,7 @@ def main():
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
-    batch_size = 1
+    batch_size = 4
     total_steps = 1 + (len(args.train) // batch_size)
 
     model = mel.rotomap.detectmolesnn.CackModel(total_steps=total_steps)
