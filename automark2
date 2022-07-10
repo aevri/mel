@@ -27,6 +27,11 @@ def setup_parser():
         "--extra-stem",
         help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
     )
+    parser.add_argument(
+        "--save-images",
+        help="Save images of the processing.",
+        action="store_true",
+    )
     return parser
 
 
@@ -82,8 +87,14 @@ def process_path(args, path, model):
     data_y[data_y >= threshold] = 1
     data_y[0][0][data_m.rename(None)[0] == 0] = 0
 
-    # write_result(data_y, "out.png")
-    # write_contour_image(data_y, "contour.png")
+    if args.save_images:
+        extra_suffix = ""
+        if args.extra_stem:
+            extra_suffix = f".{args.extra_stem}"
+        write_result(data_y, str(path) + f"{extra_suffix}.automark2.png")
+        write_contour_image(
+            data_y, str(path) + f"{extra_suffix}.automark2.contour.png"
+        )
 
     pos_xy = pos_xy_from_contours(data_y)
     moles = moles_from_posxy(pos_xy)
