@@ -10,6 +10,7 @@ import torchvision
 import tqdm
 
 import pytorch_lightning as pl
+from torch.nn import functional as F
 
 # import PIL
 # import wandb
@@ -63,8 +64,8 @@ def dice_loss(prediction, target):
     intersection = (prediction * target).sum()
     total = prediction.sum() + target.sum()
     loss = 1 - ((2 * intersection) / total)
-    assert loss >= 0
-    assert loss <= 1
+    assert loss >= 0, loss
+    assert loss <= 1, loss
     return loss
 
 
@@ -89,8 +90,34 @@ def precision_ish(prediction, target):
         raise ValueError("Pixel value must be [0, 1].")
 
     result = (prediction * target).sum() / prediction.sum()
-    assert result >= 0
-    assert result <= 1
+    assert result >= 0, result
+    assert result <= 1, result
+    return result
+
+
+def recall_ish(prediction, target):
+    images = [prediction, target]
+    if not all(len(img.shape) == 4 for img in images):
+        raise ValueError(
+            "Images must be of rank 4.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[0] == images[0].shape[0] for img in images):
+        raise ValueError(
+            "Images must have the same number of fragments.",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[2:4] == (1, 1) for img in images):
+        raise ValueError(
+            "Images must be 1x1 tiles.",
+            [img.shape for img in images],
+        )
+    if any((img > 1).any() or (img < 0).any() for img in images):
+        raise ValueError("Pixel value must be [0, 1].")
+
+    result = (prediction * target).sum() / target.sum()
+    assert result >= 0, result
+    assert result <= 1, result
     return result
 
 
@@ -232,6 +259,16 @@ class Swish(torch.nn.Module):
         return x * torch.sigmoid(x)
 
 
+def mean_l1(model):
+    l1_sum = sum(p.abs().sum() for p in model.parameters() if p.requires_grad)
+    p_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return l1_sum / p_count
+
+
+def mean(*args):
+    return sum(args) / len(args)
+
+
 class Model(pl.LightningModule):
     def __init__(self, total_steps):
         super().__init__()
@@ -243,9 +280,17 @@ class Model(pl.LightningModule):
         result = self(x)
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
-        loss = dice_loss(result, target)
+        # loss = dice_loss(result, target)
+        loss = mean(F.mse_loss(result, target), mean_l1(self))
         self.log("train/loss", loss.detach())
-        return {"loss": loss, "pres": precision_ish(result, target)}
+        return {
+            "loss": loss,
+            "dice": dice_loss(result, target),
+            "pres": precision_ish(result, target),
+            "rec": recall_ish(result, target),
+            "mse": F.mse_loss(result, target),
+            "mul1": mean_l1(self),
+        }
 
     def configure_optimizers(self):
         self.optimizer = torch.optim.AdamW(
@@ -418,7 +463,7 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         self, trainer, pl_module, outputs, batch, batch_idx
     ):
         desc = " ".join(
-            f"{name}:{val.item():.0%}" for name, val in outputs.items()
+            f"{name}:{val.item():.3}" for name, val in outputs.items()
         )
         self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
