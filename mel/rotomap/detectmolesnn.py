@@ -375,6 +375,141 @@ class Dense1x1(Model):
                 print()
 
 
+class Dense1x1HueSat(Model):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        image_channels = 4
+        self.l1_bn = torch.nn.BatchNorm2d(image_channels)
+        self.l2_cnn = torch.nn.Conv2d(
+            in_channels=image_channels,
+            out_channels=3,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l3_swish = Swish()
+        self.l4_bn = torch.nn.BatchNorm2d(3)
+        self.l5_cnn = torch.nn.Conv2d(
+            in_channels=image_channels + 3,
+            out_channels=3,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l6_swish = Swish()
+        self.l7_bn = torch.nn.BatchNorm2d(3)
+        self.l8_cnn = torch.nn.Conv2d(
+            in_channels=image_channels + 6,
+            out_channels=1,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l9_sigmoid = torch.nn.Sigmoid()
+
+        self.frame = 0
+
+    def forward(self, orig_x):
+        sat_channel = 4
+        hue_channel = 3
+        blur_hue_channel = 9
+        blur_sat_channel = 10
+        x = orig_x[
+            :,
+            [sat_channel, hue_channel, blur_hue_channel, blur_sat_channel],
+            :,
+            :,
+        ]
+        x1_out = self.l1_bn(x)
+        x4_out = self.l4_bn(self.l3_swish(self.l2_cnn(x1_out)))
+        x7_in = torch.cat([x1_out, x4_out], dim=1)
+        x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
+        x8_in = torch.cat([x7_in, x7_out], dim=1)
+        return self.l9_sigmoid(self.l8_cnn(x8_in))
+
+    def print_details(self):
+        super().print_details()
+
+        channel_names = [
+            "photo_hsv_H",
+            "photo_hsv_S",
+            "blur_photo_hsv_H",
+            "blur_photo_hsv_S",
+        ]
+
+        for cnn in [self.l2_cnn, self.l5_cnn, self.l8_cnn]:
+            print()
+            for i, name in enumerate(channel_names):
+                print(f"{name:20} ", end="")
+                for output in cnn.weight:
+                    print(f"{output[i][0][0].item(): .3f}  ", end="")
+                print()
+
+
+class Dense1x1SatMask(Model):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        image_channels = 3
+        self.l1_bn = torch.nn.BatchNorm2d(image_channels)
+        self.l2_cnn = torch.nn.Conv2d(
+            in_channels=image_channels,
+            out_channels=3,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l3_swish = Swish()
+        self.l4_bn = torch.nn.BatchNorm2d(3)
+        self.l5_cnn = torch.nn.Conv2d(
+            in_channels=image_channels + 3,
+            out_channels=3,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l6_swish = Swish()
+        self.l7_bn = torch.nn.BatchNorm2d(3)
+        self.l8_cnn = torch.nn.Conv2d(
+            in_channels=image_channels + 6,
+            out_channels=1,
+            kernel_size=1,
+            padding=0,
+        )
+        self.l9_sigmoid = torch.nn.Sigmoid()
+
+        self.frame = 0
+
+    def forward(self, orig_x):
+        sat_channel = 4
+        blur_sat_channel = 10
+        mask_channel = 12
+        x = orig_x[
+            :,
+            [sat_channel, blur_sat_channel, mask_channel],
+            :,
+            :,
+        ]
+        x1_out = self.l1_bn(x)
+        x4_out = self.l4_bn(self.l3_swish(self.l2_cnn(x1_out)))
+        x7_in = torch.cat([x1_out, x4_out], dim=1)
+        x7_out = self.l7_bn(self.l6_swish(self.l5_cnn(x7_in)))
+        x8_in = torch.cat([x7_in, x7_out], dim=1)
+        return self.l9_sigmoid(self.l8_cnn(x8_in))
+
+    def print_details(self):
+        super().print_details()
+
+        channel_names = [
+            "photo_hsv_H",
+            "photo_hsv_S",
+            "blur_photo_hsv_H",
+            "blur_photo_hsv_S",
+        ]
+
+        for cnn in [self.l2_cnn, self.l5_cnn, self.l8_cnn]:
+            print()
+            for i, name in enumerate(channel_names):
+                print(f"{name:20} ", end="")
+                for output in cnn.weight:
+                    print(f"{output[i][0][0].item(): .3f}  ", end="")
+                print()
+
+
 class Threshold1x1(Model):
     def __init__(self, total_steps):
         super().__init__(total_steps)
@@ -396,7 +531,7 @@ class Threshold1x1(Model):
         return y
 
 
-class CackModel(Dense1x1):
+class CackModel(Dense1x1SatMask):
     pass
 
 
