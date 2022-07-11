@@ -375,10 +375,10 @@ class Dense1x1(Model):
                 print()
 
 
-class Dense1x1HueSat(Model):
+class Dense1x1HueSatMask(Model):
     def __init__(self, total_steps):
         super().__init__(total_steps)
-        image_channels = 4
+        image_channels = 5
         self.l1_bn = torch.nn.BatchNorm2d(image_channels)
         self.l2_cnn = torch.nn.Conv2d(
             in_channels=image_channels,
@@ -411,9 +411,16 @@ class Dense1x1HueSat(Model):
         hue_channel = 3
         blur_hue_channel = 9
         blur_sat_channel = 10
+        blur_mask_channel = 12
         x = orig_x[
             :,
-            [sat_channel, hue_channel, blur_hue_channel, blur_sat_channel],
+            [
+                sat_channel,
+                hue_channel,
+                blur_hue_channel,
+                blur_sat_channel,
+                blur_mask_channel,
+            ],
             :,
             :,
         ]
@@ -432,6 +439,7 @@ class Dense1x1HueSat(Model):
             "photo_hsv_S",
             "blur_photo_hsv_H",
             "blur_photo_hsv_S",
+            "blur_mask",
         ]
 
         for cnn in [self.l2_cnn, self.l5_cnn, self.l8_cnn]:
@@ -531,7 +539,7 @@ class Threshold1x1(Model):
         return y
 
 
-class CackModel(Dense1x1SatMask):
+class CackModel(Dense1x1HueSatMask):
     pass
 
 
