@@ -456,33 +456,31 @@ class Conv1x1HueSatMask(Model):
         super().__init__(total_steps)
         image_channels = 5
         width = 10
-        self.cnn = torch.nn.Sequence(
-            [
-                torch.nn.BatchNorm2d(image_channels),
-                torch.nn.Conv2d(
-                    in_channels=image_channels,
-                    out_channels=width,
-                    kernel_size=1,
-                    padding=0,
-                ),
-                Swish(),
-                torch.nn.BatchNorm2d(3),
-                torch.nn.Conv2d(
-                    in_channels=width,
-                    out_channels=width,
-                    kernel_size=1,
-                    padding=0,
-                ),
-                Swish(),
-                torch.nn.BatchNorm2d(3),
-                torch.nn.Conv2d(
-                    in_channels=width,
-                    out_channels=1,
-                    kernel_size=1,
-                    padding=0,
-                ),
-                torch.nn.Sigmoid(),
-            ]
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(image_channels),
+            torch.nn.Conv2d(
+                in_channels=image_channels,
+                out_channels=width,
+                kernel_size=1,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=width,
+                kernel_size=1,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=1,
+                kernel_size=1,
+                padding=0,
+            ),
+            torch.nn.Sigmoid(),
         )
 
     def forward(self, orig_x):
