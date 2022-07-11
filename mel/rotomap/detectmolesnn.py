@@ -451,6 +451,78 @@ class Dense1x1HueSatMask(Model):
                 print()
 
 
+class Conv1x1HueSatMask(Model):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        image_channels = 5
+        width = 10
+        self.cnn = torch.nn.Sequence(
+            [
+                torch.nn.BatchNorm2d(image_channels),
+                torch.nn.Conv2d(
+                    in_channels=image_channels,
+                    out_channels=width,
+                    kernel_size=1,
+                    padding=0,
+                ),
+                Swish(),
+                torch.nn.BatchNorm2d(3),
+                torch.nn.Conv2d(
+                    in_channels=width,
+                    out_channels=width,
+                    kernel_size=1,
+                    padding=0,
+                ),
+                Swish(),
+                torch.nn.BatchNorm2d(3),
+                torch.nn.Conv2d(
+                    in_channels=width,
+                    out_channels=1,
+                    kernel_size=1,
+                    padding=0,
+                ),
+                torch.nn.Sigmoid(),
+            ]
+        )
+
+    def forward(self, orig_x):
+        sat_channel = 4
+        hue_channel = 3
+        blur_hue_channel = 9
+        blur_sat_channel = 10
+        blur_mask_channel = 12
+        x = orig_x[
+            :,
+            [
+                sat_channel,
+                hue_channel,
+                blur_hue_channel,
+                blur_sat_channel,
+                blur_mask_channel,
+            ],
+            :,
+            :,
+        ]
+        return self.cnn(x)
+
+    def print_details(self):
+        super().print_details()
+
+        channel_names = [
+            "photo_hsv_H",
+            "photo_hsv_S",
+            "blur_photo_hsv_H",
+            "blur_photo_hsv_S",
+            "blur_mask",
+        ]
+
+        for i, name in enumerate(channel_names):
+            print(f"{name:20} ", end="")
+            for output in self.cnn[1].weight:
+                print(f"{output[i][0][0].item(): .3f}  ", end="")
+            print()
+
+
 class Threshold1x1(Model):
     def __init__(self, total_steps):
         super().__init__(total_steps)
@@ -472,7 +544,7 @@ class Threshold1x1(Model):
         return y
 
 
-class CackModel(Dense1x1HueSatMask):
+class CackModel(Conv1x1HueSatMask):
     pass
 
 
