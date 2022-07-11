@@ -281,7 +281,8 @@ class Model(pl.LightningModule):
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = dice_loss(result, target)
-        loss = mean(F.mse_loss(result, target), mean_l1(self))
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        loss = F.mse_loss(result, target)
         self.log("train/loss", loss.detach())
         return {
             "loss": loss,
