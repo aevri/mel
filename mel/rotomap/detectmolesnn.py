@@ -484,6 +484,14 @@ class Conv1x1HueSatMask(Model):
             torch.nn.BatchNorm2d(width),
             torch.nn.Conv2d(
                 in_channels=width,
+                out_channels=width,
+                kernel_size=1,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
                 out_channels=1,
                 kernel_size=1,
                 padding=0,
