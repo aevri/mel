@@ -12,6 +12,7 @@ import tqdm
 import pytorch_lightning as pl
 from torch.nn import functional as F
 
+
 # import PIL
 # import wandb
 
@@ -53,11 +54,6 @@ def dice_loss(prediction, target):
             "Images must have the same number of fragments.",
             [img.shape for img in images],
         )
-    if not all(img.shape[2:4] == (1, 1) for img in images):
-        raise ValueError(
-            "Images must be 1x1 tiles.",
-            [img.shape for img in images],
-        )
     if any((img > 1).any() or (img < 0).any() for img in images):
         raise ValueError("Pixel value must be [0, 1].")
 
@@ -81,11 +77,6 @@ def precision_ish(prediction, target):
             "Images must have the same number of fragments.",
             [img.shape for img in images],
         )
-    if not all(img.shape[2:4] == (1, 1) for img in images):
-        raise ValueError(
-            "Images must be 1x1 tiles.",
-            [img.shape for img in images],
-        )
     if any((img > 1).any() or (img < 0).any() for img in images):
         raise ValueError("Pixel value must be [0, 1].")
 
@@ -105,11 +96,6 @@ def recall_ish(prediction, target):
     if not all(img.shape[0] == images[0].shape[0] for img in images):
         raise ValueError(
             "Images must have the same number of fragments.",
-            [img.shape for img in images],
-        )
-    if not all(img.shape[2:4] == (1, 1) for img in images):
-        raise ValueError(
-            "Images must be 1x1 tiles.",
             [img.shape for img in images],
         )
     if any((img > 1).any() or (img < 0).any() for img in images):
@@ -558,8 +544,124 @@ class Threshold1x1(Model):
         return y
 
 
+class Model2(Model):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+
+    def training_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        loss = F.mse_loss(result, target)
+        self.log("train/loss", loss.detach())
+        return {
+            "loss": loss,
+            "dice": dice_loss(result, target),
+            "pres": precision_ish(result, target),
+            "rec": recall_ish(result, target),
+            "mse": F.mse_loss(result, target),
+            "mul1": mean_l1(self),
+        }
+
+    def configure_optimizers(self):
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.total_steps,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
+
+    def print_details(self):
+        print(self)
+        print()
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                print(name, param.data.shape)
+
+
+class Conv3x3HueSatMask(Model2):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        image_channels = 2
+        width = 10
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(image_channels),
+            torch.nn.Conv2d(
+                in_channels=image_channels,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=1,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            torch.nn.Sigmoid(),
+        )
+
+    def forward(self, x, mask):
+        result = self.cnn(x)
+        mask2 = torchvision.transforms.functional.resize(
+            mask,
+            result.shape[-2:],
+            interpolation=torchvision.transforms.InterpolationMode.NEAREST,
+        )
+        result.masked_fill(mask2, 0)
+        return result
+
+
 class CackModel(Conv1x1HueSatMask):
     pass
+
+
+class CackModel2(Conv3x3HueSatMask):
+    pass
+
+
+def load_ptgz(path):
+    zipin = gzip.open(path, "rb")
+    # See https://github.com/pytorch/pytorch/issues/55777
+    # Oddly much faster to load from BytesIO instead of zip directly.
+    bytesin = io.BytesIO(zipin.read())
+    return torch.load(bytesin)
 
 
 def collate(pretrained_list):
@@ -570,11 +672,7 @@ def collate(pretrained_list):
     data_list = []
 
     for path in pretrained_list:
-        zipin = gzip.open(path, "rb")
-        # See https://github.com/pytorch/pytorch/issues/55777
-        # Oddly much faster to load from BytesIO instead of zip directly.
-        bytesin = io.BytesIO(zipin.read())
-        data_list.append(torch.load(bytesin))
+        data_list.append(load_ptgz(path))
 
     return (
         torch.cat([d["x_data"] for d in data_list]),

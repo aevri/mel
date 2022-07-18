@@ -1,0 +1,94 @@
+#! /usr/bin/env python
+"""Pre-train 'automark3'."""
+
+import argparse
+import gzip
+import pickle
+import sys
+
+import cv2
+import torch
+import torchvision
+
+from tqdm import tqdm
+
+import mel.rotomap.moles
+import mel.lib.common
+import mel.rotomap.detectmolesnn
+
+
+def setup_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "IMAGES", nargs="+", help="A list of paths to images to process."
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print information about the processing.",
+    )
+    return parser
+
+
+def main():
+    parser = setup_parser()
+    args = parser.parse_args()
+
+    for path in tqdm(args.IMAGES):
+        outpath = path + ".automark3.pt.gz"
+        if args.verbose:
+            print(outpath)
+        zipout = gzip.open(outpath, "wb", compresslevel=6)
+        x_data, y_data, m_data = rotoimage_to_xym_tensors(path)
+        x_data.rename_(None)
+        y_data.rename_(None)
+        m_data.rename_(None)
+        data = {"x_data": x_data, "y_data": y_data, "m_data": m_data}
+        torch.save(data, zipout, pickle_protocol=pickle.HIGHEST_PROTOCOL)
+        zipout.close()
+
+
+def rotoimage_to_xym_tensors(path):
+    to_tensor = torchvision.transforms.ToTensor()
+
+    photo = mel.lib.image.load_image(path)
+    mask = mel.rotomap.mask.load(path)
+    photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+    # blur_photo = cv2.blur(photo, (64, 64))
+    x_data = torch.vstack(
+        [
+            to_tensor(x)[[0, 1]]
+            for x in [
+                photo_hsv,
+            ]
+        ]
+    )
+
+    moles = mel.rotomap.moles.load_image_moles(path)
+    image_height, image_width = photo.shape[0:2]
+    locations_image = mel.rotomap.detectmolesnn.locations_image(
+        moles, image_width, image_height
+    )
+    locations_image = cv2.resize(
+        # locations_image, (image_width // 16, image_height // 16)
+        locations_image, (188, 251)
+    )
+    y_data = to_tensor(locations_image)
+    y_data = y_data[2:3].clone()
+    assert y_data.shape[0] == 1, y_data.shape
+    # assert y_data.shape[1] == x_data.shape[1] // 16
+    # assert y_data.shape[2] == x_data.shape[2] // 16
+
+    m_data = to_tensor(mask)
+    # assert m_data.shape == y_data.shape, m_data.shape
+
+    return (
+        x_data.rename(*list("CHW")),
+        y_data.rename(*list("CHW")),
+        m_data.rename(*list("CHW")),
+    )
+
+
+if __name__ == "__main__":
+    sys.exit(main())
