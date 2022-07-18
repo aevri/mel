@@ -64,7 +64,7 @@ def main():
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        process_path(args, path, model)
+        process_path_2(args, path, model)
 
 
 def process_path(args, path, model):
@@ -96,6 +96,52 @@ def process_path(args, path, model):
         # write_contour_image(
         #     data_y, str(path) + f"{extra_suffix}.automark3.contour.png"
         # )
+
+    pos_xy = pos_xy_from_contours(data_y)
+    moles = moles_from_posxy(pos_xy)
+    mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
+
+
+def rotoimage_to_y_tensor(path):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torchvision
+    to_tensor = torchvision.transforms.ToTensor()
+
+    photo = mel.lib.image.load_image(path)
+    moles = mel.rotomap.moles.load_image_moles(path)
+    image_height, image_width = photo.shape[0:2]
+    locations_image = mel.rotomap.detectmolesnn.locations_image(
+        moles, image_width, image_height
+    )
+    locations_image = cv2.resize(
+        # locations_image, (image_width // 16, image_height // 16)
+        locations_image,
+        (188, 251),
+    )
+    y_data = to_tensor(locations_image)
+    y_data = y_data[2:3].clone()
+    assert y_data.shape[0] == 1, y_data.shape
+
+    return y_data
+
+
+def process_path_2(args, path, model):
+    data_y = rotoimage_to_y_tensor(path)
+
+    threshold = 0.5
+    data_y[data_y < threshold] = 0
+    data_y[data_y >= threshold] = 1
+    # data_y[0][0][data_m.rename(None)[0] == 0] = 0
+
+    if args.save_images:
+        extra_suffix = ""
+        if args.extra_stem:
+            extra_suffix = f".{args.extra_stem}"
+        write_result(data_y, str(path) + f"{extra_suffix}.automark3.png")
+        write_contour_image(
+            data_y, str(path) + f"{extra_suffix}.automark3.contour.png"
+        )
 
     pos_xy = pos_xy_from_contours(data_y)
     moles = moles_from_posxy(pos_xy)
