@@ -78,7 +78,8 @@ def rotoimage_to_xym_tensors(path):
     )
     locations_image = cv2.resize(
         # locations_image, (image_width // 16, image_height // 16)
-        locations_image, (188, 251)
+        locations_image,
+        (188, 251),
     )
     y_data = to_tensor(locations_image)
     y_data = y_data[2:3].clone()
