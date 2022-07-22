@@ -39,22 +39,55 @@ def main():
     parser = setup_parser()
     args = parser.parse_args()
 
+    model = make_model()
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        process_path(args, path)
+        process_path(args, path, model)
 
 
-def process_path(args, path):
+def make_model():
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "automark4.pth"
+    # metadata_path = model_dir / "automark3.json"
+
+    model = mel.rotomap.detectmolesnn.CackModel4(total_steps=0)
+    model.load_state_dict(torch.load(model_path))
+
+    return model
+
+
+def process_path(args, path, model):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     (
         image_width,
         image_height,
         scale_x,
         scale_y,
     ) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
-    data_y = mel.rotomap.detectmolesnn.rotoimage_to_mxy_y_tensor(
-        path, image_width, image_height, scale_x, scale_y
+
+    # data_y = mel.rotomap.detectmolesnn.rotoimage_to_mxy_y_tensor(
+    #     path, image_width, image_height, scale_x, scale_y
+    # )
+
+    data_x, data_m = rotoimage_to_xm_tensors(path)
+    dataloader = torch.utils.data.DataLoader(
+        [{"data_x": data_x.rename(None), "data_m": data_m.rename(None)}],
+        batch_size=1,
     )
+    assert len(dataloader) == 1
+    model.eval()
+    with torch.no_grad():
+        for data in dataloader:
+            data_y = model(data["data_x"], data["data_m"])[0]
 
     # threshold = 0.5
     # data_y[data_y < threshold] = 0
@@ -68,12 +101,26 @@ def process_path(args, path):
         image = data_y.detach().numpy() * 255
         image = np.uint8(image)
         image = image.transpose((1, 2, 0))
-        # print(image[image[:,:,0] != 0])
+        print(image[image[:,:,0] != 0])
         cv2.imwrite(str(path) + f"{extra_suffix}.automark4.png", image)
 
     pos_xy = y_tensor_to_posxy(data_y, 1 / scale_x, 1 / scale_y)
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
+
+
+def rotoimage_to_xm_tensors(path):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torchvision
+
+    to_tensor = torchvision.transforms.ToTensor()
+
+    x_data = mel.rotomap.detectmolesnn.rotoimage_to_hs_x_tensor(path)
+
+    m_data = to_tensor(mel.rotomap.mask.load(path))
+
+    return x_data, m_data
 
 
 def y_tensor_to_posxy(y_tensor, scale_x, scale_y):
