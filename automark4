@@ -87,7 +87,7 @@ def y_tensor_to_posxy(y_tensor, scale_x, scale_y):
         if value < 0.5:
             continue
         pos_xy.append(
-            [int((x + 0.5 + xoff) * scale_x), int((y + 0.5 + yoff) * scale_y)]
+            [int((x + xoff) * scale_x), int((y + yoff) * scale_y)]
         )
 
     return pos_xy

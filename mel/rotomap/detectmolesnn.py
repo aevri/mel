@@ -856,8 +856,8 @@ def rotoimage_to_mxy_y_tensor(
         float_y = my * scale_y
         new_x = int(float_x)
         new_y = int(float_y)
-        x_off = float_x - (new_x + 0.5)
-        y_off = float_y - (new_y + 0.5)
+        x_off = float_x - new_x
+        y_off = float_y - new_y
         draw_mxy(y_data, new_x, new_y, x_off, y_off)
 
     return y_data
