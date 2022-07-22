@@ -12,6 +12,7 @@ import tqdm
 import pytorch_lightning as pl
 from torch.nn import functional as F
 
+import cv2
 
 # import PIL
 # import wandb
@@ -728,6 +729,23 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         )
         self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
+
+
+def rotoimage_to_hs_x_tensor(path):
+    to_tensor = torchvision.transforms.ToTensor()
+
+    photo = mel.lib.image.load_image(path)
+    photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
+    # blur_photo = cv2.blur(photo, (64, 64))
+    x_data = torch.vstack(
+        [
+            to_tensor(x)[[0, 1]]
+            for x in [
+                photo_hsv,
+            ]
+        ]
+    )
+    return x_data
 
 
 def calc_mxy_shapewh_scalexy(path):
