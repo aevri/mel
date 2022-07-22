@@ -59,7 +59,7 @@ def main():
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
-    min_steps = 6000
+    min_steps = 60000
     batch_size = 1
     total_steps = 1 + max((len(args.train) // batch_size), min_steps)
 
