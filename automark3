@@ -123,7 +123,7 @@ def rotoimage_to_y_tensor(path):
     y_data = y_data[2:3].clone()
     assert y_data.shape[0] == 1, y_data.shape
 
-    return y_data
+    return y_data.unsqueeze(0)
 
 
 def process_path_2(args, path, model):
