@@ -690,6 +690,7 @@ class Conv3x3HueSatMaskMxy(Model2):
                 stride=2,
                 padding=0,
             ),
+            torch.nn.Sigmoid(),
         )
 
     def forward(self, x, mask):
@@ -715,10 +716,10 @@ class Conv3x3HueSatMaskMxy(Model2):
         self.log("train/loss", loss.detach())
         return {
             "loss": loss,
-            # "dice": dice_loss(result[0:1], target[0:1]),
-            # "pres": precision_ish(result[0:1], target[0:1]),
-            # "rec": recall_ish(result[0:1], target[0:1]),
-            "mse": F.mse_loss(result, target),
+            "dice": dice_loss(result[:, 0:1], target[:, 0:1]),
+            "pres": precision_ish(result[:, 0:1], target[:, 0:1]),
+            "rec": recall_ish(result[:, 0:1], target[:, 0:1]),
+            # "mse": F.mse_loss(result, target),
         }
 
 
