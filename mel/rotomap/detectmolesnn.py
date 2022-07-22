@@ -649,11 +649,88 @@ class Conv3x3HueSatMask(Model2):
         return result
 
 
+class Conv3x3HueSatMaskMxy(Model2):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        image_channels = 2
+        width = 10
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(image_channels),
+            torch.nn.Conv2d(
+                in_channels=image_channels,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=width,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(width),
+            torch.nn.Conv2d(
+                in_channels=width,
+                out_channels=3,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+            ),
+        )
+
+    def forward(self, x, mask):
+        result = self.cnn(x)
+        mask2 = torchvision.transforms.functional.resize(
+            mask,
+            result.shape[-2:],
+            interpolation=torchvision.transforms.InterpolationMode.NEAREST,
+        )
+        result.masked_fill(mask2, 0)
+        return result
+
+    def training_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        loss = F.mse_loss(result, target)
+        self.log("train/loss", loss.detach())
+        return {
+            "loss": loss,
+            # "dice": dice_loss(result[0:1], target[0:1]),
+            # "pres": precision_ish(result[0:1], target[0:1]),
+            # "rec": recall_ish(result[0:1], target[0:1]),
+            "mse": F.mse_loss(result, target),
+        }
+
+
 class CackModel(Conv1x1HueSatMask):
     pass
 
 
 class CackModel2(Conv3x3HueSatMask):
+    pass
+
+
+class CackModel4(Conv3x3HueSatMaskMxy):
     pass
 
 

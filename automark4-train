@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Train 'automark3'."""
+"""Train 'automark4'."""
 
 import argparse
 import json
@@ -54,20 +54,20 @@ def main():
 
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
-    model_path = model_dir / "automark3.pth"
-    metadata_path = model_dir / "automark3.json"
+    model_path = model_dir / "automark4.pth"
+    metadata_path = model_dir / "automark4.json"
     print(f"Will save to {model_path}")
     print(f"         and {metadata_path}")
 
     min_steps = 600
-    batch_size = 4
+    batch_size = 1
     total_steps = 1 + max((len(args.train) // batch_size), min_steps)
 
-    model = mel.rotomap.detectmolesnn.CackModel2(total_steps=total_steps)
+    model = mel.rotomap.detectmolesnn.CackModel4(total_steps=total_steps)
 
     if enable_wandb:
         wandb_logger = pl.loggers.WandbLogger(
-            project="mel-automark3", name=experiment_name
+            project="mel-automark4", name=experiment_name
         )
         wandb_logger.watch(model, log="all")
 
