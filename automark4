@@ -35,174 +35,97 @@ def setup_parser():
     return parser
 
 
-def make_model():
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-    import torch
-
-    melroot = mel.lib.fs.find_melroot()
-    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
-    model_path = model_dir / "automark3.pth"
-    # metadata_path = model_dir / "automark3.json"
-
-    model = mel.rotomap.detectmolesnn.CackModel2(total_steps=0)
-    model.load_state_dict(torch.load(model_path))
-
-    return model
-
-
 def main():
     parser = setup_parser()
     args = parser.parse_args()
 
-    model = make_model()
-
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        process_path(args, path, model)
+        process_path(args, path)
 
 
-def process_path(args, path, model):
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-    import torch
+def process_path(args, path):
+    data_y = rotoimage_to_y_tensor(path)
 
-    data_x, data_m = rotoimage_to_xm_tensors(path)
-    dataloader = torch.utils.data.DataLoader(
-        [{"data_x": data_x.rename(None), "data_m": data_m.rename(None)}],
-        batch_size=1,
-    )
-    assert len(dataloader) == 1
-    model.eval()
-    with torch.no_grad():
-        for data in dataloader:
-            data_y = model(data["data_x"], data["data_m"])
-
-    threshold = 0.5
-    data_y[data_y < threshold] = 0
-    data_y[data_y >= threshold] = 1
+    # threshold = 0.5
+    # data_y[data_y < threshold] = 0
+    # data_y[data_y >= threshold] = 1
     # data_y[0][0][data_m.rename(None)[0] == 0] = 0
-
-    photo_height_width = mel.lib.image.load_image(path).shape[0:2]
-    image = data_y.detach().numpy()[0][0] * 255
-    image = np.uint8(image)
-    image = cv2.resize(
-        image,
-        photo_height_width[::-1],
-    )
 
     if args.save_images:
         extra_suffix = ""
         if args.extra_stem:
             extra_suffix = f".{args.extra_stem}"
-        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.png", image)
-        write_contour_image(
-            image, str(path) + f"{extra_suffix}.automark3.contour.png"
-        )
+        image = data_y.detach().numpy() * 255
+        image = np.uint8(image)
+        image = image.transpose((1, 2, 0))
+        # print(image[image[:,:,0] != 0])
+        cv2.imwrite(str(path) + f"{extra_suffix}.automark4.png", image)
 
-        data_y2 = rotoimage_to_y_tensor(path)
-        image2 = data_y2.detach().numpy()[0][0] * 255
-        image2 = np.uint8(image2)
-        image2 = cv2.resize(
-            image2,
-            photo_height_width[::-1],
-        )
-        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.target.png", image2)
-
-    pos_xy = pos_xy_from_contours(image)
+    return
+    pos_xy = y_tensor_to_rotoimage(data_y)
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
+
+
+def draw(tensor, x, y, xoff, yoff):
+    if x < 0 or y < 0:
+        return
+    if x >= tensor.shape[2] or y >= tensor.shape[1]:
+        raise ValueError("Co-ordinate out of bounds.", x, y)
+    tensor[0][y][x] = 1.0
+    tensor[1][y][x] = xoff
+    tensor[2][y][x] = yoff
 
 
 def rotoimage_to_y_tensor(path):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
-    import torchvision
-
-    to_tensor = torchvision.transforms.ToTensor()
-
-    photo = mel.lib.image.load_image(path)
-    moles = mel.rotomap.moles.load_image_moles(path)
-    image_height, image_width = photo.shape[0:2]
-    locations_image = mel.rotomap.detectmolesnn.locations_image(
-        moles, image_width, image_height
-    )
-    locations_image = cv2.resize(
-        # locations_image, (image_width // 16, image_height // 16)
-        locations_image,
-        (188, 251),
-    )
-    y_data = to_tensor(locations_image)
-    y_data = y_data[2:3].clone()
-    assert y_data.shape[0] == 1, y_data.shape
-
-    return y_data.unsqueeze(0)
-
-
-def process_path_2(args, path, model):
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-    data_y = rotoimage_to_y_tensor(path)
-
-    threshold = 0.5
-    data_y[data_y < threshold] = 0
-    data_y[data_y >= threshold] = 1
-    # data_y[0][0][data_m.rename(None)[0] == 0] = 0
-
-    photo_height_width = mel.lib.image.load_image(path).shape[0:2]
-
-    image = data_y.detach().numpy()[0][0] * 255
-    image = np.uint8(image)
-    image = cv2.resize(
-        image,
-        photo_height_width[::-1],
-    )
-
-    if args.save_images:
-        extra_suffix = ""
-        if args.extra_stem:
-            extra_suffix = f".{args.extra_stem}"
-        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.png", image)
-        write_contour_image(
-            image, str(path) + f"{extra_suffix}.automark3.contour.png"
-        )
-
-    pos_xy = pos_xy_from_contours(image)
-    moles = moles_from_posxy(pos_xy)
-    mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
-
-
-def rotoimage_to_xm_tensors(path):
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
     import torch
-    import torchvision
 
-    to_tensor = torchvision.transforms.ToTensor()
+    image_height = 251
+    image_width = 188
 
-    photo = mel.lib.image.load_image(path)
-    mask = mel.rotomap.mask.load(path)
-    photo_hsv = cv2.cvtColor(photo, cv2.COLOR_BGR2HSV)
-    # blur_photo = cv2.blur(photo, (64, 64))
-    # blur_photo_hsv = cv2.cvtColor(blur_photo, cv2.COLOR_BGR2HSV)
-    # blur_mask = cv2.blur(mask, (64, 64))
-    x_data = torch.vstack(
-        [
-            to_tensor(x)[[0, 1]]
-            for x in [
-                photo_hsv,
-            ]
-        ]
-    )
+    # Make new image.
+    # Iterate over moles.
+    # Paint into image.
 
-    m_data = to_tensor(mask)
-    assert m_data.shape[0] == 1, m_data.shape
+    photo_height, photo_width = mel.lib.image.load_image(path).shape[0:2]
+    scale_x = image_width / photo_width
+    scale_y = image_height / photo_height
+    moles = mel.rotomap.moles.load_image_moles(path)
+    y_data = torch.zeros([3, image_height, image_width])
+    for mole in moles:
+        mx, my = mole["x"], mole["y"]
+        float_x = mx * scale_x
+        float_y = my * scale_y
+        new_x = int(float_x)
+        new_y = int(float_y)
+        x_off = new_x - (float_x + 0.5)
+        y_off = new_y - (float_y + 0.5)
+        draw(y_data, new_x, new_y, x_off, y_off)
 
-    return (
-        x_data.rename(*list("CHW")),
-        m_data.rename(*list("CHW")),
-    )
+    return y_data
+
+
+def locations_image(moles, image_width, image_height):
+    image = mel.lib.common.new_image(image_height, image_width)
+
+    mole_points = [
+        (m["x"], m["y"])
+        for m in moles
+        if "looks_like" not in m or m["looks_like"] == "mole"
+    ]
+
+    for x, y in mole_points:
+        mel.lib.common.draw_circle(image, x, y, 32, (0, 0, 255))
+
+    return image
+
+
+def y_tensor_to_rotoimage(y_tensor):
+    assert False
 
 
 def moles_from_posxy(pos_xy):
@@ -210,42 +133,6 @@ def moles_from_posxy(pos_xy):
     for x, y in pos_xy:
         mel.rotomap.moles.add_mole(moles, int(x), int(y))
     return moles
-
-
-def pos_xy_from_contours(image):
-    image = image.copy()
-    _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    pos_xy = []
-    for contour in contours:
-        if contour is not None and len(contour) > 5:
-            # area = cv2.contourArea(contour)
-            moments = cv2.moments(contour)
-            if moments["m00"] != 0:
-                cx = int(moments["m10"] / moments["m00"])
-                cy = int(moments["m01"] / moments["m00"])
-                pos_xy.append((cx, cy))
-    return pos_xy
-
-
-def write_contour_image(result, path):
-    image = contour_image(result)
-    cv2.imwrite(path, image)
-
-
-def contour_image(image):
-    image = image.copy()
-    _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    for contour in contours:
-        if contour is not None and len(contour) > 5:
-            # area = cv2.contourArea(contour)
-            moments = cv2.moments(contour)
-            if moments["m00"] != 0:
-                cx = int(moments["m10"] / moments["m00"])
-                cy = int(moments["m01"] / moments["m00"])
-                mel.lib.common.draw_circle(image, cx, cy, 16, (128,))
-    return image
 
 
 if __name__ == "__main__":
