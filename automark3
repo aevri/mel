@@ -51,10 +51,6 @@ def make_model():
     return model
 
 
-def write_result(result, path):
-    cv2.imwrite(path, result.detach().numpy()[0][0] * 255)
-
-
 def main():
     parser = setup_parser()
     args = parser.parse_args()
@@ -64,7 +60,7 @@ def main():
     for path in args.IMAGES:
         if args.verbose:
             print(path)
-        process_path_2(args, path, model)
+        process_path(args, path, model)
 
 
 def process_path(args, path, model):
@@ -88,16 +84,33 @@ def process_path(args, path, model):
     data_y[data_y >= threshold] = 1
     # data_y[0][0][data_m.rename(None)[0] == 0] = 0
 
+    photo_height_width = mel.lib.image.load_image(path).shape[0:2]
+    image = data_y.detach().numpy()[0][0] * 255
+    image = np.uint8(image)
+    image = cv2.resize(
+        image,
+        photo_height_width[::-1],
+    )
+
     if args.save_images:
         extra_suffix = ""
         if args.extra_stem:
             extra_suffix = f".{args.extra_stem}"
-        write_result(data_y, str(path) + f"{extra_suffix}.automark3.png")
-        # write_contour_image(
-        #     data_y, str(path) + f"{extra_suffix}.automark3.contour.png"
-        # )
+        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.png", image)
+        write_contour_image(
+            image, str(path) + f"{extra_suffix}.automark3.contour.png"
+        )
 
-    pos_xy = pos_xy_from_contours(data_y)
+        data_y2 = rotoimage_to_y_tensor(path)
+        image2 = data_y2.detach().numpy()[0][0] * 255
+        image2 = np.uint8(image2)
+        image2 = cv2.resize(
+            image2,
+            photo_height_width[::-1],
+        )
+        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.target.png", image2)
+
+    pos_xy = pos_xy_from_contours(image)
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
 
@@ -106,6 +119,7 @@ def rotoimage_to_y_tensor(path):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torchvision
+
     to_tensor = torchvision.transforms.ToTensor()
 
     photo = mel.lib.image.load_image(path)
@@ -127,6 +141,8 @@ def rotoimage_to_y_tensor(path):
 
 
 def process_path_2(args, path, model):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
     data_y = rotoimage_to_y_tensor(path)
 
     threshold = 0.5
@@ -134,16 +150,25 @@ def process_path_2(args, path, model):
     data_y[data_y >= threshold] = 1
     # data_y[0][0][data_m.rename(None)[0] == 0] = 0
 
+    photo_height_width = mel.lib.image.load_image(path).shape[0:2]
+
+    image = data_y.detach().numpy()[0][0] * 255
+    image = np.uint8(image)
+    image = cv2.resize(
+        image,
+        photo_height_width[::-1],
+    )
+
     if args.save_images:
         extra_suffix = ""
         if args.extra_stem:
             extra_suffix = f".{args.extra_stem}"
-        write_result(data_y, str(path) + f"{extra_suffix}.automark3.png")
+        cv2.imwrite(str(path) + f"{extra_suffix}.automark3.png", image)
         write_contour_image(
-            data_y, str(path) + f"{extra_suffix}.automark3.contour.png"
+            image, str(path) + f"{extra_suffix}.automark3.contour.png"
         )
 
-    pos_xy = pos_xy_from_contours(data_y)
+    pos_xy = pos_xy_from_contours(image)
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
 
@@ -187,9 +212,8 @@ def moles_from_posxy(pos_xy):
     return moles
 
 
-def pos_xy_from_contours(result):
-    image = result.detach().numpy()[0][0] * 255
-    image = np.uint8(image)
+def pos_xy_from_contours(image):
+    image = image.copy()
     _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     pos_xy = []
@@ -209,9 +233,8 @@ def write_contour_image(result, path):
     cv2.imwrite(path, image)
 
 
-def contour_image(result):
-    image = result.detach().numpy()[0][0] * 255
-    image = np.uint8(image)
+def contour_image(image):
+    image = image.copy()
     _, image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
