@@ -730,6 +730,43 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         self.main_progress_bar.update(1)
 
 
+def calc_mxy_shapewh_scalexy(path):
+    image_height = 251
+    image_width = 188
+    photo_height, photo_width = mel.lib.image.load_image(path).shape[0:2]
+    scale_x = image_width / photo_width
+    scale_y = image_height / photo_height
+    return image_width, image_height, scale_x, scale_y
+
+
+def draw_mxy(tensor, x, y, xoff, yoff):
+    if x < 0 or y < 0:
+        return
+    if x >= tensor.shape[2] or y >= tensor.shape[1]:
+        raise ValueError("Co-ordinate out of bounds.", x, y)
+    tensor[0][y][x] = 1.0
+    tensor[1][y][x] = xoff
+    tensor[2][y][x] = yoff
+
+
+def rotoimage_to_mxy_y_tensor(
+    path, image_width, image_height, scale_x, scale_y
+):
+    moles = mel.rotomap.moles.load_image_moles(path)
+    y_data = torch.zeros([3, image_height, image_width])
+    for mole in moles:
+        mx, my = mole["x"], mole["y"]
+        float_x = mx * scale_x
+        float_y = my * scale_y
+        new_x = int(float_x)
+        new_y = int(float_y)
+        x_off = float_x - (new_x + 0.5)
+        y_off = float_y - (new_y + 0.5)
+        draw_mxy(y_data, new_x, new_y, x_off, y_off)
+
+    return y_data
+
+
 # -----------------------------------------------------------------------------
 # Copyright (C) 2022 Angelos Evripiotis.
 #
