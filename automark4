@@ -46,7 +46,14 @@ def main():
 
 
 def process_path(args, path):
-    data_y = rotoimage_to_y_tensor(path)
+    image_height = 251
+    image_width = 188
+    photo_height, photo_width = mel.lib.image.load_image(path).shape[0:2]
+    scale_x = image_width / photo_width
+    scale_y = image_height / photo_height
+    data_y = rotoimage_to_y_tensor(
+        path, image_width, image_height, scale_x, scale_y
+    )
 
     # threshold = 0.5
     # data_y[data_y < threshold] = 0
@@ -63,8 +70,7 @@ def process_path(args, path):
         # print(image[image[:,:,0] != 0])
         cv2.imwrite(str(path) + f"{extra_suffix}.automark4.png", image)
 
-    return
-    pos_xy = y_tensor_to_rotoimage(data_y)
+    pos_xy = y_tensor_to_posxy(data_y, 1 / scale_x, 1 / scale_y)
     moles = moles_from_posxy(pos_xy)
     mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
 
@@ -79,21 +85,11 @@ def draw(tensor, x, y, xoff, yoff):
     tensor[2][y][x] = yoff
 
 
-def rotoimage_to_y_tensor(path):
+def rotoimage_to_y_tensor(path, image_width, image_height, scale_x, scale_y):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
 
-    image_height = 251
-    image_width = 188
-
-    # Make new image.
-    # Iterate over moles.
-    # Paint into image.
-
-    photo_height, photo_width = mel.lib.image.load_image(path).shape[0:2]
-    scale_x = image_width / photo_width
-    scale_y = image_height / photo_height
     moles = mel.rotomap.moles.load_image_moles(path)
     y_data = torch.zeros([3, image_height, image_width])
     for mole in moles:
@@ -102,30 +98,28 @@ def rotoimage_to_y_tensor(path):
         float_y = my * scale_y
         new_x = int(float_x)
         new_y = int(float_y)
-        x_off = new_x - (float_x + 0.5)
-        y_off = new_y - (float_y + 0.5)
+        x_off = float_x - (new_x + 0.5)
+        y_off = float_y - (new_y + 0.5)
         draw(y_data, new_x, new_y, x_off, y_off)
 
     return y_data
 
 
-def locations_image(moles, image_width, image_height):
-    image = mel.lib.common.new_image(image_height, image_width)
+def y_tensor_to_posxy(y_tensor, scale_x, scale_y):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
 
-    mole_points = [
-        (m["x"], m["y"])
-        for m in moles
-        if "looks_like" not in m or m["looks_like"] == "mole"
-    ]
+    pos_xy = []
+    for y, x in torch.nonzero(y_tensor[0]):
+        value, xoff, yoff = y_tensor[:, y, x]
+        if value < 0.5:
+            continue
+        pos_xy.append(
+            [int((x + 0.5 + xoff) * scale_x), int((y + 0.5 + yoff) * scale_y)]
+        )
 
-    for x, y in mole_points:
-        mel.lib.common.draw_circle(image, x, y, 32, (0, 0, 255))
-
-    return image
-
-
-def y_tensor_to_rotoimage(y_tensor):
-    assert False
+    return pos_xy
 
 
 def moles_from_posxy(pos_xy):
