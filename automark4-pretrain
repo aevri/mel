@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+"""Pre-train 'automark4'."""
+
+import argparse
+import gzip
+import pickle
+import sys
+
+import torch
+import torchvision
+
+from tqdm import tqdm
+
+import mel.rotomap.moles
+import mel.lib.common
+import mel.rotomap.detectmolesnn
+
+
+def setup_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "IMAGES", nargs="+", help="A list of paths to images to process."
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print information about the processing.",
+    )
+    return parser
+
+
+def main():
+    parser = setup_parser()
+    args = parser.parse_args()
+
+    for path in tqdm(args.IMAGES):
+        outpath = path + ".automark4.pt.gz"
+        if args.verbose:
+            print(outpath)
+        zipout = gzip.open(outpath, "wb", compresslevel=6)
+        x_data, y_data, m_data = rotoimage_to_xym_tensors(path)
+        data = {"x_data": x_data, "y_data": y_data, "m_data": m_data}
+        torch.save(data, zipout, pickle_protocol=pickle.HIGHEST_PROTOCOL)
+        zipout.close()
+
+
+def rotoimage_to_xym_tensors(path):
+    to_tensor = torchvision.transforms.ToTensor()
+
+    x_data = mel.rotomap.detectmolesnn.rotoimage_to_hs_x_tensor(path)
+
+    (
+        image_width,
+        image_height,
+        scale_x,
+        scale_y,
+    ) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
+    y_data = mel.rotomap.detectmolesnn.rotoimage_to_mxy_y_tensor(
+        path, image_width, image_height, scale_x, scale_y
+    )
+
+    m_data = to_tensor(mel.rotomap.mask.load(path))
+
+    return x_data, y_data, m_data
+
+
+if __name__ == "__main__":
+    sys.exit(main())
