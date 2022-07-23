@@ -714,11 +714,17 @@ class Conv3x3HueSatMaskMxy(Model2):
         # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
         loss = F.mse_loss(result, target)
         self.log("train/loss", loss.detach())
+        dice = dice_loss(result[:, 0:1], target[:, 0:1]).detach()
+        pres = precision_ish(result[:, 0:1], target[:, 0:1]).detach()
+        rec = recall_ish(result[:, 0:1], target[:, 0:1]).detach()
+        self.log("train/dice", dice)
+        self.log("train/pres", pres)
+        self.log("train/rec", rec)
         return {
             "loss": loss,
-            "dice": dice_loss(result[:, 0:1], target[:, 0:1]),
-            "pres": precision_ish(result[:, 0:1], target[:, 0:1]),
-            "rec": recall_ish(result[:, 0:1], target[:, 0:1]),
+            "dice": dice,
+            "pres": pres,
+            "rec": rec,
             # "mse": F.mse_loss(result, target),
         }
 

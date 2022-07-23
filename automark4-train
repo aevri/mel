@@ -5,6 +5,8 @@ import argparse
 import json
 import sys
 
+from pprint import pprint
+
 import pytorch_lightning as pl
 import wandb
 
@@ -130,6 +132,8 @@ def main():
     with open(metadata_path, "w") as f:
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
+
+    pprint(trainer.logged_metrics)
 
 
 if __name__ == "__main__":
