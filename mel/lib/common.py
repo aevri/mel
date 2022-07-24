@@ -325,7 +325,7 @@ def process_context_detail_args(args):
 
 
 class Timer:
-    def __init__(self, csv_writer, command):
+    def __init__(self):
         self._start = self._now()
 
     def _now(self):
