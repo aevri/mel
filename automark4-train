@@ -44,6 +44,13 @@ def setup_parser():
         help="Train from scratch, don't load an existing model.",
     )
     parser.add_argument(
+        "--batch-size",
+        "-b",
+        type=int,
+        default=1,
+        help="Batch size.",
+    )
+    parser.add_argument(
         "--steps",
         "-s",
         type=int,
@@ -82,8 +89,7 @@ def main():
     print(f"         and {metadata_path}")
 
     min_steps = args.steps
-    batch_size = 1
-    total_steps = 1 + max((len(args.train) // batch_size), min_steps)
+    total_steps = 1 + max((len(args.train) // args.batch_size), min_steps)
 
     model = mel.rotomap.detectmolesnn.CackModel4(total_steps=total_steps)
 
@@ -106,7 +112,7 @@ def main():
         ]
         train_dl = torch.utils.data.DataLoader(
             data,
-            batch_size=batch_size,
+            batch_size=args.batch_size,
             shuffle=True,
         )
     else:
