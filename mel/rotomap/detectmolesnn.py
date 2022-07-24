@@ -18,6 +18,7 @@ import cv2
 # import wandb
 
 
+import mel.lib.common
 import mel.lib.math
 import mel.rotomap.moles
 
@@ -771,6 +772,8 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         self._process_position = process_position
         self._enabled = True
         self.main_progress_bar = None
+        self.timer = mel.lib.common.Timer()
+        self.step_count = None
 
     def __getstate__(self):
         # can't pickle the tqdm objects
@@ -801,6 +804,8 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
             file=sys.stdout,
             smoothing=0,
         )
+        self.timer.reset()
+        self.step_count = 0
 
     def on_train_end(self, trainer, pl_module):
         self.main_progress_bar.close()
@@ -813,6 +818,9 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         )
         self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
+        if self.timer.elapsed() >= 600:
+            self.main_progress_bar.write(f"{self.step_count}: {desc}")
+        self.step_count += 1
 
 
 def rotoimage_to_hs_x_tensor(path):

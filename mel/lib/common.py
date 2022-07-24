@@ -324,6 +324,20 @@ def process_context_detail_args(args):
     return context_image, detail_image
 
 
+class Timer:
+    def __init__(self, csv_writer, command):
+        self._start = self._now()
+
+    def _now(self):
+        return datetime.datetime.now(datetime.timezone.utc)
+
+    def elapsed_secs(self):
+        return int((self._now() - self._start).total_seconds())
+
+    def reset(self, *, command=None, mode=None, path=None):
+        self._start = self._now()
+
+
 class TimeLogger:
     def __init__(self, csv_writer, command):
         self._writer = csv_writer
