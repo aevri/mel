@@ -814,7 +814,7 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         self, trainer, pl_module, outputs, batch, batch_idx
     ):
         desc = " ".join(
-            f"{name}:{val.item():.3}" for name, val in outputs.items()
+            f"{name}:{val.item():.6f}" for name, val in outputs.items()
         )
         self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
