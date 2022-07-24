@@ -818,7 +818,7 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
         )
         self.main_progress_bar.set_description(desc)
         self.main_progress_bar.update(1)
-        if self.timer.elapsed() >= 600:
+        if self.timer.elapsed_secs() >= 600:
             self.main_progress_bar.write(f"{self.step_count}: {desc}")
         self.step_count += 1
 
