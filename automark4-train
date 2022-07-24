@@ -50,6 +50,13 @@ def setup_parser():
         default=600,
         help="Minimum training steps.",
     )
+    parser.add_argument(
+        "--learning-rate",
+        "--lr",
+        type=float,
+        default=0.075,
+        help="Learning rate.",
+    )
     return parser
 
 
@@ -83,6 +90,8 @@ def main():
     if not args.from_scratch and model_path.exists():
         model.load_state_dict(torch.load(model_path))
         print(f"Loaded {model_path}.")
+
+    model.learning_rate = args.learning_rate
 
     if enable_wandb:
         wandb_logger = pl.loggers.WandbLogger(
