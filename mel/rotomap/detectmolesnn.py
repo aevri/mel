@@ -61,8 +61,8 @@ def dice_loss(prediction, target):
     intersection = (prediction * target).sum()
     total = prediction.sum() + target.sum()
     loss = 1 - ((2 * intersection) / total)
-    assert loss >= 0, loss
-    assert loss <= 1, loss
+    # assert loss >= 0, loss
+    # assert loss <= 1, loss
     return loss
 
 
@@ -82,8 +82,8 @@ def precision_ish(prediction, target):
         raise ValueError("Pixel value must be [0, 1].")
 
     result = (prediction * target).sum() / prediction.sum()
-    assert result >= 0, result
-    assert result <= 1, result
+    # assert result >= 0, result
+    # assert result <= 1, result
     return result
 
 
@@ -103,8 +103,8 @@ def recall_ish(prediction, target):
         raise ValueError("Pixel value must be [0, 1].")
 
     result = (prediction * target).sum() / target.sum()
-    assert result >= 0, result
-    assert result <= 1, result
+    # assert result >= 0, result
+    # assert result <= 1, result
     return result
 
 
