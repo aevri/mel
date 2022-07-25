@@ -57,6 +57,13 @@ def setup_parser():
         help="Batch size.",
     )
     parser.add_argument(
+        "--accumulate-grad-batches",
+        "--acc-grad",
+        type=int,
+        default=None,
+        help="Number of batches to accumulate gradient for.",
+    )
+    parser.add_argument(
         "--steps",
         "-s",
         type=int,
@@ -141,6 +148,7 @@ def main():
         "callbacks": [mel.rotomap.detectmolesnn.GlobalProgressBar()],
         "enable_checkpointing": False,
         "accelerator": "auto",
+        "accumulate_grad_batches": args.accumulate_grad_batches,
         # "auto_lr_find": True,
     }
     if enable_wandb:
