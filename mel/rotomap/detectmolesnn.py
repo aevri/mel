@@ -57,13 +57,16 @@ def mxy_loss(prediction, target):
         raise ValueError("Pixel value must be [0, 1].")
     activation_p = prediction[:, 0]
     activation_t = target[:, 0]
-    activation_mse = F.mse_loss(activation_p, activation_t)
+    # activation_mse = F.mse_loss(activation_p, activation_t)
+    act_intersection = (activation_p * activation_t).sum()
+    act_total = activation_p.sum() + activation_t.sum()
+    activation_dice = 1 - ((2 * act_intersection) / act_total)
     off_p = prediction[:, 1:]
     off_t = target[:, 1:]
     off_mse = F.mse_loss(
         (activation_p ** 2) * off_p, (activation_t ** 2) * off_t
     )
-    return mean(activation_mse, off_mse)
+    return mean(activation_dice, off_mse)
 
 
 def dice_loss(prediction, target):
