@@ -807,21 +807,21 @@ class Conv3x3HueSatMaskMxy(Model2):
 
 
 class MxyNextModule(torch.nn.Module):
-    def __init__(self, in_, out, is_depthwise=False, use_swish=True):
+    def __init__(self, in_, out, is_pointwise=False, use_swish=True):
         super().__init__()
-        num_groups = 1
-        kernel_size = 1
-        stride = 1
-        if is_depthwise:
-            num_groups = in_
-            kernel_size = 3
-            stride = 2
+        # num_groups = in_
+        kernel_size = 3
+        stride = 2
+        if is_pointwise:
+            # num_groups = 1
+            kernel_size = 1
+            stride = 1
         layers = [
             torch.nn.BatchNorm2d(in_),
             torch.nn.Conv2d(
                 in_channels=in_,
                 out_channels=out,
-                groups=num_groups,
+                # groups=num_groups,
                 kernel_size=kernel_size,
                 stride=stride,
                 padding=0,
@@ -842,14 +842,14 @@ class Conv3x3HueSatMaskMxyNext(Model2):
         image_channels = 2
         width = 10
         self.cnn = torch.nn.Sequential(
-            MxyNextModule(image_channels, width, is_depthwise=True),
+            MxyNextModule(image_channels, width),
             MxyNextModule(width, width),
-            MxyNextModule(width, width, is_depthwise=True),
             MxyNextModule(width, width),
-            MxyNextModule(width, width, is_depthwise=True),
             MxyNextModule(width, width),
-            MxyNextModule(width, width, is_depthwise=True),
-            MxyNextModule(width, 3, use_swish=False),
+            MxyNextModule(width, width, is_pointwise=True),
+            MxyNextModule(width, width, is_pointwise=True),
+            MxyNextModule(width, width, is_pointwise=True),
+            MxyNextModule(width, 3, is_pointwise=True, use_swish=False),
             torch.nn.Sigmoid(),
         )
 
