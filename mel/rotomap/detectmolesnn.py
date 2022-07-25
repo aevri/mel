@@ -41,6 +41,31 @@ to_tensor = torchvision.transforms.ToTensor()
 # blur64_mask
 
 
+def mxy_loss(prediction, target):
+    images = [prediction, target]
+    if not all(len(img.shape) == 4 for img in images):
+        raise ValueError(
+            "Images must be of rank 4 (NCHW).",
+            [img.shape for img in images],
+        )
+    if not all(img.shape[1] == 3 for img in images):
+        raise ValueError(
+            "Images must be (Nx(MXY)xWxY).",
+            [img.shape for img in images],
+        )
+    if any((img > 1).any() or (img < 0).any() for img in images):
+        raise ValueError("Pixel value must be [0, 1].")
+    activation_p = prediction[:, 0]
+    activation_t = target[:, 0]
+    activation_mse = F.mse_loss(activation_p, activation_t)
+    off_p = prediction[:, 1:]
+    off_t = target[:, 1:]
+    off_mse = F.mse_loss(
+        (activation_p ** 2) * off_p, (activation_t ** 2) * off_t
+    )
+    return mean(activation_mse, off_mse)
+
+
 def dice_loss(prediction, target):
     images = [prediction, target]
     # for img in images:
@@ -713,7 +738,8 @@ class Conv3x3HueSatMaskMxy(Model2):
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = dice_loss(result, target)
         # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
-        loss = F.mse_loss(result, target)
+        # loss = F.mse_loss(result, target)
+        loss = mxy_loss(result, target)
         self.log("train/loss", loss.detach())
         dice = dice_loss(result[:, 0:1], target[:, 0:1]).detach()
         pres = precision_ish(result[:, 0:1], target[:, 0:1]).detach()
@@ -726,7 +752,7 @@ class Conv3x3HueSatMaskMxy(Model2):
             "dice": dice,
             "pres": pres,
             "rec": rec,
-            # "mse": F.mse_loss(result, target),
+            "mse": F.mse_loss(result, target),
         }
 
 

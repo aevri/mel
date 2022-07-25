@@ -6,6 +6,99 @@ import torch
 import mel.rotomap.detectmolesnn
 
 
+def test_mxy_loss_happy_none():
+    prediction = torch.tensor(
+        [
+            [
+                [[0.0]],
+                [[0.0]],
+                [[0.0]],
+            ],
+        ],
+    )
+    target = torch.tensor(
+        [
+            [
+                [[0.0]],
+                [[0.0]],
+                [[0.0]],
+            ],
+        ],
+    )
+    loss = mel.rotomap.detectmolesnn.mxy_loss(prediction, target)
+    assert loss == 0
+
+
+def test_mxy_loss_happy_match():
+    prediction = torch.tensor(
+        [
+            [
+                [[1.0]],
+                [[0.25]],
+                [[0.75]],
+            ],
+        ],
+    )
+    target = torch.tensor(
+        [
+            [
+                [[1.0]],
+                [[0.25]],
+                [[0.75]],
+            ],
+        ],
+    )
+    loss = mel.rotomap.detectmolesnn.mxy_loss(prediction, target)
+    assert loss == 0
+
+
+def test_mxy_loss_happy_mismatch():
+    prediction = torch.tensor(
+        [
+            [
+                [[0.0]],
+                [[0.25]],
+                [[0.75]],
+            ],
+        ],
+    )
+    target = torch.tensor(
+        [
+            [
+                [[1.0]],
+                [[1.0]],
+                [[1.0]],
+            ],
+        ],
+    )
+    loss = mel.rotomap.detectmolesnn.mxy_loss(prediction, target)
+    assert loss == 1
+
+
+def test_mxy_loss_happy_near():
+    prediction = torch.tensor(
+        [
+            [
+                [[0.8]],
+                [[0.255]],
+                [[0.77]],
+            ],
+        ],
+    )
+    target = torch.tensor(
+        [
+            [
+                [[1.0]],
+                [[0.25]],
+                [[0.75]],
+            ],
+        ],
+    )
+    loss = mel.rotomap.detectmolesnn.mxy_loss(prediction, target)
+    assert loss > 0
+    assert loss < 1
+
+
 def test_sorted_unique_images_sync():
     a = torch.tensor(
         [
