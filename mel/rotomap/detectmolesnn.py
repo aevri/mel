@@ -729,6 +729,32 @@ class Conv3x3HueSatMaskMxy(Model2):
         result.masked_fill(mask2, 0)
         return result
 
+    def validation_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        # loss = F.mse_loss(result, target)
+        loss = mxy_loss(result, target)
+        self.log("valid/loss", loss.detach())
+        dice = dice_loss(result[:, 0:1], target[:, 0:1]).detach()
+        pres = precision_ish(result[:, 0:1], target[:, 0:1]).detach()
+        rec = recall_ish(result[:, 0:1], target[:, 0:1]).detach()
+        self.log("valid/dice", dice)
+        self.log("valid/pres", pres)
+        self.log("valid/rec", rec)
+        return {
+            "loss": loss,
+            "dice": dice,
+            "pres": pres,
+            "rec": rec,
+            "mse": F.mse_loss(result, target),
+        }
+
     def training_step(self, batch, batch_nb):
         x = batch["x_data"]
         y = batch["y_data"]
@@ -848,6 +874,17 @@ class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
             self.timer.reset()
             self.main_progress_bar.write(f"{self.step_count}: {desc}")
         self.step_count += 1
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        desc = " ".join(
+            f"{name}:{val.item():.6f}" for name, val in outputs.items()
+        )
+        if self.main_progress_bar is not None:
+            self.main_progress_bar.write(f"valid: {self.step_count}: {desc}")
+        else:
+            print(f"valid: {self.step_count}: {desc}")
 
 
 def rotoimage_to_hs_x_tensor(path):

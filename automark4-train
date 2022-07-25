@@ -26,6 +26,12 @@ def setup_parser():
         required=True,
     )
     parser.add_argument(
+        "--valid",
+        metavar="PTGZ_FILE",
+        nargs="*",
+        help="A list of paths to pre-trained images to validate with.",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -105,6 +111,7 @@ def main():
         )
         wandb_logger.watch(model, log="all")
 
+    valid_dl = None
     if args.preload:
         data = [
             mel.rotomap.detectmolesnn.load_ptgz(example)
@@ -115,6 +122,16 @@ def main():
             batch_size=args.batch_size,
             shuffle=True,
         )
+        if args.valid:
+            data = [
+                mel.rotomap.detectmolesnn.load_ptgz(example)
+                for example in args.valid
+            ]
+            valid_dl = torch.utils.data.DataLoader(
+                data,
+                batch_size=args.batch_size,
+                shuffle=False,
+            )
     else:
         assert False
 
@@ -136,7 +153,7 @@ def main():
     # trainer.tune(model, train_dl)
     # print("Post-tune learning rate:", model.learning_rate)
 
-    trainer.fit(model, train_dl)
+    trainer.fit(model, train_dl, valid_dl)
 
     torch.save(model.state_dict(), model_path)
 
