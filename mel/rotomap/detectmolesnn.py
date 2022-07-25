@@ -806,6 +806,136 @@ class Conv3x3HueSatMaskMxy(Model2):
         }
 
 
+class MxyNextModule(torch.nn.Module):
+    def __init__(self, in_, out, is_depthwise=False, use_swish=True):
+        super().__init__()
+        num_groups = 1
+        kernel_size = 1
+        stride = 1
+        if is_depthwise:
+            num_groups = in_
+            kernel_size = 3
+            stride = 2
+        layers = [
+            torch.nn.BatchNorm2d(in_),
+            torch.nn.Conv2d(
+                in_channels=in_,
+                out_channels=out,
+                groups=num_groups,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=0,
+            ),
+        ]
+        if use_swish:
+            layers.append(Swish())
+        self.nn = torch.nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.nn(x)
+
+
+class Conv3x3HueSatMaskMxyNext(Model2):
+    def __init__(self, total_steps, use_onecycle=True):
+        super().__init__(total_steps)
+        self._use_onecycle = use_onecycle
+        image_channels = 2
+        width = 10
+        self.cnn = torch.nn.Sequential(
+            MxyNextModule(image_channels, width, is_depthwise=True),
+            MxyNextModule(width, width, is_depthwise=True),
+            MxyNextModule(width, width, is_depthwise=True),
+            MxyNextModule(width, width, is_depthwise=True),
+            MxyNextModule(width, width),
+            MxyNextModule(width, width),
+            MxyNextModule(width, width),
+            MxyNextModule(width, 3, use_swish=False),
+            torch.nn.Sigmoid(),
+        )
+
+    def forward(self, x, mask):
+        result = self.cnn(x)
+        mask2 = torchvision.transforms.functional.resize(
+            mask,
+            result.shape[-2:],
+            interpolation=torchvision.transforms.InterpolationMode.NEAREST,
+        )
+        result.masked_fill(mask2, 0)
+        return result
+
+    def configure_optimizers(self):
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        if not self._use_onecycle:
+            return self.optimizer
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.total_steps,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
+
+    def validation_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        # loss = F.mse_loss(result, target)
+        loss = mxy_loss(result, target)
+        self.log("valid/loss", loss.detach())
+        dice = dice_loss(result[:, 0:1], target[:, 0:1]).detach()
+        pres = precision_ish(result[:, 0:1], target[:, 0:1]).detach()
+        rec = recall_ish(result[:, 0:1], target[:, 0:1]).detach()
+        self.log("valid/dice", dice)
+        self.log("valid/pres", pres)
+        self.log("valid/rec", rec)
+        return {
+            "loss": loss,
+            "dice": dice,
+            "pres": pres,
+            "rec": rec,
+            "mse": F.mse_loss(result, target),
+        }
+
+    def training_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        # loss = F.mse_loss(result, target)
+        loss = mxy_loss(result, target)
+        self.log("train/loss", loss.detach())
+        dice = dice_loss(result[:, 0:1], target[:, 0:1]).detach()
+        pres = precision_ish(result[:, 0:1], target[:, 0:1]).detach()
+        rec = recall_ish(result[:, 0:1], target[:, 0:1]).detach()
+        self.log("train/dice", dice)
+        self.log("train/pres", pres)
+        self.log("train/rec", rec)
+        return {
+            "loss": loss,
+            "dice": dice,
+            "pres": pres,
+            "rec": rec,
+            "mse": F.mse_loss(result, target),
+        }
+
+
 class CackModel(Conv1x1HueSatMask):
     pass
 
@@ -814,7 +944,7 @@ class CackModel2(Conv3x3HueSatMask):
     pass
 
 
-class CackModel4(Conv3x3HueSatMaskMxy):
+class CackModel4(Conv3x3HueSatMaskMxyNext):
     pass
 
 
