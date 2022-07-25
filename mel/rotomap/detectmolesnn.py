@@ -843,12 +843,12 @@ class Conv3x3HueSatMaskMxyNext(Model2):
         width = 10
         self.cnn = torch.nn.Sequential(
             MxyNextModule(image_channels, width, is_depthwise=True),
-            MxyNextModule(width, width, is_depthwise=True),
-            MxyNextModule(width, width, is_depthwise=True),
+            MxyNextModule(width, width),
             MxyNextModule(width, width, is_depthwise=True),
             MxyNextModule(width, width),
+            MxyNextModule(width, width, is_depthwise=True),
             MxyNextModule(width, width),
-            MxyNextModule(width, width),
+            MxyNextModule(width, width, is_depthwise=True),
             MxyNextModule(width, 3, use_swish=False),
             torch.nn.Sigmoid(),
         )
