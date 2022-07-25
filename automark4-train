@@ -50,6 +50,11 @@ def setup_parser():
         help="Train from scratch, don't load an existing model.",
     )
     parser.add_argument(
+        "--use-onecycle",
+        action="store_true",
+        help="Use the '1cycle' training scheduler.",
+    )
+    parser.add_argument(
         "--batch-size",
         "-b",
         type=int,
@@ -104,7 +109,9 @@ def main():
     min_steps = args.steps
     total_steps = 1 + max((len(args.train) // args.batch_size), min_steps)
 
-    model = mel.rotomap.detectmolesnn.CackModel4(total_steps=total_steps)
+    model = mel.rotomap.detectmolesnn.CackModel4(
+        total_steps=total_steps, use_onecycle=args.use_onecycle
+    )
 
     if not args.from_scratch and model_path.exists():
         model.load_state_dict(torch.load(model_path))

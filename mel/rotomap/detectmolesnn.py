@@ -679,8 +679,9 @@ class Conv3x3HueSatMask(Model2):
 
 
 class Conv3x3HueSatMaskMxy(Model2):
-    def __init__(self, total_steps):
+    def __init__(self, total_steps, use_onecycle=True):
         super().__init__(total_steps)
+        self._use_onecycle = use_onecycle
         image_channels = 2
         width = 10
         self.cnn = torch.nn.Sequential(
@@ -731,6 +732,26 @@ class Conv3x3HueSatMaskMxy(Model2):
         )
         result.masked_fill(mask2, 0)
         return result
+
+    def configure_optimizers(self):
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        if not self._use_onecycle:
+            return self.optimizer
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.total_steps,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
 
     def validation_step(self, batch, batch_nb):
         x = batch["x_data"]
