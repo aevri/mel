@@ -6,8 +6,11 @@ import gzip
 import pickle
 import sys
 
+import cv2
 import torch
 import torchvision
+
+import numpy as np
 
 from tqdm import tqdm
 
@@ -43,6 +46,11 @@ def main():
         data = {"x_data": x_data, "y_data": y_data, "m_data": m_data}
         torch.save(data, zipout, pickle_protocol=pickle.HIGHEST_PROTOCOL)
         zipout.close()
+
+        image = y_data.detach().numpy() * 255
+        image = np.uint8(image)
+        image = image.transpose((1, 2, 0))
+        cv2.imwrite(str(path) + ".automark4.png", image)
 
 
 def rotoimage_to_xym_tensors(path):
