@@ -200,7 +200,7 @@ def _make_on_keydown(
         elif key == pygame.K_x:
             display.adjust_zoom(1 / 1.025)
         elif key == pygame.K_l:
-            display.auto_align()
+            display.auto_align_and_show()
         elif key == pygame.K_j:
             display.adjust_rotation(2)
         elif key == pygame.K_k:
@@ -284,7 +284,7 @@ class ImageCompareDisplay:
 
         self._should_indicate_changed = None
 
-        self._show()
+        self.auto_align_and_show()
         self._reset_logger()
 
     def next_image(self):
@@ -292,26 +292,26 @@ class ImageCompareDisplay:
         num_images = len(self._rotomaps[ix])
         self._rotomap_cursors[ix] += 1
         self._rotomap_cursors[ix] %= num_images
-        self._show()
+        self.auto_align_and_show()
 
     def prev_image(self):
         ix = self._indices[0]
         num_images = len(self._rotomaps[ix])
         self._rotomap_cursors[ix] -= 1
         self._rotomap_cursors[ix] %= num_images
-        self._show()
+        self.auto_align_and_show()
 
     def next_rotomap(self):
         num_rotomaps = len(self._rotomaps)
         self._indices[0] += 1
         self._indices[0] %= num_rotomaps
-        self._show()
+        self.auto_align_and_show()
 
     def prev_rotomap(self):
         num_rotomaps = len(self._rotomaps)
         self._indices[0] -= 1
         self._indices[0] %= num_rotomaps
-        self._show()
+        self.auto_align_and_show()
 
     def swap_images(self):
         self._indices.reverse()
@@ -340,7 +340,7 @@ class ImageCompareDisplay:
         image_index = self._rotomap_cursors[ix]
         return self._rotomaps[ix][image_index]
 
-    def auto_align(self):
+    def auto_align_and_show(self):
         left_posinfo = self._posinfo(0)
         right_posinfo = self._posinfo(1)
         target_uuid = left_posinfo.uuid
