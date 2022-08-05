@@ -835,6 +835,10 @@ class MxyNextModule(torch.nn.Module):
         return self.nn(x)
 
 
+class ChannelActivation(torch.nn.module):
+    pass
+
+
 class Conv3x3HueSatMaskMxyNext(Model2):
     def __init__(self, total_steps, use_onecycle=True):
         super().__init__(total_steps)
@@ -850,7 +854,11 @@ class Conv3x3HueSatMaskMxyNext(Model2):
             MxyNextModule(width, width, is_pointwise=True),
             MxyNextModule(width, width, is_pointwise=True),
             MxyNextModule(width, 3, is_pointwise=True, use_swish=False),
-            torch.nn.Sigmoid(),
+            ChannelActivation(
+                torch.nn.Sigmoid(),
+                torch.nn.Tanh(),
+                torch.nn.Tanh(),
+            ),
         )
 
     def forward(self, x, mask):
@@ -1075,6 +1083,7 @@ def draw_mxy(tensor, x, y, xoff, yoff, amount=1.0):
     tensor[0][y][x] = amount
     tensor[1][y][x] = xoff
     tensor[2][y][x] = yoff
+    print(x, y, " ", xoff, yoff, amount)
 
 
 def draw_mxy9(tensor, x, y, xoff, yoff):
@@ -1083,12 +1092,14 @@ def draw_mxy9(tensor, x, y, xoff, yoff):
         for yy in [-1, 0, 1]:
             if xx == 0 and yy == 0:
                 continue
+            xoff2 = xoff if xx == 0 else -xx
+            yoff2 = yoff if yy == 0 else -yy
             draw_mxy(
                 tensor,
                 x + xx,
                 y + yy,
-                1 - (xx + 1) * 0.5,
-                1 - (yy + 1) * 0.5,
+                xoff2,
+                yoff2,
                 amount=0.5,
             )
 
@@ -1102,11 +1113,11 @@ def rotoimage_to_mxy_y_tensor(
         mx, my = mole["x"], mole["y"]
         float_x = mx * scale_x
         float_y = my * scale_y
-        new_x = int(float_x)
-        new_y = int(float_y)
-        x_off = float_x - new_x
-        y_off = float_y - new_y
-        draw_mxy9(y_data, new_x, new_y, x_off, y_off)
+        new_x = int(float_x) + 0.5
+        new_y = int(float_y) + 0.5
+        x_off = (float_x - new_x) * 2
+        y_off = (float_y - new_y) * 2
+        draw_mxy9(y_data, int(new_x), int(new_y), x_off, y_off)
 
     return y_data
 
