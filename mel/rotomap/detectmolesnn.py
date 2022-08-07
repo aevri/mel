@@ -972,6 +972,23 @@ def collate(pretrained_list):
     )
 
 
+def collate_xym(pretrained_list):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
+    data_list = []
+
+    for path in pretrained_list:
+        data_list.append(load_ptgz(path))
+
+    return {
+        "x_data": torch.cat([d["x_data"].unsqueeze(0) for d in data_list]),
+        "y_data": torch.cat([d["y_data"].unsqueeze(0) for d in data_list]),
+        "m_data": torch.cat([d["m_data"].unsqueeze(0) for d in data_list]),
+    }
+
+
 class GlobalProgressBar(pl.callbacks.progress.ProgressBarBase):
     def __init__(self, process_position: int = 0):
         super().__init__()
