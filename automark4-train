@@ -168,6 +168,7 @@ def main():
         "enable_checkpointing": False,
         "accelerator": "auto",
         "accumulate_grad_batches": args.accumulate_grad_batches,
+        "val_check_interval": 5,
         # "auto_lr_find": True,
     }
     if enable_wandb:
