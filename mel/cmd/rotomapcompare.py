@@ -351,6 +351,7 @@ class ImageCompareDisplay:
         )
         common_uuids.remove(target_uuid)
         if not common_uuids:
+            self._show()
             return
 
         left_target_pos = [
