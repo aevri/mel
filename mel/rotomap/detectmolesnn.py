@@ -840,7 +840,7 @@ class Conv3x3HueSatMaskMxyNext(Model2):
         super().__init__(total_steps)
         self._use_onecycle = use_onecycle
         image_channels = 2
-        width = 20
+        width = 4
         self.cnn = torch.nn.Sequential(
             MxyNextModule(image_channels, width),
             MxyNextModule(width, width, is_pointwise=True),
