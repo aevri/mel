@@ -848,9 +848,9 @@ class Conv3x3HueSatMaskMxyNext(Model2):
             MxyNextModule(width * 2, width * 4, is_pointwise=True),
             MxyNextModule(width * 4, width * 4),
             MxyNextModule(width * 4, width * 8, is_pointwise=True),
-            MxyNextModule(width * 8, width * 8),
-            MxyNextModule(width * 8, width * 8),
-            MxyNextModule(width * 8, width * 8),
+            MxyNextModule(width * 8, width * 8, is_pointwise=True),
+            MxyNextModule(width * 8, width * 8, is_pointwise=True),
+            MxyNextModule(width * 8, width * 8, is_pointwise=True),
             MxyNextModule(width * 8, 3, is_pointwise=True, use_swish=False),
             torch.nn.Sigmoid(),
         )
