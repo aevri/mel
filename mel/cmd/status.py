@@ -357,7 +357,6 @@ def process_args(args):
 
 
 def print_klass_to_notices(klass_to_notices, detail_level, fore):
-
     for klass, notice_list in klass_to_notices.items():
         print()
         print(fore, klass.__name__, colorama.Fore.RESET)
@@ -449,7 +448,6 @@ def uuids_from_dir(rotomap_dir):
 
 
 def check_rotomap_list(notices, rotomap_list):
-
     if len(rotomap_list) < 2:
         return
 
@@ -489,7 +487,6 @@ def check_rotomap_list(notices, rotomap_list):
 
 
 def check_rotomap(notices, rotomap, importance_level):
-
     unconfirmed = RotomapUnconfirmedMoleInfo(rotomap.path)
     duplicates = RotomapDuplicateUuidError(rotomap.path)
 
@@ -539,7 +536,6 @@ def check_rotomap(notices, rotomap, importance_level):
 
 
 def check_newest_rotomap(notices, rotomap):
-
     missing_unchanged_status = RotomapMissingLesionUnchangedStatus(
         rotomap.path
     )

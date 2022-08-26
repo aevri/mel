@@ -12,7 +12,6 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
-
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,

@@ -9,7 +9,6 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
-
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
@@ -37,7 +36,6 @@ def process_args(args):
 
 
 def make_montage_image(images_moles, uuid_, rot90=0):
-
     path_moles_list = []
 
     radius = 10

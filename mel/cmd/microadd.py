@@ -110,7 +110,6 @@ def pick_comparison_path(path_list, min_compare_age_days):
 
 
 def get_comparison_image_path(path, min_compare_age_days):
-
     micro_path = os.path.join(path, "__micro__")
     if not os.path.exists(micro_path):
         return None
@@ -147,7 +146,6 @@ def process_args(args):
 
 
 def process_path(mole_path, min_compare_age_days, display, cap):
-
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
@@ -211,7 +209,6 @@ def process_path(mole_path, min_compare_age_days, display, cap):
 
 
 def capture(cap, display, capindex, mole_acquirer):
-
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

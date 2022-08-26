@@ -10,7 +10,6 @@ import mel.rotomap.moles
 
 
 def merge_in_radiuses(targets, radii_sources, error_distance, only_merge):
-
     match_uuids, _, added_uuids = match_moles_by_pos(
         targets, radii_sources, error_distance
     )
@@ -97,7 +96,6 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
 
 
 def match_moles_by_pos(from_moles, to_moles, error_distance):
-
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
     elif not from_moles and to_moles:

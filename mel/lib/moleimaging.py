@@ -69,7 +69,6 @@ def biggest_contour(image):
 
 
 def process_contours(mole_regions, original):
-
     final = original.copy()
     stats = None
 
@@ -117,7 +116,6 @@ def process_contours(mole_regions, original):
 
 
 def find_mole_contour(contours, width_height):
-
     centre = (
         width_height[0] // 2,
         width_height[1] // 2,
@@ -333,7 +331,6 @@ def annotate_image(original, is_rot_sensitive):
 
 
 def find_mole_ellipse(original, centre, radius):
-
     lefttop = centre - (radius, radius)
     rightbottom = centre + (radius + 1, radius + 1)
 

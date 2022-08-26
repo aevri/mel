@@ -16,7 +16,6 @@ def setup_parser(parser):
 
 
 def get_comparison_images(path):
-
     micro_path = os.path.join(path, "__micro__")
 
     # List all the 'jpg' files in the micro dir
