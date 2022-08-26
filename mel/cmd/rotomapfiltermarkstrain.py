@@ -25,7 +25,6 @@ def proportion_arg(x):
 
 
 def setup_parser(parser):
-
     parser.add_argument(
         "--verbose",
         "-v",

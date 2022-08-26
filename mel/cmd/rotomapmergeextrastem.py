@@ -49,7 +49,6 @@ def process_args(args):
 
 
 def _merge(from_moles, to_moles, error_distance):
-
     (
         match_uuids,
         _missing_uuids,

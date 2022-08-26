@@ -46,7 +46,6 @@ def write_image(path, image):
 
 
 def user_mark_moles(window_name, context_image, detail_image, num_moles):
-
     display_image = numpy.copy(context_image)
     cv2.imshow(window_name, display_image)
 
@@ -235,7 +234,6 @@ def rotated90(image, times):
 
 
 def add_context_detail_arguments(parser):
-
     parser.add_argument(
         "context",
         type=str,

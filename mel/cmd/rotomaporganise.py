@@ -15,7 +15,6 @@ def setup_parser(parser):
 
 
 def process_args(args):
-
     print("Press left arrow or right arrow to change image.")
     print("Press backspace to delete image.")
     print("Press 'g' to group images before current to a folder.")

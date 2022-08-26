@@ -11,7 +11,6 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
-
     parser.add_argument(
         "FROM_FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles_tree,
@@ -107,7 +106,6 @@ def print_items(common_path, items, label):
 
 
 def match_moles(from_moles, to_moles, error_distance):
-
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
     elif not from_moles and to_moles:

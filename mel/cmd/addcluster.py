@@ -10,7 +10,6 @@ import mel.lib.image
 
 
 def setup_parser(parser):
-
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(

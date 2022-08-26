@@ -96,7 +96,6 @@ def reverse_theory(theory, theory_to_original):
 
 
 def best_theory(from_moles, to_moles, iterate):
-
     if not iterate:
         return best_offset_theory(from_moles, to_moles)
 
@@ -324,7 +323,6 @@ def pick_value_from_field(point, point_values):
 
 
 def best_baseless_offset_theory(from_moles, to_moles):
-
     cutoff_sq = mole_min_sq_distance(to_moles)
     if cutoff_sq is None:
         cutoff_sq = 0

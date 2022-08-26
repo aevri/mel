@@ -200,7 +200,6 @@ def normalised_ellipse_mask(ellipse):
 
 
 def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
-
     max_length = max(max_x, max_y) * 2
 
     if ellipse[1][0] < 1 or ellipse[1][1] < 1:

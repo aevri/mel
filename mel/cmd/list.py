@@ -91,7 +91,6 @@ def process_args(args):
 
 
 def _yield_mole_dirs(rootpath, args):
-
     mole_iter = mel.micro.fs.yield_moles(rootpath)
 
     if args.sort == "lastmicro" or args.sort is None:

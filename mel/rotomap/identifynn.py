@@ -329,7 +329,6 @@ def make_dataset(
 
 
 def make_data(repo_path, data_config, channel_cache=None):
-
     parts_path = repo_path / "rotomaps" / "parts"
 
     if data_config["rotomaps"][0] == "subpart":

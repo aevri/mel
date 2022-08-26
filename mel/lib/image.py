@@ -219,7 +219,6 @@ def calc_centering_offset(centre_xy, dst_size_xy):
 
 
 def centered_at(image, src_pos, dst_rect):
-
     dst_selection, src_selection = calc_centered_at_selections(
         get_image_rect(image), src_pos, dst_rect
     )

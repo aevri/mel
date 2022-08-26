@@ -8,7 +8,6 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
-
     parser.add_argument(
         "FRAMES",
         nargs="+",

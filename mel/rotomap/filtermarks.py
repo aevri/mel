@@ -462,7 +462,6 @@ def filter_marks(is_mole, image, moles, include_canonical):
 
 
 def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
-
     # These imports can be very expensive, so we delay them as late as
     # possible.
     #
