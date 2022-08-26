@@ -9,7 +9,7 @@ pyflakes==2.5.0
 pygame==2.1.2
 pylint==2.14.5
 pytest==7.1.2
-pytorch-lightning==1.7.2
+pytorch-lightning==1.7.3
 torch==1.12.1
 torchvision==0.13.1
 tqdm==4.64.0
