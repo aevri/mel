@@ -9,6 +9,7 @@ import torch
 import torchvision
 import tqdm
 
+import numpy as np
 import pytorch_lightning as pl
 from torch.nn import functional as F
 
@@ -1129,6 +1130,57 @@ def rotoimage_to_mxy_y_tensor(
         draw_mxy9(y_data, new_x, new_y, x_off, y_off)
 
     return y_data
+
+
+def rotoimage_to_vexy_y_tensor(
+    path, image_width, image_height, scale_x, scale_y
+):
+    moles = mel.rotomap.moles.load_image_moles(path)
+    data = torch.zeros([3, image_height, image_width])
+    if not moles:
+        return data
+
+    mole_pos = mel.rotomap.moles.mole_list_to_pointvec(moles)
+    mole_pos = mole_pos * np.array([scale_x, scale_y])
+
+    for y in range(image_height):
+        for x in range(image_width):
+            xy = np.array([x, y])
+            nearest_xy = min(
+                mole_pos,
+                key=lambda mxy: mel.lib.math.distance_sq_2d(mxy, xy),
+            )
+            distance = mel.lib.math.distance_sq_2d(nearest_xy, xy)
+            distoid = 1 - min(1, distance / 10)
+            x_off = nearest_xy[0] - x
+            y_off = nearest_xy[1] - y
+            if data[0][y][x] < distoid:
+                data[0][y][x] = distoid
+                data[1][y][x] = x_off
+                data[2][y][x] = y_off
+
+    return data
+
+
+def vexy_y_tensor_to_position_image(y_tensor):
+    threshold = 0.1
+
+    data = torch.zeros(y_tensor.shape[1:])
+    image_width = y_tensor.shape[2]
+    image_height = y_tensor.shape[1]
+
+    for y in range(image_height):
+        for x in range(image_width):
+            if y_tensor[0][y][x] >= threshold:
+                target_x = int(x + y_tensor[1][y][x])
+                target_y = int(y + y_tensor[2][y][x])
+                if target_x < image_width:
+                    if target_y < image_height:
+                        if target_x >= 0:
+                            if target_y >= 0:
+                                data[target_y][target_x] += 1
+
+    return data
 
 
 # -----------------------------------------------------------------------------

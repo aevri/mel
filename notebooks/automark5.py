@@ -57,7 +57,7 @@ def show_target_image_from_path(path):
         scale_x,
         scale_y,
     ) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
-    y = mel.rotomap.detectmolesnn.rotoimage_to_mxy_y_tensor(
+    y = mel.rotomap.detectmolesnn.rotoimage_to_vexy_y_tensor(
         path, image_width, image_height, scale_x, scale_y
     )
     
@@ -71,3 +71,26 @@ def show_target_image_from_path(path):
 
     
 show_target_image_from_path(data_path / 'LeftArm/Upper/2022_07_29/01.jpg')
+# -
+
+path = data_path / 'LeftArm/Upper/2022_07_29/01.jpg'
+(
+    image_width,
+    image_height,
+    scale_x,
+    scale_y,
+) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
+y_data = mel.rotomap.detectmolesnn.rotoimage_to_vexy_y_tensor(
+    path, image_width, image_height, scale_x, scale_y
+)
+
+image = y_data.detach().numpy() * 255
+image = np.uint8(image)
+image = image.transpose((1, 2, 0))
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data)
+plt.imshow(pos_image.numpy())
+
+# +
+# Convert back to list of moles and positions.
