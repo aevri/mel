@@ -21,6 +21,7 @@ import cv2
 
 import mel.lib.common
 import mel.lib.math
+import mel.rotomap.automark
 import mel.rotomap.moles
 
 X_OFFSET = 1
@@ -1181,6 +1182,33 @@ def vexy_y_tensor_to_position_image(y_tensor):
                                 data[target_y][target_x] += 1
 
     return data
+
+
+def position_image_to_position_list(image, scale_x, scale_y):
+    threshold = 10
+
+    image_width = image.shape[1]
+    image_height = image.shape[0]
+    pos_list = []
+    for y in range(image_height):
+        for x in range(image_width):
+            if image[y][x] >= threshold:
+                pos_list.append([int(x / scale_x), int(y / scale_y)])
+
+    return pos_list
+
+
+def compare_position_list_to_moles(from_moles, to_pos_list, error_distance):
+    from_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(from_moles)
+    to_pos_vec = np.array(to_pos_list)
+
+    vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
+        from_pos_vec, to_pos_vec, error_distance
+    )
+
+    print(f"{len(vec_matches)} matched.")
+    print(f"{len(vec_missing)} missing.")
+    print(f"{len(vec_added)} added.")
 
 
 # -----------------------------------------------------------------------------
