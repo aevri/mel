@@ -97,9 +97,11 @@ plt.imshow(pos_image.numpy())
 # Convert back to list of moles and positions.
 # -
 
-pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, 1, 1)
-pos_list
+pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, 1)
+sorted(pos_list)
 
 moles = mel.rotomap.moles.load_image_moles(path)
+
+sorted(mel.rotomap.moles.mole_list_to_pointvec(moles).tolist())
 
 mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 16)

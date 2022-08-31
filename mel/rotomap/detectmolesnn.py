@@ -1186,7 +1186,7 @@ def vexy_y_tensor_to_position_image(y_tensor, multiplier):
     return data
 
 
-def position_image_to_position_list(image, scale_x, scale_y):
+def position_image_to_position_list(image, multiplier):
     threshold = 10
 
     image_width = image.shape[1]
@@ -1195,7 +1195,7 @@ def position_image_to_position_list(image, scale_x, scale_y):
     for y in range(image_height):
         for x in range(image_width):
             if image[y][x] >= threshold:
-                pos_list.append([int(x / scale_x), int(y / scale_y)])
+                pos_list.append([int(x * multiplier), int(y * multiplier)])
 
     # pos_xy = []
     # for y, x in torch.nonzero(y_tensor[0]):
