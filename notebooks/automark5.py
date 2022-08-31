@@ -89,16 +89,17 @@ image = np.uint8(image)
 image = image.transpose((1, 2, 0))
 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data)
+pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data, 16)
+plt.figure(figsize=(20, 20))
 plt.imshow(pos_image.numpy())
 
 # +
 # Convert back to list of moles and positions.
 # -
 
-pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, scale_x, scale_y)
+pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, 1, 1)
 pos_list
 
 moles = mel.rotomap.moles.load_image_moles(path)
 
-mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 32)
+mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 16)

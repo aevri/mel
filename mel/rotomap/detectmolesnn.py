@@ -1163,20 +1163,22 @@ def rotoimage_to_vexy_y_tensor(
     return data
 
 
-def vexy_y_tensor_to_position_image(y_tensor):
+def vexy_y_tensor_to_position_image(y_tensor, multiplier):
     threshold = 0.1
 
-    data = torch.zeros(y_tensor.shape[1:])
     image_width = y_tensor.shape[2]
     image_height = y_tensor.shape[1]
+    target_width = image_width * multiplier
+    target_height = image_height * multiplier
+    data = torch.zeros([target_height, target_width])
 
     for y in range(image_height):
         for x in range(image_width):
             if y_tensor[0][y][x] >= threshold:
-                target_x = int(x + y_tensor[1][y][x])
-                target_y = int(y + y_tensor[2][y][x])
-                if target_x < image_width:
-                    if target_y < image_height:
+                target_x = int((x + y_tensor[1][y][x]) * multiplier)
+                target_y = int((y + y_tensor[2][y][x]) * multiplier)
+                if target_x < target_width:
+                    if target_y < target_height:
                         if target_x >= 0:
                             if target_y >= 0:
                                 data[target_y][target_x] += 1
@@ -1194,6 +1196,15 @@ def position_image_to_position_list(image, scale_x, scale_y):
         for x in range(image_width):
             if image[y][x] >= threshold:
                 pos_list.append([int(x / scale_x), int(y / scale_y)])
+
+    # pos_xy = []
+    # for y, x in torch.nonzero(y_tensor[0]):
+    #     value, xoff, yoff = y_tensor[:, y, x]
+    #     if value < 0.5:
+    #         continue
+    #     pos_xy.append(
+    #         [int((x + xoff) * scale_x), int((y + yoff) * scale_y)]
+    #     )
 
     return pos_list
 
