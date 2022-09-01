@@ -84,6 +84,10 @@ y_data = mel.rotomap.detectmolesnn.rotoimage_to_vexy_y_tensor(
     path, image_width, image_height, scale_x, scale_y
 )
 
+# +
+# Todo: try to get the multiplier to be a whole number.
+# -
+
 image = y_data.detach().numpy() * 255
 image = np.uint8(image)
 image = image.transpose((1, 2, 0))
@@ -93,11 +97,17 @@ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 # Convert back to list of moles and positions.
 # -
 
-pos_counter = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_counter(y_data, 16)
+1 / scale_x
+
+1 / scale_y
+
+pos_counter = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_counter(y_data, 1 / scale_x)
 
 pos_list = mel.rotomap.detectmolesnn.position_counter_to_position_list(pos_counter, threshold=10)
 
-mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 8)
+moles = mel.rotomap.moles.load_image_moles(path)
+
+mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 1)
 
 # +
 # Convert back to list of moles and positions - pixel way
@@ -109,8 +119,6 @@ plt.imshow(pos_image.numpy())
 
 pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, 1)
 sorted(pos_list)
-
-moles = mel.rotomap.moles.load_image_moles(path)
 
 sorted(mel.rotomap.moles.mole_list_to_pointvec(moles).tolist())
 

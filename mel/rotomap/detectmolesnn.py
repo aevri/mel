@@ -1231,7 +1231,6 @@ def vexy_y_tensor_to_position_counter(y_tensor, multiplier):
     target_height = image_height * multiplier
     data = collections.Counter()
 
-    count = 0
     for y in range(image_height):
         for x in range(image_width):
             if y_tensor[0][y][x] >= threshold:
@@ -1242,16 +1241,6 @@ def vexy_y_tensor_to_position_counter(y_tensor, multiplier):
                         if target_x >= 0:
                             if target_y >= 0:
                                 data[(target_x, target_y)] += 1
-                                count += 1
-                                if count < 100:
-                                    print(
-                                        target_x,
-                                        (x + y_tensor[1][y][x]) * multiplier,
-                                        (x + y_tensor[1][y][x]),
-                                        x,
-                                        y_tensor[1][y][x],
-                                        y_tensor[1][y][x].dtype,
-                                    )
 
     return data
 
