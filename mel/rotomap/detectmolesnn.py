@@ -1,6 +1,6 @@
 """Detect moles in an image, using deep neural nets."""
 
-
+import collections
 import gzip
 import io
 import sys
@@ -1220,6 +1220,46 @@ def compare_position_list_to_moles(from_moles, to_pos_list, error_distance):
     print(f"{len(vec_matches)} matched.")
     print(f"{len(vec_missing)} missing.")
     print(f"{len(vec_added)} added.")
+
+
+def vexy_y_tensor_to_position_counter(y_tensor, multiplier):
+    threshold = 0.1
+
+    image_width = y_tensor.shape[2]
+    image_height = y_tensor.shape[1]
+    target_width = image_width * multiplier
+    target_height = image_height * multiplier
+    data = collections.Counter()
+
+    count = 0
+    for y in range(image_height):
+        for x in range(image_width):
+            if y_tensor[0][y][x] >= threshold:
+                target_x = int((x + y_tensor[1][y][x]) * multiplier)
+                target_y = int((y + y_tensor[2][y][x]) * multiplier)
+                if target_x < target_width:
+                    if target_y < target_height:
+                        if target_x >= 0:
+                            if target_y >= 0:
+                                data[(target_x, target_y)] += 1
+                                count += 1
+                                if count < 100:
+                                    print(
+                                        target_x,
+                                        (x + y_tensor[1][y][x]) * multiplier,
+                                        (x + y_tensor[1][y][x]),
+                                        x,
+                                        y_tensor[1][y][x],
+                                        y_tensor[1][y][x].dtype,
+                                    )
+
+    return data
+
+
+def position_counter_to_position_list(pos_counter, threshold):
+    return np.array(
+        [pos for pos, count in pos_counter.items() if count >= threshold]
+    )
 
 
 # -----------------------------------------------------------------------------
