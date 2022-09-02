@@ -79,18 +79,3 @@ pos_list = mel.rotomap.detectmolesnn.position_counter_to_position_list(pos_count
 moles = mel.rotomap.moles.load_image_moles(path)
 
 mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 0)
-
-# +
-# Convert back to list of moles and positions - pixel way
-# -
-
-pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data, scaleup)
-plt.figure(figsize=(20, 20))
-plt.imshow(pos_image.numpy())
-
-pos_list = mel.rotomap.detectmolesnn.position_image_to_position_list(pos_image, 1)
-sorted(pos_list)
-
-sorted(mel.rotomap.moles.mole_list_to_pointvec(moles).tolist())
-
-mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 16)

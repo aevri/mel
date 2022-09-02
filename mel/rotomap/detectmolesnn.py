@@ -1174,52 +1174,6 @@ def rotoimage_to_vexy_y_tensor(
     return data
 
 
-def vexy_y_tensor_to_position_image(y_tensor, scaleup):
-    threshold = 0.1
-
-    image_width = y_tensor.shape[2]
-    image_height = y_tensor.shape[1]
-    target_width = image_width * scaleup
-    target_height = image_height * scaleup
-    data = torch.zeros([target_height, target_width])
-
-    for y in range(image_height):
-        for x in range(image_width):
-            if y_tensor[0][y][x] >= threshold:
-                target_x = int((x + y_tensor[1][y][x]) * scaleup)
-                target_y = int((y + y_tensor[2][y][x]) * scaleup)
-                if target_x < target_width:
-                    if target_y < target_height:
-                        if target_x >= 0:
-                            if target_y >= 0:
-                                data[target_y][target_x] += 1
-
-    return data
-
-
-def position_image_to_position_list(image, scaleup):
-    threshold = 10
-
-    image_width = image.shape[1]
-    image_height = image.shape[0]
-    pos_list = []
-    for y in range(image_height):
-        for x in range(image_width):
-            if image[y][x] >= threshold:
-                pos_list.append([int(x * scaleup), int(y * scaleup)])
-
-    # pos_xy = []
-    # for y, x in torch.nonzero(y_tensor[0]):
-    #     value, xoff, yoff = y_tensor[:, y, x]
-    #     if value < 0.5:
-    #         continue
-    #     pos_xy.append(
-    #         [int((x + xoff) * scale_x), int((y + yoff) * scale_y)]
-    #     )
-
-    return pos_list
-
-
 def compare_position_list_to_moles(from_moles, to_pos_list, error_distance):
     from_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(from_moles)
     to_pos_vec = np.array(to_pos_list)
