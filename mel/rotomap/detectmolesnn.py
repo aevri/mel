@@ -1141,18 +1141,16 @@ def calc_vexy_shapewh_scaleup(path):
     return image_width, image_height, scaleup
 
 
-def rotoimage_to_vexy_y_tensor(
-    path,
+def pointvec_to_vexy_y_tensor(
+    mole_pos,
     image_width,
     image_height,
     scaleup,
 ):
-    moles = mel.rotomap.moles.load_image_moles(path)
     data = torch.zeros([3, image_height, image_width])
-    if not moles:
+    if not mole_pos.shape:
         return data
 
-    mole_pos = mel.rotomap.moles.mole_list_to_pointvec(moles)
     mole_pos = mole_pos / scaleup
 
     for y in range(image_height):
@@ -1172,6 +1170,19 @@ def rotoimage_to_vexy_y_tensor(
                 data[2][y][x] = y_off
 
     return data
+
+
+def rotoimage_to_vexy_y_tensor(
+    path,
+    image_width,
+    image_height,
+    scaleup,
+):
+    moles = mel.rotomap.moles.load_image_moles(path)
+    mole_pos = mel.rotomap.moles.mole_list_to_pointvec(moles)
+    return pointvec_to_vexy_y_tensor(
+        mole_pos, image_width, image_height, scaleup
+    )
 
 
 def compare_position_list_to_moles(from_moles, to_pos_list, error_distance):
@@ -1214,6 +1225,88 @@ def position_counter_to_position_list(pos_counter, threshold):
     return np.array(
         [pos for pos, count in pos_counter.items() if count >= threshold]
     )
+
+
+def rotoimage_to_rgb_x_tensor(path):
+    to_tensor = torchvision.transforms.ToTensor()
+    photo_bgr = mel.lib.image.load_image(path)
+    x_data = torch.vstack(
+        [
+            to_tensor(x)[[0, 1, 2]]
+            for x in [
+                photo_bgr,
+            ]
+        ]
+    )
+    return x_data
+
+
+def pick_one_mole(path, *, border_size, index=0):
+    x_data = rotoimage_to_rgb_x_tensor(path)
+    moles = mel.rotomap.moles.load_image_moles(path)
+    pos_vec = mel.rotomap.moles.mole_list_to_pointvec(moles)
+    pos = pos_vec[index]
+    x1, y1 = pos - border_size
+    x2, y2 = pos + border_size
+    return x_data[:, y1:y2, x1:x2]
+
+
+def rgb_tensor_to_cv2_image(tensor):
+    image = tensor.detach().numpy() * 255
+    image = np.uint8(image)
+    image = image.transpose((1, 2, 0))
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+
+class VexyConv(pl.LightningModule):
+    def __init__(self, total_steps):
+        super().__init__()
+        self.learning_rate = 0.075
+        self.total_steps = total_steps
+
+    def training_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        m = batch["m_data"]
+        result = self(x, m)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        # loss = dice_loss(result, target)
+        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
+        loss = F.mse_loss(result, target)
+        self.log("train/loss", loss.detach())
+        return {
+            "loss": loss,
+            "dice": dice_loss(result, target),
+            "pres": precision_ish(result, target),
+            "rec": recall_ish(result, target),
+            "mse": F.mse_loss(result, target),
+            "mul1": mean_l1(self),
+        }
+
+    def configure_optimizers(self):
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), self.learning_rate
+        )
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.total_steps,
+        )
+
+        sched = {
+            "scheduler": self.scheduler,
+            "interval": "step",
+        }
+        return [self.optimizer], [sched]
+
+    def print_details(self):
+        print(self)
+        print()
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                print(name, param.data.shape)
 
 
 # -----------------------------------------------------------------------------
