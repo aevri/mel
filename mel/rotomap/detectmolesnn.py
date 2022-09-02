@@ -1133,8 +1133,19 @@ def rotoimage_to_mxy_y_tensor(
     return y_data
 
 
+def calc_vexy_shapewh_scaleup(path):
+    photo_height, photo_width = mel.lib.image.load_image(path).shape[0:2]
+    scaleup = 16
+    image_width = photo_width // scaleup
+    image_height = photo_height // scaleup
+    return image_width, image_height, scaleup
+
+
 def rotoimage_to_vexy_y_tensor(
-    path, image_width, image_height, scale_x, scale_y
+    path,
+    image_width,
+    image_height,
+    scaleup,
 ):
     moles = mel.rotomap.moles.load_image_moles(path)
     data = torch.zeros([3, image_height, image_width])
@@ -1142,7 +1153,7 @@ def rotoimage_to_vexy_y_tensor(
         return data
 
     mole_pos = mel.rotomap.moles.mole_list_to_pointvec(moles)
-    mole_pos = mole_pos * np.array([scale_x, scale_y])
+    mole_pos = mole_pos / scaleup
 
     for y in range(image_height):
         for x in range(image_width):
@@ -1163,20 +1174,20 @@ def rotoimage_to_vexy_y_tensor(
     return data
 
 
-def vexy_y_tensor_to_position_image(y_tensor, multiplier):
+def vexy_y_tensor_to_position_image(y_tensor, scaleup):
     threshold = 0.1
 
     image_width = y_tensor.shape[2]
     image_height = y_tensor.shape[1]
-    target_width = image_width * multiplier
-    target_height = image_height * multiplier
+    target_width = image_width * scaleup
+    target_height = image_height * scaleup
     data = torch.zeros([target_height, target_width])
 
     for y in range(image_height):
         for x in range(image_width):
             if y_tensor[0][y][x] >= threshold:
-                target_x = int((x + y_tensor[1][y][x]) * multiplier)
-                target_y = int((y + y_tensor[2][y][x]) * multiplier)
+                target_x = int((x + y_tensor[1][y][x]) * scaleup)
+                target_y = int((y + y_tensor[2][y][x]) * scaleup)
                 if target_x < target_width:
                     if target_y < target_height:
                         if target_x >= 0:
@@ -1186,7 +1197,7 @@ def vexy_y_tensor_to_position_image(y_tensor, multiplier):
     return data
 
 
-def position_image_to_position_list(image, multiplier):
+def position_image_to_position_list(image, scaleup):
     threshold = 10
 
     image_width = image.shape[1]
@@ -1195,7 +1206,7 @@ def position_image_to_position_list(image, multiplier):
     for y in range(image_height):
         for x in range(image_width):
             if image[y][x] >= threshold:
-                pos_list.append([int(x * multiplier), int(y * multiplier)])
+                pos_list.append([int(x * scaleup), int(y * scaleup)])
 
     # pos_xy = []
     # for y, x in torch.nonzero(y_tensor[0]):
@@ -1222,20 +1233,20 @@ def compare_position_list_to_moles(from_moles, to_pos_list, error_distance):
     print(f"{len(vec_added)} added.")
 
 
-def vexy_y_tensor_to_position_counter(y_tensor, multiplier):
+def vexy_y_tensor_to_position_counter(y_tensor, scaleup):
     threshold = 0.1
 
     image_width = y_tensor.shape[2]
     image_height = y_tensor.shape[1]
-    target_width = image_width * multiplier
-    target_height = image_height * multiplier
+    target_width = image_width * scaleup
+    target_height = image_height * scaleup
     data = collections.Counter()
 
     for y in range(image_height):
         for x in range(image_width):
             if y_tensor[0][y][x] >= threshold:
-                target_x = int((x + y_tensor[1][y][x]) * multiplier)
-                target_y = int((y + y_tensor[2][y][x]) * multiplier)
+                target_x = int((x + y_tensor[1][y][x]) * scaleup)
+                target_y = int((y + y_tensor[2][y][x]) * scaleup)
                 if target_x < target_width:
                     if target_y < target_height:
                         if target_x >= 0:

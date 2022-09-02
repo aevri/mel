@@ -47,45 +47,20 @@ def show_image_from_rotodir(path):
     plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     
 show_image_from_rotodir(data_path / 'LeftArm/Upper/2022_07_29/')
-
-
-# +
-def show_target_image_from_path(path):
-    (
-        image_width,
-        image_height,
-        scale_x,
-        scale_y,
-    ) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
-    y = mel.rotomap.detectmolesnn.rotoimage_to_vexy_y_tensor(
-        path, image_width, image_height, scale_x, scale_y
-    )
-    
-    image = y.detach().numpy() * 255
-    image = np.uint8(image)
-    image = image.transpose((1, 2, 0))
-    #print(image[image[:,:,0] != 0])
-    
-    # OpenCV images are BGR, whereas matplotlib expects RGB.
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-    
-show_target_image_from_path(data_path / 'LeftArm/Upper/2022_07_29/01.jpg')
 # -
 
 path = data_path / 'LeftArm/Upper/2022_07_29/01.jpg'
 (
     image_width,
     image_height,
-    scale_x,
-    scale_y,
-) = mel.rotomap.detectmolesnn.calc_mxy_shapewh_scalexy(path)
+    scaleup,
+) = mel.rotomap.detectmolesnn.calc_vexy_shapewh_scaleup(path)
 y_data = mel.rotomap.detectmolesnn.rotoimage_to_vexy_y_tensor(
-    path, image_width, image_height, scale_x, scale_y
+    path, image_width, image_height, scaleup,
 )
 
 # +
-# Todo: try to get the multiplier to be a whole number.
+# NEXT: try to get the multiplier to be a whole number.
 # -
 
 image = y_data.detach().numpy() * 255
@@ -97,23 +72,19 @@ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 # Convert back to list of moles and positions.
 # -
 
-1 / scale_x
-
-1 / scale_y
-
-pos_counter = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_counter(y_data, 1 / scale_x)
+pos_counter = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_counter(y_data, scaleup)
 
 pos_list = mel.rotomap.detectmolesnn.position_counter_to_position_list(pos_counter, threshold=10)
 
 moles = mel.rotomap.moles.load_image_moles(path)
 
-mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 1)
+mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 0)
 
 # +
 # Convert back to list of moles and positions - pixel way
 # -
 
-pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data, 16)
+pos_image = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_image(y_data, scaleup)
 plt.figure(figsize=(20, 20))
 plt.imshow(pos_image.numpy())
 
