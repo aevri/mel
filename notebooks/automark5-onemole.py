@@ -18,6 +18,8 @@ import pathlib
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import pytorch_lightning as pl
+import torch
 # -
 
 # Make it possible to view images within the notebook.
@@ -31,13 +33,15 @@ import numpy as np
 from mel.rotomap import moles
 from mel.rotomap import detectmolesnn
 
+# # Setup data
+
 data_path = pathlib.Path("/Volumes/angelos-mel2/angelos_mel/rotomaps/parts")
 assert data_path.exists()
 
 path = data_path / 'LeftArm/Upper/2022_07_29/01.jpg'
 
 half_size = 64
-x_data = detectmolesnn.pick_one_mole(path, border_size=64, index=1)
+x_data = detectmolesnn.pick_one_mole(path, border_size=64, index=0)
 plt.imshow(
     detectmolesnn.rgb_tensor_to_cv2_image(
         x_data
@@ -57,12 +61,35 @@ plt.imshow(
     )
 )
 
-model = detectmolesnn.VexyConv(total_steps=100)
+# # Training
 
-pos_counter = mel.rotomap.detectmolesnn.vexy_y_tensor_to_position_counter(y_data, scaleup)
+train_dl = torch.utils.data.DataLoader(
+    [{"x_data": x_data, "y_data": y_data}],
+    batch_size=1,
+    shuffle=True,
+)
+model = detectmolesnn.VexyConv(total_steps=10000)
+trainer_kwargs = {
+    "max_steps": model.total_steps,
+    "log_every_n_steps": 1,
+    "callbacks": [detectmolesnn.GlobalProgressBar()],
+    "enable_checkpointing": False,
+    "accelerator": "auto",
+    #"accumulate_grad_batches": args.accumulate_grad_batches,
+    #"val_check_interval": 5,
+    # "auto_lr_find": True,
+}
+trainer = pl.Trainer(**trainer_kwargs)
 
-pos_list = mel.rotomap.detectmolesnn.position_counter_to_position_list(pos_counter, threshold=10)
+trainer.fit(model, train_dl)
 
-moles = mel.rotomap.moles.load_image_moles(path)
+y2_data = model(x_data.unsqueeze(0))
+plt.imshow(
+    detectmolesnn.rgb_tensor_to_cv2_image(
+        y2_data[0]
+    )
+)
 
-mel.rotomap.detectmolesnn.compare_position_list_to_moles(moles, pos_list, 0)
+detectmolesnn.vexy_y_tensor_to_position_counter(y_data, scaleup)
+
+detectmolesnn.vexy_y_tensor_to_position_counter(y2_data[0], scaleup)

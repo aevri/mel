@@ -1263,12 +1263,29 @@ class VexyConv(pl.LightningModule):
         super().__init__()
         self.learning_rate = 0.075
         self.total_steps = total_steps
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=3,
+                kernel_size=16,
+                stride=16,
+                groups=3,
+            ),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=3,
+                kernel_size=1,
+            ),
+        )
+
+    def forward(self, x):
+        return self.cnn(x)
 
     def training_step(self, batch, batch_nb):
         x = batch["x_data"]
         y = batch["y_data"]
-        m = batch["m_data"]
-        result = self(x, m)
+        result = self(x)
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
         # loss = dice_loss(result, target)
@@ -1277,11 +1294,6 @@ class VexyConv(pl.LightningModule):
         self.log("train/loss", loss.detach())
         return {
             "loss": loss,
-            "dice": dice_loss(result, target),
-            "pres": precision_ish(result, target),
-            "rec": recall_ish(result, target),
-            "mse": F.mse_loss(result, target),
-            "mul1": mean_l1(self),
         }
 
     def configure_optimizers(self):
