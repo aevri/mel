@@ -83,13 +83,32 @@ trainer = pl.Trainer(**trainer_kwargs)
 
 trainer.fit(model, train_dl)
 
-y2_data = model(x_data.unsqueeze(0))
+yy_data = model(x_data.unsqueeze(0))
 plt.imshow(
     detectmolesnn.rgb_tensor_to_cv2_image(
-        y2_data[0]
+        yy_data[0]
     )
 )
 
 detectmolesnn.vexy_y_tensor_to_position_counter(y_data, scaleup)
 
-detectmolesnn.vexy_y_tensor_to_position_counter(y2_data[0], scaleup)
+detectmolesnn.vexy_y_tensor_to_position_counter(yy_data[0], scaleup)
+
+# # Test
+
+half_size = 64
+x2_data = detectmolesnn.pick_one_mole(path, border_size=64, index=1)
+plt.imshow(
+    detectmolesnn.rgb_tensor_to_cv2_image(
+        x2_data
+    )
+)
+
+yy2_data = model(x2_data.unsqueeze(0))
+plt.imshow(
+    detectmolesnn.rgb_tensor_to_cv2_image(
+        yy2_data[0]
+    )
+)
+
+detectmolesnn.vexy_y_tensor_to_position_counter(yy2_data[0], scaleup)
