@@ -1261,7 +1261,7 @@ def rgb_tensor_to_cv2_image(tensor):
 class VexyConv(pl.LightningModule):
     def __init__(self, total_steps):
         super().__init__()
-        self.learning_rate = 0.075
+        self.learning_rate = 0.0003
         self.total_steps = total_steps
         self.cnn = torch.nn.Sequential(
             torch.nn.BatchNorm2d(3),
@@ -1288,10 +1288,20 @@ class VexyConv(pl.LightningModule):
         result = self(x)
         target = y
         assert result.shape == target.shape, (result.shape, target.shape)
-        # loss = dice_loss(result, target)
-        # loss = F.mse_loss(result, target) * 0.999 + mean_l1(self) * 0.001
         loss = F.mse_loss(result, target)
         self.log("train/loss", loss.detach())
+        return {
+            "loss": loss,
+        }
+
+    def validation_step(self, batch, batch_nb):
+        x = batch["x_data"]
+        y = batch["y_data"]
+        result = self(x)
+        target = y
+        assert result.shape == target.shape, (result.shape, target.shape)
+        loss = F.mse_loss(result, target)
+        self.log("valid/loss", loss.detach())
         return {
             "loss": loss,
         }
@@ -1300,18 +1310,19 @@ class VexyConv(pl.LightningModule):
         self.optimizer = torch.optim.AdamW(
             self.parameters(), self.learning_rate
         )
+        return self.optimizer
 
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            self.optimizer,
-            max_lr=self.learning_rate,
-            total_steps=self.total_steps,
-        )
+        # self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        #     self.optimizer,
+        #     max_lr=self.learning_rate,
+        #     total_steps=self.total_steps,
+        # )
 
-        sched = {
-            "scheduler": self.scheduler,
-            "interval": "step",
-        }
-        return [self.optimizer], [sched]
+        # sched = {
+        #     "scheduler": self.scheduler,
+        #     "interval": "step",
+        # }
+        # return [self.optimizer], [sched]
 
     def print_details(self):
         print(self)
@@ -1319,6 +1330,273 @@ class VexyConv(pl.LightningModule):
         for name, param in self.named_parameters():
             if param.requires_grad:
                 print(name, param.data.shape)
+
+
+class VexyConv2(VexyConv):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=16,
+                kernel_size=4,
+                stride=4,
+            ),
+            torch.nn.Conv2d(
+                in_channels=16,
+                out_channels=64,
+                kernel_size=4,
+                stride=4,
+            ),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=3,
+                kernel_size=1,
+            ),
+        )
+
+
+class VexyConv3(VexyConv):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=16,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.Conv2d(
+                in_channels=16,
+                out_channels=64,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                padding="same",
+                padding_mode="reflect",
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=3,
+                kernel_size=1,
+            ),
+        )
+
+
+class VexyConv4(VexyConv):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=16,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.Conv2d(
+                in_channels=16,
+                out_channels=64,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                padding="same",
+                padding_mode="reflect",
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=3,
+                padding="same",
+                padding_mode="reflect",
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(64),
+            torch.nn.Conv2d(
+                in_channels=64,
+                out_channels=3,
+                kernel_size=1,
+            ),
+        )
+
+
+class VexyConv5(VexyConv):
+    def __init__(self, total_steps):
+        super().__init__(total_steps)
+        self.cnn = torch.nn.Sequential(
+            torch.nn.BatchNorm2d(3),
+            torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=256,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=4,
+                stride=4,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding="same",
+                padding_mode="reflect",
+                groups=256,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding="same",
+                padding_mode="reflect",
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=1,
+            ),
+            Swish(),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.Conv2d(
+                in_channels=256,
+                out_channels=3,
+                kernel_size=1,
+            ),
+        )
+
+
+class CenteredImageMoles(pl.LightningDataModule):
+    def __init__(
+        self, image_path: str, *, scaleup: int = 16, batch_size: int = 2
+    ):
+        super().__init__()
+        self.image_path = image_path
+        self.batch_size = batch_size
+        self.half_size = 64
+        self.scaleup = scaleup
+        self.data_len = len(
+            mel.rotomap.moles.load_image_moles(self.image_path)
+        )
+        self.test_len = max(1, int(self.data_len * 0.2))
+        self.valid_len = max(1, int(self.data_len * 0.1))
+        self.train_len = self.data_len - self.test_len - self.valid_len
+        if not self.train_len:
+            raise ValueError("Not enough data.")
+
+    def setup(self, stage: str):
+        full_size = self.half_size * 2
+        y_size = full_size // self.scaleup
+        y_data = pointvec_to_vexy_y_tensor(
+            np.array([[self.half_size, self.half_size]]),
+            y_size,
+            y_size,
+            self.scaleup,
+        )
+        self.data = [
+            {
+                "x_data": pick_one_mole(
+                    self.image_path, border_size=self.half_size, index=index
+                ),
+                "y_data": y_data,
+            }
+            for index in range(self.data_len)
+        ]
+
+    def train_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.data[: self.train_len],
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
+
+    def val_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.data[self.train_len : -self.test_len],
+            batch_size=self.batch_size,
+        )
+
+    def test_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.data[-self.test_len :],
+            batch_size=self.batch_size,
+        )
+
+    # def predict_dataloader(self):
+    #     return DataLoader(self.mnist_predict, batch_size=self.batch_size)
 
 
 # -----------------------------------------------------------------------------
