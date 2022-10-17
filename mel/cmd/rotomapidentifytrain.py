@@ -214,7 +214,7 @@ def process_args(args):
         ),
     )
 
-    trainer = pl.Trainer(max_epochs=args.epochs)
+    trainer = pl.Trainer(max_epochs=args.epochs, accelerator="auto")
     if not valid_dataloader:
         valid_dataloader = None
 
