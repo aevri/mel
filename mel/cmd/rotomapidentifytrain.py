@@ -173,6 +173,11 @@ def process_args(args):
         "extra_stem": args.extra_stem,
     }
 
+    trainer_kwargs = {
+        "max_epochs": args.epochs,
+        "accelerator": "auto",
+    }
+
     print("Making data ..")
     (
         train_dataset,
@@ -221,7 +226,7 @@ def process_args(args):
         ),
     )
 
-    trainer = pl.Trainer(max_epochs=args.epochs, accelerator="auto")
+    trainer = pl.Trainer(**trainer_kwargs)
     if not valid_dataloader:
         valid_dataloader = None
 
