@@ -51,6 +51,13 @@ def setup_parser(parser):
         help="Number of epochs to train for.",
     )
     parser.add_argument(
+        "--batch-size",
+        "-b",
+        type=int,
+        default=100,
+        help="Number of items in a batch. Best to increase until it crashes.",
+    )
+    parser.add_argument(
         "--train-proportion",
         "-t",
         type=proportion_arg,
@@ -160,7 +167,7 @@ def process_args(args):
         "rotomaps": ("all"),
         "train_proportion": args.train_proportion,
         "image_size": image_size,
-        "batch_size": 100,
+        "batch_size": args.batch_size,
         "do_augmentation": False,
         "do_channels": False,
         "extra_stem": args.extra_stem,
