@@ -89,6 +89,12 @@ def setup_parser(parser):
         "--extra-stem",
         help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
     )
+    parser.add_argument(
+        "--wandb",
+        nargs=2,
+        metavar=("project", "run_name"),
+        help="Use a https://wandb.ai/ logger.",
+    )
 
 
 def process_args(args):
@@ -179,6 +185,12 @@ def process_args(args):
         "log_every_n_steps": 5,
     }
 
+    if args.wandb:
+        wandb_project, wandb_run_name = args.wandb
+        trainer_kwargs["logger"] = pl.loggers.WandbLogger(
+            project=wandb_project, name=wandb_run_name
+        )
+
     print("Making data ..")
     (
         train_dataset,
@@ -248,6 +260,11 @@ def process_args(args):
     with open(metadata_path, "w") as f:
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
+
+    if args.wandb:
+        import wandb
+
+        wandb.finish()
 
 
 def _fixup_old_model(old_metadata, new_metadata, model):

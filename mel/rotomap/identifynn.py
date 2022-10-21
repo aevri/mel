@@ -161,13 +161,14 @@ class LightningModel(pl.LightningModule):
         i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
+        self.log("train_loss", loss.detach(), prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss.detach(), prog_bar=True)
 
         preds = torch.argmax(out[0], dim=1)
         correct = (preds == yb[0]).float().sum()
