@@ -62,6 +62,7 @@ setuptools.setup(
         'torch',
         'torchvision',
         'tqdm',
+        'wandb',
     ],
     extras_require={
         'dev': [

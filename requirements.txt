@@ -14,3 +14,4 @@ torch==1.12.1
 torchvision==0.13.1
 tqdm==4.64.1
 vulture==2.6
+wandb==0.13.3
