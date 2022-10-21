@@ -176,6 +176,7 @@ def process_args(args):
     trainer_kwargs = {
         "max_epochs": args.epochs,
         "accelerator": "auto",
+        "log_every_n_steps": 5,
     }
 
     print("Making data ..")
