@@ -58,6 +58,12 @@ def setup_parser(parser):
         help="Number of items in a batch. Best to increase until it crashes.",
     )
     parser.add_argument(
+        "--lr",
+        type=float,
+        default=1e-3,
+        help="Learning rate.",
+    )
+    parser.add_argument(
         "--train-proportion",
         "-t",
         type=proportion_arg,
@@ -217,7 +223,7 @@ def process_args(args):
         init_model_args = old_metadata["model_args"]
 
     pl_model = mel.rotomap.identifynn.LightningModel(
-        init_model_args, not args.no_train_conv
+        init_model_args, not args.no_train_conv, lr=args.lr
     )
 
     metadata = {
