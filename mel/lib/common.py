@@ -331,7 +331,7 @@ class TimeLogger:
 
     def reset(self, *, command=None, mode=None, path=None):
         now = self._now()
-        elapsed = int((now - self._start).total_seconds())
+        elapsed = (now - self._start).total_seconds()
         self._writer.writerow(
             [self._command, self._mode, self._path, self._start, elapsed]
         )
