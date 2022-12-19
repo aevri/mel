@@ -161,7 +161,6 @@ def make_argparse_image_moles_tree(path):
 
 class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
-
         self.new = (new_uuids - old_uuids) - ignore_new
         self.missing = (old_uuids - new_uuids) - ignore_missing
         # self.matching = old_uuids & new_uuids

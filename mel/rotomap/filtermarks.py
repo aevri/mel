@@ -498,7 +498,6 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     softmax = torch.nn.Softmax(dim=1)
 
     def is_mole(image):
-
         batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)
 
         with torch.no_grad():
