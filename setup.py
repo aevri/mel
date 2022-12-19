@@ -57,6 +57,7 @@ setuptools.setup(
     install_requires=[
         'colorama',
         'opencv-python',
+        'pandas',
         'pygame',
         'pytorch-lightning',
         'torch',

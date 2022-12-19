@@ -32,10 +32,12 @@ import mel.cmd.rotomaporganise
 import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
 import mel.cmd.status
+import mel.cmd.timelog
 
 COMMANDS = {
     "root": {
         "status": mel.cmd.status,
+        "timelog": mel.cmd.timelog,
     },
     "micro": {
         "add-cluster": mel.cmd.addcluster,
