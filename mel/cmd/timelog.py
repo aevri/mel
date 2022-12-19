@@ -39,6 +39,28 @@ def process_args(args):
         parse_dates=["start"],
     )
 
+    timelog["major_part"] = timelog.path.str.removeprefix(
+        "rotomaps/parts/"
+    ).str.split("/", expand=True)[0]
+    timelog.loc[
+        ~timelog.path.str.startswith("rotomaps/parts/").fillna(False),
+        "major_part",
+    ] = None
+
+    timelog["part"] = None
+    timelog.loc[
+        timelog.path.str.startswith("rotomaps/parts/").fillna(False), "part"
+    ] = (
+        timelog.loc[
+            timelog.path.str.startswith("rotomaps/parts/").fillna(False),
+            "path",
+        ]
+        .str.removeprefix("rotomaps/parts/")
+        .str.split("/")
+        .apply(lambda x: x[0:2])
+        .str.join("/")
+    )
+
     print()
 
     print("Time spent, per command:")
@@ -53,9 +75,29 @@ def process_args(args):
 
     print("Events logged, per command:")
     print(
-        timelog[["command", "elapsed_secs"]]
+        timelog[["command"]]
         .groupby("command")
         .size()
+        .sort_values(ascending=False)
+    )
+
+    print()
+
+    print("Time spent, per major part:")
+    print(
+        timelog[["major_part", "elapsed_secs"]]
+        .groupby("major_part")
+        .sum()["elapsed_secs"]
+        .sort_values(ascending=False)
+    )
+
+    print()
+
+    print("Time spent, per part:")
+    print(
+        timelog[["part", "elapsed_secs"]]
+        .groupby("part")
+        .sum()["elapsed_secs"]
         .sort_values(ascending=False)
     )
 
