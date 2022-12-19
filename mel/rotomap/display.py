@@ -86,7 +86,6 @@ class Display:
         self._zoom_level = 1
 
     def show_current(self, image, overlay):
-
         if self._is_zoomed:
             self._transform = ZoomedImageTransform(
                 image, self._zoom_pos, self._image_rect, scale=self._zoom_level
@@ -149,7 +148,6 @@ class StatusOverlay:
         self.text = ""
 
     def __call__(self, image, transform):
-
         if self.text:
             text_image = mel.lib.image.render_text_as_image(self.text)
             mel.lib.common.copy_image_into_image(text_image, image, 0, 0)
@@ -181,7 +179,6 @@ class MoleMarkerOverlay:
         self._is_faded_markers = not self._is_faded_markers
 
     def __call__(self, image, transform):
-
         if not self._is_showing_markers:
             return image
 
@@ -304,7 +301,6 @@ class BoundingAreaOverlay:
         self.bounding_box = None
 
     def __call__(self, image, transform):
-
         image //= 2
         if self.bounding_box is not None:
             color = (0, 0, 255)
@@ -706,7 +702,6 @@ class Editor:
 
 class MoleData:
     def __init__(self, path_list):
-
         # Make an instance-specific cache of images. Note that this means that
         # mel will need to be re-run in order to pick up changes to mole
         # images. This seems to be fine for use-cases to date, only the mole
@@ -738,7 +733,6 @@ class MoleData:
         self.ensure_loaded()
 
     def ensure_loaded(self):
-
         if self._loaded_index == self._list_index:
             return
 
