@@ -6,6 +6,7 @@ import pathlib
 DEFAULT_CLASSIFIER_PATH = "classifiers"
 DEFAULT_MOLE_MARK_MODEL_NAME = "mole_mark_model"
 DEFAULT_MOLE_MARK_DATACONFIG_NAME = "mole_mark_dataconfig.pkl"
+TIMELOG_NAME = "timelog.csv"
 
 ROTOMAPS_PATH = pathlib.Path("rotomaps")
 MICRO_PATH = pathlib.Path("micro")
