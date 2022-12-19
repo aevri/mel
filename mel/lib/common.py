@@ -9,6 +9,7 @@ import cv2
 import numpy
 
 import mel.lib.datetime
+import mel.lib.fs
 import mel.lib.image
 
 
@@ -349,7 +350,7 @@ class TimeLogger:
 
 @contextlib.contextmanager
 def timelogger_context(command):
-    path = mel.lib.fs.find_melroot() / "timelog.csv"
+    path = mel.lib.fs.find_melroot() / mel.lib.fs.TIMELOG_NAME
     if not path.exists():
         path.write_text("command,mode,path,start,elapsed_secs\n")
     with path.open("a") as f:
