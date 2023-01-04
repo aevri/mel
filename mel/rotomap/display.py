@@ -13,7 +13,6 @@ import mel.lib.image
 import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
-import mel.rotomap.relate
 import mel.rotomap.tricolour
 
 DEFAULT_MASKER_RADIUS = 200
@@ -87,11 +86,13 @@ class Display:
 
     def show_current(self, image, overlay):
         if self._is_zoomed:
-            self._transform = ZoomedImageTransform(
+            self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
                 image, self._zoom_pos, self._image_rect, scale=self._zoom_level
             )
         else:
-            self._transform = FittedImageTransform(image, self._image_rect)
+            self._transform = mel.lib.fullscreenui.FittedImageTransform(
+                image, self._image_rect
+            )
 
         image = self._transform.render()
         if overlay is not None:
@@ -334,47 +335,6 @@ class BoundingAreaOverlay:
             cv2.drawContours(image, [border, centre], -1, color, size)
 
         return image
-
-
-class ZoomedImageTransform:
-    def __init__(self, image, pos, rect, scale):
-        self._pos = tuple(int(v * scale) for v in pos)
-        self._rect = rect
-        self._offset = mel.lib.image.calc_centering_offset(self._pos, rect)
-        self._scale = scale
-
-        self._image = mel.lib.image.scale_image(image, self._scale)
-
-    def render(self):
-        return mel.lib.image.centered_at(self._image, self._pos, self._rect)
-
-    def imagexy_to_transformedxy(self, x, y):
-        return ((numpy.array((x, y)) * self._scale) + self._offset).astype(int)
-
-    def transformedxy_to_imagexy(self, x, y):
-        return ((numpy.array((x, y)) - self._offset) / self._scale).astype(int)
-
-
-class FittedImageTransform:
-    def __init__(self, image, fit_rect):
-        self._fit_rect = fit_rect
-        image_rect = mel.lib.image.get_image_rect(image)
-
-        letterbox = mel.lib.image.calc_letterbox(*image_rect, *self._fit_rect)
-
-        self._offset = numpy.array(letterbox[:2])
-        self._scale = image.shape[1] / letterbox[2]
-
-        self._image = image
-
-    def render(self):
-        return mel.lib.image.letterbox(self._image, *self._fit_rect)
-
-    def imagexy_to_transformedxy(self, x, y):
-        return (numpy.array((x, y)) / self._scale + self._offset).astype(int)
-
-    def transformedxy_to_imagexy(self, x, y):
-        return ((numpy.array((x, y)) - self._offset) * self._scale).astype(int)
 
 
 class EditorMode(enum.Enum):
