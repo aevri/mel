@@ -230,7 +230,7 @@ class ZoomableMixin:
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
 
-class LeftRightDisplay:
+class LeftRightDisplay(ZoomableMixin):
     """Display images in a window, supply controls for navigating."""
 
     def __init__(self, screen, image_list):
@@ -238,6 +238,14 @@ class LeftRightDisplay:
             raise ValueError(
                 "image_list must be a list with at least one image."
             )
+        super().__init__()
+
+        rect = numpy.array((screen.width, screen.height))
+        title_height, _ = mel.lib.image.measure_text_height_width("abc")
+        self._spacer_height = 10
+        self._image_rect = rect - numpy.array(
+            (0, title_height + self._spacer_height)
+        )
 
         self.display = screen
         self.image_path = None
@@ -261,15 +269,22 @@ class LeftRightDisplay:
     def _get_image(self, path):
         return mel.lib.image.load_image(path)
 
+    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None):
+        image_x, image_y = self.windowxy_to_imagexy(mouse_x, mouse_y)
+        self.set_zoomed(image_x, image_y, zoom_level)
+        self.show()
+
     def show(self):
         if self._image_list:
             path = self._image_list[self._index]
             self.image_path = path
             caption = mel.lib.image.render_text_as_image(str(path))
-            image = mel.lib.image.letterbox(
-                self._get_image(path), self.display.width, self.display.height
+            image = self._get_image(path)
+            self.zoomable_transform_update(image, self._image_rect)
+            image = self.zoomable_transform_render()
+            image = mel.lib.image.montage_vertical(
+                self._spacer_height, image, caption
             )
-            image = mel.lib.image.montage_vertical(10, image, caption)
             self.display.show_opencv_image(image)
         else:
             self.image_path = None
