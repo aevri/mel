@@ -186,6 +186,50 @@ class Display:
         self.is_dirty = False
 
 
+class ZoomableMixin:
+    def __init__(self):
+        self._transform = None
+        self._zoom_pos = None
+        self._is_zoomed = False
+        self._zoom_level = 1
+
+    def zoomable_transform_update(self, image, window_rect):
+        if self._is_zoomed:
+            self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
+                image, self._zoom_pos, window_rect, scale=self._zoom_level
+            )
+        else:
+            self._transform = mel.lib.fullscreenui.FittedImageTransform(
+                image, window_rect
+            )
+
+    def zoomable_transform_render(self):
+        return self._transform.render()
+
+    def set_fitted(self):
+        self._is_zoomed = False
+
+    def set_zoom_level(self, zoom_level=1):
+        self._zoom_level = zoom_level
+
+    def set_zoomed(self, x, y, zoom_level=None):
+        self._zoom_pos = numpy.array((x, y))
+        self._is_zoomed = True
+        if zoom_level is not None:
+            self._zoom_level = zoom_level
+
+    def is_zoomed(self):
+        return self._is_zoomed
+
+    def get_zoom_pos(self):
+        if not self.is_zoomed():
+            raise Exception("Not zoomed")
+        return self._zoom_pos
+
+    def windowxy_to_imagexy(self, window_x, window_y):
+        return self._transform.transformedxy_to_imagexy(window_x, window_y)
+
+
 class LeftRightDisplay:
     """Display images in a window, supply controls for navigating."""
 

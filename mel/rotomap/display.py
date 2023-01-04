@@ -65,8 +65,9 @@ def draw_crosshair(image, x, y):
             )
 
 
-class Display:
+class Display(mel.lib.fullscreenui.ZoomableMixin):
     def __init__(self, screen):
+        super().__init__()
         self._image_display = screen
 
         self._rect = numpy.array((screen.width, screen.height))
@@ -76,54 +77,18 @@ class Display:
             (0, title_height + self._spacer_height)
         )
 
-        self._transform = None
-
         self._title = ""
 
-        self._zoom_pos = None
-        self._is_zoomed = False
-        self._zoom_level = 1
-
     def show_current(self, image, overlay):
-        if self._is_zoomed:
-            self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
-                image, self._zoom_pos, self._image_rect, scale=self._zoom_level
-            )
-        else:
-            self._transform = mel.lib.fullscreenui.FittedImageTransform(
-                image, self._image_rect
-            )
+        self.zoomable_transform_update(image, self._image_rect)
+        image = self.zoomable_transform_render()
 
-        image = self._transform.render()
         if overlay is not None:
             image = overlay(image, self._transform)
 
         caption = mel.lib.image.render_text_as_image(self._title)
         image = mel.lib.image.montage_vertical(10, image, caption)
         self._image_display.show_opencv_image(image)
-
-    def set_fitted(self):
-        self._is_zoomed = False
-
-    def set_zoom_level(self, zoom_level=1):
-        self._zoom_level = zoom_level
-
-    def set_zoomed(self, x, y, zoom_level=None):
-        self._zoom_pos = numpy.array((x, y))
-        self._is_zoomed = True
-        if zoom_level is not None:
-            self._zoom_level = zoom_level
-
-    def is_zoomed(self):
-        return self._is_zoomed
-
-    def get_zoom_pos(self):
-        if not self.is_zoomed():
-            raise Exception("Not zoomed")
-        return self._zoom_pos
-
-    def windowxy_to_imagexy(self, window_x, window_y):
-        return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
     def set_title(self, title):
         self._title = title
