@@ -87,7 +87,9 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
             image = overlay(image, self._transform)
 
         caption = mel.lib.image.render_text_as_image(self._title)
-        image = mel.lib.image.montage_vertical(10, image, caption)
+        image = mel.lib.image.montage_vertical(
+            self._spacer_height, image, caption
+        )
         self._image_display.show_opencv_image(image)
 
     def set_title(self, title):
