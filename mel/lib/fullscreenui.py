@@ -4,10 +4,53 @@
 import contextlib
 
 import cv2
+import numpy
 
 import mel.lib.common
 import mel.lib.image
 import mel.lib.ui
+
+
+class FittedImageTransform:
+    def __init__(self, image, fit_rect):
+        self._fit_rect = fit_rect
+        image_rect = mel.lib.image.get_image_rect(image)
+
+        letterbox = mel.lib.image.calc_letterbox(*image_rect, *self._fit_rect)
+
+        self._offset = numpy.array(letterbox[:2])
+        self._scale = image.shape[1] / letterbox[2]
+
+        self._image = image
+
+    def render(self):
+        return mel.lib.image.letterbox(self._image, *self._fit_rect)
+
+    def imagexy_to_transformedxy(self, x, y):
+        return (numpy.array((x, y)) / self._scale + self._offset).astype(int)
+
+    def transformedxy_to_imagexy(self, x, y):
+        return ((numpy.array((x, y)) - self._offset) * self._scale).astype(int)
+
+
+class ZoomedImageTransform:
+    def __init__(self, image, pos, rect, scale):
+        self._pos = tuple(int(v * scale) for v in pos)
+        self._rect = rect
+        self._offset = mel.lib.image.calc_centering_offset(self._pos, rect)
+        self._scale = scale
+
+        self._image = mel.lib.image.scale_image(image, self._scale)
+
+    def render(self):
+        return mel.lib.image.centered_at(self._image, self._pos, self._rect)
+
+    def imagexy_to_transformedxy(self, x, y):
+        return ((numpy.array((x, y)) * self._scale) + self._offset).astype(int)
+
+    def transformedxy_to_imagexy(self, x, y):
+        return ((numpy.array((x, y)) - self._offset) / self._scale).astype(int)
+
 
 _PYGAME_HAD_EXCLUSIVE_INIT = False
 
