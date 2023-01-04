@@ -19,6 +19,8 @@ def process_args(args):
     print("Press backspace to delete image.")
     print("Press 'g' to group images before current to a folder.")
     print("Press 'q' to quit.")
+    print("Ctrl-click on a point to zoom in on it.")
+    print("Press space to restore original zoom.")
 
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -29,6 +31,7 @@ def process_args(args):
             display = OrganiserDisplay(
                 logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
             )
+
             display.reset_logger()
             for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
                 if event.type == pygame.KEYDOWN:
@@ -44,6 +47,17 @@ def process_args(args):
                         logger.reset(mode="group")
                         destination = input("group destination: ")
                         display.group_images(destination)
+                    elif event.key == pygame.K_SPACE:
+                        display.set_fitted()
+                        display.show()
+                elif (
+                    event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+                ):
+                    key_mods = pygame.key.get_mods()
+                    if key_mods & pygame.KMOD_CTRL:
+                        mouse_x, mouse_y = pygame.mouse.get_pos()
+                        display.show_zoomed(mouse_x, mouse_y)
+                        display.show()
 
 
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
