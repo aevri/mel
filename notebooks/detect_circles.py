@@ -115,6 +115,17 @@ class PlModule(pl.LightningModule):
         losses = sum(loss for loss in loss_dict.values())
         self.log("train_loss", losses.detach())
         return losses
+    
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        result = self.model(x)
+        nobj_offset = 0
+        for y_item, result_item in zip(y, result):
+            nobj_offset += len(result_item["labels"]) - len(y_item["labels"])
+            print("result labels:", len(result_item["labels"]))
+            print("expected labels:", len(y_item["labels"]))
+        self.log("valid_nobj_offset", float(nobj_offset), prog_bar=True)
+        return result
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
@@ -130,17 +141,21 @@ def collate_fn(batch):
 
 # Note, need to normalize the images,
 # e.g. https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#load-data
-dataset = [torch_gen_image() for _ in range(1000)]
+train_dataset = [torch_gen_image() for _ in range(100)]
+valid_dataset = [torch_gen_image() for _ in range(10)]
 # -
 
 import gc
 torch.cuda.empty_cache()
 gc.collect()
-train_loader = torch.utils.data.DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
 
-for x, y in train_loader:
-    print(y)
-    break
+# + active=""
+# for x, y in train_loader:
+#     print(y)
+#     break
+# -
 
 trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
-trainer.fit(model=model, train_dataloaders=train_loader)
+trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
