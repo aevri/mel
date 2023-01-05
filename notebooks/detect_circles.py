@@ -43,6 +43,10 @@ def gen_image():
     boxes = [
         [x - r, y - r, x + r, y + r] for x, y, r in points
     ]
+    fr = 10
+    boxes = [
+        [x - fr, y - fr, x + fr, y + fr] for x, y, r in points
+    ]
     # From https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
     # ...
     # boxes.append([xmin, ymin, xmax, ymax])
@@ -166,16 +170,16 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate
 #     break
 # -
 
-trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
+trainer = pl.Trainer(max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 import gc
 torch.cuda.empty_cache()
 gc.collect()
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=1, collate_fn=collate_fn)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
 set_parameter_yes_grad(model)
-trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
+trainer = pl.Trainer(max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 # +
