@@ -97,11 +97,19 @@ model(to_tensor(image).unsqueeze(0))
 # +
 import pytorch_lightning as pl
 
-# define the LightningModule
+def set_parameter_no_grad(model):
+    for param in model.parameters():
+        param.requires_grad = False
+
+def set_parameter_yes_grad(model):
+    for param in model.parameters():
+        param.requires_grad = True
+        
 class PlModule(pl.LightningModule):
     def __init__(self):
         super().__init__()
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
+        set_parameter_no_grad(model)
         num_classes = 2  # 1 class + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
@@ -142,15 +150,15 @@ def collate_fn(batch):
 
 # Note, need to normalize the images,
 # e.g. https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#load-data
-train_dataset = [torch_gen_image() for _ in range(100)]
+train_dataset = [torch_gen_image() for _ in range(1000)]
 valid_dataset = [torch_gen_image() for _ in range(10)]
 # -
 
 import gc
 torch.cuda.empty_cache()
 gc.collect()
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=10, collate_fn=collate_fn, shuffle=True)
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate_fn=collate_fn)
 
 # + active=""
 # for x, y in train_loader:
@@ -161,6 +169,16 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_
 trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
+import gc
+torch.cuda.empty_cache()
+gc.collect()
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, collate_fn=collate_fn, shuffle=True)
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=1, collate_fn=collate_fn)
+set_parameter_yes_grad(model)
+trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
+trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+
+# +
 image, target = gen_image()
 to_tensor = torchvision.transforms.ToTensor()
 torch_image = to_tensor(image)
@@ -168,8 +186,6 @@ model.eval()
 with torch.no_grad():
     boxes = model(torch_image.unsqueeze(0))[0]["boxes"]
 
-
-# +
 def draw_result(image, boxes):
     image = image.copy()
     print(boxes)
