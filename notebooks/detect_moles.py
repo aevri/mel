@@ -30,6 +30,20 @@ import torch
 # %autoreload 2
 
 import mel.lib.common
+import mel.rotomap.moles
+
+data_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
+assert data_path.exists()
+d = mel.rotomap.moles.RotomapDirectory(data_path / 'LeftArm/Upper/2017_04_19/')
+f = next(d.yield_frames())
+i = f.load_image()
+
+# +
+# Make sure the image is nice and large in the notebook.
+plt.figure(figsize=(20, 20))
+
+# OpenCV images are BGR, whereas matplotlib expects RGB.
+plt.imshow(cv2.cvtColor(i, cv2.COLOR_BGR2RGB))
 
 
 # +
