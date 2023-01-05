@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 import mel.rotomap.moles
 
-data_path = pathlib.Path("/Volumes/angelos-mel/angelos_mel/rotomaps/parts")
+data_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
 assert data_path.exists()
 d = mel.rotomap.moles.RotomapDirectory(data_path / 'LeftArm/Upper/2017_04_19/')
 f = next(d.yield_frames())
