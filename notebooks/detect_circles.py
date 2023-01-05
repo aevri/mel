@@ -18,6 +18,7 @@ import random
 
 import cv2
 import matplotlib.pyplot as plt
+import torch
 # -
 
 # Make it possible to view images within the notebook.
@@ -30,24 +31,45 @@ import matplotlib.pyplot as plt
 
 import mel.lib.common
 
+
 # +
-image_width, image_height = (1024, 800)
-image = mel.lib.common.new_image(image_height, image_width)
+def gen_image():
+    image_width, image_height = (1024, 800)
+    image = mel.lib.common.new_image(image_height, image_width)
+    points = [
+        [random.randrange(image_width), random.randrange(image_height), random.randrange(8, 12)]
+        for _ in range(random.randrange(1, 20))
+    ]
+    boxes = [
+        [x - r, y - r, x + r, y + r] for x, y, r in points
+    ]
+    # From https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
+    # ...
+    # boxes.append([xmin, ymin, xmax, ymax])
+    # ...
+    # # convert everything into a torch.Tensor
+    # boxes = torch.as_tensor(boxes, dtype=torch.float32)
+    # # there is only one class
+    # labels = torch.ones((num_objs,), dtype=torch.int64)
+    # ...
+    # target["boxes"] = boxes
+    # target["labels"] = labels
+    # ...
+    for x, y, radius in points:
+       mel.lib.common.draw_circle(image, x, y, radius, (0, 0, 255))
+    target = {}
+    target["labels"] = torch.ones((len(points),), dtype=torch.int64)
+    target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
+    return image, target
 
-points = [
-    [100, 150],
-    [150, 50],
-]
+def torch_gen_image():
+    image, target = gen_image()
+    to_tensor = torchvision.transforms.ToTensor()
+    return to_tensor(image), target
 
-points = [
-    [random.randrange(image_width), random.randrange(image_height), random.randrange(8, 12)]
-    for _ in range(random.randrange(1, 20))
-]
-
-for x, y, radius in points:
-   mel.lib.common.draw_circle(image, x, y, radius, (0, 0, 255))
-
+image, target = gen_image()
 plt.imshow(image)
+target
 
 # +
 import torchvision
@@ -68,3 +90,57 @@ model.eval()
 
 to_tensor = torchvision.transforms.ToTensor()
 model(to_tensor(image).unsqueeze(0))
+
+# +
+# See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/engine.py#L12
+
+# +
+import pytorch_lightning as pl
+
+# define the LightningModule
+class PlModule(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
+        num_classes = 2  # 1 class + background
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+        model.eval()
+        
+        self.model = model
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        loss_dict = self.model(x, y)
+        losses = sum(loss for loss in loss_dict.values())
+        self.log("train_loss", losses.detach())
+        return losses
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
+    
+model = PlModule()
+
+
+# +
+# See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
+# Note, need to normalize the images,
+# e.g. https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#load-data
+dataset = [torch_gen_image() for _ in range(1000)]
+# -
+
+import gc
+torch.cuda.empty_cache()
+gc.collect()
+train_loader = torch.utils.data.DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
+
+for x, y in train_loader:
+    print(y)
+    break
+
+trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
+trainer.fit(model=model, train_dataloaders=train_loader)
