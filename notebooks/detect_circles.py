@@ -122,10 +122,11 @@ class PlModule(pl.LightningModule):
         nobj_offset = 0
         for y_item, result_item in zip(y, result):
             nobj_offset += len(result_item["labels"]) - len(y_item["labels"])
-            print("result labels:", len(result_item["labels"]))
-            print("expected labels:", len(y_item["labels"]))
         self.log("valid_nobj_offset", float(nobj_offset), prog_bar=True)
         return result
+    
+    def forward(self, x):
+        return self.model(x)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
@@ -159,3 +160,22 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_
 
 trainer = pl.Trainer(limit_train_batches=100, max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+
+image, target = gen_image()
+to_tensor = torchvision.transforms.ToTensor()
+torch_image = to_tensor(image)
+model.eval()
+with torch.no_grad():
+    boxes = model(torch_image.unsqueeze(0))[0]["boxes"]
+
+
+# +
+def draw_result(image, boxes):
+    image = image.copy()
+    print(boxes)
+    for xmin, ymin, xmax, ymax in boxes:
+        mel.lib.common.draw_circle(image, int(xmin), int(ymin), 2, (255, 255, 255))
+        mel.lib.common.draw_circle(image, int(xmax), int(ymax), 2, (255, 255, 255))
+    return image
+
+plt.imshow(draw_result(image, boxes))
