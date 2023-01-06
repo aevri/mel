@@ -30,7 +30,30 @@ import torch
 # %autoreload 2
 
 import mel.lib.common
+import mel.lib.fs
 import mel.rotomap.moles
+
+parts_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
+
+mel.lib.fs.list_all_rotomaps_by_part(parts_path)
+
+
+# +
+def list_train_valid_images():
+    parts_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
+    exclude_parts = ["LeftArm/Hand", "RightArm/Hand", "LeftLeg/Foot", "RightLeg/Foot", "Trunk/Lower", "Trunk/Back"]
+    session_images = mel.lib.fs.list_rotomap_images_by_session(parts_path, exclude_parts=exclude_parts)
+    sessions = [s for s in sorted(session_images.keys()) if s > "2020_"]
+    train_sessions = sessions[:-1]
+    valid_sessions = sessions[-1:]
+    train_images = [img for sess in train_sessions for img in session_images[sess]]
+    valid_images = [img for sess in valid_sessions for img in session_images[sess]]
+    return train_images, valid_images
+
+train_images, valid_images = list_train_valid_images()
+print(f"There are {len(train_images)} training images.")
+print(f"There are {len(valid_images)} validation images.")
+# -
 
 data_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
 assert data_path.exists()
