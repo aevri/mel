@@ -128,7 +128,7 @@ class PlModule(pl.LightningModule):
         self.log("train_loss", losses.detach())
         return losses
     
-    def validation_step(self, batch, batch_idx):
+    def validation_step2(self, batch, batch_idx):
         x, y = batch
         result = self.model(x)
         nobj_offset = 0
@@ -137,6 +137,14 @@ class PlModule(pl.LightningModule):
         self.log("valid_nobj_offset", float(nobj_offset), prog_bar=True)
         return result
     
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        self.model.train()
+        loss_dict = self.model(x, y)
+        losses = sum(loss for loss in loss_dict.values())
+        self.log("val_loss", losses.detach(), prog_bar=True)
+        return losses
+
     def forward(self, x):
         return self.model(x)
 
@@ -170,7 +178,7 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate
 #     break
 # -
 
-trainer = pl.Trainer(max_epochs=1, accelerator="auto")
+trainer = pl.Trainer(limit_train_batches=10, max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 import gc
