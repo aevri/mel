@@ -18,7 +18,9 @@ import random
 
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+import torchvision
 # -
 
 # Make it possible to view images within the notebook.
@@ -34,8 +36,6 @@ import mel.lib.fs
 import mel.rotomap.moles
 
 parts_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
-
-mel.lib.fs.list_all_rotomaps_by_part(parts_path)
 
 
 # +
@@ -53,63 +53,91 @@ def list_train_valid_images():
 train_images, valid_images = list_train_valid_images()
 print(f"There are {len(train_images)} training images.")
 print(f"There are {len(valid_images)} validation images.")
+
+
+# +
+def drop_paths_without_moles(path_list):
+    return [path for path in path_list if mel.rotomap.moles.load_image_moles(path)]
+
+train_images = drop_paths_without_moles(train_images)
+valid_images = drop_paths_without_moles(valid_images)
+
+print(f"There are {len(train_images)} training images.")
+print(f"There are {len(valid_images)} validation images.")
+
+
+# +
+def load_image(image_path):
+    #flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
+    flags = cv2.IMREAD_COLOR
+    try:
+        original_image = cv2.imread(str(image_path), flags)
+        if original_image is None:
+            raise OSError(f"File not recognized by opencv: {image_path}")
+        original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    except Exception as e:
+        raise OSError(f"Error handling image at: {image_path}") from e
+
+    mask = mel.rotomap.mask.load(image_path)
+    green = np.zeros(original_image.shape, np.uint8)
+    green[:, :, 1] = 255
+    image = cv2.bitwise_and(original_image, original_image, mask=mask)
+    not_mask = cv2.bitwise_not(mask)
+    green = cv2.bitwise_and(green, green, mask=not_mask)
+    image = cv2.bitwise_or(image, green)
+    return image
+
+plt.figure(figsize=(20, 20))
+plt.imshow(load_image(train_images[0]))
+
+
 # -
 
-data_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
-assert data_path.exists()
-d = mel.rotomap.moles.RotomapDirectory(data_path / 'LeftArm/Upper/2017_04_19/')
-f = next(d.yield_frames())
-i = f.load_image()
+class MoleImageBoxesDataset(torch.utils.data.Dataset):
+    def __init__(self, image_paths):
+        self.image_paths = image_paths
+        self.image_transform = torchvision.transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+            ])
+        
+    def __len__(self):
+        return len(self.image_paths)
+    def __getitem__(self, index):
+        path = self.image_paths[index]
+        
+        image = load_image(path)
+        to_tensor = torchvision.transforms.ToTensor()
+        image = self.image_transform(image)
+        
+        moles = mel.rotomap.moles.load_image_moles(path)
+        if not moles:
+            raise ValueError("Mole list must not be empty.")
+        fr = 10
+        boxes = [
+            [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
+        ]
+        
+        target = {}
+        target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
+        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
+        return image, target
 
-# +
-# Make sure the image is nice and large in the notebook.
-plt.figure(figsize=(20, 20))
 
-# OpenCV images are BGR, whereas matplotlib expects RGB.
-plt.imshow(cv2.cvtColor(i, cv2.COLOR_BGR2RGB))
+def rgb_tensor_to_image(tensor):
+    image = tensor.detach().numpy() * 255
+    image = np.uint8(image)
+    image = image.transpose((1, 2, 0))
+    return image
 
 
-# +
-def gen_image():
-    image_width, image_height = (1024, 800)
-    image = mel.lib.common.new_image(image_height, image_width)
-    points = [
-        [random.randrange(image_width), random.randrange(image_height), random.randrange(8, 12)]
-        for _ in range(random.randrange(1, 20))
-    ]
-    boxes = [
-        [x - r, y - r, x + r, y + r] for x, y, r in points
-    ]
-    fr = 10
-    boxes = [
-        [x - fr, y - fr, x + fr, y + fr] for x, y, r in points
-    ]
-    # From https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
-    # ...
-    # boxes.append([xmin, ymin, xmax, ymax])
-    # ...
-    # # convert everything into a torch.Tensor
-    # boxes = torch.as_tensor(boxes, dtype=torch.float32)
-    # # there is only one class
-    # labels = torch.ones((num_objs,), dtype=torch.int64)
-    # ...
-    # target["boxes"] = boxes
-    # target["labels"] = labels
-    # ...
-    for x, y, radius in points:
-       mel.lib.common.draw_circle(image, x, y, radius, (0, 0, 255))
-    target = {}
-    target["labels"] = torch.ones((len(points),), dtype=torch.int64)
-    target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
-    return image, target
+train_dataset = MoleImageBoxesDataset(train_images)
+valid_dataset = MoleImageBoxesDataset(valid_images)
 
-def torch_gen_image():
-    image, target = gen_image()
-    to_tensor = torchvision.transforms.ToTensor()
-    return to_tensor(image), target
+image, target = train_dataset[0]
+plt.imshow(rgb_tensor_to_image(image))
 
-image, target = gen_image()
-plt.imshow(image)
 target
 
 # +
@@ -130,7 +158,8 @@ model.eval()
 # -
 
 to_tensor = torchvision.transforms.ToTensor()
-model(to_tensor(image).unsqueeze(0))
+model.eval()
+model(image.unsqueeze(0))
 
 # +
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/engine.py#L12
@@ -150,7 +179,7 @@ class PlModule(pl.LightningModule):
     def __init__(self):
         super().__init__()
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
-        set_parameter_no_grad(model)
+        #set_parameter_no_grad(model)
         num_classes = 2  # 1 class + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
@@ -167,12 +196,11 @@ class PlModule(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        result = self.model(x)
-        nobj_offset = 0
-        for y_item, result_item in zip(y, result):
-            nobj_offset += len(result_item["labels"]) - len(y_item["labels"])
-        self.log("valid_nobj_offset", float(nobj_offset), prog_bar=True)
-        return result
+        self.model.train()
+        loss_dict = self.model(x, y)
+        losses = sum(loss for loss in loss_dict.values())
+        self.log("val_loss", losses.detach(), prog_bar=True)
+        return losses
     
     def forward(self, x):
         return self.model(x)
@@ -184,55 +212,54 @@ class PlModule(pl.LightningModule):
 model = PlModule()
 
 
-# +
+# -
+
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
 def collate_fn(batch):
     return tuple(zip(*batch))
 
-# Note, need to normalize the images,
-# e.g. https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#load-data
-train_dataset = [torch_gen_image() for _ in range(1000)]
-valid_dataset = [torch_gen_image() for _ in range(10)]
-# -
-
-import gc
-torch.cuda.empty_cache()
-gc.collect()
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=10, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate_fn=collate_fn)
 
 # + active=""
-# for x, y in train_loader:
-#     print(y)
-#     break
-# -
+# import gc
+# torch.cuda.empty_cache()
+# gc.collect()
+# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=10, collate_fn=collate_fn, shuffle=True)
+# valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate_fn=collate_fn, shuffle=True)
 
-trainer = pl.Trainer(max_epochs=1, accelerator="auto")
-trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+# + active=""
+# trainer = pl.Trainer(limit_train_batches=10, max_epochs=1, accelerator="auto")
+# trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+# -
 
 import gc
 torch.cuda.empty_cache()
 gc.collect()
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
-set_parameter_yes_grad(model)
-trainer = pl.Trainer(max_epochs=1, accelerator="auto")
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
+#set_parameter_yes_grad(model)
+trainer = pl.Trainer(max_epochs=1, accelerator="auto", limit_val_batches=10, val_check_interval=50)
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 # +
-image, target = gen_image()
-to_tensor = torchvision.transforms.ToTensor()
-torch_image = to_tensor(image)
+image, target = valid_dataset[60]
 model.eval()
 with torch.no_grad():
-    boxes = model(torch_image.unsqueeze(0))[0]["boxes"]
+    boxes = model(image.unsqueeze(0))[0]["boxes"]
 
 def draw_result(image, boxes):
-    image = image.copy()
-    print(boxes)
+    image = rgb_tensor_to_image(image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #print(boxes)
+    for xmin, ymin, xmax, ymax in target["boxes"]:
+        x = 0.5 * (xmin + xmax)
+        y = 0.5 * (ymin + ymax)
+        mel.lib.common.draw_circle(image, int(x), int(y), 20, (128, 0, 128))
     for xmin, ymin, xmax, ymax in boxes:
-        mel.lib.common.draw_circle(image, int(xmin), int(ymin), 2, (255, 255, 255))
-        mel.lib.common.draw_circle(image, int(xmax), int(ymax), 2, (255, 255, 255))
+        x = 0.5 * (xmin + xmax)
+        y = 0.5 * (ymin + ymax)
+        mel.lib.common.draw_circle(image, int(x), int(y), 10, (256, 256, 0))
     return image
 
+plt.figure(figsize=(20, 20))
 plt.imshow(draw_result(image, boxes))
