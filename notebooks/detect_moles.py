@@ -295,7 +295,7 @@ trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_l
 pl.Trainer(accelerator="auto").validate(model, torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn))
 
 # +
-image, target = valid_dataset[60]
+image, target = valid_dataset[20]
 model.eval()
 with torch.no_grad():
     boxes = model(image.unsqueeze(0))[0]["boxes"]
@@ -317,12 +317,6 @@ def draw_result(image, boxes):
 
 plt.figure(figsize=(20, 20))
 plt.imshow(draw_result(image, boxes))
-# -
-
-mel.rotomap.detectmolesnn2.boxes_to_poslist(target["boxes"])
-
-mel.rotomap.detectmolesnn2.boxes_to_poslist(boxes)
-
 mel.rotomap.detectmolesnn2.calc_precision_recall(
     target_poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(target["boxes"]),
     poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(boxes),
