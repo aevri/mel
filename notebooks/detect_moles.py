@@ -181,7 +181,7 @@ def set_parameter_yes_grad(model):
 class PlModule(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.lr = 0.0001
+        self.lr = 0.001
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
         #set_parameter_no_grad(model)
         num_classes = 2  # 1 class + background
@@ -220,7 +220,15 @@ class PlModule(pl.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.AdamW(
+            [
+                #{"params", self.model.transform.parameters(), "lr": self.lr * 0.1},
+                {"params": self.model.backbone.parameters(), "lr": self.lr * 0.01},
+                {"params": self.model.rpn.parameters(), "lr": self.lr * 1.0},
+                {"params": self.model.roi_heads.parameters(), "lr": self.lr * 1.0},
+            ],
+            lr=self.lr,
+        )
         return optimizer
     
 model = PlModule()
@@ -256,7 +264,7 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, collate_
 valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
 
 # +
-experiment_name = "base-lr.0001"
+experiment_name = "base-lr.001-AdamW-DiffLR"
 def setup_wandb_logger():
     wandb_logger = pl.loggers.WandbLogger(
         project="mel-faster-rcnn", name=experiment_name
@@ -269,13 +277,13 @@ trainer_kwargs = {
     "enable_checkpointing": False,
     "accelerator": "auto",
     #"accumulate_grad_batches": args.accumulate_grad_batches,
-    #"max_epochs": 10,
-    "max_epochs": 1,
-    "limit_train_batches": 10,
+    "max_epochs": 10,
+    #"max_epochs": 1,
+    #"limit_train_batches": 10,
     "limit_val_batches": 10,
-    #"val_check_interval": 50,
+    "val_check_interval": 50,
     # "auto_lr_find": True,
-    #"logger": setup_wandb_logger(),
+    "logger": setup_wandb_logger(),
 }
 trainer = pl.Trainer(**trainer_kwargs)
 
