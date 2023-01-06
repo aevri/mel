@@ -290,6 +290,9 @@ trainer = pl.Trainer(**trainer_kwargs)
 #set_parameter_yes_grad(model)
 #trainer = pl.Trainer(max_epochs=1, accelerator="auto", limit_val_batches=10, val_check_interval=50)
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+# -
+
+pl.Trainer(accelerator="auto").validate(model, torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn))
 
 # +
 image, target = valid_dataset[60]
