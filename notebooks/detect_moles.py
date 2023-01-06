@@ -23,6 +23,8 @@ import torch
 import torchvision
 # -
 
+import wandb
+
 # Make it possible to view images within the notebook.
 # %matplotlib inline
 
@@ -34,6 +36,7 @@ import torchvision
 import mel.lib.common
 import mel.lib.fs
 import mel.rotomap.moles
+import mel.rotomap.detectmolesnn2
 
 parts_path = pathlib.Path("~/angelos_mel/angelos_mel/rotomaps/parts").expanduser()
 
@@ -97,8 +100,8 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         self.image_paths = image_paths
         self.image_transform = torchvision.transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
             ])
         
@@ -178,6 +181,7 @@ def set_parameter_yes_grad(model):
 class PlModule(pl.LightningModule):
     def __init__(self):
         super().__init__()
+        self.lr = 0.0001
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
         #set_parameter_no_grad(model)
         num_classes = 2  # 1 class + background
@@ -196,17 +200,27 @@ class PlModule(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        self.model.train()
-        loss_dict = self.model(x, y)
-        losses = sum(loss for loss in loss_dict.values())
-        self.log("val_loss", losses.detach(), prog_bar=True)
-        return losses
+        #self.model.train()
+        result = self.model(x, y)
+        precision_list = []
+        recall_list = []
+        for y_item, result_item in zip(y, result):
+            item_precision, item_recall = mel.rotomap.detectmolesnn2.calc_precision_recall(
+                target_poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(y_item["boxes"]),
+                poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(result_item["boxes"]),
+            )
+            precision_list.append(item_precision)
+            recall_list.append(item_recall)
+        precision = sum(precision_list) / len(precision_list)
+        recall = sum(recall_list) / len(recall_list)
+        self.log("val_prec", precision, prog_bar=True)
+        self.log("val_reca", recall, prog_bar=True)
     
     def forward(self, x):
         return self.model(x)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
 model = PlModule()
@@ -234,10 +248,39 @@ def collate_fn(batch):
 import gc
 torch.cuda.empty_cache()
 gc.collect()
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
+
+import gc
+torch.cuda.empty_cache()
+gc.collect()
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
+valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
+
+# +
+experiment_name = "base-lr.0001"
+def setup_wandb_logger():
+    wandb_logger = pl.loggers.WandbLogger(
+        project="mel-faster-rcnn", name=experiment_name
+    )
+    wandb_logger.watch(model, log="all")
+    return wandb_logger
+
+trainer_kwargs = {
+    "log_every_n_steps": 1,
+    "enable_checkpointing": False,
+    "accelerator": "auto",
+    #"accumulate_grad_batches": args.accumulate_grad_batches,
+    #"max_epochs": 10,
+    "max_epochs": 1,
+    "limit_train_batches": 10,
+    "limit_val_batches": 10,
+    #"val_check_interval": 50,
+    # "auto_lr_find": True,
+    #"logger": setup_wandb_logger(),
+}
+trainer = pl.Trainer(**trainer_kwargs)
+
 #set_parameter_yes_grad(model)
-trainer = pl.Trainer(max_epochs=1, accelerator="auto", limit_val_batches=10, val_check_interval=50)
+#trainer = pl.Trainer(max_epochs=1, accelerator="auto", limit_val_batches=10, val_check_interval=50)
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 # +
@@ -263,3 +306,13 @@ def draw_result(image, boxes):
 
 plt.figure(figsize=(20, 20))
 plt.imshow(draw_result(image, boxes))
+# -
+
+mel.rotomap.detectmolesnn2.boxes_to_poslist(target["boxes"])
+
+mel.rotomap.detectmolesnn2.boxes_to_poslist(boxes)
+
+mel.rotomap.detectmolesnn2.calc_precision_recall(
+    target_poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(target["boxes"]),
+    poslist=mel.rotomap.detectmolesnn2.boxes_to_poslist(boxes),
+)
