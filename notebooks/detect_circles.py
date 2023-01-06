@@ -113,7 +113,7 @@ class PlModule(pl.LightningModule):
     def __init__(self):
         super().__init__()
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
-        set_parameter_no_grad(model)
+        #set_parameter_no_grad(model)
         num_classes = 2  # 1 class + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
@@ -178,17 +178,19 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=10, collate
 #     break
 # -
 
-trainer = pl.Trainer(limit_train_batches=10, max_epochs=1, accelerator="auto")
-trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
-
-import gc
-torch.cuda.empty_cache()
-gc.collect()
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
-valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
-set_parameter_yes_grad(model)
+#trainer = pl.Trainer(limit_train_batches=10, max_epochs=1, accelerator="auto")
 trainer = pl.Trainer(max_epochs=1, accelerator="auto")
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+
+# + active=""
+# import gc
+# torch.cuda.empty_cache()
+# gc.collect()
+# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, collate_fn=collate_fn, shuffle=True)
+# valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=2, collate_fn=collate_fn)
+# set_parameter_yes_grad(model)
+# trainer = pl.Trainer(max_epochs=1, accelerator="auto")
+# trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 # +
 image, target = gen_image()
