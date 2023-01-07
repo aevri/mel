@@ -25,6 +25,8 @@ import torchvision
 
 import wandb
 
+torch.cuda.is_available()
+
 # Make it possible to view images within the notebook.
 # %matplotlib inline
 
@@ -179,7 +181,7 @@ def set_parameter_yes_grad(model):
         param.requires_grad = True
         
 class PlModule(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, model_path=None):
         super().__init__()
         self.lr = 0.001
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
@@ -187,6 +189,8 @@ class PlModule(pl.LightningModule):
         num_classes = 2  # 1 class + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+        if model_path is not None:
+            model.load_state_dict(torch.load(model_path))
         model.eval()
         
         self.model = model
@@ -231,9 +235,8 @@ class PlModule(pl.LightningModule):
         )
         return optimizer
     
-model = PlModule()
-
-
+model = PlModule("base.pt")
+#model = PlModule()
 # -
 
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
@@ -264,7 +267,7 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, collate_
 valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
 
 # +
-experiment_name = "base-lr.001-AdamW-DiffLR"
+experiment_name = "base-lr.001-AdamW-DiffLR2"
 def setup_wandb_logger():
     wandb_logger = pl.loggers.WandbLogger(
         project="mel-faster-rcnn", name=experiment_name
@@ -277,7 +280,7 @@ trainer_kwargs = {
     "enable_checkpointing": False,
     "accelerator": "auto",
     #"accumulate_grad_batches": args.accumulate_grad_batches,
-    "max_epochs": 10,
+    "max_epochs": 100,
     #"max_epochs": 1,
     #"limit_train_batches": 10,
     "limit_val_batches": 10,
@@ -290,12 +293,16 @@ trainer = pl.Trainer(**trainer_kwargs)
 #set_parameter_yes_grad(model)
 #trainer = pl.Trainer(max_epochs=1, accelerator="auto", limit_val_batches=10, val_check_interval=50)
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
+
+wandb.finish()
 # -
 
 pl.Trainer(accelerator="auto").validate(model, torch.utils.data.DataLoader(valid_dataset, batch_size=4, collate_fn=collate_fn))
 
+torch.save(model.model.state_dict(), experiment_name + ".pt")
+
 # +
-image, target = valid_dataset[20]
+image, target = valid_dataset[31]
 model.eval()
 with torch.no_grad():
     boxes = model(image.unsqueeze(0))[0]["boxes"]
