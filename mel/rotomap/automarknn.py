@@ -90,3 +90,159 @@ def boxes_to_poslist(boxes):
         for xmin, ymin, xmax, ymax in boxes
     ]
     return np.array(poslist)
+
+
+def calc_precision_recall(target_poslist, poslist, error_distance=5):
+    if not len(poslist):
+        return 0, 0
+    vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
+        target_poslist, poslist, error_distance
+    )
+    precision = len(vec_matches) / (len(vec_matches) + len(vec_added))
+    recall = len(vec_matches) / (len(vec_matches) + len(vec_missing))
+    return precision, recall
+
+
+def set_parameter_no_grad(model):
+    for param in model.parameters():
+        param.requires_grad = False
+
+
+def set_parameter_yes_grad(model):
+    for param in model.parameters():
+        param.requires_grad = True
+
+
+class PlModule(pl.LightningModule):
+    def __init__(self, model_path=None):
+        super().__init__()
+        self.lr = 0.001
+        self.model = make_model(model_path)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        loss_dict = self.model(x, y)
+        losses = sum(loss for loss in loss_dict.values())
+        self.log("train_loss", losses.detach())
+        return losses
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        # self.model.train()
+        result = self.model(x, y)
+        precision_list = []
+        recall_list = []
+        for y_item, result_item in zip(y, result):
+            (item_precision, item_recall,) = calc_precision_recall(
+                target_poslist=boxes_to_poslist(y_item["boxes"]),
+                poslist=boxes_to_poslist(result_item["boxes"]),
+            )
+            precision_list.append(item_precision)
+            recall_list.append(item_recall)
+        precision = sum(precision_list) / len(precision_list)
+        recall = sum(recall_list) / len(recall_list)
+        self.log("val_prec", precision, prog_bar=True)
+        self.log("val_reca", recall, prog_bar=True)
+
+    def forward(self, x):
+        return self.model(x)
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(
+            [
+                # {"params", self.model.transform.parameters(), "lr": self.lr * 0.1},
+                {
+                    "params": self.model.backbone.parameters(),
+                    "lr": self.lr * 0.01,
+                },
+                {
+                    "params": self.model.rpn.parameters(),
+                    "lr": self.lr * 1.0,
+                },
+                {
+                    "params": self.model.roi_heads.parameters(),
+                    "lr": self.lr * 1.0,
+                },
+            ],
+            lr=self.lr,
+        )
+        return optimizer
+
+
+class MoleImageBoxesDataset(torch.utils.data.Dataset):
+    def __init__(self, image_paths):
+        self.image_paths = image_paths
+        self.image_transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                # torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                #                     std=[0.229, 0.224, 0.225])
+            ]
+        )
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, index):
+        path = self.image_paths[index]
+
+        image = load_image(path)
+        image = self.image_transform(image)
+
+        moles = mel.rotomap.moles.load_image_moles(path)
+        if not moles:
+            raise ValueError("Mole list must not be empty.")
+        fr = 10
+        boxes = [
+            [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
+        ]
+
+        target = {}
+        target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
+        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
+        return image, target
+
+
+def rgb_tensor_to_image(tensor):
+    image = tensor.detach().numpy() * 255
+    image = np.uint8(image)
+    image = image.transpose((1, 2, 0))
+    return image
+
+
+def list_train_valid_images():
+    parts_path = pathlib.Path(
+        "~/angelos_mel/angelos_mel/rotomaps/parts"
+    ).expanduser()
+    exclude_parts = [
+        "LeftArm/Hand",
+        "RightArm/Hand",
+        "LeftLeg/Foot",
+        "RightLeg/Foot",
+        "Trunk/Lower",
+        "Trunk/Back",
+    ]
+    session_images = mel.lib.fs.list_rotomap_images_by_session(
+        parts_path, exclude_parts=exclude_parts
+    )
+    sessions = [s for s in sorted(session_images.keys()) if s > "2020_"]
+    train_sessions = sessions[:-1]
+    valid_sessions = sessions[-1:]
+    train_images = [
+        img for sess in train_sessions for img in session_images[sess]
+    ]
+    valid_images = [
+        img for sess in valid_sessions for img in session_images[sess]
+    ]
+    return train_images, valid_images
+
+
+def drop_paths_without_moles(path_list):
+    return [
+        path for path in path_list if mel.rotomap.moles.load_image_moles(path)
+    ]
+
+
+# See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
+def collate_fn(batch):
+    return tuple(zip(*batch))
