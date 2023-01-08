@@ -12,6 +12,7 @@ import mel.cmd.microadd
 import mel.cmd.microcompare
 import mel.cmd.microview
 import mel.cmd.rotomapautomark
+import mel.cmd.rotomapautomark2
 import mel.cmd.rotomapautomask
 import mel.cmd.rotomapcalcspace
 import mel.cmd.rotomapcompare
@@ -49,6 +50,7 @@ COMMANDS = {
     },
     "rotomap": {
         "automark": mel.cmd.rotomapautomark,
+        "automark2": mel.cmd.rotomapautomark2,
         "automask": mel.cmd.rotomapautomask,
         "calc-space": mel.cmd.rotomapcalcspace,
         "compare": mel.cmd.rotomapcompare,
