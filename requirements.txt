@@ -8,7 +8,7 @@ pandas==1.5.2
 pycodestyle==2.10.0
 pyflakes==3.0.1
 pygame==2.1.2
-pylint==2.15.9
+pylint==2.15.10
 pytest==7.2.0
 pytorch-lightning==1.8.6
 torch==1.13.1
