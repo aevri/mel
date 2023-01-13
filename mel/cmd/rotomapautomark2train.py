@@ -108,6 +108,10 @@ def process_args(args):
 
     trainer = pl.Trainer(**trainer_kwargs)
 
+    # model.train()
+    # trainer.tune(model, train_loader)
+    print(f"Learning rate: {model.lr:0.8f}")
+
     trainer.fit(
         model=model,
         train_dataloaders=train_loader,
