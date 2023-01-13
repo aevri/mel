@@ -203,11 +203,13 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         return image, target
 
 
-def rgb_tensor_to_image(tensor):
-    image = tensor.detach().numpy() * 255
-    image = np.uint8(image)
-    image = image.transpose((1, 2, 0))
-    return image
+# This is useful for debugging sometimes.
+#
+# def rgb_tensor_to_image(tensor):
+#     image = tensor.detach().numpy() * 255
+#     image = np.uint8(image)
+#     image = image.transpose((1, 2, 0))
+#     return image
 
 
 def list_train_valid_images():
