@@ -103,7 +103,7 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
 class PlModule(pl.LightningModule):
     def __init__(self, model_path=None):
         super().__init__()
-        self.lr = 0.001
+        self.lr = 0.0000229  # As determined by pl auto_lr_find
         self.model = make_model(model_path)
 
     def training_step(self, batch, _batch_idx):
