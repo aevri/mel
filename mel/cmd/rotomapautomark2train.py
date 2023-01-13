@@ -35,27 +35,7 @@ def process_args(args):
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detect.pth"
 
-    if model_path.exists():
-        if not os.access(model_path, os.W_OK):
-            print("No permission to write to", model_path)
-            return 1
-
-        print(f"Will fine-tune {model_path}")
-        model = mel.rotomap.automarknn.PlModule(model_path)
-    else:
-        print(f"Will save to {model_path}")
-        model = mel.rotomap.automarknn.PlModule()
-
-    if not model_dir.exists():
-        model_dir.mkdir()
-
-    warnings.filterwarnings(
-        "ignore",
-        message=(
-            r"The dataloader, \w+ dataloader( 0)?, "
-            "does not have many workers which may be a bottleneck."
-        ),
-    )
+    batch_size = 4
 
     print("Making data ..")
     (
@@ -71,18 +51,43 @@ def process_args(args):
     print(f"There are {len(train_images)} training images.")
     print(f"There are {len(valid_images)} validation images.")
 
+    total_steps = int(((len(train_images) * args.epochs) / batch_size) + 0.5)
+    print(f"There are {total_steps:,} total training steps.")
+
+    if model_path.exists():
+        if not os.access(model_path, os.W_OK):
+            print("No permission to write to", model_path)
+            return 1
+
+        print(f"Will fine-tune {model_path}")
+        model = mel.rotomap.automarknn.PlModule(total_steps, model_path)
+    else:
+        print(f"Will save to {model_path}")
+        model = mel.rotomap.automarknn.PlModule(total_steps)
+
+    if not model_dir.exists():
+        model_dir.mkdir()
+
+    warnings.filterwarnings(
+        "ignore",
+        message=(
+            r"The dataloader, \w+ dataloader( 0)?, "
+            "does not have many workers which may be a bottleneck."
+        ),
+    )
+
     train_dataset = mel.rotomap.automarknn.MoleImageBoxesDataset(train_images)
     valid_dataset = mel.rotomap.automarknn.MoleImageBoxesDataset(valid_images)
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=4,
+        batch_size=batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
     )
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset,
-        batch_size=4,
+        batch_size=batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
     )
@@ -122,7 +127,7 @@ def process_args(args):
         model,
         torch.utils.data.DataLoader(
             valid_dataset,
-            batch_size=4,
+            batch_size=batch_size,
             collate_fn=mel.rotomap.automarknn.collate_fn,
         ),
     )
