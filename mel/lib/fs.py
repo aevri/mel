@@ -53,14 +53,15 @@ def find_melroot():
         path = parent
 
 
-def list_rotomaps_by_part(parts_path):
-    all_rotomaps = collections.defaultdict(list)
-    for part in parts_path.iterdir():
-        for subpart in part.iterdir():
-            subpart_paths = sorted(p for p in subpart.iterdir())
-            for p in subpart_paths:
-                all_rotomaps[f"{part.stem}/{subpart.stem}"].append(p)
-    return all_rotomaps
+# This is quite useful for exploration sometimes.
+# def list_rotomaps_by_part(parts_path):
+#     all_rotomaps = collections.defaultdict(list)
+#     for part in parts_path.iterdir():
+#         for subpart in part.iterdir():
+#             subpart_paths = sorted(p for p in subpart.iterdir())
+#             for p in subpart_paths:
+#                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(p)
+#     return all_rotomaps
 
 
 def list_rotomap_images_by_session(parts_path, *, exclude_parts=None):
