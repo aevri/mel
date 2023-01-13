@@ -3,12 +3,10 @@
 import pathlib
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torchvision
-import wandb
 
 import mel.lib.common
 import mel.lib.fs
@@ -49,7 +47,6 @@ def make_model(model_path=None):
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
         weights="DEFAULT"
     )
-    # set_parameter_no_grad(model)
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = (
@@ -103,30 +100,20 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
     return precision, recall
 
 
-def set_parameter_no_grad(model):
-    for param in model.parameters():
-        param.requires_grad = False
-
-
-def set_parameter_yes_grad(model):
-    for param in model.parameters():
-        param.requires_grad = True
-
-
 class PlModule(pl.LightningModule):
     def __init__(self, model_path=None):
         super().__init__()
         self.lr = 0.001
         self.model = make_model(model_path)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         x, y = batch
         loss_dict = self.model(x, y)
         losses = sum(loss for loss in loss_dict.values())
         self.log("train_loss", losses.detach())
         return losses
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         x, y = batch
         # self.model.train()
         result = self.model(x, y)
@@ -150,7 +137,6 @@ class PlModule(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
             [
-                # {"params", self.model.transform.parameters(), "lr": self.lr * 0.1},
                 {
                     "params": self.model.backbone.parameters(),
                     "lr": self.lr * 0.01,
