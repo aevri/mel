@@ -101,10 +101,9 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
 
 
 class PlModule(pl.LightningModule):
-    def __init__(self, total_steps, model_path=None):
+    def __init__(self, model_path=None):
         super().__init__()
         self.lr = 0.0000229  # As determined by pl auto_lr_find
-        self.total_steps = total_steps
         self.model = make_model(model_path)
 
     def training_step(self, batch, _batch_idx):
@@ -136,39 +135,24 @@ class PlModule(pl.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        min_lr = self.lr * 0.5
-        self.optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.AdamW(
             [
                 {
                     "params": self.model.backbone.parameters(),
-                    "lr": min_lr * 0.01,
+                    "lr": self.lr * 0.01,
                 },
                 {
                     "params": self.model.rpn.parameters(),
-                    "lr": min_lr * 1.0,
+                    "lr": self.lr * 1.0,
                 },
                 {
                     "params": self.model.roi_heads.parameters(),
-                    "lr": min_lr * 1.0,
+                    "lr": self.lr * 1.0,
                 },
             ],
             lr=self.lr,
         )
-
-        max_lr = self.lr * 2
-
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            self.optimizer,
-            max_lr=[max_lr * 0.01, max_lr * 1.0, max_lr * 1.0],
-            total_steps=self.total_steps,
-        )
-
-        sched = {
-            "scheduler": self.scheduler,
-            "interval": "step",
-        }
-
-        return [self.optimizer], [sched]
+        return optimizer
 
 
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
