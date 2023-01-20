@@ -25,6 +25,13 @@ def setup_parser(parser):
         default=4,
         help="Number of images to load at a time.",
     )
+    parser.add_argument(
+        "--num-workers",
+        "-w",
+        type=int,
+        default=0,
+        help="Number of workers to load batches in parallel.",
+    )
 
 
 def process_args(args):
@@ -86,12 +93,14 @@ def process_args(args):
         batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
+        num_workers=args.num_workers,
     )
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset,
         batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
+        num_workers=args.num_workers,
     )
 
     trainer_kwargs = {
@@ -131,6 +140,7 @@ def process_args(args):
             valid_dataset,
             batch_size=args.batch_size,
             collate_fn=mel.rotomap.automarknn.collate_fn,
+            num_workers=args.num_workers,
         ),
     )
 
