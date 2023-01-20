@@ -18,6 +18,13 @@ def setup_parser(parser):
         metavar=("project", "run_name"),
         help="Use a https://wandb.ai/ logger.",
     )
+    parser.add_argument(
+        "--batch-size",
+        "-b",
+        type=int,
+        default=4,
+        help="Number of images to load at a time.",
+    )
 
 
 def process_args(args):
@@ -76,13 +83,13 @@ def process_args(args):
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=4,
+        batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
     )
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset,
-        batch_size=4,
+        batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
     )
@@ -122,7 +129,7 @@ def process_args(args):
         model,
         torch.utils.data.DataLoader(
             valid_dataset,
-            batch_size=4,
+            batch_size=args.batch_size,
             collate_fn=mel.rotomap.automarknn.collate_fn,
         ),
     )
