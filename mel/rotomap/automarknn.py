@@ -123,7 +123,10 @@ class PlModule(pl.LightningModule):
         precision_list = []
         recall_list = []
         for y_item, result_item in zip(y, result):
-            (item_precision, item_recall,) = calc_precision_recall(
+            (
+                item_precision,
+                item_recall,
+            ) = calc_precision_recall(
                 target_poslist=boxes_to_poslist(y_item["boxes"]),
                 poslist=boxes_to_poslist(result_item["boxes"]),
             )

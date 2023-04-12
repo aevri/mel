@@ -442,7 +442,6 @@ def captioned_mole_image(
     should_draw_crosshairs,
     border_colour=None,
 ):
-
     image, caption_shape = _cached_captioned_mole_image(
         str(path), tuple(pos), zoom, tuple(size), rotation_degs
     )

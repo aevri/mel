@@ -294,7 +294,6 @@ def make_dataset(
     augmentations,
     extra_stem=None,
 ):
-
     if augmentations is None:
         augmentations = [(1, numpy.array([0, 0]))]
 

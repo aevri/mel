@@ -91,7 +91,6 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
 def _extend_context_image_name_tuple_tuple(
     path, context_image_name_tuple_tuple
 ):
-
     image_names = []
     for sub in path.iterdir():
         if sub.suffix.lower() in IMAGE_SUFFIXES:
@@ -110,7 +109,6 @@ def _list_micro_dir_if_exists(path):
 
     image_names = []
     for sub in path.iterdir():
-
         if sub.name in FILES_TO_IGNORE and sub.is_file():
             continue
 

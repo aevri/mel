@@ -84,7 +84,6 @@ def process_contours(mole_regions, original):
 
     if mole_contour is not None:
         if len(mole_contour) > 5:
-
             ellipse = cv2.fitEllipse(mole_contour)
 
             blue = (255, 0, 0)
@@ -156,7 +155,6 @@ class MoleAcquirer(object):
 
     def update(self, stats):
         if stats and self._last_stats:
-
             stats_diff = list(map(lambda x, y: x - y, self._last_stats, stats))
 
             self._last_stats = list(
