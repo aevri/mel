@@ -209,7 +209,6 @@ def to_point_offsets(mole_pairs):
 def make_offset_field_theory(
     from_uuid_points, to_uuid_points, point_offsets, theory
 ):
-
     to_uuid_points = dict(to_uuid_points)
     inv_point_offsets = invert_point_offsets(point_offsets)
     for uuid_, point in from_uuid_points.items():
@@ -226,7 +225,6 @@ def make_offset_field_theory(
         # out of hundreds. Otherwise _MAGIC_FIELD_ERROR is still best.
 
         if distance < _MAGIC_FIELD_ERROR:
-
             # Make sure that the closest match for the 'to' mole is also the
             # 'from' mole.
             to_point = to_uuid_points[to_uuid]

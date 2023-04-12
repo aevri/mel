@@ -610,7 +610,6 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
         mel.rotomap.moles.uuid_mole_index(editor.moledata.moles, follow_uuid)
         is None
     ):
-
         guess_pos = mel.rotomap.relate.guess_mole_pos(
             follow_uuid, prev_moles, editor.moledata.moles
         )

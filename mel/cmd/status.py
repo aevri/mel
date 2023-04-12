@@ -323,7 +323,6 @@ def process_args(args):
     abspath = os.path.abspath(args.PATH) if args.PATH is not None else None
 
     for notice in notice_list:
-
         if abspath is not None:
             if not str(notice.path).startswith(abspath):
                 continue
@@ -627,7 +626,6 @@ def check_micro(path, notices):
 def _validate_mole_dir(path, notices):
     for sub in path.iterdir():
         if sub.name.lower() not in mel.micro.fs.MOLE_DIR_ENTRIES:
-
             if sub.suffix.lower() in mel.micro.fs.IMAGE_SUFFIXES:
                 continue
 

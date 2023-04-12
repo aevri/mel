@@ -107,7 +107,6 @@ def _yield_mole_dirs(rootpath, args):
         no_recent_days = _DEFAULT_NO_RECENT_DAYS
 
     for mole in mole_iter:
-
         if args.only_no_micro and mole.micro_image_details:
             continue
 
