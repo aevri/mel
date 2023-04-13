@@ -4,7 +4,7 @@ It can be helpful to pre-train a model on a reasonable amount of fake data
 before fine-tuning it on your own data. This is especially helpful when you
 don't have much data of your own yet. For example:
 
-    mkdir temp
+-   mkdir temp
     cd temp
     mel-debug gen-repo --num-rotomaps 10 --num-parts 10 .
     mel rotomap automask rotomaps/parts/*/*/*/*.jpg
@@ -16,13 +16,14 @@ your data.
 
 Here is a good recipe if you have a GPU:
 
-    mkdir temp
+-   mkdir temp
     cd temp
     mel-debug gen-repo --num-rotomaps 100 --num-parts 10 .
     mel rotomap automask rotomaps/parts/*/*/*/*.jpg
     mel rotomap calc-space rotomaps/parts/*/*/*/*.jpg
     mel rotomap identify-train --epochs 100 --batch-size 500 --lr 0.001
     mel rotomap identify-train --epochs 200 --batch-size 500 --lr 0.0001
+
 """
 
 import argparse
