@@ -179,7 +179,6 @@ def copy_image_into_image(source, dest, y, x):
 
 def shrink_to_max_dimension(image, max_dimension):
     """May or may not return the original image."""
-
     shape = image.shape
     height = shape[0]
     width = shape[1]

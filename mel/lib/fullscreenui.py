@@ -129,8 +129,8 @@ def fullscreen_context():
 
     Shutdown the underlying `pygame` library when the context expires.
 
-    Only one context can exist per run of the application. Once `pygame` has
-    been shutdown then it cannot be initialised again.
+    Only one context can exist per run of the application. Once `pygame`
+    has been shutdown then it cannot be initialised again.
     """
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.

@@ -264,7 +264,8 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect):
 def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     """Return a selection object for an image as specified by positions.
 
-    Note that the bottom right point will not be included in the selection.
+    Note that the bottom right point will not be included in the
+    selection.
 
     :top_left_inclusive: a numpy.array of (top, left) co-ordinates
     :bottom_right_exclusive: a numpy.array of (bottom, right) co-ordinates
@@ -306,7 +307,8 @@ def slice_square_or_none(image, lefttop, rightbottom):
 def recentered_at(image, x, y):
     """Return a new image, centered at new position on a black background.
 
-    Where new content needs to be shifted into the image, it will appear black.
+    Where new content needs to be shifted into the image, it will appear
+    black.
 
     :image: An OpenCV image.
     :x: The horizontal co-ordinate to put at the centre of the new image.
@@ -328,7 +330,8 @@ def get_image_rect(image):
 def rotated(image, degrees):
     """Return a new image, rotated by specified amount, on a black background.
 
-    Where new content needs to be shifted into the image, it will appear black.
+    Where new content needs to be shifted into the image, it will appear
+    black.
 
     :image: An OpenCV image.
     :degrees: The degrees of the rotation about the centre.

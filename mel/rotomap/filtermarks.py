@@ -436,7 +436,6 @@ def select_marks(moles_and_marks):
 
 def filter_marks(is_mole, image, moles, include_canonical):
     """Return a list of moles with the unlikely ones filtered out."""
-
     filtered_moles = []
     for m in moles:
         r = _HALF_IMAGE_SIZE

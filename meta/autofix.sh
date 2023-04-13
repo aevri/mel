@@ -5,10 +5,10 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-black --quiet --line-length 79 $allscripts
+docformatter -i $allscripts
 printf "."
 
-docformatter -i $allscripts
+black --quiet --line-length 79 $allscripts
 printf "."
 
 isort --quiet --apply $allscripts
