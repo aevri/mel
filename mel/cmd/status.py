@@ -1,10 +1,10 @@
 """Show the status of a mel repository.
 
-This idea is to show you active concerns and what you can do about them, with
-executable examples.
+This idea is to show you active concerns and what you can do about them,
+with executable examples.
 
-This is meant to be similar in usage to 'git status', or perhaps 'ls'. Answers
-the question 'What's happening here, and what shall I do next?'.
+This is meant to be similar in usage to 'git status', or perhaps 'ls'.
+Answers the question 'What's happening here, and what shall I do next?'.
 """
 
 # There are a few things to vary on in the future:

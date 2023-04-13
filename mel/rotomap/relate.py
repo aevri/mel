@@ -292,7 +292,6 @@ def pick_value_from_field(point, point_values):
     :point_values: an array of (point, value) to sample at supplied 'point'.
     :returns: a tuple, (sampled_value, estimated_error).
     """
-
     # Note that the idea of passing in 'points' and 'values' as separate
     # variables, already as numpy.arrays has been tried. This was in order to
     # avoid the array -> numpy.array listcomp conversions happening inside a

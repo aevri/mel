@@ -1,12 +1,12 @@
 """Render a 'value field' as an image, to make the idea easier to inspect.
 
 The 'value field' idea from mel.rotomap.pick_value_from_field() is now
-important for relating moles together. This visualisation helps check it's
-behaviour.
+important for relating moles together. This visualisation helps check
+it's behaviour.
 
-In this image, there is a blue point in the top-left, and a green point in the
-bottom-right. Where the error gets high, you can see that redness is
-introduced.
+In this image, there is a blue point in the top-left, and a green point
+in the bottom-right. Where the error gets high, you can see that redness
+is introduced.
 """
 
 import numpy

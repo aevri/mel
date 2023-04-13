@@ -23,7 +23,6 @@ Here is a good recipe if you have a GPU:
     mel rotomap calc-space rotomaps/parts/*/*/*/*.jpg
     mel rotomap identify-train --epochs 100 --batch-size 500 --lr 0.001
     mel rotomap identify-train --epochs 200 --batch-size 500 --lr 0.0001
-
 """
 
 import argparse
