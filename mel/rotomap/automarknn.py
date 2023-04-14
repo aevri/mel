@@ -282,6 +282,44 @@ def clip_boxes(boxes, x_start, y_start, x_end, y_end):
     return clipped_boxes
 
 
+def get_tile_and_target(
+    image, moles, tile_index, tile_handler, image_transform
+):
+    (
+        y_start,
+        y_end,
+        x_start,
+        x_end,
+    ) = tile_handler.tile(tile_index)
+
+    tile = image[y_start:y_end, x_start:x_end, :]
+    tile = image_transform(tile)
+
+    fr = 10
+    boxes = [
+        [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
+    ]
+
+    boxes = clip_boxes(boxes, x_start, y_start, x_end, y_end)
+    boxes = [
+        [
+            box[0] - x_start,
+            box[1] - y_start,
+            box[2] - x_start,
+            box[3] - y_start,
+        ]
+        for box in boxes
+    ]
+
+    target = {
+        "labels": torch.ones((len(boxes),), dtype=torch.int64),
+        "boxes": torch.tensor(boxes, dtype=torch.float32)
+        if boxes
+        else torch.zeros((0, 4), dtype=torch.float32),
+    }
+    return tile, target
+
+
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         self.image_paths = image_paths
@@ -292,28 +330,44 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
                 #                     std=[0.229, 0.224, 0.225])
             ]
         )
+        self._image_shape = load_image(self.image_paths[0]).shape
+        self._th = TileHandler(self._image_shape[:2])
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.image_paths) * self._th.num_tiles
 
     def __getitem__(self, index):
-        path = self.image_paths[index]
+        image_index = index // self._th.num_tiles
+        tile_index = index % self._th.num_tiles
+
+        path = self.image_paths[image_index]
 
         image = load_image(path)
-        image = self.image_transform(image)
+        if image.shape != self._image_shape:
+            raise ValueError(
+                "Image shape doesn't match first seen.",
+                path,
+                image.shape,
+                self._image_shape,
+            )
+
+        (
+            y_start,
+            y_end,
+            x_start,
+            x_end,
+        ) = self._th.tile(tile_index)
+
+        tile = image[y_start:y_end, x_start:x_end, :]
+        tile = self.image_transform(tile)
 
         moles = mel.rotomap.moles.load_image_moles(path)
         if not moles:
             raise ValueError("Mole list must not be empty.")
-        fr = 10
-        boxes = [
-            [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
-        ]
 
-        target = {}
-        target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
-        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
-        return image, target
+        return get_tile_and_target(
+            image, moles, tile_index, self._th, self.image_transform
+        )
 
 
 # This is useful for debugging sometimes.
