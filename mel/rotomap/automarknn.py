@@ -332,13 +332,44 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         )
         self._image_shape = load_image(self.image_paths[0]).shape
         self._th = TileHandler(self._image_shape[:2])
+        self.valid_tile_indices = self._get_valid_tile_indices()
+
+    def _mole_within_tile(self, mole, tile_index, tile_handler):
+        fr = 10
+        m = mole
+        x1, y1, x2, y2 = [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr]
+        x_center = (x1 + x2) / 2
+        y_center = (y1 + y2) / 2
+
+        (
+            tile_y_start,
+            tile_y_end,
+            tile_x_start,
+            tile_x_end,
+        ) = tile_handler.tile(tile_index)
+
+        return (
+            tile_x_start <= x_center <= tile_x_end
+            and tile_y_start <= y_center <= tile_y_end
+        )
+
+    def _get_valid_tile_indices(self):
+        valid_tile_indices = []
+        for image_index, path in enumerate(self.image_paths):
+            moles = mel.rotomap.moles.load_image_moles(path)
+            for tile_index in range(self._th.num_tiles):
+                if any(
+                    self._mole_within_tile(mole, tile_index, self._th)
+                    for mole in moles
+                ):
+                    valid_tile_indices.append((image_index, tile_index))
+        return valid_tile_indices
 
     def __len__(self):
-        return len(self.image_paths) * self._th.num_tiles
+        return len(self.valid_tile_indices)
 
     def __getitem__(self, index):
-        image_index = index // self._th.num_tiles
-        tile_index = index % self._th.num_tiles
+        image_index, tile_index = self.valid_tile_indices[index]
 
         path = self.image_paths[image_index]
 
