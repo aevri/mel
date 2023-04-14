@@ -228,7 +228,7 @@ def list_train_valid_images():
     valid_images = [
         img for sess in valid_sessions for img in session_images[sess]
     ]
-    return train_images, valid_images
+    return train_images, valid_images, train_sessions, valid_sessions
 
 
 def drop_paths_without_moles(path_list):
