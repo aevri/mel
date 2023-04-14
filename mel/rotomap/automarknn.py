@@ -258,6 +258,26 @@ class TileHandler:
         return starts[0], ends[0], starts[1], ends[1]
 
 
+def clip_boxes(boxes, x_start, y_start, x_end, y_end):
+    """Drop boxes that are fully outside the bounds of a tile.
+
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 0, 0, 10, 10)
+    [[0, 0, 5, 5], [5, 5, 7, 7]]
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 0, 0, 4, 4)
+    [[0, 0, 5, 5]]
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 10, 10, 14, 14)
+    []
+
+    """
+    clipped_boxes = []
+    for box in boxes:
+        xmin, ymin, xmax, ymax = box
+        if xmax < x_start or xmin > x_end or ymax < y_start or ymin > y_end:
+            continue
+        clipped_boxes.append(box)
+    return clipped_boxes
+
+
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         self.image_paths = image_paths
