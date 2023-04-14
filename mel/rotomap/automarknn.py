@@ -90,8 +90,8 @@ def boxes_to_poslist(boxes):
 
 
 def calc_precision_recall(target_poslist, poslist, error_distance=5):
-    if not len(poslist):
-        return 0, 0
+    if not len(poslist) or not len(target_poslist):
+        return None
     vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
         target_poslist, poslist, error_distance
     )
@@ -123,19 +123,23 @@ class PlModule(pl.LightningModule):
         precision_list = []
         recall_list = []
         for y_item, result_item in zip(y, result):
-            (
-                item_precision,
-                item_recall,
-            ) = calc_precision_recall(
+            item_precision_recall = calc_precision_recall(
                 target_poslist=boxes_to_poslist(y_item["boxes"]),
                 poslist=boxes_to_poslist(result_item["boxes"]),
             )
+            if item_precision_recall is None:
+                continue
+            (
+                item_precision,
+                item_recall,
+            ) = item_precision_recall
             precision_list.append(item_precision)
             recall_list.append(item_recall)
-        precision = sum(precision_list) / len(precision_list)
-        recall = sum(recall_list) / len(recall_list)
-        self.log("val_prec", precision, prog_bar=True)
-        self.log("val_reca", recall, prog_bar=True)
+        if precision_list:
+            precision = sum(precision_list) / len(precision_list)
+            recall = sum(recall_list) / len(recall_list)
+            self.log("val_prec", precision, prog_bar=True)
+            self.log("val_reca", recall, prog_bar=True)
 
     def forward(self, x):
         return self.model(x)
