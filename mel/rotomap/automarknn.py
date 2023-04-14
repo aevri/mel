@@ -161,6 +161,103 @@ class PlModule(pl.LightningModule):
         return optimizer
 
 
+class TileHandler:
+    def __init__(self, image_shape, tile_size=800, min_overlap=0.1):
+        """
+        Initialize a TileHandler object.
+
+        >>> th = TileHandler((1600, 1000), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([3, 2])
+        >>> th.overlaps
+        array([400, 600])
+
+        >>> th = TileHandler((1601, 999), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([3, 2])
+        >>> th.overlaps
+        array([400, 601])
+
+        >>> th = TileHandler((4032, 3024), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([6, 5])
+        >>> th.tile((6 * 5) - 1)
+        (3230, 4030, 2224, 3024)
+        >>> th.overlaps
+        array([154, 244])
+
+        """
+        self.image_shape = np.array(image_shape)
+        self.tile_size = tile_size
+        self.min_overlap = min_overlap
+        self.tile_counts, self.overlaps = self._calculate_num_tiles()
+        self.num_tiles = self.tile_counts.prod()
+
+    def _calculate_num_tiles(self):
+        """
+        Calculate the number of tiles in x and y directions and the overlaps.
+        """
+        effective_tile_size = self.tile_size - np.floor(
+            self.tile_size * self.min_overlap
+        )
+        tile_counts = np.ceil(self.image_shape / effective_tile_size).astype(
+            int
+        )
+        overlaps = np.ceil(
+            (tile_counts * self.tile_size - self.image_shape)
+            / (tile_counts - 1)
+        ).astype(int)
+
+        return tile_counts, overlaps
+
+    def tile(self, tile_index):
+        """
+        Get the coordinates (y_start, y_end, x_start, x_end) for a tile.
+
+        >>> th = TileHandler((1600, 1000), tile_size=800, min_overlap=0.1)
+        >>> th.tile(0)
+        (0, 800, 0, 800)
+        >>> th.tile(1)
+        (0, 800, 200, 1000)
+        >>> th.tile(2)
+        (400, 1200, 0, 800)
+        >>> th.tile(3)
+        (400, 1200, 200, 1000)
+        >>> th.tile(4)
+        (800, 1600, 0, 800)
+        >>> th.tile(5)
+        (800, 1600, 200, 1000)
+        >>> th.tile(-1)
+        Traceback (most recent call last):
+          ...
+        IndexError: ('Out of bounds', -1)
+        >>> th.tile(6)
+        Traceback (most recent call last):
+          ...
+        IndexError: ('Out of bounds', 6)
+
+        """
+        if tile_index < 0:
+            raise IndexError("Out of bounds", tile_index)
+        if tile_index >= self.num_tiles:
+            raise IndexError("Out of bounds", tile_index)
+        tile_row_col = np.array(
+            [
+                tile_index // self.tile_counts[1],
+                tile_index % self.tile_counts[1],
+            ]
+        )
+        starts = np.maximum(
+            0, tile_row_col * self.tile_size - tile_row_col * self.overlaps
+        )
+        ends = np.minimum(
+            self.image_shape,
+            (tile_row_col + 1) * self.tile_size - tile_row_col * self.overlaps,
+        )
+
+        return starts[0], ends[0], starts[1], ends[1]
+
+
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         self.image_paths = image_paths
