@@ -32,6 +32,13 @@ def setup_parser(parser):
         default=0,
         help="Number of workers to load batches in parallel.",
     )
+    parser.add_argument(
+        "--learning-rate",
+        "--lr",
+        type=float,
+        default=0.001,
+        help="Learning rate, choose carefully.",
+    )
 
 
 def process_args(args):
@@ -59,6 +66,8 @@ def process_args(args):
     else:
         print(f"Will save to {model_path}")
         model = mel.rotomap.automarknn.PlModule()
+
+    model.lr = args.learning_rate
 
     if not model_dir.exists():
         model_dir.mkdir()
