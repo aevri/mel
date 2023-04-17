@@ -39,6 +39,11 @@ def setup_parser(parser):
         default=0.001,
         help="Learning rate, choose carefully.",
     )
+    parser.add_argument(
+        "--just-validate",
+        action="store_true",
+        help="Learning rate, choose carefully.",
+    )
 
 
 def process_args(args):
@@ -143,17 +148,21 @@ def process_args(args):
             project=wandb_project, name=wandb_run_name
         )
 
-    trainer = pl.Trainer(**trainer_kwargs)
+    if not args.just_validate:
+        trainer = pl.Trainer(**trainer_kwargs)
 
-    # model.train()
-    # trainer.tune(model, train_loader)
-    print(f"Learning rate: {model.lr:0.8f}")
+        # model.train()
+        # trainer.tune(model, train_loader)
+        print(f"Learning rate: {model.lr:0.8f}")
 
-    trainer.fit(
-        model=model,
-        train_dataloaders=train_loader,
-        val_dataloaders=valid_loader,
-    )
+        trainer.fit(
+            model=model,
+            train_dataloaders=train_loader,
+            val_dataloaders=valid_loader,
+        )
+
+        torch.save(model.model.state_dict(), model_path)
+        print(f"Saved {model_path}")
 
     pl.Trainer(accelerator="auto").validate(
         model,
@@ -164,9 +173,6 @@ def process_args(args):
             num_workers=args.num_workers,
         ),
     )
-
-    torch.save(model.model.state_dict(), model_path)
-    print(f"Saved {model_path}")
 
     if args.wandb:
         import wandb
