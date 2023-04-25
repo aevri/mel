@@ -18,6 +18,20 @@ def setup_parser(parser):
         metavar=("project", "run_name"),
         help="Use a https://wandb.ai/ logger.",
     )
+    parser.add_argument(
+        "--batch-size",
+        "-b",
+        type=int,
+        default=4,
+        help="Number of images to load at a time.",
+    )
+    parser.add_argument(
+        "--num-workers",
+        "-w",
+        type=int,
+        default=0,
+        help="Number of workers to load batches in parallel.",
+    )
 
 
 def process_args(args):
@@ -61,6 +75,8 @@ def process_args(args):
     (
         train_images,
         valid_images,
+        train_sessions,
+        valid_sessions,
     ) = mel.rotomap.automarknn.list_train_valid_images()
     train_images = mel.rotomap.automarknn.drop_paths_without_moles(
         train_images
@@ -68,23 +84,35 @@ def process_args(args):
     valid_images = mel.rotomap.automarknn.drop_paths_without_moles(
         valid_images
     )
-    print(f"There are {len(train_images)} training images.")
-    print(f"There are {len(valid_images)} validation images.")
+
+    def print_sessions(kind, sessions):
+        print(f"{kind} image sessions:")
+        print()
+        for session in sessions:
+            print(" ", session)
+        print()
+
+    print_sessions("Training", train_sessions)
+    print_sessions("Validation", valid_sessions)
+    print(f"There are {len(train_images):,} training images.")
+    print(f"There are {len(valid_images):,} validation images.")
 
     train_dataset = mel.rotomap.automarknn.MoleImageBoxesDataset(train_images)
     valid_dataset = mel.rotomap.automarknn.MoleImageBoxesDataset(valid_images)
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=4,
+        batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
+        num_workers=args.num_workers,
     )
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset,
-        batch_size=4,
+        batch_size=args.batch_size,
         collate_fn=mel.rotomap.automarknn.collate_fn,
         shuffle=True,
+        num_workers=args.num_workers,
     )
 
     trainer_kwargs = {
@@ -122,8 +150,9 @@ def process_args(args):
         model,
         torch.utils.data.DataLoader(
             valid_dataset,
-            batch_size=4,
+            batch_size=args.batch_size,
             collate_fn=mel.rotomap.automarknn.collate_fn,
+            num_workers=args.num_workers,
         ),
     )
 
