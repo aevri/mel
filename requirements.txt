@@ -1,6 +1,6 @@
 black==23.3.0
 colorama==0.4.6
-docformatter==1.5.1
+docformatter==1.7.0
 isort==5.12.0
 nose==1.3.7
 opencv-python==4.7.0.72
