@@ -298,6 +298,15 @@ class LeftRightDisplay(ZoomableMixin):
 class MultiImageDisplay:
     def __init__(self, display):
         self._display = display
+
+        self._title = "_"
+        rect = numpy.array((display.width, display.height))
+        title_height, _ = mel.lib.image.measure_text_height_width("abc")
+        self._spacer_height = 5
+        self._image_rect = rect - numpy.array(
+            (0, title_height + self._spacer_height)
+        )
+
         self.reset()
 
     def reset(self):
@@ -321,6 +330,9 @@ class MultiImageDisplay:
         self._images_names[index] = (image, name)
         self.refresh()
 
+    def set_title(self, title):
+        self._title = title
+
     def refresh(self):
         row_image_list = []
 
@@ -341,11 +353,16 @@ class MultiImageDisplay:
         else:
             montage_image = mel.lib.image.montage_vertical(0, *row_image_list)
 
+        caption = mel.lib.image.render_text_as_image(str(self._title))
+        montage_image = mel.lib.image.montage_vertical(
+            self._spacer_height, montage_image, caption
+        )
+
         self._display.show_opencv_image(montage_image)
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020-2021 Angelos Evripiotis.
+# Copyright (C) 2020-2023 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
