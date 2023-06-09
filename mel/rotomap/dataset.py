@@ -3,6 +3,7 @@
 import collections
 import pathlib
 
+import mel.lib.ellipsespace
 import mel.rotomap.moles
 
 
@@ -66,4 +67,30 @@ def split_train_valid_last(pathdict):
 
 
 def listify_pathdict(pathdict):
-    return [path for subpart in pathdict.values() for path in subpart.values()]
+    return [
+        path
+        for subpart_maps in pathdict.values()
+        for maps in subpart_maps.values()
+        for path in maps
+    ]
+
+
+def yield_imagemoles_from_pathlist(pathlist):
+    """Return a list, with one entry per image. Each entry is a list of moles.
+
+    Each entry in the resulting list is a self-contained example.
+
+    The mole positions are normalized to their position in ellipse space.
+
+    """
+    for rotomap_path in pathlist:
+        rdir = mel.rotomap.moles.RotomapDirectory(rotomap_path)
+        for frame in rdir.yield_frames():
+            uuid_points = list(frame.moledata.uuid_points_list)
+            ellipse = frame.metadata["ellipse"]
+            elspace = mel.lib.ellipsespace.Transform(ellipse)
+            uuid_points = [
+                (uuid, elspace.to_space(point)) for uuid, point in uuid_points
+            ]
+            if uuid_points:
+                yield uuid_points
