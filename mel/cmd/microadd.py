@@ -155,11 +155,10 @@ def process_path(mole_path, min_compare_age_days, display, cap):
     )
 
     if comparison_image_data is not None:
-        _, comparison_image = comparison_image_data
-        # display.set_title(comparison_path)
+        comparison_path, comparison_image = comparison_image_data
+        display.set_title(comparison_path)
     else:
-        # display.set_title(mole_path)
-        pass
+        display.set_title(mole_path)
 
     context_images = load_context_images(mole_path)
     for image in context_images:
