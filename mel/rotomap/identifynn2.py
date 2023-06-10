@@ -43,8 +43,29 @@ def make_mole_row(points, indices, distances, padding):
 
 
 class Model(torch.nn.Module):
+    def __init__(self, partnames_uuids):
+        self.selfpos_encoder = torch.nn.Sequential(
+            torch.nn.Linear(2, 8, bias=True),
+            torch.nn.ReLU(),
+            torch.nn.Linear(8, 8, bias=True),
+            torch.nn.ReLU(),
+            torch.nn.Linear(8, 8, bias=True),
+            torch.nn.ReLU(),
+        )
+        self.partnames_uuidmap = {
+            {u: i for i, u in enumerate(sorted(uuids))}
+            for partname, uuids in partnames_uuids.items()
+        }
+        self.partnames_classifiers = {
+            partname: torch.nn.Sequential(
+                torch.nn.Linear(8, len(uuids) + 1, bias=True),
+                torch.nn.SoftMax(),
+            )
+            for partname, uuids in partnames_uuids.items()
+        }
+
     def forward(self, x):
-        # x: list of moles
+        # x: (part_name, list of moles)
         #
         # moles: my_abs_pos, [nn_rel_pos, ...]
         #
@@ -61,4 +82,7 @@ class Model(torch.nn.Module):
         #
         # Subpart-specific linear layer with softmax to classify moles. Include
         # something for 'not a mole'.
+
+        # Minimal test version: just a linear layers looking at the self_pos.
+
         pass
