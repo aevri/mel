@@ -4,12 +4,8 @@
 import torch
 
 
-def mole_neighbours_from_uuid_points(uuid_points, num_neighbours):
-    """Given a list of (uuid, pos_xy) tuples, determine the nearest uuids.
-
-    Returns a list of lists containing the uuids of the nearest neighbors for
-    each tuple.
-    """
+def mole_data_from_uuid_points(uuid_points, num_neighbours=4):
+    """Given a list of (uuid, pos_xy) tuples, determine each mole's context."""
 
     if not uuid_points:
         return []
@@ -18,21 +14,51 @@ def mole_neighbours_from_uuid_points(uuid_points, num_neighbours):
 
     positions_tensor = torch.tensor([pos_xy for _, pos_xy in uuid_points])
     distances = torch.cdist(positions_tensor, positions_tensor)
-    _, indices = torch.topk(
+    topk_distances, indices = torch.topk(
         distances, actual_num_neighbours + 1, largest=False, sorted=True
     )
 
-    # Exclude each point from it's own nearest neighbors list.
-    indices = indices[:, 1:]
+    # Note each point is in it's own nearest neighbors list.
 
-    # Map the indices back to uuids
-    uuids = [uuid for uuid, _ in uuid_points]
-    nearest_neighbors = [[uuids[i] for i in row] for row in indices]
-
+    points = [p for _, p in uuid_points]
     padding = num_neighbours - actual_num_neighbours
-    if padding:
-        nearest_neighbors = [
-            uuids + ([None] * padding) for uuids in nearest_neighbors
-        ]
+    x = [
+        make_mole_row(points, row_indices, distances[i], padding)
+        for i, row_indices in enumerate(indices)
+    ]
 
-    return nearest_neighbors
+    return x
+
+
+def make_mole_row(points, indices, distances, padding):
+    i = indices[0]
+    self_item = (i, points[i], distances[i])
+    self_point = points[i]
+    neighbours = [
+        (i, points[i] - self_point, distances[i]) for i in indices[1:]
+    ]
+    if padding:
+        neighbours += [(None, None, None, None) for _ in range(padding)]
+    return [self_item] + neighbours
+
+
+class Model(torch.nn.Module):
+    def forward(self, x):
+        # x: list of moles
+        #
+        # moles: my_abs_pos, [nn_rel_pos, ...]
+        #
+        # for each mole, process my_abs_pos, process each nn_rel_pos.
+        #
+        # for each mole, apply transformer to embedding list, create new short
+        # embedding
+        #
+        # for each mole, copy appropriate short embedding, combine with
+        # original position embedding. Apply transformer. Create new short
+        # embedding.
+        #
+        # Repeat.
+        #
+        # Subpart-specific linear layer with softmax to classify moles. Include
+        # something for 'not a mole'.
+        pass
