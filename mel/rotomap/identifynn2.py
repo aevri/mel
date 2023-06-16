@@ -43,6 +43,7 @@ def make_mole_row(points, indices, distances, padding):
 
 class Model(torch.nn.Module):
     def __init__(self, partnames_uuids):
+        super().__init__()
         self.selfpos_encoder = torch.nn.Sequential(
             torch.nn.Linear(2, 8, bias=True),
             torch.nn.ReLU(),
@@ -52,13 +53,13 @@ class Model(torch.nn.Module):
             torch.nn.ReLU(),
         )
         self.partnames_uuidmap = {
-            {u: i for i, u in enumerate(sorted(uuids))}
+            partname: {u: i for i, u in enumerate(sorted(uuids))}
             for partname, uuids in partnames_uuids.items()
         }
         self.partnames_classifiers = {
             partname: torch.nn.Sequential(
                 torch.nn.Linear(8, len(uuids) + 1, bias=True),
-                torch.nn.SoftMax(),
+                torch.nn.Softmax(),
             )
             for partname, uuids in partnames_uuids.items()
         }
@@ -83,8 +84,7 @@ class Model(torch.nn.Module):
         # something for 'not a mole'.
 
         # Minimal test version: just a linear layers looking at the self_pos.
-
-        pass
+        return x
 
 
 # -----------------------------------------------------------------------------
