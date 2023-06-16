@@ -94,3 +94,20 @@ def yield_imagemoles_from_pathlist(pathlist):
             ]
             if uuid_points:
                 yield uuid_points
+
+
+def make_partnames_uuids(pathdict):
+    result = collections.defaultdict(set)
+    for part, subpart_rotomaps in pathdict.items():
+        for subpart, rotomaps in subpart_rotomaps.items():
+            partname = f"{part}/{subpart}"
+            for path in rotomaps:
+                rdir = mel.rotomap.moles.RotomapDirectory(path)
+                for frame in rdir.yield_frames():
+                    for mole in frame.moles:
+                        if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
+                            result[partname].add(mole["uuid"])
+
+    return {
+        partname: list(sorted(uuids)) for partname, uuids in result.items()
+    }
