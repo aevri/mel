@@ -68,9 +68,9 @@ def split_train_valid_last(pathdict):
 
 def listify_pathdict(pathdict):
     return [
-        path
-        for subpart_maps in pathdict.values()
-        for maps in subpart_maps.values()
+        (f"{part}/{subpart}", path)
+        for part, subpart_maps in pathdict.items()
+        for subpart, maps in subpart_maps.items()
         for path in maps
     ]
 
@@ -83,7 +83,7 @@ def yield_imagemoles_from_pathlist(pathlist):
     The mole positions are normalized to their position in ellipse space.
 
     """
-    for rotomap_path in pathlist:
+    for partname, rotomap_path in pathlist:
         rdir = mel.rotomap.moles.RotomapDirectory(rotomap_path)
         for frame in rdir.yield_frames():
             uuid_points = list(frame.moledata.uuid_points_list)
@@ -93,7 +93,7 @@ def yield_imagemoles_from_pathlist(pathlist):
                 (uuid, elspace.to_space(point)) for uuid, point in uuid_points
             ]
             if uuid_points:
-                yield uuid_points
+                yield partname, uuid_points
 
 
 def make_partnames_uuids(pathdict):
