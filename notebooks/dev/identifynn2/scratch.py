@@ -19,12 +19,10 @@ import mel.rotomap.identifynn2 as identifynn2
 # %autoreload 2
 # -
 
-# !jt -t solarizedl
-
 # Generate fake data if not already present.
 temp_path = pathlib.Path("temp-data")
 if not temp_path.exists():
-    subprocess.run(f"mel-debug gen-repo {temp_path} --num-rotomaps 2 --num-parts 10", shell=True)
+    subprocess.run(f"mel-debug gen-repo {temp_path} --num-rotomaps 10 --num-parts 10", shell=True)
     subprocess.run(f"find {temp_path} -iname '*.jpg' | xargs mel rotomap automask", shell=True)
     subprocess.run(f"find {temp_path} -iname '*.jpg' | xargs mel rotomap calc-space", shell=True)
 
@@ -53,8 +51,6 @@ model = identifynn2.SelfposOnly(partnames_uuids)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-identifynn2.eval_step(model, criterion, optimizer, train)
-
 train_loss = []
 train_acc = []
 valid_loss = []
@@ -81,7 +77,7 @@ def do_train(num_iter):
 
 do_valid()
 
-for _ in tqdm(range(10), leave=False):
+for _ in tqdm(range(10)):
     do_train(10)
     do_valid()
 

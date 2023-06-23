@@ -100,21 +100,91 @@ class RandomChooser(torch.nn.Module):
         return dist.sample([len(mole_data)])
 
 
+class ResBlock(torch.nn.Module):
+    def __init__(self, submodule):
+        super().__init__()
+        self.submodule = submodule
+
+    def forward(self, x):
+        return self.submodule(x) + x
+
+
 class SelfposOnly(torch.nn.Module):
     def __init__(self, partnames_uuids):
         super().__init__()
+        self.width = 16
         self.selfpos_encoder = torch.nn.Sequential(
-            torch.nn.Linear(2, 8, bias=True),
+            # torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, self.width, bias=True),
             torch.nn.ReLU(),
-            torch.nn.Linear(8, 8, bias=True),
-            torch.nn.ReLU(),
-            torch.nn.Linear(8, 8, bias=True),
-            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
         )
         self.partnames_uuidmap = make_partname_uuidmap(partnames_uuids)
         self.partnames_classifiers = {
             partname: torch.nn.Sequential(
-                torch.nn.Linear(8, len(uuids) + 1, bias=True),
+                torch.nn.Linear(self.width, len(uuids) + 1, bias=True),
+            )
+            for partname, uuids in partnames_uuids.items()
+        }
+
+    def forward(self, x):
+        part_name, mole_list = x
+        classifier = self.partnames_classifiers[part_name]
+        pos = torch.tensor(
+            [mole[0][1] for mole in mole_list], dtype=torch.float32
+        )
+        emb = self.selfpos_encoder(pos)
+        return classifier(emb)
+
+
+class SinglePass(torch.nn.Module):
+    def __init__(self, partnames_uuids):
+        super().__init__()
+        self.width = 16
+        # TODO: consider https://lightning.ai/docs/pytorch/stable/notebooks/course_UvA-DL/05-transformers-and-MH-attention.html
+        self.selfpos_encoder = torch.nn.Sequential(
+            # torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+        )
+        self.relpos_encoder = torch.nn.Sequential(
+            # torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    # torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+        )
+        self.partnames_uuidmap = make_partname_uuidmap(partnames_uuids)
+        self.partnames_classifiers = {
+            partname: torch.nn.Sequential(
+                torch.nn.Linear(self.width, len(uuids) + 1, bias=True),
             )
             for partname, uuids in partnames_uuids.items()
         }
