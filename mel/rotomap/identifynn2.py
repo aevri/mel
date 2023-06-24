@@ -321,25 +321,41 @@ class Trainer:
 
     def validate(self):
         with torch.no_grad():
-            loss, acc = eval_step(
-                self.model,
-                self.criterion,
-                self.optimizer,
-                self.valid_data,
-            )
+            loss, acc = self.eval(self.valid_data)
         self.valid_loss.append(float(loss))
         self.valid_acc.append(float(acc))
         self.valid_step.append(len(self.train_loss))
 
     def train(self, num_iter=1):
-        loss, acc = train_step(
-            self.model,
-            self.criterion,
-            self.optimizer,
-            self.train_data,
-        )
+        self.optimizer.zero_grad()
+        loss, acc = self.eval(self.train_data)
+        loss.backward()
+        self.optimizer.step()
         self.train_loss.append(float(loss))
         self.train_acc.append(float(acc))
+
+    def eval(self, dataset):
+        x = [
+            (
+                item[0],
+                mole_data_from_uuid_points(item[1], num_neighbours=3),
+            )
+            for item in dataset
+        ]
+
+        logits_model = self.model(x)
+
+        y_actual = []
+        for item in dataset:
+            y_actual.extend(part_uuids_to_indices(self.model, item))
+
+        t_y_actual = torch.tensor(y_actual)
+        loss = self.criterion(logits_model, t_y_actual)
+        _, y_model = torch.max(logits_model, dim=1)
+        total_correct = sum(torch.eq(y_model, t_y_actual))
+        total_moles = len(y_actual)
+
+        return loss, total_correct / total_moles
 
     def plot(self):
         train_df = pd.DataFrame(
@@ -353,60 +369,6 @@ class Trainer:
         ax = valid_df.plot(y="valid loss", ax=ax)
         ax = train_df.plot(y="train accuracy", secondary_y=True, ax=ax)
         ax = valid_df.plot(y="valid accuracy", secondary_y=True, ax=ax)
-
-
-def eval_step_single(model, criterion, optimizer, training_set):
-    loss_sum = 0
-    total_correct = 0
-    total_moles = 0
-
-    for item in training_set:
-        x = (
-            item[0],
-            mole_data_from_uuid_points(item[1], num_neighbours=3),
-        )
-        logits_model = model(x)
-        y_actual = part_uuids_to_indices(model, item)
-        t_y_actual = torch.tensor(y_actual)
-        loss = criterion(logits_model, torch.tensor(y_actual))
-        _, y_model = torch.max(logits_model, dim=1)
-        total_correct += sum(torch.eq(y_model, t_y_actual))
-        total_moles += len(y_actual)
-        loss_sum += loss
-
-    return loss_sum / len(training_set), total_correct / total_moles
-
-
-def eval_step(model, criterion, optimizer, training_set):
-    x = [
-        (
-            item[0],
-            mole_data_from_uuid_points(item[1], num_neighbours=3),
-        )
-        for item in training_set
-    ]
-
-    logits_model = model(x)
-
-    y_actual = []
-    for item in training_set:
-        y_actual.extend(part_uuids_to_indices(model, item))
-
-    t_y_actual = torch.tensor(y_actual)
-    loss = criterion(logits_model, t_y_actual)
-    _, y_model = torch.max(logits_model, dim=1)
-    total_correct = sum(torch.eq(y_model, t_y_actual))
-    total_moles = len(y_actual)
-
-    return loss, total_correct / total_moles
-
-
-def train_step(model, criterion, optimizer, training_set):
-    optimizer.zero_grad()
-    loss, acc = eval_step(model, criterion, optimizer, training_set)
-    loss.backward()
-    optimizer.step()
-    return loss.detach(), acc
 
 
 # -----------------------------------------------------------------------------

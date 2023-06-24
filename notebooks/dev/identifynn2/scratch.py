@@ -56,6 +56,8 @@ for _ in tqdm(range(100)):
     trainer.train(10)
     trainer.validate()
 
+# !jt -t solarizedd
+
 trainer.plot()
 
 # + active=""
