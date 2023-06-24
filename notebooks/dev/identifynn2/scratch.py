@@ -51,42 +51,14 @@ model = identifynn2.SelfposOnly(partnames_uuids)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-train_loss = []
-train_acc = []
-valid_loss = []
-valid_acc = []
-valid_step = []
-
-
-# +
-def do_valid():
-    with torch.no_grad():
-        loss, acc = identifynn2.eval_step(model, criterion, optimizer, valid)
-    valid_loss.append(float(loss))
-    valid_acc.append(float(acc))
-    valid_step.append(len(train_loss))
-
-def do_train(num_iter):
-    for _ in tqdm(range(num_iter), leave=False):
-        loss, acc = identifynn2.train_step(model, criterion, optimizer, train)
-        train_loss.append(float(loss))
-        train_acc.append(float(acc))
-
-
-# -
-
-do_valid()
+trainer = identifynn2.Trainer(model, criterion, optimizer, train, valid)
+trainer.validate()
 
 for _ in tqdm(range(10)):
-    do_train(10)
-    do_valid()
+    trainer.train(10)
+    trainer.validate()
 
-train_df = pd.DataFrame({"train loss": train_loss, "train accuracy": train_acc})
-valid_df = pd.DataFrame({"valid loss": valid_loss, "valid accuracy": valid_acc}, index=valid_step)
-ax = train_df.plot(y="train loss")
-ax = valid_df.plot(y="valid loss", ax=ax)
-ax = train_df.plot(y="train accuracy", secondary_y=True, ax=ax)
-ax = valid_df.plot(y="valid accuracy", secondary_y=True, ax=ax)
+trainer.plot()
 
 # + active=""
 # identifynn2.infer_uuids(model, x1)

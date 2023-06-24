@@ -1,5 +1,6 @@
 """Identify moles from their positions in images."""
 
+import pandas as pd
 import torch
 
 
@@ -225,6 +226,56 @@ class Model(torch.nn.Module):
         #
         # Minimal test version: just a linear layers looking at the self_pos.
         pass
+
+
+class Trainer:
+    def __init__(self, model, criterion, optimizer, train_data, valid_data):
+        self.model = model
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.train_data = train_data
+        self.valid_data = valid_data
+
+        self.train_loss = []
+        self.train_acc = []
+        self.valid_loss = []
+        self.valid_acc = []
+        self.valid_step = []
+
+    def validate(self):
+        with torch.no_grad():
+            loss, acc = eval_step(
+                self.model,
+                self.criterion,
+                self.optimizer,
+                self.valid_data,
+            )
+        self.valid_loss.append(float(loss))
+        self.valid_acc.append(float(acc))
+        self.valid_step.append(len(self.train_loss))
+
+    def train(self, num_iter=1):
+        loss, acc = train_step(
+            self.model,
+            self.criterion,
+            self.optimizer,
+            self.train_data,
+        )
+        self.train_loss.append(float(loss))
+        self.train_acc.append(float(acc))
+
+    def plot(self):
+        train_df = pd.DataFrame(
+            {"train loss": self.train_loss, "train accuracy": self.train_acc}
+        )
+        valid_df = pd.DataFrame(
+            {"valid loss": self.valid_loss, "valid accuracy": self.valid_acc},
+            index=self.valid_step,
+        )
+        ax = train_df.plot(y="train loss")
+        ax = valid_df.plot(y="valid loss", ax=ax)
+        ax = train_df.plot(y="train accuracy", secondary_y=True, ax=ax)
+        ax = valid_df.plot(y="valid accuracy", secondary_y=True, ax=ax)
 
 
 def eval_step(model, criterion, optimizer, training_set):
