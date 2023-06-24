@@ -52,7 +52,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 trainer = identifynn2.Trainer(model, criterion, optimizer, train, valid)
 trainer.validate()
 
-for _ in tqdm(range(100)):
+for _ in tqdm(range(1_000)):
     trainer.train(10)
     trainer.validate()
 

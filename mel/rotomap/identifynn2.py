@@ -175,12 +175,25 @@ class SelfposOnlyVec(torch.nn.Module):
         super().__init__()
         self.width = 16
         self.selfpos_encoder = torch.nn.Sequential(
+            torch.nn.BatchNorm1d(2),
             torch.nn.Linear(2, self.width, bias=True),
             torch.nn.ReLU(),
             ResBlock(
                 torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
                     torch.nn.Linear(self.width, self.width, bias=True),
                     torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
                     torch.nn.Linear(self.width, self.width, bias=True),
                     torch.nn.ReLU(),
                 )
