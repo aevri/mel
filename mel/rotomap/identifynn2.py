@@ -80,10 +80,16 @@ def infer_uuids(model, x):
     return model.partnames_uuidmap[part_name].intlist_to_uuids(ids)
 
 
+# def part_uuids_to_indices(model, data):
+#     part_name, mole_data = data
+#     uuids = [x[0] for x in mole_data]
+#     return model.partnames_uuidmap[part_name].uuidlist_to_ints(uuids)
+
+
 def part_uuids_to_indices(model, data):
     part_name, mole_data = data
     uuids = [x[0] for x in mole_data]
-    return model.partnames_uuidmap[part_name].uuidlist_to_ints(uuids)
+    return [model.uuids_map.item_to_int(uuid) for uuid in uuids]
 
 
 class RandomChooser(torch.nn.Module):
@@ -145,6 +151,77 @@ class SelfposOnly(torch.nn.Module):
         )
         emb = self.selfpos_encoder(pos)
         return classifier(emb)
+
+
+class IndexMap:
+    def __init__(self, items):
+        self._item_to_int = {
+            item: i for i, item in enumerate(sorted(set(items)))
+        }
+        self._int_to_item = {i: item for item, i in self._item_to_int.items()}
+
+    def item_to_int(self, item):
+        return self._item_to_int.get(item)
+
+    def int_to_item(self, i):
+        return self._int_to_item.get(i)
+
+    def __len__(self):
+        return len(self._item_to_int)
+
+
+class SelfposOnlyVec(torch.nn.Module):
+    def __init__(self, partnames_uuids):
+        super().__init__()
+        self.width = 16
+        self.selfpos_encoder = torch.nn.Sequential(
+            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+        )
+        all_partnames = list(partnames_uuids.keys())
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.partnames_map = IndexMap(all_partnames)
+        self.uuids_map = IndexMap(all_uuids)
+
+        self.partnames_embedding = torch.nn.Embedding(
+            len(self.partnames_map), self.width
+        )
+        self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
+
+    def forward(self, batch):
+        # TODO: allow moles with 'None' uuid, to be non-moles.
+        partname_indices = []
+        pos_values = []
+
+        for x in batch:
+            part_name, mole_list = x
+            num_moles = len(mole_list)
+            partname_indices.extend(
+                [self.partnames_map.item_to_int(part_name)] * num_moles
+            )
+            pos_values.extend([mole[0][1] for mole in mole_list])
+
+        # Convert lists to tensors
+        partname_indices = torch.tensor(partname_indices, dtype=torch.long)
+        pos_values = torch.tensor(pos_values, dtype=torch.float32)
+
+        # Create embeddings
+        partname_embedding = self.partnames_embedding(partname_indices)
+        pos_emb = self.selfpos_encoder(pos_values)
+
+        emb = torch.cat([pos_emb, partname_embedding], dim=-1)
+        return self.classifier(emb)
 
 
 class SinglePass(torch.nn.Module):
@@ -278,10 +355,11 @@ class Trainer:
         ax = valid_df.plot(y="valid accuracy", secondary_y=True, ax=ax)
 
 
-def eval_step(model, criterion, optimizer, training_set):
+def eval_step_single(model, criterion, optimizer, training_set):
     loss_sum = 0
     total_correct = 0
     total_moles = 0
+
     for item in training_set:
         x = (
             item[0],
@@ -295,7 +373,32 @@ def eval_step(model, criterion, optimizer, training_set):
         total_correct += sum(torch.eq(y_model, t_y_actual))
         total_moles += len(y_actual)
         loss_sum += loss
+
     return loss_sum / len(training_set), total_correct / total_moles
+
+
+def eval_step(model, criterion, optimizer, training_set):
+    x = [
+        (
+            item[0],
+            mole_data_from_uuid_points(item[1], num_neighbours=3),
+        )
+        for item in training_set
+    ]
+
+    logits_model = model(x)
+
+    y_actual = []
+    for item in training_set:
+        y_actual.extend(part_uuids_to_indices(model, item))
+
+    t_y_actual = torch.tensor(y_actual)
+    loss = criterion(logits_model, t_y_actual)
+    _, y_model = torch.max(logits_model, dim=1)
+    total_correct = sum(torch.eq(y_model, t_y_actual))
+    total_moles = len(y_actual)
+
+    return loss, total_correct / total_moles
 
 
 def train_step(model, criterion, optimizer, training_set):
