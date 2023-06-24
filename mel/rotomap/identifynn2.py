@@ -199,7 +199,7 @@ class SelfposOnlyVec(torch.nn.Module):
         )
         self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
 
-    def forward(self, batch):
+    def prepare_batch(self, batch):
         # TODO: allow moles with 'None' uuid, to be non-moles.
         partname_indices = []
         pos_values = []
@@ -212,11 +212,18 @@ class SelfposOnlyVec(torch.nn.Module):
             )
             pos_values.extend([mole[0][1] for mole in mole_list])
 
-        # Convert lists to tensors
-        partname_indices = torch.tensor(partname_indices, dtype=torch.long)
-        pos_values = torch.tensor(pos_values, dtype=torch.float32)
+        partname_indices = torch.tensor(
+            partname_indices, dtype=torch.long, requires_grad=False
+        )
+        pos_values = torch.tensor(
+            pos_values, dtype=torch.float32, requires_grad=False
+        )
 
-        # Create embeddings
+        return partname_indices, pos_values
+
+    def forward(self, batch):
+        partname_indices, pos_values = batch
+
         partname_embedding = self.partnames_embedding(partname_indices)
         pos_emb = self.selfpos_encoder(pos_values)
 
@@ -319,22 +326,27 @@ class Trainer:
         self.valid_acc = []
         self.valid_step = []
 
+        self.valid_x = self.prepare_x(self.valid_data)
+        self.valid_y = self.prepare_y(self.valid_data)
+        self.train_x = self.prepare_x(self.train_data)
+        self.train_y = self.prepare_y(self.train_data)
+
     def validate(self):
         with torch.no_grad():
-            loss, acc = self.eval(self.valid_data)
+            loss, acc = self.eval(self.valid_x, self.valid_y)
         self.valid_loss.append(float(loss))
         self.valid_acc.append(float(acc))
         self.valid_step.append(len(self.train_loss))
 
     def train(self, num_iter=1):
         self.optimizer.zero_grad()
-        loss, acc = self.eval(self.train_data)
+        loss, acc = self.eval(self.train_x, self.train_y)
         loss.backward()
         self.optimizer.step()
         self.train_loss.append(float(loss))
         self.train_acc.append(float(acc))
 
-    def eval(self, dataset):
+    def prepare_x(self, dataset):
         x = [
             (
                 item[0],
@@ -342,19 +354,21 @@ class Trainer:
             )
             for item in dataset
         ]
+        return self.model.prepare_batch(x)
 
-        logits_model = self.model(x)
-
+    def prepare_y(self, dataset):
         y_actual = []
         for item in dataset:
             y_actual.extend(part_uuids_to_indices(self.model, item))
+        t_y_actual = torch.tensor(y_actual, requires_grad=False)
+        return t_y_actual
 
-        t_y_actual = torch.tensor(y_actual)
-        loss = self.criterion(logits_model, t_y_actual)
+    def eval(self, x, y_actual):
+        logits_model = self.model(x)
+        loss = self.criterion(logits_model, y_actual)
         _, y_model = torch.max(logits_model, dim=1)
-        total_correct = sum(torch.eq(y_model, t_y_actual))
+        total_correct = sum(torch.eq(y_model, y_actual))
         total_moles = len(y_actual)
-
         return loss, total_correct / total_moles
 
     def plot(self):
