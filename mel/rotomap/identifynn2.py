@@ -213,6 +213,15 @@ class SelfposOnlyVec(torch.nn.Module):
         self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
 
     def prepare_batch(self, batch):
+
+        batch = [
+            (
+                item[0],
+                mole_data_from_uuid_points(item[1], num_neighbours=3),
+            )
+            for item in batch
+        ]
+
         # TODO: allow moles with 'None' uuid, to be non-moles.
         partname_indices = []
         pos_values = []
@@ -363,14 +372,7 @@ class Trainer:
         self.train_acc.append(float(acc))
 
     def prepare_x(self, dataset):
-        x = [
-            (
-                item[0],
-                mole_data_from_uuid_points(item[1], num_neighbours=3),
-            )
-            for item in dataset
-        ]
-        x1, x2 = self.model.prepare_batch(x)
+        x1, x2 = self.model.prepare_batch(dataset)
         return x1.to(self.device), x2.to(self.device)
 
     def prepare_y(self, dataset):
