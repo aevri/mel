@@ -327,7 +327,10 @@ class Model(torch.nn.Module):
 
 class Trainer:
     def __init__(self, model, criterion, optimizer, train_data, valid_data):
-        self.model = model
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
+        self.model = model.to(self.device)
         self.criterion = criterion
         self.optimizer = optimizer
         self.train_data = train_data
@@ -340,9 +343,9 @@ class Trainer:
         self.valid_step = []
 
         self.valid_x = self.prepare_x(self.valid_data)
-        self.valid_y = self.prepare_y(self.valid_data)
+        self.valid_y = self.prepare_y(self.valid_data).to(self.device)
         self.train_x = self.prepare_x(self.train_data)
-        self.train_y = self.prepare_y(self.train_data)
+        self.train_y = self.prepare_y(self.train_data).to(self.device)
 
     def validate(self):
         with torch.no_grad():
@@ -367,7 +370,8 @@ class Trainer:
             )
             for item in dataset
         ]
-        return self.model.prepare_batch(x)
+        x1, x2 = self.model.prepare_batch(x)
+        return x1.to(self.device), x2.to(self.device)
 
     def prepare_y(self, dataset):
         y_actual = []
