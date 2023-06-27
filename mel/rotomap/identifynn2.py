@@ -253,6 +253,121 @@ class SelfposOnlyVec(torch.nn.Module):
         return self.classifier(emb)
 
 
+class PosOnly(torch.nn.Module):
+    def __init__(self, partnames_uuids):
+        super().__init__()
+        self.width = 16
+        self.selfpos_encoder = torch.nn.Sequential(
+            torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+        )
+        self.relpos_encoder = torch.nn.Sequential(
+            torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.ReLU(),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+            ResBlock(
+                torch.nn.Sequential(
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm1d(self.width),
+                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.ReLU(),
+                )
+            ),
+        )
+        all_partnames = list(partnames_uuids.keys())
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.partnames_map = IndexMap(all_partnames)
+        self.uuids_map = IndexMap(all_uuids)
+
+        self.partnames_embedding = torch.nn.Embedding(
+            len(self.partnames_map), self.width
+        )
+        self.classifier = torch.nn.Linear(self.width * 3, len(self.uuids_map))
+
+    def prepare_batch(self, batch):
+        batch = [
+            (
+                item[0],
+                mole_data_from_uuid_points(item[1], num_neighbours=3),
+            )
+            for item in batch
+        ]
+
+        # TODO: allow moles with 'None' uuid, to be non-moles.
+        partname_indices = []
+        pos_values = []
+
+        def convert_none_pos(pos):
+            if pos is None:
+                return 0.0, 0.0
+            x, y = pos
+            return float(x), float(y)
+
+        for x in batch:
+            part_name, mole_list = x
+            num_moles = len(mole_list)
+            partname_indices.extend(
+                [self.partnames_map.item_to_int(part_name)] * num_moles
+            )
+            pos_values.extend(
+                [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
+            )
+
+        partname_indices = torch.tensor(
+            partname_indices, dtype=torch.long, requires_grad=False
+        )
+        pos_values = torch.tensor(
+            pos_values, dtype=torch.float32, requires_grad=False
+        )
+
+        return partname_indices, pos_values
+
+    def forward(self, batch):
+        partname_indices, pos_values = batch
+
+        partname_embedding = self.partnames_embedding(partname_indices)
+        selfpos_emb = self.selfpos_encoder(pos_values[:, 0])
+        relpos_emb = self.relpos_encoder(pos_values[:, 1])
+        emb = torch.cat([selfpos_emb, relpos_emb, partname_embedding], dim=-1)
+        return self.classifier(emb)
+
+
 class SinglePass(torch.nn.Module):
     def __init__(self, partnames_uuids):
         super().__init__()
