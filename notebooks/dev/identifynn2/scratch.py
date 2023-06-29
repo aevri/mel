@@ -49,11 +49,11 @@ criterion = torch.nn.CrossEntropyLoss()
 #model = identifynn2.SelfposOnly(partnames_uuids)
 #model = identifynn2.SelfposOnlyVec(partnames_uuids)
 model = identifynn2.PosOnly(partnames_uuids, num_neighbours=5)
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+optimizer = torch.optim.AdamW(model.parameters())
 trainer = identifynn2.Trainer(model, criterion, optimizer, train, valid)
 trainer.validate()
 
-for _ in tqdm(range(1_000)):
+for _ in tqdm(range(400)):
     trainer.train(10)
     trainer.validate()
 
