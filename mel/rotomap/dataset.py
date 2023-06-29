@@ -75,7 +75,7 @@ def listify_pathdict(pathdict):
     ]
 
 
-def yield_imagemoles_from_pathlist(pathlist):
+def yield_imagemoles_from_pathlist(pathlist, extra_stem_list=None):
     """Return a list, with one entry per image. Each entry is a list of moles.
 
     Each entry in the resulting list is a self-contained example.
@@ -83,17 +83,21 @@ def yield_imagemoles_from_pathlist(pathlist):
     The mole positions are normalized to their position in ellipse space.
 
     """
+    if extra_stem_list is None:
+        extra_stem_list = [None]
     for partname, rotomap_path in pathlist:
         rdir = mel.rotomap.moles.RotomapDirectory(rotomap_path)
-        for frame in rdir.yield_frames():
-            uuid_points = list(frame.moledata.uuid_points_list)
-            ellipse = frame.metadata["ellipse"]
-            elspace = mel.lib.ellipsespace.Transform(ellipse)
-            uuid_points = [
-                (uuid, elspace.to_space(point)) for uuid, point in uuid_points
-            ]
-            if uuid_points:
-                yield partname, uuid_points
+        for extra_stem in extra_stem_list:
+            for frame in rdir.yield_frames(extra_stem=extra_stem):
+                uuid_points = list(frame.moledata.uuid_points_list)
+                ellipse = frame.metadata["ellipse"]
+                elspace = mel.lib.ellipsespace.Transform(ellipse)
+                uuid_points = [
+                    (uuid, elspace.to_space(point))
+                    for uuid, point in uuid_points
+                ]
+                if uuid_points:
+                    yield partname, uuid_points
 
 
 def make_partnames_uuids(pathdict):
