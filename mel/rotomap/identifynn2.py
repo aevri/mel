@@ -1,7 +1,74 @@
 """Identify moles from their positions in images."""
 
+import json
+import pathlib
+
 import pandas as pd
 import torch
+
+import mel.lib.fs
+import mel.rotomap.dataset
+
+
+def make_identifier():
+    melroot = mel.lib.fs.find_melroot()
+    model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
+    model_path = model_dir / "identify2.pth"
+    metadata_path = model_dir / "identify2.json"
+    return MoleIdentifier(metadata_path, model_path)
+
+
+class MoleIdentifier:
+    def __init__(self, metadata_path, model_path):
+        # Some of these imports are expensive, so to keep program start-up time
+        # lower, import them only when necessary.
+        import torch
+
+        with open(metadata_path) as f:
+            self.metadata = json.load(f)
+
+        self.model = mel.rotomap.identifynn2.PosOnly(
+            partnames_uuids=self.metadata["partnames_uuids"],
+            num_neighbours=self.metadata["num_neighbours"],
+        )
+        self.model.load_state_dict(torch.load(model_path))
+
+    def get_new_moles(self, path, extra_stem=None):
+        import torch
+
+        path = pathlib.Path(path)
+
+        pathname = (
+            f"{path.parent.parent.parent.stem}/{path.parent.parent.stem}"
+        )
+
+        old_moles, uuid_points = mel.rotomap.dataset.imagemoles_from_framepath(
+            path, extra_stem=extra_stem
+        )
+
+        if not old_moles:
+            return []
+
+        x1, x2 = self.model.prepare_batch([(pathname, uuid_points)])
+
+        self.model.eval()
+        with torch.no_grad():
+            logits = self.model((x1, x2))
+            preds = torch.argmax(logits, dim=1)
+
+        new_moles = []
+        for i, mole in enumerate(old_moles):
+            if old_moles[i][mel.rotomap.moles.KEY_IS_CONFIRMED]:
+                new_moles.append(old_moles[i])
+                continue
+            pred_i = preds[i]
+            pred_uuid = self.model.uuids_map.int_to_item(int(pred_i))
+            if pred_uuid is None:
+                continue
+            old_moles[i]["uuid"] = pred_uuid
+            new_moles.append(old_moles[i])
+
+        return new_moles
 
 
 def mole_data_from_uuid_points(uuid_points, num_neighbours=4):

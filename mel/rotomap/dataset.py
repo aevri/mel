@@ -100,6 +100,17 @@ def yield_imagemoles_from_pathlist(pathlist, extra_stem_list=None):
                     yield partname, uuid_points
 
 
+def imagemoles_from_framepath(frame_path, extra_stem=None):
+    frame = mel.rotomap.moles.RotomapFrame(frame_path, extra_stem=extra_stem)
+    uuid_points = list(frame.moledata.uuid_points_list)
+    ellipse = frame.metadata["ellipse"]
+    elspace = mel.lib.ellipsespace.Transform(ellipse)
+    uuid_points = [
+        (uuid, elspace.to_space(point)) for uuid, point in uuid_points
+    ]
+    return frame.moles, uuid_points
+
+
 def make_partnames_uuids(pathdict):
     result = collections.defaultdict(set)
     for part, subpart_rotomaps in pathdict.items():
