@@ -156,12 +156,17 @@ class SelfposOnly(torch.nn.Module):
 class IndexMap:
     def __init__(self, items):
         self._item_to_int = {
-            item: i for i, item in enumerate(sorted(set(items)))
+            item: i for i, item in enumerate([None] + sorted(set(items)))
         }
         self._int_to_item = {i: item for item, i in self._item_to_int.items()}
+        assert self._item_to_int[None] == 0
+        assert self._int_to_item[0] == None
 
     def item_to_int(self, item):
-        return self._item_to_int.get(item)
+        i = self._item_to_int.get(item, None)
+        if i is None:
+            return 0
+        return i
 
     def int_to_item(self, i):
         return self._int_to_item.get(i)

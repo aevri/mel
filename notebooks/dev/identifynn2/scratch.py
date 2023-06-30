@@ -34,7 +34,7 @@ partnames_uuids = mel_dataset.make_partnames_uuids(pathdict)
 
 def process_dataset(pathdict, name):
     d = mel_dataset.listify_pathdict(pathdict)
-    d = mel_dataset.yield_imagemoles_from_pathlist(d)
+    d = mel_dataset.yield_imagemoles_from_pathlist(d, extra_stem_list=[None, "auto"])
     d = list(d)
     print(f"There are {len(d)} {name} items.")
     return d
