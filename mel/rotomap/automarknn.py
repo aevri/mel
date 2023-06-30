@@ -21,25 +21,72 @@ def make_detector():
 
 
 class MoleDetector:
-    def __init__(self, model_path):
+    def __init__(self, model_path, tile_size=800, min_overlap=0.1):
         self.model = make_model(model_path)
         self.image_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
             ]
         )
+        self.tile_size = tile_size
+        self.min_overlap = min_overlap
 
-    def get_moles(self, frame):
+    def get_moles(
+        self, frame, box_size=10, iou_threshold=0.5
+    ):  # box_size and iou_threshold parameters added
         image = load_image(frame.path)
+        image_shape = image.shape[:2]
         image = self.image_transform(image)
 
+        tile_handler = TileHandler(
+            image_shape, self.tile_size, self.min_overlap
+        )
+        moles_boxes = []
         self.model.eval()
-        with torch.no_grad():
-            boxes = self.model(image.unsqueeze(0))[0]["boxes"]
-        poslist = boxes_to_poslist(boxes)
+
+        print(image.shape)
+
+        for i in range(tile_handler.num_tiles):
+            tile_coords = tile_handler.tile(i)
+            tile_image = image[
+                :,
+                tile_coords[0] : tile_coords[1],
+                tile_coords[2] : tile_coords[3],
+            ]
+
+            with torch.no_grad():
+                boxes = self.model(tile_image.unsqueeze(0))[0]["boxes"]
+            poslist = boxes_to_poslist(boxes)
+
+            for x, y in poslist:
+                x_adj = int(x) + tile_coords[2]
+                y_adj = int(y) + tile_coords[0]
+
+                # Create bounding boxes around the detected moles
+                box = torch.tensor(
+                    [
+                        x_adj - box_size,
+                        y_adj - box_size,
+                        x_adj + box_size,
+                        y_adj + box_size,
+                    ]
+                )
+                moles_boxes.append(box)
+
+        moles_boxes = torch.stack(moles_boxes)
+        keep = torchvision.ops.nms(
+            moles_boxes, torch.ones(len(moles_boxes)), iou_threshold
+        )
+        moles_boxes = moles_boxes[keep]
+
         moles = []
-        for x, y in poslist:
-            mel.rotomap.moles.add_mole(moles, int(x), int(y))
+        for box in moles_boxes:
+            x_center = (box[0] + box[2]) / 2
+            y_center = (box[1] + box[3]) / 2
+            moles.append(
+                mel.rotomap.moles.add_mole(int(x_center), int(y_center))
+            )
+
         return moles
 
 
