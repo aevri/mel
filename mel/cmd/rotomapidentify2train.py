@@ -103,6 +103,9 @@ def process_args(args):
         trainer.train(10)
         trainer.validate()
 
+    print("Validation loss:", trainer.valid_loss[-1])
+    print("Validation acc:", f"{trainer.valid_acc[-1]:.0%}")
+
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
 
