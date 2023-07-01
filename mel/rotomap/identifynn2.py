@@ -328,7 +328,7 @@ class PosOnly(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
-        self.width = 16
+        self.width = 128
         self.selfpos_encoder = torch.nn.Sequential(
             torch.nn.BatchNorm1d(2),
             torch.nn.Linear(2, self.width, bias=True),
@@ -390,9 +390,12 @@ class PosOnly(torch.nn.Module):
         self.partnames_embedding = torch.nn.Embedding(
             len(self.partnames_map), self.width
         )
-        self.classifier = torch.nn.Linear(
-            self.width * (2 + self.num_neighbours), len(self.uuids_map)
+        self.attention = torch.nn.MultiheadAttention(
+            self.width,
+            num_heads=32,
+            batch_first=True,
         )
+        self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
 
     def prepare_batch(self, batch):
         batch = [
@@ -445,9 +448,20 @@ class PosOnly(torch.nn.Module):
             relpos_emb = self.relpos_encoder(pos_values[:, i])
             relpos_embs.append(relpos_emb)
 
-        emb = torch.cat(
-            [selfpos_emb] + relpos_embs + [partname_embedding], dim=-1
+        emb_sequence = torch.stack([selfpos_emb] + relpos_embs).transpose(
+            0, 1
         )
+
+        attn_output, _ = self.attention(
+            emb_sequence, emb_sequence, emb_sequence
+        )
+
+        attn_output, _ = torch.max(
+            attn_output, dim=1
+        )
+
+        emb = torch.cat([attn_output, partname_embedding], dim=-1)
+
         return self.classifier(emb)
 
 
