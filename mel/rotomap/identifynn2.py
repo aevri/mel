@@ -585,8 +585,8 @@ class Trainer:
         logits_model = self.model(x)
         loss = self.criterion(logits_model, y_actual)
         _, y_model = torch.max(logits_model, dim=1)
-        total_correct = sum(torch.eq(y_model, y_actual))
-        total_moles = len(y_actual)
+        total_correct = (torch.eq(y_model, y_actual)).sum()
+        total_moles = y_actual.shape[0]
         return loss, total_correct / total_moles
 
     def plot(self):
