@@ -99,9 +99,13 @@ def process_args(args):
         "num_neighbours": num_neighbours,
     }
 
-    for _ in tqdm(range(200)):
-        trainer.train(10)
-        trainer.validate()
+    try:
+        for _ in tqdm(range(1_000)):
+            trainer.train(10)
+            trainer.validate()
+    except mel.rotomap.identifynn2.EarlyStoppingException:
+        print("Stopping training early due to no improvement.")
+        pass
 
     print("Validation loss:", trainer.valid_loss[-1])
     print("Validation acc:", f"{trainer.valid_acc[-1]:.0%}")

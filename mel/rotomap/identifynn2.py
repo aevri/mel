@@ -285,7 +285,6 @@ class SelfposOnlyVec(torch.nn.Module):
         self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
 
     def prepare_batch(self, batch):
-
         batch = [
             (
                 item[0],
@@ -533,8 +532,14 @@ class Model(torch.nn.Module):
         pass
 
 
+class EarlyStoppingException(Exception):
+    pass
+
+
 class Trainer:
-    def __init__(self, model, criterion, optimizer, train_data, valid_data):
+    def __init__(
+        self, model, criterion, optimizer, train_data, valid_data, patience=5
+    ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
@@ -543,6 +548,7 @@ class Trainer:
         self.optimizer = optimizer
         self.train_data = train_data
         self.valid_data = valid_data
+        self.patience = patience
 
         self.train_loss = []
         self.train_acc = []
@@ -555,12 +561,26 @@ class Trainer:
         self.train_x = self.prepare_x(self.train_data)
         self.train_y = self.prepare_y(self.train_data).to(self.device)
 
+        self.best_valid_loss = float("inf")
+        self.patience_counter = 0
+
     def validate(self):
         with torch.no_grad():
             loss, acc = self.eval(self.valid_x, self.valid_y)
-        self.valid_loss.append(float(loss))
+        loss_val = float(loss)
+        self.valid_loss.append(loss_val)
         self.valid_acc.append(float(acc))
         self.valid_step.append(len(self.train_loss))
+
+        if loss_val < self.best_valid_loss:
+            self.best_valid_loss = loss_val
+            self.patience_counter = 0
+        else:
+            self.patience_counter += 1
+            if self.patience_counter >= self.patience:
+                raise EarlyStoppingException(
+                    "Early stopping due to validation loss not improving"
+                )
 
     def train(self, num_iter=1):
         self.optimizer.zero_grad()
