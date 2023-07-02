@@ -328,7 +328,7 @@ class PosOnly(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
-        self.width = 128
+        self.width = 16
         self.selfpos_encoder = torch.nn.Sequential(
             torch.nn.BatchNorm1d(2),
             torch.nn.Linear(2, self.width, bias=True),
@@ -390,12 +390,15 @@ class PosOnly(torch.nn.Module):
         self.partnames_embedding = torch.nn.Embedding(
             len(self.partnames_map), self.width
         )
-        self.attention = torch.nn.MultiheadAttention(
-            self.width,
-            num_heads=32,
-            batch_first=True,
+        self.transformer_layer = torch.nn.TransformerEncoderLayer(
+            d_model=self.width, nhead=8, batch_first=True
         )
-        self.classifier = torch.nn.Linear(self.width * 2, len(self.uuids_map))
+        self.transformer = torch.nn.TransformerEncoder(
+            self.transformer_layer, num_layers=1
+        )
+        self.classifier = torch.nn.Linear(
+            self.width * (2 + self.num_neighbours), len(self.uuids_map)
+        )
 
     def prepare_batch(self, batch):
         batch = [
@@ -450,17 +453,17 @@ class PosOnly(torch.nn.Module):
 
         emb_sequence = torch.stack([selfpos_emb] + relpos_embs).transpose(
             0, 1
-        )
+        )  # Shape: (batch_size, sequence_length, embed_dim)
 
-        attn_output, _ = self.attention(
-            emb_sequence, emb_sequence, emb_sequence
-        )
+        transformer_output = self.transformer(
+            emb_sequence
+        )  # shape: (batch_size, sequence_length, embed_dim)
 
-        attn_output, _ = torch.max(
-            attn_output, dim=1
-        )
+        transformer_output_flat = transformer_output.view(
+            transformer_output.size(0), -1
+        )  # shape: (batch_size, sequence_length * embed_dim)
 
-        emb = torch.cat([attn_output, partname_embedding], dim=-1)
+        emb = torch.cat([transformer_output_flat, partname_embedding], dim=-1)
 
         return self.classifier(emb)
 
