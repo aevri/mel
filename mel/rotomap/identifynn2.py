@@ -556,24 +556,42 @@ class Trainer:
         self.valid_acc = []
         self.valid_step = []
 
-        self.valid_x = self.prepare_x(self.valid_data)
-        self.valid_y = self.prepare_y(self.valid_data).to(self.device)
-        self.train_x = self.prepare_x(self.train_data)
-        self.train_y = self.prepare_y(self.train_data).to(self.device)
+        self.batch_size = 1_000
+
+        self.valid_loader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(
+                *self.prepare_x(self.valid_data),
+                self.prepare_y(self.valid_data).to(self.device),
+            ),
+            batch_size=self.batch_size,
+        )
+        self.train_loader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(
+                *self.prepare_x(self.train_data),
+                self.prepare_y(self.train_data).to(self.device),
+            ),
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
 
         self.best_valid_loss = float("inf")
         self.patience_counter = 0
 
     def validate(self):
         with torch.no_grad():
-            loss, acc = self.eval(self.valid_x, self.valid_y)
-        loss_val = float(loss)
-        self.valid_loss.append(loss_val)
-        self.valid_acc.append(float(acc))
+            total_loss = 0
+            total_acc = 0
+            for x1, x2, y in self.valid_loader:
+                x = (x1, x2)
+                loss, acc = self.eval(x, y)
+                total_loss += float(loss)
+                total_acc += float(acc)
+            self.valid_loss.append(total_loss / len(self.valid_loader))
+            self.valid_acc.append(total_acc / len(self.valid_loader))
         self.valid_step.append(len(self.train_loss))
 
-        if loss_val < self.best_valid_loss:
-            self.best_valid_loss = loss_val
+        if self.valid_loss[-1] < self.best_valid_loss:
+            self.best_valid_loss = self.valid_loss[-1]
             self.patience_counter = 0
         else:
             self.patience_counter += 1
@@ -583,12 +601,15 @@ class Trainer:
                 )
 
     def train(self, num_iter=1):
-        self.optimizer.zero_grad()
-        loss, acc = self.eval(self.train_x, self.train_y)
-        loss.backward()
-        self.optimizer.step()
-        self.train_loss.append(float(loss))
-        self.train_acc.append(float(acc))
+        # for _ in range(num_iter):
+        for x1, x2, y in self.train_loader:
+            self.optimizer.zero_grad()
+            x = (x1, x2)
+            loss, acc = self.eval(x, y)
+            loss.backward()
+            self.optimizer.step()
+            self.train_loss.append(float(loss))
+            self.train_acc.append(float(acc))
 
     def prepare_x(self, dataset):
         x1, x2 = self.model.prepare_batch(dataset)

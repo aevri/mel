@@ -105,6 +105,9 @@ def process_args(args):
         "num_neighbours": num_neighbours,
     }
 
+    print("Batches per training epoch:", len(trainer.train_loader))
+    print("Batches per validation epoch:", len(trainer.valid_loader))
+
     try:
         for _ in tqdm(range(1_000)):
             trainer.train(10)
