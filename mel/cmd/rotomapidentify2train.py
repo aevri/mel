@@ -87,6 +87,9 @@ def process_args(args):
     # model = mel.rotomap.identifynn2.SelfposOnly(
     #     partnames_uuids
     # )
+    # model = mel.rotomap.identifynn2.PosOnlyLinear(
+    #     partnames_uuids, num_neighbours=num_neighbours
+    # )
     model = mel.rotomap.identifynn2.PosOnly(
         partnames_uuids, num_neighbours=num_neighbours
     )
