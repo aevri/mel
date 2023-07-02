@@ -601,15 +601,15 @@ class Trainer:
                 )
 
     def train(self, num_iter=1):
-        # for _ in range(num_iter):
-        for x1, x2, y in self.train_loader:
-            self.optimizer.zero_grad()
-            x = (x1, x2)
-            loss, acc = self.eval(x, y)
-            loss.backward()
-            self.optimizer.step()
-            self.train_loss.append(float(loss))
-            self.train_acc.append(float(acc))
+        for _ in range(num_iter):
+            for x1, x2, y in self.train_loader:
+                self.optimizer.zero_grad()
+                x = (x1, x2)
+                loss, acc = self.eval(x, y)
+                loss.backward()
+                self.optimizer.step()
+                self.train_loss.append(float(loss))
+                self.train_acc.append(float(acc))
 
     def prepare_x(self, dataset):
         x1, x2 = self.model.prepare_batch(dataset)
