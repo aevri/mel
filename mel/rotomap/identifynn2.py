@@ -109,12 +109,6 @@ def make_mole_row(points, indices, distances, padding):
     return [self_item] + neighbours
 
 
-def make_partname_uuidmap(partnames_uuids):
-    return {
-        partname: UuidMap(uuids) for partname, uuids in partnames_uuids.items()
-    }
-
-
 class UuidMap:
     def __init__(self, uuids):
         self.uuidmap = {u: i for i, u in enumerate([None] + sorted(uuids))}
@@ -147,31 +141,10 @@ def infer_uuids(model, x):
     return model.partnames_uuidmap[part_name].intlist_to_uuids(ids)
 
 
-# def part_uuids_to_indices(model, data):
-#     part_name, mole_data = data
-#     uuids = [x[0] for x in mole_data]
-#     return model.partnames_uuidmap[part_name].uuidlist_to_ints(uuids)
-
-
 def part_uuids_to_indices(model, data):
     part_name, mole_data = data
     uuids = [x[0] for x in mole_data]
     return [model.uuids_map.item_to_int(uuid) for uuid in uuids]
-
-
-class RandomChooser(torch.nn.Module):
-    def __init__(self, partnames_uuids):
-        super().__init__()
-        self.partnames_uuidmap = make_partname_uuidmap(partnames_uuids)
-
-    def forward(self, x):
-        part_name, mole_data = x
-        uuidmap = self.partnames_uuidmap[part_name]
-        num_possible_uuids = len(uuidmap)
-        dist = torch.distributions.one_hot_categorical.OneHotCategorical(
-            torch.ones(num_possible_uuids) / num_possible_uuids
-        )
-        return dist.sample([len(mole_data)])
 
 
 class ResBlock(torch.nn.Module):
@@ -181,43 +154,6 @@ class ResBlock(torch.nn.Module):
 
     def forward(self, x):
         return self.submodule(x) + x
-
-
-class SelfposOnly(torch.nn.Module):
-    def __init__(self, partnames_uuids):
-        super().__init__()
-        self.width = 16
-        self.selfpos_encoder = torch.nn.Sequential(
-            # torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
-        self.partnames_uuidmap = make_partname_uuidmap(partnames_uuids)
-        self.partnames_classifiers = {
-            partname: torch.nn.Sequential(
-                torch.nn.Linear(self.width, len(uuids) + 1, bias=True),
-            )
-            for partname, uuids in partnames_uuids.items()
-        }
-
-    def forward(self, x):
-        part_name, mole_list = x
-        classifier = self.partnames_classifiers[part_name]
-        pos = torch.tensor(
-            [mole[0][1] for mole in mole_list], dtype=torch.float32
-        )
-        emb = self.selfpos_encoder(pos)
-        return classifier(emb)
 
 
 class IndexMap:
@@ -242,7 +178,7 @@ class IndexMap:
         return len(self._item_to_int)
 
 
-class SelfposOnlyVec(torch.nn.Module):
+class SelfposOnly(torch.nn.Module):
     def __init__(self, partnames_uuids):
         super().__init__()
         self.width = 16
@@ -466,87 +402,6 @@ class PosOnly(torch.nn.Module):
         emb = torch.cat([transformer_output_flat, partname_embedding], dim=-1)
 
         return self.classifier(emb)
-
-
-class SinglePass(torch.nn.Module):
-    def __init__(self, partnames_uuids):
-        super().__init__()
-        self.width = 16
-        # TODO: consider https://lightning.ai/docs/pytorch/stable/notebooks/course_UvA-DL/05-transformers-and-MH-attention.html
-        self.selfpos_encoder = torch.nn.Sequential(
-            # torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
-        self.relpos_encoder = torch.nn.Sequential(
-            # torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    # torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
-        self.partnames_uuidmap = make_partname_uuidmap(partnames_uuids)
-        self.partnames_classifiers = {
-            partname: torch.nn.Sequential(
-                torch.nn.Linear(self.width, len(uuids) + 1, bias=True),
-            )
-            for partname, uuids in partnames_uuids.items()
-        }
-
-    def forward(self, x):
-        part_name, mole_list = x
-        classifier = self.partnames_classifiers[part_name]
-        pos = torch.tensor(
-            [mole[0][1] for mole in mole_list], dtype=torch.float32
-        )
-        emb = self.selfpos_encoder(pos)
-        return classifier(emb)
-
-
-class Model(torch.nn.Module):
-    def __init__(self, partnames_uuids):
-        super().__init__()
-        pass
-
-    def forward(self, x):
-        # x: (part_name, list of moles)
-        #
-        # moles: my_abs_pos, [nn_rel_pos, ...]
-        #
-        # for each mole, process my_abs_pos, process each nn_rel_pos.
-        #
-        # for each mole, apply transformer to embedding list, create new short
-        # embedding
-        #
-        # for each mole, copy appropriate short embedding, combine with
-        # original position embedding. Apply transformer. Create new short
-        # embedding.
-        #
-        # Repeat.
-        #
-        # Subpart-specific linear layer with softmax to classify moles. Include
-        # something for 'not a mole'.
-        #
-        # Minimal test version: just a linear layers looking at the self_pos.
-        pass
 
 
 class EarlyStoppingException(Exception):

@@ -84,6 +84,9 @@ def process_args(args):
     valid = process_dataset(valid, "validation")
 
     num_neighbours = 5
+    # model = mel.rotomap.identifynn2.SelfposOnly(
+    #     partnames_uuids
+    # )
     model = mel.rotomap.identifynn2.PosOnly(
         partnames_uuids, num_neighbours=num_neighbours
     )
