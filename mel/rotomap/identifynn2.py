@@ -178,35 +178,45 @@ class IndexMap:
         return len(self._item_to_int)
 
 
-class SelfposOnly(torch.nn.Module):
-    def __init__(self, partnames_uuids):
+class PosEncoder(torch.nn.Module):
+    def __init__(self, width):
         super().__init__()
-        self.width = 16
-        self.selfpos_encoder = torch.nn.Sequential(
+        self.width = width
+        self.encoder = torch.nn.Sequential(
             torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
+            torch.nn.Linear(2, width, bias=True),
             torch.nn.ReLU(),
             ResBlock(
                 torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.BatchNorm1d(width),
+                    torch.nn.Linear(width, width, bias=True),
                     torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.BatchNorm1d(width),
+                    torch.nn.Linear(width, width, bias=True),
                     torch.nn.ReLU(),
                 )
             ),
             ResBlock(
                 torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.BatchNorm1d(width),
+                    torch.nn.Linear(width, width, bias=True),
                     torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
+                    torch.nn.BatchNorm1d(width),
+                    torch.nn.Linear(width, width, bias=True),
                     torch.nn.ReLU(),
                 )
             ),
         )
+
+    def forward(self, x):
+        return self.encoder(x)
+
+
+class SelfposOnly(torch.nn.Module):
+    def __init__(self, partnames_uuids):
+        super().__init__()
+        self.width = 16
+        self.selfpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
         all_uuids = [
             uuid for uuids in partnames_uuids.values() for uuid in uuids
@@ -265,56 +275,9 @@ class PosOnlyLinear(torch.nn.Module):
         super().__init__()
         self.num_neighbours = num_neighbours
         self.width = 16
-        self.selfpos_encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
-        self.relpos_encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
+
+        self.selfpos_encoder = PosEncoder(self.width)
+        self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
         all_uuids = [
             uuid for uuids in partnames_uuids.values() for uuid in uuids
@@ -393,56 +356,8 @@ class PosOnly(torch.nn.Module):
         super().__init__()
         self.num_neighbours = num_neighbours
         self.width = 32
-        self.selfpos_encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
-        self.relpos_encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2),
-            torch.nn.Linear(2, self.width, bias=True),
-            torch.nn.ReLU(),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-            ResBlock(
-                torch.nn.Sequential(
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                    torch.nn.BatchNorm1d(self.width),
-                    torch.nn.Linear(self.width, self.width, bias=True),
-                    torch.nn.ReLU(),
-                )
-            ),
-        )
+        self.selfpos_encoder = PosEncoder(self.width)
+        self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
         all_uuids = [
             uuid for uuids in partnames_uuids.values() for uuid in uuids
