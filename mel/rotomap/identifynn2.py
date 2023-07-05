@@ -453,7 +453,15 @@ class EarlyStoppingException(Exception):
 
 class Trainer:
     def __init__(
-        self, model, criterion, optimizer, train_data, valid_data, patience=5
+        self,
+        model,
+        criterion,
+        optimizer,
+        train_data,
+        valid_data,
+        max_lr=0.01,
+        patience=5,
+        epochs=50,
     ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
@@ -473,10 +481,6 @@ class Trainer:
 
         self.batch_size = 2_000
 
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode="min", factor=0.5, patience=20
-        )
-
         self.valid_loader = torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(
                 *self.prepare_x(self.valid_data),
@@ -491,6 +495,17 @@ class Trainer:
             ),
             batch_size=self.batch_size,
             shuffle=True,
+        )
+
+        # Compute the steps per epoch and total epochs for the scheduler.
+        self.steps_per_epoch = len(self.train_loader)
+        self.epochs = epochs
+
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=max_lr,
+            steps_per_epoch=self.steps_per_epoch,
+            epochs=self.epochs,
         )
 
         self.best_valid_loss = float("inf")
@@ -527,7 +542,7 @@ class Trainer:
                 loss, acc = self.eval(x, y)
                 loss.backward()
                 self.optimizer.step()
-                self.scheduler.step(float(loss))
+                self.scheduler.step()
                 self.train_loss.append(float(loss))
                 self.train_acc.append(float(acc))
 

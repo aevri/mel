@@ -115,7 +115,7 @@ def process_args(args):
     print("Batches per validation epoch:", len(trainer.valid_loader))
 
     try:
-        for _ in (pbar := tqdm(range(1_000))):
+        for _ in (pbar := tqdm(range(trainer.epochs))):
             trainer.train()
             trainer.validate()
             pbar.set_description(f"val_acc:{trainer.valid_acc[-1]:.1%}")
