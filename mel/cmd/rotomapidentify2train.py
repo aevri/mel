@@ -99,10 +99,10 @@ def process_args(args):
     model = mel.rotomap.identifynn2.PosOnly(
         partnames_uuids, num_neighbours=num_neighbours
     )
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.04)
     criterion = torch.nn.CrossEntropyLoss()
     trainer = mel.rotomap.identifynn2.Trainer(
-        model, criterion, optimizer, train, valid, patience=5
+        model, criterion, optimizer, train, valid, patience=5, epochs=25
     )
     print("Device:", trainer.device)
 

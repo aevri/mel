@@ -479,7 +479,7 @@ class Trainer:
         self.valid_acc = []
         self.valid_step = []
 
-        self.batch_size = 2_000
+        self.batch_size = 8_000
 
         self.valid_loader = torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(
