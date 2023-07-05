@@ -355,7 +355,7 @@ class PosOnly(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
-        self.width = 32
+        self.width = 16
         self.selfpos_encoder = PosEncoder(self.width)
         self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
@@ -471,7 +471,7 @@ class Trainer:
         self.valid_acc = []
         self.valid_step = []
 
-        self.batch_size = 1_000
+        self.batch_size = 2_000
 
         self.valid_loader = torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(
