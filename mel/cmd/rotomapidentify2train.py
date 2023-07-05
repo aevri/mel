@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import warnings
 
 
 def proportion_arg(x):
@@ -64,6 +65,11 @@ def process_args(args):
         model_dir.mkdir()
 
     print("Making data ..")
+
+    warnings.filterwarnings(
+        "ignore",
+        message="Creating a tensor from a list of numpy.ndarrays is extremely slow.",
+    )
 
     pathdict = mel.rotomap.dataset.make_pathdict(melroot)
     pathdict = mel.rotomap.dataset.drop_empty_paths(pathdict)
