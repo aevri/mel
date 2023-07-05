@@ -109,9 +109,10 @@ def process_args(args):
     print("Batches per validation epoch:", len(trainer.valid_loader))
 
     try:
-        for _ in tqdm(range(1_000)):
-            trainer.train(10)
+        for _ in (pbar := tqdm(range(1_000))):
+            trainer.train()
             trainer.validate()
+            pbar.set_description(f"val_acc:{trainer.valid_acc[-1]:.1%}")
     except mel.rotomap.identifynn2.EarlyStoppingException:
         print("Stopping training early due to no improvement.")
         pass
