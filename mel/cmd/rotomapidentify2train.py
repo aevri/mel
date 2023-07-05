@@ -102,7 +102,7 @@ def process_args(args):
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.04)
     criterion = torch.nn.CrossEntropyLoss()
     trainer = mel.rotomap.identifynn2.Trainer(
-        model, criterion, optimizer, train, valid, patience=5, epochs=25
+        model, criterion, optimizer, train, valid, patience=5, epochs=35
     )
     print("Device:", trainer.device)
 

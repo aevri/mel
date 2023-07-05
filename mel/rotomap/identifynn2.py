@@ -355,7 +355,7 @@ class PosOnly(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
-        self.width = 16
+        self.width = 64
         self.selfpos_encoder = PosEncoder(self.width)
         self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
@@ -373,7 +373,7 @@ class PosOnly(torch.nn.Module):
             d_model=self.width, nhead=8, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
-            self.transformer_layer, num_layers=1
+            self.transformer_layer, num_layers=4
         )
         self.classifier = torch.nn.Linear(
             self.width * (2 + self.num_neighbours), len(self.uuids_map)
