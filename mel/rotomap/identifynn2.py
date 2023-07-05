@@ -473,6 +473,10 @@ class Trainer:
 
         self.batch_size = 2_000
 
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, mode="min", factor=0.5, patience=20
+        )
+
         self.valid_loader = torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(
                 *self.prepare_x(self.valid_data),
@@ -523,6 +527,7 @@ class Trainer:
                 loss, acc = self.eval(x, y)
                 loss.backward()
                 self.optimizer.step()
+                self.scheduler.step(float(loss))
                 self.train_loss.append(float(loss))
                 self.train_acc.append(float(acc))
 
