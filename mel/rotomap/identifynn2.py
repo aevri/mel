@@ -451,6 +451,32 @@ class EarlyStoppingException(Exception):
     pass
 
 
+def identity(x):
+    return x
+
+
+class TransformTensorDataset(torch.utils.data.Dataset):
+    def __init__(self, *tensors, transforms=None):
+        assert all(tensors[0].size(0) == tensor.size(0) for tensor in tensors)
+        self.tensors = tensors
+        self.transforms = transforms
+        if self.transforms is None:
+            raise ValueError("Must specify transforms.")
+        if len(self.transforms) != len(self.tensors):
+            raise ValueError(
+                "Must specify corresponding transform per tensor."
+            )
+
+    def __getitem__(self, index):
+        return tuple(
+            self.transforms[i](tensor[index])
+            for i, tensor in enumerate(self.tensors)
+        )
+
+    def __len__(self):
+        return self.tensors[0].size(0)
+
+
 class Trainer:
     def __init__(
         self,
@@ -500,9 +526,10 @@ class Trainer:
 
     def _make_dataloader(self, data):
         return torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(
+            TransformTensorDataset(
                 *self.prepare_x(data),
                 self.prepare_y(data).to(self.device),
+                transforms=(identity, identity, identity),
             ),
             batch_size=self.batch_size,
         )
