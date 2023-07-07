@@ -507,11 +507,13 @@ class Trainer:
 
         self.batch_size = 8_000
 
-        self.valid_loader = self._make_dataloader(self.valid_data)
-        self.train_loader = self._make_dataloader(self.train_data)
+        self.valid_loader = self._make_dataloader(
+            self._prepare_tensors(self.valid_data)
+        )
+        self.train_tensors = self._prepare_tensors(self.train_data)
 
         # Compute the steps per epoch and total epochs for the scheduler.
-        self.steps_per_epoch = len(self.train_loader)
+        self.steps_per_epoch = len(self.make_train_dataloader())
         self.epochs = epochs
 
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
@@ -524,14 +526,24 @@ class Trainer:
         self.best_valid_loss = float("inf")
         self.patience_counter = 0
 
-    def _make_dataloader(self, data):
+    def _prepare_tensors(self, data):
+        return *self.prepare_x(data), self.prepare_y(data).to(self.device)
+
+    def make_train_dataloader(self):
+        return self._make_dataloader(
+            self.train_tensors,
+            transform=identity,
+            shuffle=True,
+        )
+
+    def _make_dataloader(self, tensors, transform=None, **kwargs):
+        if transform is not None:
+            tensors = (tensors[0], transform(tensors[1]), tensors[2])
+
         return torch.utils.data.DataLoader(
-            TransformTensorDataset(
-                *self.prepare_x(data),
-                self.prepare_y(data).to(self.device),
-                transforms=(identity, identity, identity),
-            ),
+            torch.utils.data.TensorDataset(*tensors),
             batch_size=self.batch_size,
+            **kwargs,
         )
 
     def validate(self):
@@ -559,7 +571,7 @@ class Trainer:
 
     def train(self, num_iter=1):
         for _ in range(num_iter):
-            for x1, x2, y in self.train_loader:
+            for x1, x2, y in self.make_train_dataloader():
                 self.optimizer.zero_grad()
                 x = (x1, x2)
                 loss, acc = self.eval(x, y)
