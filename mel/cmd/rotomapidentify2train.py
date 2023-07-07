@@ -109,7 +109,7 @@ def process_args(args):
         valid,
         patience=5,
         epochs=35,
-        max_lr=0.001,
+        max_lr=0.004,
     )
     print("Device:", trainer.device)
 
