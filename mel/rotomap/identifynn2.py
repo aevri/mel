@@ -455,6 +455,34 @@ def identity(x):
     return x
 
 
+def zero_some_items_in_sequence(input_tensor, num_items_to_zero=2):
+    # Make a copy of the original tensor
+    input_tensor_copy = input_tensor.clone()
+
+    # Get the batch size and sequence length
+    batch_size, seq_length, _ = input_tensor_copy.size()
+
+    # Create a mask where the first item in each row is never zeroed out
+    mask = torch.ones_like(input_tensor_copy, dtype=bool)
+    mask[:, 0] = 0
+
+    # Create randomized indices across the sequence dimension
+    rand_indices = (
+        torch.randperm(seq_length - 1, device=input_tensor.device) + 1
+    )
+
+    # We choose 'num_items_to_zero' items from the randomized indices
+    indices_to_zero = rand_indices[:num_items_to_zero]
+
+    # Use broadcasting and advanced indexing to create the mask
+    mask[:, indices_to_zero] = 0
+
+    # Apply the mask
+    input_tensor_copy[mask] = 0
+
+    return input_tensor_copy
+
+
 class TransformTensorDataset(torch.utils.data.Dataset):
     def __init__(self, *tensors, transforms=None):
         assert all(tensors[0].size(0) == tensor.size(0) for tensor in tensors)
@@ -532,7 +560,7 @@ class Trainer:
     def make_train_dataloader(self):
         return self._make_dataloader(
             self.train_tensors,
-            transform=identity,
+            transform=zero_some_items_in_sequence,
             shuffle=True,
         )
 
