@@ -481,21 +481,8 @@ class Trainer:
 
         self.batch_size = 8_000
 
-        self.valid_loader = torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(
-                *self.prepare_x(self.valid_data),
-                self.prepare_y(self.valid_data).to(self.device),
-            ),
-            batch_size=self.batch_size,
-        )
-        self.train_loader = torch.utils.data.DataLoader(
-            torch.utils.data.TensorDataset(
-                *self.prepare_x(self.train_data),
-                self.prepare_y(self.train_data).to(self.device),
-            ),
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+        self.valid_loader = self._make_dataloader(self.valid_data)
+        self.train_loader = self._make_dataloader(self.train_data)
 
         # Compute the steps per epoch and total epochs for the scheduler.
         self.steps_per_epoch = len(self.train_loader)
@@ -510,6 +497,15 @@ class Trainer:
 
         self.best_valid_loss = float("inf")
         self.patience_counter = 0
+
+    def _make_dataloader(self, data):
+        return torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(
+                *self.prepare_x(data),
+                self.prepare_y(data).to(self.device),
+            ),
+            batch_size=self.batch_size,
+        )
 
     def validate(self):
         with torch.no_grad():
