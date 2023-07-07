@@ -99,10 +99,17 @@ def process_args(args):
     model = mel.rotomap.identifynn2.PosOnly(
         partnames_uuids, num_neighbours=num_neighbours
     )
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.04)
+    optimizer = torch.optim.AdamW(model.parameters())
     criterion = torch.nn.CrossEntropyLoss()
     trainer = mel.rotomap.identifynn2.Trainer(
-        model, criterion, optimizer, train, valid, patience=5, epochs=35
+        model,
+        criterion,
+        optimizer,
+        train,
+        valid,
+        patience=5,
+        epochs=35,
+        max_lr=0.001,
     )
     print("Device:", trainer.device)
 
@@ -118,7 +125,10 @@ def process_args(args):
         for _ in (pbar := tqdm(range(trainer.epochs))):
             trainer.train()
             trainer.validate()
-            pbar.set_description(f"val_acc:{trainer.valid_acc[-1]:.1%}")
+            pbar.set_description(
+                f"val_acc:{trainer.valid_acc[-1]:.1%} "
+                f"tra_acc:{trainer.train_acc[-1]:.1%} "
+            )
     except mel.rotomap.identifynn2.EarlyStoppingException:
         print("Stopping training early due to no improvement.")
         pass
