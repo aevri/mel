@@ -89,7 +89,7 @@ def process_args(args):
     train = process_dataset(train, "training")
     valid = process_dataset(valid, "validation")
 
-    num_neighbours = 7
+    num_neighbours = 15
     # model = mel.rotomap.identifynn2.SelfposOnly(
     #     partnames_uuids
     # )
@@ -109,7 +109,7 @@ def process_args(args):
         valid,
         patience=5,
         epochs=35,
-        max_lr=0.004,
+        max_lr=0.002,
     )
     print("Device:", trainer.device)
 

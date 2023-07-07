@@ -524,7 +524,7 @@ class Trainer:
         self.valid_acc = []
         self.valid_step = []
 
-        self.batch_size = 8_000
+        self.batch_size = 4_000
 
         self.valid_loader = self._make_dataloader(
             self._prepare_tensors(self.valid_data)
