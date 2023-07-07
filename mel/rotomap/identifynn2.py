@@ -2,6 +2,7 @@
 
 import json
 import pathlib
+import random
 
 import pandas as pd
 import torch
@@ -455,32 +456,23 @@ def identity(x):
     return x
 
 
-def zero_some_items_in_sequence(input_tensor, num_items_to_zero=2):
-    # Make a copy of the original tensor
-    input_tensor_copy = input_tensor.clone()
+def make_mask_with_limited_ones(rows, cols, num_ones, device):
+    values = torch.randn(rows, cols, device=device)
+    _, indices = values.topk(num_ones, dim=1)
+    mask = torch.zeros(rows, cols, dtype=torch.bool, device=device)
+    mask.scatter_(1, indices, True)
+    return mask
 
-    # Get the batch size and sequence length
-    batch_size, seq_length, _ = input_tensor_copy.size()
 
-    # Create a mask where the first item in each row is never zeroed out
-    mask = torch.ones_like(input_tensor_copy, dtype=bool)
-    mask[:, 0] = 0
-
-    # Create randomized indices across the sequence dimension
-    rand_indices = (
-        torch.randperm(seq_length - 1, device=input_tensor.device) + 1
+def zero_some_items_in_sequence(t, num_items_to_zero=2):
+    t = t.clone()
+    batch_size, seq_length, _ = t.size()
+    mask = make_mask_with_limited_ones(
+        batch_size, seq_length, num_items_to_zero + 1, device=t.device
     )
-
-    # We choose 'num_items_to_zero' items from the randomized indices
-    indices_to_zero = rand_indices[:num_items_to_zero]
-
-    # Use broadcasting and advanced indexing to create the mask
-    mask[:, indices_to_zero] = 0
-
-    # Apply the mask
-    input_tensor_copy[mask] = 0
-
-    return input_tensor_copy
+    mask[:, 0] = 0
+    t[mask] = 0
+    return t
 
 
 class TransformTensorDataset(torch.utils.data.Dataset):
@@ -558,9 +550,12 @@ class Trainer:
         return *self.prepare_x(data), self.prepare_y(data).to(self.device)
 
     def make_train_dataloader(self):
+        num_zeroed = random.choice([0, 1, 2])
         return self._make_dataloader(
             self.train_tensors,
-            transform=zero_some_items_in_sequence,
+            transform=lambda x: zero_some_items_in_sequence(
+                x, num_items_to_zero=num_zeroed
+            ),
             shuffle=True,
         )
 
