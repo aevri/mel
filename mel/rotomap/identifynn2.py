@@ -2,7 +2,6 @@
 
 import json
 import pathlib
-import random
 
 import pandas as pd
 import torch
@@ -550,12 +549,8 @@ class Trainer:
         return *self.prepare_x(data), self.prepare_y(data).to(self.device)
 
     def make_train_dataloader(self):
-        num_zeroed = random.choice([0, 1, 2])
         return self._make_dataloader(
             self.train_tensors,
-            transform=lambda x: zero_some_items_in_sequence(
-                x, num_items_to_zero=num_zeroed
-            ),
             shuffle=True,
         )
 
