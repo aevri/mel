@@ -375,11 +375,11 @@ class PosOnly(torch.nn.Module):
         self.partnames_embedding = torch.nn.Embedding(
             len(self.partnames_map), self.width
         )
-        self.transformer_layer = torch.nn.TransformerEncoderLayer(
+        transformer_layer = torch.nn.TransformerEncoderLayer(
             d_model=self.width, nhead=8, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
-            self.transformer_layer, num_layers=4
+            transformer_layer, num_layers=4
         )
         self.classifier = torch.nn.Linear(
             self.width * (2 + self.num_neighbours), len(self.uuids_map)
