@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import warnings
 
 
@@ -58,9 +59,6 @@ def process_args(args):
     model_path = model_dir / "identify2.pth"
     metadata_path = model_dir / "identify2.json"
 
-    print(f"Will save to {model_path}")
-    print(f"         and {metadata_path}")
-
     if not model_dir.exists():
         model_dir.mkdir()
 
@@ -77,10 +75,13 @@ def process_args(args):
     partnames_uuids = mel.rotomap.dataset.make_partnames_uuids(pathdict)
 
     def process_dataset(pathdict, name):
+        extra_stem = [None]
+        if args.extra_stem:
+            extra_stem.extend(args.extra_stem)
         d = mel.rotomap.dataset.listify_pathdict(pathdict)
         d = mel.rotomap.dataset.yield_imagemoles_from_pathlist(
             d,
-            extra_stem_list=[None] + args.extra_stem,
+            extra_stem_list=extra_stem,
         )
         d = list(d)
         print(f"There are {len(d)} {name} items.")
@@ -96,9 +97,44 @@ def process_args(args):
     # model = mel.rotomap.identifynn2.PosOnlyLinear(
     #     partnames_uuids, num_neighbours=num_neighbours
     # )
-    model = mel.rotomap.identifynn2.PosOnly(
-        partnames_uuids, num_neighbours=num_neighbours
-    )
+    if model_path.exists():
+        print(f"Will fine-tune {model_path}")
+        print(f"           and {metadata_path}")
+
+        if not metadata_path.exists():
+            raise Exception(
+                f"Metadata for model does not exist: " f"{metadata_path}"
+            )
+
+        if not os.access(model_path, os.W_OK):
+            print("No permission to write to", model_path)
+            return 1
+
+        if not os.access(metadata_path, os.W_OK):
+            print("No permission to write to", metadata_path)
+            return 1
+
+        with open(metadata_path) as f:
+            old_metadata = json.load(f)
+
+        if old_metadata["num_neighbours"] != num_neighbours:
+            print("Cannot fine-tune with different number of neighbours.")
+            return 1
+
+        model = mel.rotomap.identifynn2.PosOnly(
+            partnames_uuids=old_metadata["partnames_uuids"],
+            num_neighbours=old_metadata["num_neighbours"],
+        )
+        model.load_state_dict(torch.load(model_path))
+        model.update_partnames_uuids(partnames_uuids)
+    else:
+        print(f"Will save to {model_path}")
+        print(f"         and {metadata_path}")
+
+        model = mel.rotomap.identifynn2.PosOnly(
+            partnames_uuids, num_neighbours=num_neighbours
+        )
+
     optimizer = torch.optim.AdamW(model.parameters())
     criterion = torch.nn.CrossEntropyLoss()
     trainer = mel.rotomap.identifynn2.Trainer(
@@ -108,7 +144,7 @@ def process_args(args):
         train,
         valid,
         patience=5,
-        epochs=35,
+        epochs=args.epochs,
         max_lr=0.002,
     )
     print("Device:", trainer.device)

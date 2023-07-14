@@ -174,6 +174,12 @@ class IndexMap:
     def int_to_item(self, i):
         return self._int_to_item.get(i)
 
+    def items_ints(self):
+        return self._item_to_int.items()
+
+    def __contains__(self, x):
+        return x in self._item_to_int
+
     def __len__(self):
         return len(self._item_to_int)
 
@@ -418,6 +424,44 @@ class PosOnly(torch.nn.Module):
         )
 
         return partname_indices, pos_values
+
+    def update_partnames_uuids(self, partnames_uuids):
+        all_partnames = list(partnames_uuids.keys())
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        new_partnames_map = IndexMap(all_partnames)
+        new_uuids_map = IndexMap(all_uuids)
+
+        new_partnames_embedding = torch.nn.Embedding(
+            len(new_partnames_map), self.width
+        )
+        with torch.no_grad():
+            for partname, i in new_partnames_map.items_ints():
+                if partname in self.partnames_map:
+                    old_index = self.partnames_map.item_to_int(partname)
+                    new_partnames_embedding.weight[
+                        i
+                    ] = self.partnames_embedding.weight[old_index]
+
+        new_classifier = torch.nn.Linear(
+            self.width * (2 + self.num_neighbours), len(new_uuids_map)
+        )
+        with torch.no_grad():
+            for uuid, i in new_uuids_map.items_ints():
+                if uuid in self.uuids_map:
+                    old_index = self.uuids_map.item_to_int(uuid)
+                    new_classifier.weight[i] = self.classifier.weight[
+                        old_index
+                    ]
+                    new_classifier.bias[i] = self.classifier.bias[old_index]
+
+        self.partnames_uuids = partnames_uuids
+        self.partnames_map = new_partnames_map
+        self.uuids_map = new_uuids_map
+        self.partnames_embedding = new_partnames_embedding
+        self.classifier = new_classifier
 
     def forward(self, batch):
         partname_indices, pos_values = batch
