@@ -385,6 +385,15 @@ class PosOnly(torch.nn.Module):
             self.width * (2 + self.num_neighbours), len(self.uuids_map)
         )
 
+    def freeze_except_classifier(self):
+        for sub in [
+            self.selfpos_encoder,
+            self.relpos_encoder,
+            self.transformer,
+        ]:
+            for p in sub.parameters():
+                p.requires_grad = False
+
     def prepare_batch(self, batch):
         batch = [
             (

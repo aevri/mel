@@ -40,6 +40,11 @@ def setup_parser(parser):
         nargs="+",
         help="Add an extra bit to the filename stem, e.g. '0.jpg.EXTRA.json'.",
     )
+    parser.add_argument(
+        "--only-train-classifier",
+        action="store_true",
+        help="Only train the classifier bits, good when fine-tuning.",
+    )
 
 
 def process_args(args):
@@ -127,6 +132,9 @@ def process_args(args):
         )
         model.load_state_dict(torch.load(model_path))
         model.update_partnames_uuids(partnames_uuids)
+        if args.only_train_classifier:
+            print("Freezing except classifier.")
+            model.freeze_except_classifier()
     else:
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
@@ -134,6 +142,9 @@ def process_args(args):
         model = mel.rotomap.identifynn2.PosOnly(
             partnames_uuids, num_neighbours=num_neighbours
         )
+        if args.only_train_classifier:
+            print("Makes no sense to 'only train classifier' from scratch.")
+            return 1
 
     optimizer = torch.optim.AdamW(model.parameters())
     criterion = torch.nn.CrossEntropyLoss()
