@@ -154,7 +154,7 @@ def process_args(args):
         optimizer,
         train,
         valid,
-        patience=5,
+        patience=args.epochs,
         epochs=args.epochs,
         max_lr=0.002,
     )
