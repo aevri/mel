@@ -45,6 +45,12 @@ def setup_parser(parser):
         action="store_true",
         help="Only train the classifier bits, good when fine-tuning.",
     )
+    parser.add_argument(
+        "--max-lr",
+        type=float,
+        default=0.002,
+        help="The maximum learning rate to use.",
+    )
 
 
 def process_args(args):
@@ -156,7 +162,7 @@ def process_args(args):
         valid,
         patience=args.epochs,
         epochs=args.epochs,
-        max_lr=0.002,
+        max_lr=args.max_lr,
     )
     print("Device:", trainer.device)
 
