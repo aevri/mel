@@ -3,6 +3,8 @@
 import pathlib
 import random
 
+from tqdm import tqdm
+
 import mel.cmd.error
 import mel.lib.common
 import mel.rotomap.fake
@@ -46,7 +48,7 @@ def process_args(args):
     part_names = ["LeftLeg"]
     part_names.extend([f"Part{i}" for i in range(2, args.num_parts + 1)])
 
-    for part in part_names:
+    for part in tqdm(part_names):
         leftleg_lower = melroot / "rotomaps" / "parts" / part / "Lower"
         leftleg_lower.mkdir(parents=True)
 
