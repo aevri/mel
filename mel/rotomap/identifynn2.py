@@ -286,15 +286,21 @@ class PosOnly(torch.nn.Module):
             pos_values.extend(
                 [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
             )
-            uuid_values.extend(
-                [[m[0] for m in mole] for mole in mole_list]
-            )
+            uuid_values.extend([[m[0] for m in mole] for mole in mole_list])
+
+        uuid_values = [
+            [self.uuids_map.item_to_int(u) for u in uuids]
+            for uuids in uuid_values
+        ]
 
         partname_indices = torch.tensor(
             partname_indices, dtype=torch.long, requires_grad=False
         )
         pos_values = torch.tensor(
             pos_values, dtype=torch.float32, requires_grad=False
+        )
+        uuid_values = torch.tensor(
+            uuid_values, dtype=torch.long, requires_grad=False
         )
 
         return partname_indices, pos_values
