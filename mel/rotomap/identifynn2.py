@@ -49,11 +49,11 @@ class MoleIdentifier:
         if not old_moles:
             return []
 
-        x1, x2, x3 = self.model.prepare_batch([(pathname, uuid_points)])
+        x = self.model.prepare_batch([(pathname, uuid_points)])
 
         self.model.eval()
         with torch.no_grad():
-            logits = self.model((x1, x2, x3))
+            logits = self.model(x)
             preds = torch.argmax(logits, dim=1)
 
         new_moles = []
@@ -492,8 +492,7 @@ class Trainer:
         with torch.no_grad():
             total_loss = 0
             total_acc = 0
-            for x1, x2, x3, y in self.valid_loader:
-                x = (x1, x2, x3)
+            for *x, y in self.valid_loader:
                 loss, acc = self.eval(x, y)
                 total_loss += float(loss)
                 total_acc += float(acc)
@@ -513,9 +512,8 @@ class Trainer:
 
     def train(self, num_iter=1):
         for _ in range(num_iter):
-            for x1, x2, x3, y in self.make_train_dataloader():
+            for *x, y in self.make_train_dataloader():
                 self.optimizer.zero_grad()
-                x = (x1, x2, x3)
                 loss, acc = self.eval(x, y)
                 loss.backward()
                 self.optimizer.step()
@@ -524,8 +522,8 @@ class Trainer:
                 self.train_acc.append(float(acc))
 
     def prepare_x(self, dataset):
-        x1, x2, x3 = self.model.prepare_batch(dataset)
-        return x1.to(self.device), x2.to(self.device), x3.to(self.device)
+        x = self.model.prepare_batch(dataset)
+        return tuple(item.to(self.device) for item in x)
 
     def prepare_y(self, dataset):
         y_actual = []
