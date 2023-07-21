@@ -87,22 +87,23 @@ def mole_data_from_uuid_points(uuid_points, num_neighbours=4):
 
     # Note each point is in it's own nearest neighbors list.
 
+    uuids = [u for u, _ in uuid_points]
     points = [p for _, p in uuid_points]
     padding = num_neighbours - actual_num_neighbours
     x = [
-        make_mole_row(points, row_indices, distances[i], padding)
+        make_mole_row(uuids, points, row_indices, distances[i], padding)
         for i, row_indices in enumerate(indices)
     ]
 
     return x
 
 
-def make_mole_row(points, indices, distances, padding):
+def make_mole_row(uuids, points, indices, distances, padding):
     i = indices[0]
-    self_item = (i, points[i], distances[i])
+    self_item = (uuids[i], points[i], distances[i])
     self_point = points[i]
     neighbours = [
-        (i, points[i] - self_point, distances[i]) for i in indices[1:]
+        (uuids[i], points[i] - self_point, distances[i]) for i in indices[1:]
     ]
     if padding:
         neighbours += [(None, None, None) for _ in range(padding)]
@@ -268,6 +269,7 @@ class PosOnly(torch.nn.Module):
 
         partname_indices = []
         pos_values = []
+        uuid_values = []
 
         def convert_none_pos(pos):
             if pos is None:
@@ -283,6 +285,9 @@ class PosOnly(torch.nn.Module):
             )
             pos_values.extend(
                 [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
+            )
+            uuid_values.extend(
+                [[m[0] for m in mole] for mole in mole_list]
             )
 
         partname_indices = torch.tensor(
