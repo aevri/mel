@@ -266,7 +266,6 @@ class PosOnly(torch.nn.Module):
             for item in batch
         ]
 
-        # TODO: allow moles with 'None' uuid, to be non-moles.
         partname_indices = []
         pos_values = []
 
