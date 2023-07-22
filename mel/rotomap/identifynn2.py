@@ -302,7 +302,10 @@ class PosModel(torch.nn.Module):
 
     def prepare_batch(self, batch):
         return prepare_default_batch(
-            batch, self.num_neighbours, self.partnames_map, self.uuids_map,
+            batch,
+            self.num_neighbours,
+            self.partnames_map,
+            self.uuids_map,
         )
 
     def update_partnames_uuids(self, partnames_uuids):
@@ -405,6 +408,74 @@ class PosOnly(torch.nn.Module):
     def forward(self, batch):
         pos_emb = self.pos_model(batch)
         return self.classifier(pos_emb)
+
+
+class IdentityModel(torch.nn.Module):
+    def __init__(self, partnames_uuids, num_neighbours):
+        super().__init__()
+        self.num_neighbours = num_neighbours
+        self.width = 64
+        all_partnames = list(partnames_uuids.keys())
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.partnames_map = IndexMap(all_partnames)
+        self.uuids_map = IndexMap(all_uuids)
+
+        self.uuid_embedding = torch.nn.Embedding(
+            len(self.uuids_map), self.width
+        )
+
+    def freeze_except_classifier(self):
+        for sub in []:
+            for p in sub.parameters():
+                p.requires_grad = False
+
+    def prepare_batch(self, batch):
+        return prepare_default_batch(
+            batch,
+            self.num_neighbours,
+            self.partnames_map,
+            self.uuids_map,
+        )
+
+    def update_partnames_uuids(self, partnames_uuids):
+        raise NotImplementedError()
+
+    def forward(self, batch):
+        partname_indices, pos_values, uuid_values = batch
+        identity_embedding = self.uuid_embedding(uuid_values)
+        return identity_embedding.view(identity_embedding.size(0), -1)
+
+
+class IdentityOnly(torch.nn.Module):
+    def __init__(self, partnames_uuids, num_neighbours):
+        super().__init__()
+        self.identity_model = IdentityModel(partnames_uuids, num_neighbours)
+        self.num_neighbours = num_neighbours
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.uuids_map = IndexMap(all_uuids)
+        self.classifier = torch.nn.Linear(
+            self.identity_model.width * (1 + self.num_neighbours),
+            len(self.uuids_map),
+        )
+
+    def freeze_except_classifier(self):
+        self.identity_model.freeze_except_classifier()
+
+    def prepare_batch(self, batch):
+        return self.identity_model.prepare_batch(batch)
+
+    def update_partnames_uuids(self, partnames_uuids):
+        raise NotImplementedError()
+
+    def forward(self, batch):
+        identity_emb = self.identity_model(batch)
+        return self.classifier(identity_emb)
 
 
 class EarlyStoppingException(Exception):

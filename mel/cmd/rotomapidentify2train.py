@@ -132,7 +132,8 @@ def process_args(args):
             print("Cannot fine-tune with different number of neighbours.")
             return 1
 
-        model = mel.rotomap.identifynn2.PosOnly(
+        # model = mel.rotomap.identifynn2.PosOnly(
+        model = mel.rotomap.identifynn2.IdentityOnly(
             partnames_uuids=old_metadata["partnames_uuids"],
             num_neighbours=old_metadata["num_neighbours"],
         )
@@ -145,7 +146,8 @@ def process_args(args):
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
 
-        model = mel.rotomap.identifynn2.PosOnly(
+        # model = mel.rotomap.identifynn2.PosOnly(
+        model = mel.rotomap.identifynn2.IdentityOnly(
             partnames_uuids, num_neighbours=num_neighbours
         )
         if args.only_train_classifier:
