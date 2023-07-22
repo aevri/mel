@@ -219,7 +219,54 @@ class PosEncoder(torch.nn.Module):
         return self.encoder(x)
 
 
-class PosOnly(torch.nn.Module):
+def prepare_default_batch(batch, num_neighbours, partnames_map, uuids_map):
+    batch = [
+        (
+            item[0],
+            mole_data_from_uuid_points(item[1], num_neighbours=num_neighbours),
+        )
+        for item in batch
+    ]
+
+    partname_indices = []
+    pos_values = []
+    uuid_values = []
+
+    def convert_none_pos(pos):
+        if pos is None:
+            return 0.0, 0.0
+        x, y = pos
+        return float(x), float(y)
+
+    for x in batch:
+        part_name, mole_list = x
+        num_moles = len(mole_list)
+        partname_indices.extend(
+            [partnames_map.item_to_int(part_name)] * num_moles
+        )
+        pos_values.extend(
+            [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
+        )
+        uuid_values.extend([[m[0] for m in mole] for mole in mole_list])
+
+    uuid_values = [
+        [uuids_map.item_to_int(u) for u in uuids] for uuids in uuid_values
+    ]
+
+    partname_indices = torch.tensor(
+        partname_indices, dtype=torch.long, requires_grad=False
+    )
+    pos_values = torch.tensor(
+        pos_values, dtype=torch.float32, requires_grad=False
+    )
+    uuid_values = torch.tensor(
+        uuid_values, dtype=torch.long, requires_grad=False
+    )
+
+    return partname_indices, pos_values, uuid_values
+
+
+class PosModel(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
@@ -243,9 +290,6 @@ class PosOnly(torch.nn.Module):
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=4
         )
-        self.classifier = torch.nn.Linear(
-            self.width * (2 + self.num_neighbours), len(self.uuids_map)
-        )
 
     def freeze_except_classifier(self):
         for sub in [
@@ -257,53 +301,9 @@ class PosOnly(torch.nn.Module):
                 p.requires_grad = False
 
     def prepare_batch(self, batch):
-        batch = [
-            (
-                item[0],
-                mole_data_from_uuid_points(
-                    item[1], num_neighbours=self.num_neighbours
-                ),
-            )
-            for item in batch
-        ]
-
-        partname_indices = []
-        pos_values = []
-        uuid_values = []
-
-        def convert_none_pos(pos):
-            if pos is None:
-                return 0.0, 0.0
-            x, y = pos
-            return float(x), float(y)
-
-        for x in batch:
-            part_name, mole_list = x
-            num_moles = len(mole_list)
-            partname_indices.extend(
-                [self.partnames_map.item_to_int(part_name)] * num_moles
-            )
-            pos_values.extend(
-                [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
-            )
-            uuid_values.extend([[m[0] for m in mole] for mole in mole_list])
-
-        uuid_values = [
-            [self.uuids_map.item_to_int(u) for u in uuids]
-            for uuids in uuid_values
-        ]
-
-        partname_indices = torch.tensor(
-            partname_indices, dtype=torch.long, requires_grad=False
+        return prepare_default_batch(
+            batch, self.num_neighbours, self.partnames_map, self.uuids_map,
         )
-        pos_values = torch.tensor(
-            pos_values, dtype=torch.float32, requires_grad=False
-        )
-        uuid_values = torch.tensor(
-            uuid_values, dtype=torch.long, requires_grad=False
-        )
-
-        return partname_indices, pos_values, uuid_values
 
     def update_partnames_uuids(self, partnames_uuids):
         all_partnames = list(partnames_uuids.keys())
@@ -325,23 +325,10 @@ class PosOnly(torch.nn.Module):
                         i
                     ] = self.partnames_embedding.weight[old_index]
 
-        new_classifier = torch.nn.Linear(
-            self.width * (2 + self.num_neighbours), len(new_uuids_map)
-        )
-        with torch.no_grad():
-            for uuid, i in new_uuids_map.items_ints():
-                if uuid in self.uuids_map:
-                    old_index = self.uuids_map.item_to_int(uuid)
-                    new_classifier.weight[i] = self.classifier.weight[
-                        old_index
-                    ]
-                    new_classifier.bias[i] = self.classifier.bias[old_index]
-
         self.partnames_uuids = partnames_uuids
         self.partnames_map = new_partnames_map
         self.uuids_map = new_uuids_map
         self.partnames_embedding = new_partnames_embedding
-        self.classifier = new_classifier
 
     def forward(self, batch):
         partname_indices, pos_values, uuid_values = batch
@@ -366,9 +353,58 @@ class PosOnly(torch.nn.Module):
             transformer_output.size(0), -1
         )  # shape: (batch_size, sequence_length * embed_dim)
 
-        emb = torch.cat([transformer_output_flat, partname_embedding], dim=-1)
+        return torch.cat([transformer_output_flat, partname_embedding], dim=-1)
 
-        return self.classifier(emb)
+
+class PosOnly(torch.nn.Module):
+    def __init__(self, partnames_uuids, num_neighbours):
+        super().__init__()
+        self.pos_model = PosModel(partnames_uuids, num_neighbours)
+        self.num_neighbours = num_neighbours
+        self.width = 64
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.uuids_map = IndexMap(all_uuids)
+        self.classifier = torch.nn.Linear(
+            self.width * (2 + self.num_neighbours), len(self.uuids_map)
+        )
+
+    def freeze_except_classifier(self):
+        self.pos_model.freeze_except_classifier()
+
+    def prepare_batch(self, batch):
+        return self.pos_model.prepare_batch(batch)
+
+    def update_partnames_uuids(self, partnames_uuids):
+        all_partnames = list(partnames_uuids.keys())
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        new_partnames_map = IndexMap(all_partnames)
+        new_uuids_map = IndexMap(all_uuids)
+
+        new_classifier = torch.nn.Linear(
+            self.width * (2 + self.num_neighbours), len(new_uuids_map)
+        )
+        with torch.no_grad():
+            for uuid, i in new_uuids_map.items_ints():
+                if uuid in self.uuids_map:
+                    old_index = self.uuids_map.item_to_int(uuid)
+                    new_classifier.weight[i] = self.classifier.weight[
+                        old_index
+                    ]
+                    new_classifier.bias[i] = self.classifier.bias[old_index]
+
+        self.partnames_map = new_partnames_map
+        self.uuids_map = new_uuids_map
+        self.classifier = new_classifier
+
+    def forward(self, batch):
+        pos_emb = self.pos_model(batch)
+        return self.classifier(pos_emb)
 
 
 class EarlyStoppingException(Exception):
