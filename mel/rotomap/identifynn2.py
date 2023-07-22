@@ -577,7 +577,11 @@ class Trainer:
         self.patience_counter = 0
 
     def _prepare_tensors(self, data):
-        return *self.prepare_x(data), self.prepare_y(data).to(self.device)
+        xs = self.prepare_x(data)
+        xs = tuple(x.to(self.device) for x in xs)
+        y = self.prepare_y(data)
+        y = y.to(self.device)
+        return *xs, y
 
     def make_train_dataloader(self):
         return self._make_dataloader(
@@ -629,8 +633,7 @@ class Trainer:
                 self.train_acc.append(float(acc))
 
     def prepare_x(self, dataset):
-        x = self.model.prepare_batch(dataset)
-        return tuple(item.to(self.device) for item in x)
+        return self.model.prepare_batch(dataset)
 
     def prepare_y(self, dataset):
         y_actual = []
