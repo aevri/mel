@@ -371,7 +371,7 @@ class PosOnly(torch.nn.Module):
         super().__init__()
         self.pos_model = PosModel(partnames_uuids, num_neighbours)
         self.num_neighbours = num_neighbours
-        self.width = 64
+        self.width = self.pos_model.width
         all_uuids = [
             uuid for uuids in partnames_uuids.values() for uuid in uuids
         ]
