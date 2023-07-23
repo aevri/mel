@@ -478,6 +478,40 @@ class IdentityOnly(torch.nn.Module):
         return self.classifier(identity_emb)
 
 
+class IdentityPos(torch.nn.Module):
+    def __init__(self, partnames_uuids, num_neighbours):
+        super().__init__()
+        self.identity_model = IdentityModel(partnames_uuids, num_neighbours)
+        self.pos_model = PosModel(partnames_uuids, num_neighbours)
+        self.num_neighbours = num_neighbours
+        all_uuids = [
+            uuid for uuids in partnames_uuids.values() for uuid in uuids
+        ]
+
+        self.uuids_map = IndexMap(all_uuids)
+        self.classifier = torch.nn.Linear(
+            self.identity_model.width
+            * (1 + 2 + self.num_neighbours + self.num_neighbours),
+            len(self.uuids_map),
+        )
+
+    def freeze_except_classifier(self):
+        self.identity_model.freeze_except_classifier()
+        self.pos_model.freeze_except_classifier()
+
+    def prepare_batch(self, batch):
+        return self.identity_model.prepare_batch(batch)
+
+    def update_partnames_uuids(self, partnames_uuids):
+        raise NotImplementedError()
+
+    def forward(self, batch):
+        identity_emb = self.identity_model(batch)
+        pos_emb = self.pos_model(batch)
+        emb = torch.cat([identity_emb, pos_emb], dim=-1)
+        return self.classifier(emb)
+
+
 class EarlyStoppingException(Exception):
     pass
 
