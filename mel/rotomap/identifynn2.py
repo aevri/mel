@@ -285,7 +285,7 @@ class PosModel(torch.nn.Module):
             len(self.partnames_map), self.width
         )
         transformer_layer = torch.nn.TransformerEncoderLayer(
-            d_model=self.width, nhead=8, batch_first=True
+            d_model=self.width, nhead=1, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=1
