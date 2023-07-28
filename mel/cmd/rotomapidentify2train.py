@@ -32,7 +32,7 @@ def setup_parser(parser):
         "--epochs",
         "-e",
         type=int,
-        default=10,
+        default=30,
         help="Number of epochs to train for.",
     )
     parser.add_argument(
