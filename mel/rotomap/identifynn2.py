@@ -100,7 +100,7 @@ def mole_data_from_uuid_points(uuid_points, num_neighbours=4):
 
 def make_mole_row(uuids, points, indices, distances, padding):
     i = indices[0]
-    self_item = (uuids[i], points[i], distances[i])
+    self_item = (None, points[i], distances[i])
     self_point = points[i]
     neighbours = [
         (uuids[i], points[i] - self_point, distances[i]) for i in indices[1:]
