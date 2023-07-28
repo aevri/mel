@@ -186,12 +186,12 @@ class IndexMap:
 
 
 class PosEncoder(torch.nn.Module):
-    def __init__(self, width, *, dims):
+    def __init__(self, width):
         super().__init__()
         self.width = width
         self.encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(dims),
-            torch.nn.Linear(dims, width, bias=True),
+            torch.nn.BatchNorm1d(2),
+            torch.nn.Linear(2, width, bias=True),
             torch.nn.ReLU(),
             ResBlock(
                 torch.nn.Sequential(
@@ -229,8 +229,7 @@ def prepare_default_batch(batch, num_neighbours, partnames_map, uuids_map):
     ]
 
     partname_indices = []
-    selfpos_values = []
-    otherpos_values = []
+    pos_values = []
     uuid_values = []
 
     def convert_none_pos(pos):
@@ -239,26 +238,14 @@ def prepare_default_batch(batch, num_neighbours, partnames_map, uuids_map):
         x, y = pos
         return float(x), float(y)
 
-    def convert_none_pos_dist(pos, dist):
-        if pos is None:
-            return 0.0, 0.0, 1.0
-        x, y = pos
-        return float(x), float(y), float(dist)
-
     for x in batch:
         part_name, mole_list = x
         num_moles = len(mole_list)
         partname_indices.extend(
             [partnames_map.item_to_int(part_name)] * num_moles
         )
-        selfpos_values.extend(
-            [convert_none_pos(mole[0][1]) for mole in mole_list]
-        )
-        otherpos_values.extend(
-            [
-                [convert_none_pos_dist(m[1], m[2]) for m in mole[1:]]
-                for mole in mole_list
-            ]
+        pos_values.extend(
+            [[convert_none_pos(m[1]) for m in mole] for mole in mole_list]
         )
         uuid_values.extend([[m[0] for m in mole] for mole in mole_list])
 
@@ -269,17 +256,14 @@ def prepare_default_batch(batch, num_neighbours, partnames_map, uuids_map):
     partname_indices = torch.tensor(
         partname_indices, dtype=torch.long, requires_grad=False
     )
-    selfpos_values = torch.tensor(
-        selfpos_values, dtype=torch.float32, requires_grad=False
-    )
-    otherpos_values = torch.tensor(
-        otherpos_values, dtype=torch.float32, requires_grad=False
+    pos_values = torch.tensor(
+        pos_values, dtype=torch.float32, requires_grad=False
     )
     uuid_values = torch.tensor(
         uuid_values, dtype=torch.long, requires_grad=False
     )
 
-    return partname_indices, selfpos_values, otherpos_values, uuid_values
+    return partname_indices, pos_values, uuid_values
 
 
 class PosModel(torch.nn.Module):
@@ -287,8 +271,8 @@ class PosModel(torch.nn.Module):
         super().__init__()
         self.num_neighbours = num_neighbours
         self.width = 64
-        self.selfpos_encoder = PosEncoder(self.width, dims=2)
-        self.relpos_encoder = PosEncoder(self.width, dims=3)
+        self.selfpos_encoder = PosEncoder(self.width)
+        self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
         all_uuids = [
             uuid for uuids in partnames_uuids.values() for uuid in uuids
@@ -351,14 +335,14 @@ class PosModel(torch.nn.Module):
         self.partnames_embedding = new_partnames_embedding
 
     def forward(self, batch):
-        partname_indices, selfpos_values, otherpos_values, uuid_values = batch
+        partname_indices, pos_values, uuid_values = batch
 
         partname_embedding = self.partnames_embedding(partname_indices)
-        selfpos_emb = self.selfpos_encoder(selfpos_values)
+        selfpos_emb = self.selfpos_encoder(pos_values[:, 0])
 
         relpos_embs = []
-        for i in range(self.num_neighbours):
-            relpos_emb = self.relpos_encoder(otherpos_values[:, i])
+        for i in range(1, self.num_neighbours + 1):
+            relpos_emb = self.relpos_encoder(pos_values[:, i])
             relpos_embs.append(relpos_emb)
 
         emb_sequence = torch.stack([selfpos_emb] + relpos_embs).transpose(
