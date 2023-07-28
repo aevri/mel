@@ -146,9 +146,9 @@ def process_args(args):
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")
 
-        model = mel.rotomap.identifynn2.PosOnly(
+        # model = mel.rotomap.identifynn2.PosOnly(
         # model = mel.rotomap.identifynn2.IdentityOnly(
-        # model = mel.rotomap.identifynn2.IdentityPos(
+        model = mel.rotomap.identifynn2.IdentityPos(
             partnames_uuids, num_neighbours=num_neighbours
         )
         if args.only_train_classifier:
