@@ -5,6 +5,7 @@ import pathlib
 
 import pandas as pd
 import torch
+from tqdm.auto import tqdm
 
 import mel.lib.fs
 import mel.rotomap.dataset
@@ -636,8 +637,10 @@ class Trainer:
 
         self.batch_size = 4_000
 
-        self.valid_loader = self._make_dataloader(
-            self._prepare_tensors(self.valid_data)
+        valid_tensors = self._prepare_tensors(self.valid_data)
+        self.valid_loader = self._make_dataloader(valid_tensors)
+        self.valid_1_loader = self._make_dataloader(
+            valid_tensors, batch_size=1
         )
         self.train_tensors = self._prepare_tensors(self.train_data)
 
@@ -668,13 +671,18 @@ class Trainer:
             shuffle=True,
         )
 
-    def _make_dataloader(self, tensors, transform=None, **kwargs):
+    def _make_dataloader(
+        self, tensors, transform=None, batch_size=None, **kwargs
+    ):
         if transform is not None:
             tensors = (tensors[0], transform(tensors[1]), tensors[2])
 
+        if batch_size is None:
+            batch_size = self.batch_size
+
         return torch.utils.data.DataLoader(
             torch.utils.data.TensorDataset(*tensors),
-            batch_size=self.batch_size,
+            batch_size=batch_size,
             **kwargs,
         )
 
@@ -700,6 +708,31 @@ class Trainer:
                 raise EarlyStoppingException(
                     "Early stopping due to validation loss not improving"
                 )
+
+    def print_worst_validation_examples(self):
+        self.model.eval()
+        with torch.no_grad():
+            losses = []
+            examples = []
+
+            for *x, y in tqdm(self.valid_1_loader):
+                loss, acc = self.eval(x, y)
+                examples.append((x, y))
+                losses.append(float(loss))
+
+        print(f"Num validation examples: {len(losses):,}")
+        print("Min loss:", min(losses))
+        print("Max loss:", max(losses))
+        print("Mean loss:", sum(losses) / len(losses))
+
+        # worst_indices = sorted(
+        #     range(len(losses)), key=lambda i: losses[i], reverse=True
+        # )
+
+        # worst_examples = [(examples[i], losses[i]) for i in worst_indices]
+
+        # for example, loss in worst_examples:
+        #     print(f"Loss: {loss}, Data: {example}")
 
     def train(self, num_iter=1):
         self.model.train()
