@@ -657,6 +657,15 @@ class Trainer:
 
     def _prepare_tensors(self, data):
         xs = self.prepare_x(data)
+        # x = xs[1]
+        # print("shape", x.shape)
+        # print("mean", torch.mean(x, dim=(0, 1), keepdim=True))
+        # print("std", torch.std(x, dim=(0, 1), keepdim=True))
+        # x -= torch.Tensor([-0.0016, -0.0153])
+        # x /= torch.Tensor([0.4574, 0.4915])
+        # print("mean", torch.mean(xs[1], dim=(0, 1), keepdim=True))
+        # print("std", torch.std(xs[1], dim=(0, 1), keepdim=True))
+        # assert False
         xs = tuple(x.to(self.device) for x in xs)
         y = self.prepare_y(data)
         y = y.to(self.device)
