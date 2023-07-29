@@ -679,6 +679,7 @@ class Trainer:
         )
 
     def validate(self):
+        self.model.eval()
         with torch.no_grad():
             total_loss = 0
             total_acc = 0
@@ -701,6 +702,7 @@ class Trainer:
                 )
 
     def train(self, num_iter=1):
+        self.model.train()
         for _ in range(num_iter):
             for *x, y in self.make_train_dataloader():
                 self.optimizer.zero_grad()
