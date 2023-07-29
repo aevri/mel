@@ -1,5 +1,6 @@
 """Identify moles from their positions in images."""
 
+import collections
 import json
 import pathlib
 
@@ -717,13 +718,26 @@ class Trainer:
 
             for *x, y in tqdm(self.valid_1_loader):
                 loss, acc = self.eval(x, y)
-                examples.append((x, y))
+                uuid = self.model.uuids_map.int_to_item(int(y))
+                examples.append(uuid)
                 losses.append(float(loss))
 
         print(f"Num validation examples: {len(losses):,}")
         print("Min loss:", min(losses))
         print("Max loss:", max(losses))
         print("Mean loss:", sum(losses) / len(losses))
+
+        uuid_losses = collections.defaultdict(list)
+        for loss, uuid in zip(losses, examples):
+            uuid_losses[uuid].append(loss)
+
+        mean_uuid = sorted(
+            (sum(losses) / len(losses), uuid)
+            for uuid, losses in uuid_losses.items()
+        )
+
+        for mean, uuid in mean_uuid:
+            print(uuid, mean)
 
         # worst_indices = sorted(
         #     range(len(losses)), key=lambda i: losses[i], reverse=True
