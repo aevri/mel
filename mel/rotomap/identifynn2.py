@@ -638,11 +638,14 @@ class Trainer:
 
         self.batch_size = 4_000
 
-        valid_tensors = self._prepare_tensors(self.valid_data)
+        *valid_tensors, valid_debuginfo = self._prepare_debug_tensors(
+            self.valid_data
+        )
         self.valid_loader = self._make_dataloader(valid_tensors)
         self.valid_1_loader = self._make_dataloader(
             valid_tensors, batch_size=1
         )
+        self.valid_debuginfo = valid_debuginfo
         self.train_tensors = self._prepare_tensors(self.train_data)
 
         # Compute the steps per epoch and total epochs for the scheduler.
@@ -665,6 +668,11 @@ class Trainer:
         y = self.prepare_y(data)
         y = y.to(self.device)
         return *xs, y
+
+    def _prepare_debug_tensors(self, data):
+        *xs, y = self._prepare_tensors(data)
+        debuginfo = self.prepare_debuginfo(data)
+        return *xs, y, debuginfo
 
     def make_train_dataloader(self):
         return self._make_dataloader(
@@ -716,10 +724,13 @@ class Trainer:
             losses = []
             examples = []
 
-            for *x, y in tqdm(self.valid_1_loader):
+            for (*x, y), debuginfo in tqdm(
+                list(zip(self.valid_1_loader, self.valid_debuginfo))
+            ):
                 loss, acc = self.eval(x, y)
                 uuid = self.model.uuids_map.int_to_item(int(y))
-                examples.append(uuid)
+                # examples.append(uuid)
+                examples.append(debuginfo)
                 losses.append(float(loss))
 
         print(f"Num validation examples: {len(losses):,}")
@@ -769,6 +780,13 @@ class Trainer:
             y_actual.extend(part_uuids_to_indices(self.model, item))
         t_y_actual = torch.tensor(y_actual, requires_grad=False)
         return t_y_actual
+
+    def prepare_debuginfo(self, dataset):
+        z = []
+        for partname, uuid_pos_list, path in dataset:
+            for _ in uuid_pos_list:
+                z.append(path)
+        return z
 
     def eval(self, x, y_actual):
         logits_model = self.model(x)
