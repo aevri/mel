@@ -292,7 +292,7 @@ class PosModel(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
         self.num_neighbours = num_neighbours
-        self.width = 64
+        self.width = 256
         self.selfpos_encoder = PosEncoder(self.width)
         self.relpos_encoder = PosEncoder(self.width)
         all_partnames = list(partnames_uuids.keys())
@@ -307,7 +307,7 @@ class PosModel(torch.nn.Module):
             len(self.partnames_map), self.width
         )
         transformer_layer = torch.nn.TransformerEncoderLayer(
-            d_model=self.width, nhead=1, batch_first=True
+            d_model=self.width, nhead=8, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=1
