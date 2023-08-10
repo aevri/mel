@@ -29,6 +29,19 @@ def make_pathdict(repo_path: pathlib.Path):
     return result
 
 
+def filter_pathdict(pathdict, *, excluded_parts=None, excluded_subparts=None):
+    result = empty_pathdict()
+    for part, subpart_rotomaps in pathdict.items():
+        if excluded_parts and part in excluded_parts:
+            continue
+        for subpart, rotomaps in subpart_rotomaps.items():
+            if excluded_subparts and subpart in excluded_subparts:
+                continue
+            for path in rotomaps:
+                result[part][subpart].append(path)
+    return result
+
+
 def drop_empty_paths(pathdict):
     """Drop empties from a Dict of 'part' -> 'subpart' -> list-of-rotomap-paths.
 

@@ -82,6 +82,11 @@ def process_args(args):
 
     pathdict = mel.rotomap.dataset.make_pathdict(melroot)
     pathdict = mel.rotomap.dataset.drop_empty_paths(pathdict)
+    # pathdict = mel.rotomap.dataset.filter_pathdict(
+    #     pathdict,
+    #     excluded_parts={"Trunk"},
+    #     excluded_subparts={"Hand", "Foot"},
+    # )
     train, valid = mel.rotomap.dataset.split_train_valid_last(pathdict)
     partnames_uuids = mel.rotomap.dataset.make_partnames_uuids(pathdict)
 
