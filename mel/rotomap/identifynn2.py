@@ -213,7 +213,6 @@ class PosEncoder(torch.nn.Module):
         super().__init__()
         self.width = width
         self.encoder = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2),
             torch.nn.Linear(2, width, bias=True),
             torch.nn.ReLU(),
             ResBlock(
