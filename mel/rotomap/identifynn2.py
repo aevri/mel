@@ -145,7 +145,7 @@ def infer_uuids(model, x):
 
 
 def part_uuids_to_indices(model, data):
-    part_name, mole_data = data
+    part_name, mole_data, path = data
     uuids = [x[0] for x in mole_data]
     return [model.uuids_map.item_to_int(uuid) for uuid in uuids]
 

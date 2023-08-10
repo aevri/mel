@@ -97,7 +97,7 @@ def yield_imagemoles_from_pathlist(pathlist, extra_stem_list=None):
                     for uuid, point in uuid_points
                 ]
                 if uuid_points:
-                    yield partname, uuid_points
+                    yield partname, uuid_points, frame.path
 
 
 def imagemoles_from_framepath(frame_path, extra_stem=None):
