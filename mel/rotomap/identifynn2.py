@@ -187,6 +187,27 @@ class IndexMap:
         return len(self._item_to_int)
 
 
+class SinusoidalEncoding(torch.nn.Module):
+    def __init__(self, dimensions):
+        super(SinusoidalEncoding, self).__init__()
+        self.dimensions = dimensions
+
+    def forward(self, x):
+        pos_enc = torch.zeros(x.size(0), 2 * self.dimensions).to(x.device)
+
+        base = 3
+
+        for i in range(self.dimensions):
+            pos_enc[:, 2 * i] = torch.sin(
+                x[:, 0] / (base ** (2 * i / self.dimensions))
+            )
+            pos_enc[:, 2 * i + 1] = torch.cos(
+                x[:, 1] / (base ** (2 * i / self.dimensions))
+            )
+
+        return pos_enc
+
+
 class PosEncoder(torch.nn.Module):
     def __init__(self, width):
         super().__init__()
