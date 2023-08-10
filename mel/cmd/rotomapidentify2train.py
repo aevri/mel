@@ -195,6 +195,12 @@ def process_args(args):
         print("Stopping training early due to no improvement.")
         pass
 
+    print(
+        f"val_acc:{trainer.valid_acc[-1]:.1%} "
+        f"val_loss:{trainer.valid_loss[-1]:.3} "
+        f"tra_loss:{trainer.train_loss[-1]:.3} "
+        f"tra_acc:{trainer.train_acc[-1]:.1%} "
+    )
     print("Validation loss:", trainer.valid_loss[-1])
     print("Validation acc:", f"{trainer.valid_acc[-1]:.0%}")
 
