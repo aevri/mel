@@ -367,7 +367,7 @@ class PosModel(torch.nn.Module):
             relpos_emb = self.relpos_encoder(pos_values[:, i])
             relpos_embs.append(relpos_emb)
 
-        emb_sequence = torch.stack([selfpos_emb] + relpos_embs).transpose(
+        emb_sequence = torch.stack(relpos_embs).transpose(
             0, 1
         )  # Shape: (batch_size, sequence_length, embed_dim)
 
@@ -385,7 +385,9 @@ class PosModel(torch.nn.Module):
             transformer_output.size(0), -1
         )  # shape: (batch_size, sequence_length * embed_dim)
 
-        return torch.cat([transformer_output_flat, partname_embedding], dim=-1)
+        return torch.cat(
+            [selfpos_emb, transformer_output_flat, partname_embedding], dim=-1
+        )
 
 
 class PosOnly(torch.nn.Module):
