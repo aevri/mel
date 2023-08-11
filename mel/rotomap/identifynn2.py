@@ -387,7 +387,12 @@ class PosModel(torch.nn.Module):
         # )  # shape: (batch_size, sequence_length * embed_dim)
 
         return torch.cat(
-            [selfpos_emb, pooled_output, partname_embedding], dim=-1
+            [
+                selfpos_emb,
+                pooled_output.reshape(pooled_output.size(0), -1),
+                partname_embedding,
+            ],
+            dim=-1,
         )
 
 
