@@ -638,12 +638,21 @@ def random_noise_collate(batch):
     mask = (x_pos == zeros).all(dim=-1)
     expanded_mask = mask.unsqueeze(-1).expand_as(x_pos)
 
-    x_pos_noise = torch.normal(
+    std_x = 8 / (3024 / 3)
+    std_y = 8 / 4032
+    noise_x = torch.normal(
         mean=0,
-        std=16 / 4000,
-        size=x_pos.size(),
+        std=std_x,
+        size=list(x_pos.size()[:-1]),
         device=x_pos.device,
     )
+    noise_y = torch.normal(
+        mean=0,
+        std=std_y,
+        size=list(x_pos.size()[:-1]),
+        device=x_pos.device,
+    )
+    x_pos_noise = torch.stack((noise_x, noise_y), dim=-1)
     x_pos_noise[expanded_mask] = 0
 
     return (
