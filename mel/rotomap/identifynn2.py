@@ -2,6 +2,7 @@
 
 import collections
 import json
+import math
 import pathlib
 
 import pandas as pd
@@ -672,9 +673,39 @@ def random_noise_collate(batch):
     x_pos_scale_noise = torch.stack((scale_noise_x, scale_noise_y), dim=-1)
     x_pos_scale_noise[expanded_mask] = 0
 
+    theta = ((torch.rand(x_pos.size(0)) - 0.5) * ((2 * math.pi) / 32)).to(
+        x_pos.device
+    )  # Random angles for each batch item
+    cos_theta = torch.cos(theta).view(-1, 1, 1)
+    assert cos_theta.shape == (x_pos.shape[0], 1, 1), cos_theta.shape
+    sin_theta = torch.sin(theta).view(-1, 1, 1)
+    assert sin_theta.shape == (x_pos.shape[0], 1, 1), sin_theta.shape
+    rotation_matrix = torch.cat(
+        (
+            torch.cat((cos_theta, -sin_theta), dim=2),
+            torch.cat((sin_theta, cos_theta), dim=2),
+        ),
+        dim=1,
+    ).to(
+        x_pos.device
+    )  # This should now produce a shape of [4000, 2, 2]
+    assert rotation_matrix.shape == (
+        x_pos.shape[0],
+        2,
+        2,
+    ), rotation_matrix.shape
+    # rotation_matrix_expanded = rotation_matrix.unsqueeze(1).expand(
+    #     -1, x_pos.size(1), 2, 2
+    # )
+    assert rotation_matrix.shape == (x_pos.shape[0], 2, 2)
+    x_pos_rotated = torch.bmm(x_pos, rotation_matrix)
+
+    # Ensure that points originally at (0,0) remain unchanged
+    x_pos_rotated[expanded_mask] = 0
+
     return (
         torch.stack(x_part),
-        (x_pos + x_pos_offset_noise) * x_pos_scale_noise,
+        (x_pos_rotated + x_pos_offset_noise) * x_pos_scale_noise,
         torch.stack(x_uuid),
         torch.stack(y),
     )
@@ -750,7 +781,7 @@ class Trainer:
         return self._make_dataloader(
             self.train_tensors,
             shuffle=True,
-            collate_fn=random_noise_collate,
+            # collate_fn=random_noise_collate,
         )
 
     def _make_dataloader(
