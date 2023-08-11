@@ -633,12 +633,19 @@ class TransformTensorDataset(torch.utils.data.Dataset):
 def random_noise_collate(batch):
     x_part, x_pos, x_uuid, y = zip(*batch)
     x_pos = torch.stack(x_pos)
+
+    zeros = torch.zeros_like(x_pos)
+    mask = (x_pos == zeros).all(dim=-1)
+    expanded_mask = mask.unsqueeze(-1).expand_as(x_pos)
+
     x_pos_noise = torch.normal(
         mean=0,
-        std=8 / 4000,
+        std=16 / 4000,
         size=x_pos.size(),
         device=x_pos.device,
     )
+    x_pos_noise[expanded_mask] = 0
+
     return (
         torch.stack(x_part),
         x_pos + x_pos_noise,
