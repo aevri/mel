@@ -312,7 +312,7 @@ class PosModel(torch.nn.Module):
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=1
         )
-        self.pool = torch.nn.AdaptiveMaxPool1d(1)
+        # self.pool = torch.nn.AdaptiveAvgPool1d(1)
 
     def freeze_except_classifier(self):
         for sub in [
@@ -375,17 +375,17 @@ class PosModel(torch.nn.Module):
             emb_sequence
         )  # shape: (batch_size, sequence_length, embed_dim)
 
-        pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
-            -1
-        )  # shape: (batch_size, embed_dim)
+        # pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
+        #     -1
+        # )  # shape: (batch_size, embed_dim)
 
         # return pooled_output
 
-        # transformer_output_flat = transformer_output.view(
-        #     transformer_output.size(0), -1
-        # )  # shape: (batch_size, sequence_length * embed_dim)
+        transformer_output_flat = transformer_output.view(
+            transformer_output.size(0), -1
+        )  # shape: (batch_size, sequence_length * embed_dim)
 
-        return torch.cat([partname_embedding, partname_embedding], dim=-1)
+        return torch.cat([transformer_output_flat, partname_embedding], dim=-1)
 
 
 class PosOnly(torch.nn.Module):
@@ -400,7 +400,7 @@ class PosOnly(torch.nn.Module):
 
         self.uuids_map = IndexMap(all_uuids)
         self.classifier = torch.nn.Linear(
-            self.width * (2), len(self.uuids_map)
+            self.width * (2 + self.num_neighbours), len(self.uuids_map)
         )
         # self.classifier = Classifier(
         #     self.width * (2 + self.num_neighbours), 128, len(self.uuids_map)
