@@ -640,24 +640,41 @@ def random_noise_collate(batch):
 
     std_x = 8 / (3024 / 3)
     std_y = 8 / 4032
-    noise_x = torch.normal(
+    offset_noise_x = torch.normal(
         mean=0,
         std=std_x,
         size=list(x_pos.size()[:-1]),
         device=x_pos.device,
     )
-    noise_y = torch.normal(
+    offset_noise_y = torch.normal(
         mean=0,
         std=std_y,
         size=list(x_pos.size()[:-1]),
         device=x_pos.device,
     )
-    x_pos_noise = torch.stack((noise_x, noise_y), dim=-1)
-    x_pos_noise[expanded_mask] = 0
+    x_pos_offset_noise = torch.stack((offset_noise_x, offset_noise_y), dim=-1)
+    x_pos_offset_noise[expanded_mask] = 0
+
+    scale_std_x = 100 / (3024 / 3)
+    scale_std_y = 100 / 4032
+    scale_noise_x = torch.normal(
+        mean=1,
+        std=scale_std_x,
+        size=list(x_pos.size()[:-1]),
+        device=x_pos.device,
+    )
+    scale_noise_y = torch.normal(
+        mean=1,
+        std=scale_std_y,
+        size=list(x_pos.size()[:-1]),
+        device=x_pos.device,
+    )
+    x_pos_scale_noise = torch.stack((scale_noise_x, scale_noise_y), dim=-1)
+    x_pos_scale_noise[expanded_mask] = 0
 
     return (
         torch.stack(x_part),
-        x_pos + x_pos_noise,
+        (x_pos + x_pos_offset_noise) * x_pos_scale_noise,
         torch.stack(x_uuid),
         torch.stack(y),
     )
