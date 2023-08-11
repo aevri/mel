@@ -639,6 +639,8 @@ def random_noise_collate(batch):
     mask = (x_pos == zeros).all(dim=-1)
     expanded_mask = mask.unsqueeze(-1).expand_as(x_pos)
 
+    x_pos = zero_some_items_in_sequence(x_pos, 2)
+
     std_x = 8 / (3024 / 3)
     std_y = 8 / 4032
     offset_noise_x = torch.normal(
@@ -781,7 +783,7 @@ class Trainer:
         return self._make_dataloader(
             self.train_tensors,
             shuffle=True,
-            # collate_fn=random_noise_collate,
+            collate_fn=random_noise_collate,
         )
 
     def _make_dataloader(
