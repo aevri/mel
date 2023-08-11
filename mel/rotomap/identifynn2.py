@@ -310,7 +310,7 @@ class PosModel(torch.nn.Module):
             d_model=self.width, nhead=8, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
-            transformer_layer, num_layers=2
+            transformer_layer, num_layers=1
         )
         self.pool = torch.nn.AdaptiveMaxPool1d(1)
 
