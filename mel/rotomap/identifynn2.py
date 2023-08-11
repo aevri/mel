@@ -630,6 +630,23 @@ class TransformTensorDataset(torch.utils.data.Dataset):
         return self.tensors[0].size(0)
 
 
+def random_noise_collate(batch):
+    x_part, x_pos, x_uuid, y = zip(*batch)
+    x_pos = torch.stack(x_pos)
+    x_pos_noise = torch.normal(
+        mean=0,
+        std=8 / 4000,
+        size=x_pos.size(),
+        device=x_pos.device,
+    )
+    return (
+        torch.stack(x_part),
+        x_pos + x_pos_noise,
+        torch.stack(x_uuid),
+        torch.stack(y),
+    )
+
+
 class Trainer:
     def __init__(
         self,
@@ -700,6 +717,7 @@ class Trainer:
         return self._make_dataloader(
             self.train_tensors,
             shuffle=True,
+            collate_fn=random_noise_collate,
         )
 
     def _make_dataloader(
