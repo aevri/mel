@@ -289,6 +289,54 @@ def prepare_default_batch(batch, num_neighbours, partnames_map, uuids_map):
     return partname_indices, pos_values, uuid_values
 
 
+class AttentionPool(torch.nn.Module):
+    def __init__(
+        self, input_dim, query_dim=None, key_dim=None, value_dim=None
+    ):
+        super(AttentionPool, self).__init__()
+
+        # Default dimensions
+        if query_dim is None:
+            query_dim = input_dim
+        if key_dim is None:
+            key_dim = query_dim
+        if value_dim is None:
+            value_dim = input_dim
+
+        # Learnable query vector
+        self.query = torch.nn.Parameter(torch.randn(1, query_dim))
+
+        # Linear transformations for keys and values
+        self.key_transform = torch.nn.Linear(input_dim, key_dim, bias=False)
+        self.value_transform = torch.nn.Linear(
+            input_dim, value_dim, bias=False
+        )
+
+    def forward(self, x):
+        # x shape: [batch_size, seq_len, input_dim]
+
+        # Transform the input into keys and values
+        keys = self.key_transform(x)
+        values = self.value_transform(x)
+
+        # Compute attention scores using dot product between keys and the query
+        attn_scores = torch.matmul(
+            keys, self.query.transpose(0, 1)
+        )  # [batch_size, seq_len, 1]
+
+        # Compute attention weights
+        attn_weights = torch.nn.functional.softmax(
+            attn_scores, dim=1
+        )  # [batch_size, seq_len, 1]
+
+        # Weighted sum of the values
+        pooled_output = torch.sum(
+            attn_weights * values, dim=1
+        )  # [batch_size, value_dim]
+
+        return pooled_output
+
+
 class PosModel(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
@@ -313,7 +361,7 @@ class PosModel(torch.nn.Module):
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=1
         )
-        self.pool = torch.nn.AdaptiveMaxPool1d(1)
+        self.pool = AttentionPool(self.width)
 
     def freeze_except_classifier(self):
         for sub in [
@@ -376,9 +424,11 @@ class PosModel(torch.nn.Module):
             emb_sequence
         )  # shape: (batch_size, sequence_length, embed_dim)
 
-        pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
-            -1
-        )  # shape: (batch_size, embed_dim)
+        # pooled_output = self.pool(transformer_output)
+        pooled_output = self.pool(transformer_output)
+        # pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
+        #     -1
+        # )  # shape: (batch_size, embed_dim)
 
         # return pooled_output
 
@@ -389,7 +439,7 @@ class PosModel(torch.nn.Module):
         return torch.cat(
             [
                 selfpos_emb,
-                pooled_output.reshape(pooled_output.size(0), -1),
+                pooled_output,
                 partname_embedding,
             ],
             dim=-1,
