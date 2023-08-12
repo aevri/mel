@@ -337,6 +337,86 @@ class AttentionPool(torch.nn.Module):
         return pooled_output
 
 
+class MultiheadAttentionPool(torch.nn.Module):
+    def __init__(self, input_dim, num_heads):
+        super(MultiheadAttentionPool, self).__init__()
+        self.num_heads = num_heads
+        self.head_dim = input_dim // num_heads
+
+        # Ensure division is exact
+        assert (
+            self.head_dim * num_heads == input_dim
+        ), "input_dim should be divisible by num_heads"
+
+        self.queries = torch.nn.Parameter(
+            torch.randn(num_heads, self.head_dim)
+        )
+        self.key_transform = torch.nn.Linear(input_dim, input_dim)
+        self.value_transform = torch.nn.Linear(input_dim, input_dim)
+
+    def forward(self, x):
+        # x shape: [batch_size, seq_len, input_dim]
+        batch_size = x.shape[0]
+
+        assert (
+            x.dim() == 3
+        ), f"Expected x to be 3D tensor but got shape {x.size()}"
+        assert (
+            x.size(2) == self.num_heads * self.head_dim
+        ), f"Expected last dimension of x to be {self.num_heads * self.head_dim} but got {x.size(2)}"
+
+        keys = self.key_transform(x)
+        values = self.value_transform(x)
+
+        # Ensure key and value tensors are of expected shape
+        assert (
+            keys.size()
+            == values.size()
+            == (batch_size, x.size(1), self.num_heads * self.head_dim)
+        ), f"Unexpected shape for keys/values. Got {keys.size()} for keys and {values.size()} for values."
+
+        # Split keys, values, queries into heads
+        keys = keys.view(batch_size, -1, self.num_heads, self.head_dim)
+        values = values.view(batch_size, -1, self.num_heads, self.head_dim)
+        queries = self.queries.unsqueeze(0).expand(batch_size, -1, -1)
+
+        # Ensure that shapes are as expected after view and expand operations
+        assert keys.shape == (
+            batch_size,
+            x.size(1),
+            self.num_heads,
+            self.head_dim,
+        ), f"Expected shape {batch_size, x.size(1), self.num_heads, self.head_dim} for keys but got {keys.shape}"
+        assert values.shape == (
+            batch_size,
+            x.size(1),
+            self.num_heads,
+            self.head_dim,
+        ), f"Expected shape {batch_size, x.size(1), self.num_heads, self.head_dim} for values but got {values.shape}"
+        assert queries.shape == (
+            batch_size,
+            self.num_heads,
+            self.head_dim,
+        ), f"Expected shape {batch_size, self.num_heads, self.head_dim} for queries but got {queries.shape}"
+
+        # Attention scores & weights
+        attn_scores = torch.einsum(
+            "bshd,bhd->bsh", [keys, queries]
+        )  # Using einsum for clarity
+        attn_weights = torch.nn.functional.softmax(attn_scores, dim=1)
+
+        outputs = torch.sum(values * attn_weights.unsqueeze(-1), dim=1)
+        outputs = outputs.view(batch_size, -1)  # Concatenate all heads
+
+        # Ensure that final output shape is as expected
+        assert outputs.shape == (
+            batch_size,
+            self.num_heads * self.head_dim,
+        ), f"Expected shape {batch_size, self.num_heads * self.head_dim} for outputs but got {outputs.shape}"
+
+        return outputs
+
+
 class PosModel(torch.nn.Module):
     def __init__(self, partnames_uuids, num_neighbours):
         super().__init__()
@@ -361,7 +441,8 @@ class PosModel(torch.nn.Module):
         self.transformer = torch.nn.TransformerEncoder(
             transformer_layer, num_layers=1
         )
-        self.pool = AttentionPool(self.width)
+        self.layer_norm = torch.nn.LayerNorm(self.width)
+        self.pool = MultiheadAttentionPool(self.width, num_heads=32)
 
     def freeze_except_classifier(self):
         for sub in [
@@ -424,8 +505,9 @@ class PosModel(torch.nn.Module):
             emb_sequence
         )  # shape: (batch_size, sequence_length, embed_dim)
 
+        normalized_output = self.layer_norm(transformer_output)
         # pooled_output = self.pool(transformer_output)
-        pooled_output = self.pool(transformer_output)
+        pooled_output = self.pool(normalized_output)
         # pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
         #     -1
         # )  # shape: (batch_size, embed_dim)
