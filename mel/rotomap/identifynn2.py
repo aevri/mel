@@ -311,7 +311,7 @@ class PosModel(torch.nn.Module):
             d_model=self.width, nhead=8, batch_first=True
         )
         self.transformer = torch.nn.TransformerEncoder(
-            transformer_layer, num_layers=1
+            transformer_layer, num_layers=2
         )
         self.pool = torch.nn.AdaptiveMaxPool1d(1)
 
@@ -376,9 +376,11 @@ class PosModel(torch.nn.Module):
             emb_sequence
         )  # shape: (batch_size, sequence_length, embed_dim)
 
-        pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
-            -1
-        )  # shape: (batch_size, embed_dim)
+        # pooled_output = self.pool(transformer_output.permute(0, 2, 1)).squeeze(
+        #     -1
+        # )  # shape: (batch_size, embed_dim)
+
+        pooled_output = transformer_output[:, 0, :]
 
         # return pooled_output
 
