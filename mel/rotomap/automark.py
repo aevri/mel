@@ -1,6 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
 import copy
+from typing import Dict, List, Union
 
 import numpy
 
@@ -8,8 +9,37 @@ import mel.lib.image
 import mel.rotomap.detectmoles
 import mel.rotomap.moles
 
+# Each mole should have these fields:
+#   uuid: str
+#   x: int
+#   y: int
+#   radius: int
+Moles = List[Dict[str, Union[str, int]]]
 
-def merge_in_radiuses(targets, radii_sources, error_distance, only_merge):
+
+def merge_in_radiuses(
+    targets: Moles,
+    radii_sources: Moles,
+    error_distance: int,
+    only_merge: bool,
+) -> list:
+    """Merge radius values from radius source dictionaries into target
+    dictionaries based on their positions.
+
+    Args:
+        targets (list): A list of dictionaries representing the target objects.
+            Each dictionary must have a unique "uuid" key and may contain "x" and "y" keys representing the position of the target.
+        radii_sources (list): A list of dictionaries representing the radius source objects.
+            Each dictionary must have a unique "uuid" key and may contain "x" and "y" keys representing the position of the radius source,
+            as well as a "radius" key representing the radius value.
+        error_distance (int): The maximum allowed distance for matching target and radius source objects.
+        only_merge (bool): Indicates whether to only merge the radius values into the target dictionaries or also include unmatched radius source dictionaries in the results.
+
+    Returns:
+        list: A list of dictionaries representing the merged target and radius source objects.
+            The dictionaries in the list are deep copies of the target dictionaries with the merged radius values.
+            If only_merge is False, any unmatched radius source dictionaries are also included in the list.
+    """
     match_uuids, _, added_uuids = match_moles_by_pos(
         targets, radii_sources, error_distance
     )
