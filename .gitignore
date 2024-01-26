@@ -6,3 +6,4 @@ mel.egg-info/
 build/
 Pipfile
 Pipfile.lock
+notebooks/
