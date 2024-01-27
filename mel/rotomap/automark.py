@@ -14,6 +14,10 @@ import mel.rotomap.moles
 #   x: int
 #   y: int
 #   radius: int
+#
+# Note that in Python 3.11 we can use TypedDict to enforce this,
+# and make radius NotRequired.
+#
 Moles = List[Dict[str, Union[str, int]]]
 
 
