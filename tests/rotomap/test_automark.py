@@ -19,11 +19,9 @@ RADII_SOURCES = [
 
 
 @pytest.mark.parametrize("only_merge", [True, False])
-def test_merge_in_radiuses_happy(only_merge):
+@pytest.mark.parametrize("error_distance", [0, 1, 2, 3, 4, 5])
+def test_merge_in_radiuses_happy(only_merge, error_distance):
     radii_sources = [x for x in RADII_SOURCES if x["uuid"] != "7"]
-
-    error_distance = 3
-
     result = automark.merge_in_radiuses(TARGETS, radii_sources, error_distance, only_merge)
 
     assert len(result) == 3
