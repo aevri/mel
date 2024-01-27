@@ -1,5 +1,7 @@
 """Test suite for mel.rotomap.relate."""
 
+import pytest
+
 import mel.rotomap.automark as automark
 
 TARGETS = [
@@ -16,11 +18,11 @@ RADII_SOURCES = [
 ]
 
 
-def test_merge_in_radiuses_happy():
+@pytest.mark.parametrize("only_merge", [True, False])
+def test_merge_in_radiuses_happy(only_merge):
     radii_sources = [x for x in RADII_SOURCES if x["uuid"] != "7"]
 
     error_distance = 3
-    only_merge = False
 
     result = automark.merge_in_radiuses(TARGETS, radii_sources, error_distance, only_merge)
 
