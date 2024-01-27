@@ -21,6 +21,13 @@ RADII_SOURCES = [
 @pytest.mark.parametrize("only_merge", [True, False])
 @pytest.mark.parametrize("error_distance", [0, 1, 2, 3, 4, 5])
 def test_merge_in_radiuses_happy(only_merge, error_distance):
+    """Test merge_in_radiuses() with happy path.
+
+    For simplicity, there are no radius sources that are not matched to a target.
+
+    Each target is matched to a radius source, and the radius value is merged.
+
+    """
     radii_sources = [x for x in RADII_SOURCES if x["uuid"] != "7"]
     result = automark.merge_in_radiuses(TARGETS, radii_sources, error_distance, only_merge)
 
@@ -36,6 +43,13 @@ def test_merge_in_radiuses_happy(only_merge, error_distance):
 @pytest.mark.parametrize("only_merge", [True, False])
 @pytest.mark.parametrize("error_distance", [0, 1, 2, 3, 4, 5])
 def test_merge_in_radiuses_happy_merge_extra(only_merge, error_distance):
+    """Test merge_in_radiuses() with happy path and extra radius sources.
+
+    There is one radius source that is not matched to a target.
+
+    It is either included or not included in the result, depending on only_merge.
+
+    """
     result = automark.merge_in_radiuses(TARGETS, RADII_SOURCES, error_distance, only_merge)
 
     if only_merge:
