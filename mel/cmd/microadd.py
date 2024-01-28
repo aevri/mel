@@ -33,6 +33,14 @@ def setup_parser(parser):
         default=0,
         help="The index of the device to take images from.",
     )
+    parser.add_argument(
+        "--last-changed",
+        action="store_true",
+        help=(
+            "Use the image specified in the '__last_changed__' file "
+            "in the mole's directory for comparison, if present."
+        ),
+    )
 
     # From NHS 'Moles' page:
     # http://www.nhs.uk/Conditions/Moles/Pages/Introduction.aspx
@@ -86,8 +94,32 @@ def load_context_images(path):
     return image_list
 
 
-def pick_comparison_path(path_list, min_compare_age_days):
+def pick_comparison_path(
+    path, path_list, min_compare_age_days, use_last_changed
+):
     """Return the most appropriate image path to compare with, or None."""
+
+    # Check for the __last_changed__ file if the --last-changed flag is used
+    if use_last_changed:
+        last_changed_path = os.path.join(path, "__last_changed__")
+        if os.path.exists(last_changed_path):
+            with open(last_changed_path) as file:
+                last_changed_image = file.read().strip()
+                if not last_changed_image:
+                    raise ValueError(
+                        "last changed file must not be empty.",
+                        path,
+                        last_changed_image,
+                    )
+                for p in sorted(path_list):
+                    if p.startswith(last_changed_image):
+                        return p
+                raise ValueError(
+                    "could not find referenced last changed image.",
+                    path,
+                    last_changed_image,
+                )
+
     path_dt_list = [
         (x, mel.lib.datetime.guess_datetime_from_path(x)) for x in path_list
     ]
@@ -109,7 +141,7 @@ def pick_comparison_path(path_list, min_compare_age_days):
     return path_dt_list[-1][0] if path_dt_list else None
 
 
-def get_comparison_image_path(path, min_compare_age_days):
+def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
     micro_path = os.path.join(path, "__micro__")
     if not os.path.exists(micro_path):
         return None
@@ -117,15 +149,19 @@ def get_comparison_image_path(path, min_compare_age_days):
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
     images = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
-    path = pick_comparison_path(images, min_compare_age_days)
+    path = pick_comparison_path(
+        path, images, min_compare_age_days, use_last_changed
+    )
     if path:
         return os.path.join(micro_path, path)
     else:
         return None
 
 
-def load_comparison_image(path, min_compare_age_days):
-    micro_path = get_comparison_image_path(path, min_compare_age_days)
+def load_comparison_image(path, min_compare_age_days, use_last_changed):
+    micro_path = get_comparison_image_path(
+        path, min_compare_age_days, use_last_changed
+    )
     if micro_path is None:
         return None
     return micro_path, mel.lib.image.load_image(micro_path)
@@ -142,16 +178,24 @@ def process_args(args):
         for mole_path in args.PATH:
             print(mole_path)
             display.reset()
-            process_path(mole_path, args.min_compare_age_days, display, cap)
+            process_path(
+                mole_path,
+                args.min_compare_age_days,
+                display,
+                cap,
+                args.last_changed,
+            )
 
 
-def process_path(mole_path, min_compare_age_days, display, cap):
+def process_path(
+    mole_path, min_compare_age_days, display, cap, use_last_changed
+):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
 
     comparison_image_data = load_comparison_image(
-        mole_path, min_compare_age_days
+        mole_path, min_compare_age_days, use_last_changed
     )
 
     if comparison_image_data is not None:
