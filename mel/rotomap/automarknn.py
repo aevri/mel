@@ -21,25 +21,72 @@ def make_detector():
 
 
 class MoleDetector:
-    def __init__(self, model_path):
+    def __init__(self, model_path, tile_size=800, min_overlap=0.1):
         self.model = make_model(model_path)
         self.image_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
             ]
         )
+        self.tile_size = tile_size
+        self.min_overlap = min_overlap
 
-    def get_moles(self, frame):
+    def get_moles(
+        self, frame, box_size=10, iou_threshold=0.5
+    ):  # box_size and iou_threshold parameters added
         image = load_image(frame.path)
+        image_shape = image.shape[:2]
         image = self.image_transform(image)
 
+        tile_handler = TileHandler(
+            image_shape, self.tile_size, self.min_overlap
+        )
+        moles_boxes = []
         self.model.eval()
-        with torch.no_grad():
-            boxes = self.model(image.unsqueeze(0))[0]["boxes"]
-        poslist = boxes_to_poslist(boxes)
+
+        print(image.shape)
+
+        for i in range(tile_handler.num_tiles):
+            tile_coords = tile_handler.tile(i)
+            tile_image = image[
+                :,
+                tile_coords[0] : tile_coords[1],
+                tile_coords[2] : tile_coords[3],
+            ]
+
+            with torch.no_grad():
+                boxes = self.model(tile_image.unsqueeze(0))[0]["boxes"]
+            poslist = boxes_to_poslist(boxes)
+
+            for x, y in poslist:
+                x_adj = int(x) + tile_coords[2]
+                y_adj = int(y) + tile_coords[0]
+
+                # Create bounding boxes around the detected moles
+                box = torch.tensor(
+                    [
+                        x_adj - box_size,
+                        y_adj - box_size,
+                        x_adj + box_size,
+                        y_adj + box_size,
+                    ]
+                )
+                moles_boxes.append(box)
+
+        moles_boxes = torch.stack(moles_boxes)
+        keep = torchvision.ops.nms(
+            moles_boxes, torch.ones(len(moles_boxes)), iou_threshold
+        )
+        moles_boxes = moles_boxes[keep]
+
         moles = []
-        for x, y in poslist:
-            mel.rotomap.moles.add_mole(moles, int(x), int(y))
+        for box in moles_boxes:
+            x_center = (box[0] + box[2]) / 2
+            y_center = (box[1] + box[3]) / 2
+            moles.append(
+                mel.rotomap.moles.add_mole(int(x_center), int(y_center))
+            )
+
         return moles
 
 
@@ -90,8 +137,8 @@ def boxes_to_poslist(boxes):
 
 
 def calc_precision_recall(target_poslist, poslist, error_distance=5):
-    if not len(poslist):
-        return 0, 0
+    if not len(poslist) or not len(target_poslist):
+        return None
     vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
         target_poslist, poslist, error_distance
     )
@@ -123,19 +170,23 @@ class PlModule(pl.LightningModule):
         precision_list = []
         recall_list = []
         for y_item, result_item in zip(y, result):
-            (
-                item_precision,
-                item_recall,
-            ) = calc_precision_recall(
+            item_precision_recall = calc_precision_recall(
                 target_poslist=boxes_to_poslist(y_item["boxes"]),
                 poslist=boxes_to_poslist(result_item["boxes"]),
             )
+            if item_precision_recall is None:
+                continue
+            (
+                item_precision,
+                item_recall,
+            ) = item_precision_recall
             precision_list.append(item_precision)
             recall_list.append(item_recall)
-        precision = sum(precision_list) / len(precision_list)
-        recall = sum(recall_list) / len(recall_list)
-        self.log("val_prec", precision, prog_bar=True)
-        self.log("val_reca", recall, prog_bar=True)
+        if precision_list:
+            precision = sum(precision_list) / len(precision_list)
+            recall = sum(recall_list) / len(recall_list)
+            self.log("val_prec", precision, prog_bar=True)
+            self.log("val_reca", recall, prog_bar=True)
 
     def forward(self, x):
         return self.model(x)
@@ -161,6 +212,161 @@ class PlModule(pl.LightningModule):
         return optimizer
 
 
+class TileHandler:
+    def __init__(self, image_shape, tile_size=800, min_overlap=0.1):
+        """
+        Initialize a TileHandler object.
+
+        >>> th = TileHandler((1600, 1000), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([3, 2])
+        >>> th.overlaps
+        array([400, 600])
+
+        >>> th = TileHandler((1601, 999), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([3, 2])
+        >>> th.overlaps
+        array([400, 601])
+
+        >>> th = TileHandler((4032, 3024), tile_size=800, min_overlap=0.1)
+        >>> th.tile_counts
+        array([6, 5])
+        >>> th.tile((6 * 5) - 1)
+        (3230, 4030, 2224, 3024)
+        >>> th.overlaps
+        array([154, 244])
+
+        """
+        self.image_shape = np.array(image_shape)
+        self.tile_size = tile_size
+        self.min_overlap = min_overlap
+        self.tile_counts, self.overlaps = self._calculate_num_tiles()
+        self.num_tiles = self.tile_counts.prod()
+
+    def _calculate_num_tiles(self):
+        """
+        Calculate the number of tiles in x and y directions and the overlaps.
+        """
+        effective_tile_size = self.tile_size - np.floor(
+            self.tile_size * self.min_overlap
+        )
+        tile_counts = np.ceil(self.image_shape / effective_tile_size).astype(
+            int
+        )
+        overlaps = np.ceil(
+            (tile_counts * self.tile_size - self.image_shape)
+            / (tile_counts - 1)
+        ).astype(int)
+
+        return tile_counts, overlaps
+
+    def tile(self, tile_index):
+        """
+        Get the coordinates (y_start, y_end, x_start, x_end) for a tile.
+
+        >>> th = TileHandler((1600, 1000), tile_size=800, min_overlap=0.1)
+        >>> th.tile(0)
+        (0, 800, 0, 800)
+        >>> th.tile(1)
+        (0, 800, 200, 1000)
+        >>> th.tile(2)
+        (400, 1200, 0, 800)
+        >>> th.tile(3)
+        (400, 1200, 200, 1000)
+        >>> th.tile(4)
+        (800, 1600, 0, 800)
+        >>> th.tile(5)
+        (800, 1600, 200, 1000)
+        >>> th.tile(-1)
+        Traceback (most recent call last):
+          ...
+        IndexError: ('Out of bounds', -1)
+        >>> th.tile(6)
+        Traceback (most recent call last):
+          ...
+        IndexError: ('Out of bounds', 6)
+
+        """
+        if tile_index < 0:
+            raise IndexError("Out of bounds", tile_index)
+        if tile_index >= self.num_tiles:
+            raise IndexError("Out of bounds", tile_index)
+        tile_row_col = np.array(
+            [
+                tile_index // self.tile_counts[1],
+                tile_index % self.tile_counts[1],
+            ]
+        )
+        starts = np.maximum(
+            0, tile_row_col * self.tile_size - tile_row_col * self.overlaps
+        )
+        ends = np.minimum(
+            self.image_shape,
+            (tile_row_col + 1) * self.tile_size - tile_row_col * self.overlaps,
+        )
+
+        return starts[0], ends[0], starts[1], ends[1]
+
+
+def clip_boxes(boxes, x_start, y_start, x_end, y_end):
+    """Drop boxes that are fully outside the bounds of a tile.
+
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 0, 0, 10, 10)
+    [[0, 0, 5, 5], [5, 5, 7, 7]]
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 0, 0, 4, 4)
+    [[0, 0, 5, 5]]
+    >>> clip_boxes([[0, 0, 5, 5], [5, 5, 7, 7]], 10, 10, 14, 14)
+    []
+
+    """
+    clipped_boxes = []
+    for box in boxes:
+        xmin, ymin, xmax, ymax = box
+        if xmax < x_start or xmin > x_end or ymax < y_start or ymin > y_end:
+            continue
+        clipped_boxes.append(box)
+    return clipped_boxes
+
+
+def get_tile_and_target(
+    image, moles, tile_index, tile_handler, image_transform
+):
+    (
+        y_start,
+        y_end,
+        x_start,
+        x_end,
+    ) = tile_handler.tile(tile_index)
+
+    tile = image[y_start:y_end, x_start:x_end, :]
+    tile = image_transform(tile)
+
+    fr = 10
+    boxes = [
+        [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
+    ]
+
+    boxes = clip_boxes(boxes, x_start, y_start, x_end, y_end)
+    boxes = [
+        [
+            box[0] - x_start,
+            box[1] - y_start,
+            box[2] - x_start,
+            box[3] - y_start,
+        ]
+        for box in boxes
+    ]
+
+    target = {
+        "labels": torch.ones((len(boxes),), dtype=torch.int64),
+        "boxes": torch.tensor(boxes, dtype=torch.float32)
+        if boxes
+        else torch.zeros((0, 4), dtype=torch.float32),
+    }
+    return tile, target
+
+
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         self.image_paths = image_paths
@@ -171,28 +377,75 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
                 #                     std=[0.229, 0.224, 0.225])
             ]
         )
+        self._image_shape = load_image(self.image_paths[0]).shape
+        self._th = TileHandler(self._image_shape[:2])
+        self.valid_tile_indices = self._get_valid_tile_indices()
+
+    def _mole_within_tile(self, mole, tile_index, tile_handler):
+        fr = 10
+        m = mole
+        x1, y1, x2, y2 = [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr]
+        x_center = (x1 + x2) / 2
+        y_center = (y1 + y2) / 2
+
+        (
+            tile_y_start,
+            tile_y_end,
+            tile_x_start,
+            tile_x_end,
+        ) = tile_handler.tile(tile_index)
+
+        return (
+            tile_x_start <= x_center <= tile_x_end
+            and tile_y_start <= y_center <= tile_y_end
+        )
+
+    def _get_valid_tile_indices(self):
+        valid_tile_indices = []
+        for image_index, path in enumerate(self.image_paths):
+            moles = mel.rotomap.moles.load_image_moles(path)
+            for tile_index in range(self._th.num_tiles):
+                if any(
+                    self._mole_within_tile(mole, tile_index, self._th)
+                    for mole in moles
+                ):
+                    valid_tile_indices.append((image_index, tile_index))
+        return valid_tile_indices
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.valid_tile_indices)
 
     def __getitem__(self, index):
-        path = self.image_paths[index]
+        image_index, tile_index = self.valid_tile_indices[index]
+
+        path = self.image_paths[image_index]
 
         image = load_image(path)
-        image = self.image_transform(image)
+        if image.shape != self._image_shape:
+            raise ValueError(
+                "Image shape doesn't match first seen.",
+                path,
+                image.shape,
+                self._image_shape,
+            )
+
+        (
+            y_start,
+            y_end,
+            x_start,
+            x_end,
+        ) = self._th.tile(tile_index)
+
+        tile = image[y_start:y_end, x_start:x_end, :]
+        tile = self.image_transform(tile)
 
         moles = mel.rotomap.moles.load_image_moles(path)
         if not moles:
             raise ValueError("Mole list must not be empty.")
-        fr = 10
-        boxes = [
-            [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
-        ]
 
-        target = {}
-        target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
-        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
-        return image, target
+        return get_tile_and_target(
+            image, moles, tile_index, self._th, self.image_transform
+        )
 
 
 # This is useful for debugging sometimes.
