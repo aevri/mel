@@ -264,12 +264,14 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect):
 def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     """Return a selection object for an image as specified by positions.
 
-    Note that the bottom right point will not be included in the
-    selection.
+    Note that the bottom right point will not be included in the selection.
 
-    :top_left_inclusive: a numpy.array of (top, left) co-ordinates
-    :bottom_right_exclusive: a numpy.array of (bottom, right) co-ordinates
-    :returns: A tuple (rows, columns) slices as a selection object
+    Args:
+        top_left_inclusive (numpy.ndarray): A NumPy array of (top, left) coordinates.
+        bottom_right_exclusive (numpy.ndarray): A NumPy array of (bottom, right) coordinates.
+
+    Returns:
+        tuple: A tuple (rows, columns) slices as a selection object.
     """
     return (
         slice(top_left_inclusive[1], bottom_right_exclusive[1]),
@@ -280,10 +282,13 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
 def slice_square_or_none(image, lefttop, rightbottom):
     """Return a slice of the supplied image or None.
 
-    :image: a NumPy array representing an OpenCV image, stored in yx order.
-    :lefttop: a NumPy array of xy co-ordinates, the inclusive top-left.
-    :rightbottom: a NumPy array of xy co-ordinates, the exclusive bottom-right.
-    :returns: a NumPy array representing an OpenCV image, stored in yx order.
+    Args:
+        image (numpy.ndarray): A NumPy array representing an OpenCV image, stored in yx order.
+        lefttop (numpy.ndarray): A NumPy array of xy coordinates, the inclusive top-left.
+        rightbottom (numpy.ndarray): A NumPy array of xy coordinates, the exclusive bottom-right.
+
+    Returns:
+        numpy.ndarray or None: A NumPy array representing an OpenCV image, stored in yx order.
     """
     height_width = image.shape[:2]
     width_height = (height_width[1], height_width[0])
@@ -307,13 +312,15 @@ def slice_square_or_none(image, lefttop, rightbottom):
 def recentered_at(image, x, y):
     """Return a new image, centered at new position on a black background.
 
-    Where new content needs to be shifted into the image, it will appear
-    black.
+    Where new content needs to be shifted into the image, it will appear black.
 
-    :image: An OpenCV image.
-    :x: The horizontal co-ordinate to put at the centre of the new image.
-    :y: The vertical co-ordinate to put at the centre of the new image.
-    :returns: A new OpenCV image.
+    Args:
+        image (numpy.ndarray): An OpenCV image.
+        x (int): The horizontal coordinate to put at the center of the new image.
+        y (int): The vertical coordinate to put at the center of the new image.
+
+    Returns:
+        numpy.ndarray: A new OpenCV image.
     """
     return centered_at(image, numpy.array((x, y)), get_image_rect(image))
 
@@ -330,12 +337,14 @@ def get_image_rect(image):
 def rotated(image, degrees):
     """Return a new image, rotated by specified amount, on a black background.
 
-    Where new content needs to be shifted into the image, it will appear
-    black.
+    Where new content needs to be shifted into the image, it will appear black.
 
-    :image: An OpenCV image.
-    :degrees: The degrees of the rotation about the centre.
-    :returns: A new OpenCV image.
+    Args:
+        image (numpy.ndarray): An OpenCV image.
+        degrees (float): The degrees of the rotation about the centre.
+
+    Returns:
+        numpy.ndarray: A new OpenCV image.
     """
     height, width = image.shape[0:2]
 

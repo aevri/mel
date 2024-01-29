@@ -99,8 +99,11 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
 def make_composite_overlay(*overlays):
     """Return an overlay, which will composite the supplied overlays in turn.
 
-    :*overlays: The overlay callables to composite.
-    :returns: A function which will composite *overlays and return the image.
+    Args:
+        *overlays: The overlay callables to composite.
+
+    Returns:
+        A function which will composite *overlays and return the image.
     """
 
     def do_overlay(image, transform):
