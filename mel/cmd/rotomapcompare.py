@@ -18,6 +18,8 @@ Controls:
     'j' to rotate left on the left slot.
     'k' to rotate right on the left slot.
 
+    'm' to toggle displaying mole markers.
+
     'q' to quit.
 """
 
@@ -205,6 +207,8 @@ def _make_on_keydown(
             display.adjust_rotation(2)
         elif key == pygame.K_k:
             display.adjust_rotation(-2)
+        elif key == pygame.K_m:
+            display.toggle_mole_display()
 
     return on_keydown
 
@@ -239,6 +243,7 @@ class ImageCompareDisplay:
         self._logger = logger
         self._image_path = None
         self._uuid = None
+        self._draw_moles = False
         self._should_draw_crosshairs = True
         self._display = screen
         self._melroot = mel.lib.fs.find_melroot()
@@ -321,6 +326,10 @@ class ImageCompareDisplay:
         self._should_draw_crosshairs = not self._should_draw_crosshairs
         self._show()
 
+    def toggle_mole_display(self):
+        self._draw_moles = not self._draw_moles
+        self._show()
+
     def indicate_changed(self, should_indicate_changed=True):
         self._should_indicate_changed = should_indicate_changed
         self._show()
@@ -401,12 +410,12 @@ class ImageCompareDisplay:
 
         self._show()
 
-    def _path_pos_zoom_rotation(self, index):
+    def _path_pos_zoom_rotation_moles(self, index):
         image_index = self._rotomap_cursors[index]
         posinfo = self._rotomaps[index][image_index]
         zoom = self._zooms[index]
         rotation = self._rotations[index]
-        return posinfo.path, posinfo.pos, zoom, rotation
+        return posinfo.path, posinfo.pos, zoom, rotation, posinfo.uuid_points
 
     def _show(self):
         image_width = self._display.width // 2
@@ -421,14 +430,17 @@ class ImageCompareDisplay:
 
         images = [
             captioned_mole_image(
-                *self._path_pos_zoom_rotation(i),
+                *self._path_pos_zoom_rotation_moles(i),
                 image_size,
                 self._should_draw_crosshairs,
                 border_colour,
+                self._draw_moles,
             )
             for i in self._indices
         ]
-        self._image_path = self._path_pos_zoom_rotation(self._indices[-1])[0]
+        self._image_path = self._path_pos_zoom_rotation_moles(
+            self._indices[-1]
+        )[0]
         montage = mel.lib.image.montage_horizontal(10, *images)
         self._display.show_opencv_image(montage)
 
@@ -438,12 +450,19 @@ def captioned_mole_image(
     pos,
     zoom,
     rotation_degs,
+    uuid_points,
     size,
     should_draw_crosshairs,
     border_colour=None,
+    draw_moles=False,
 ):
+    points = None
+    if draw_moles:
+        if uuid_points is not None:
+            points = tuple(tuple(p) for p in uuid_points.values())
+
     image, caption_shape = _cached_captioned_mole_image(
-        str(path), tuple(pos), zoom, tuple(size), rotation_degs
+        str(path), tuple(pos), zoom, tuple(size), rotation_degs, points
     )
 
     if should_draw_crosshairs:
@@ -461,9 +480,17 @@ def captioned_mole_image(
 
 
 @functools.lru_cache()
-def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs):
+def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
     image = mel.lib.image.load_image(path)
     image = mel.lib.image.scale_image(image, zoom)
+    colors = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
+    if points is not None:
+        for x, y in points:
+            x *= zoom
+            x = int(x)
+            y *= zoom
+            y = int(y)
+            mel.rotomap.display.draw_mole(image, x, y, colors)
     pos = tuple(int(v * zoom) for v in pos)
     size = numpy.array(size)
     max_size = 2 * max(size)
