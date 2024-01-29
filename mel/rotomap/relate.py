@@ -144,9 +144,12 @@ def best_offset_field_theory(from_moles, to_moles):
 def offset_theory_points(from_moles, to_moles):
     """Return (from_points, to_points, point_offsets, theory) from input.
 
-    :from_moles: a list of mole dicts to map from
-    :to_moles: a list of mole dicts to map to
-    :returns: (from_uuid_points, to_uuid_points, point_offsets)
+    Args:
+        from_moles (list): A list of mole dicts to map from.
+        to_moles (list): A list of mole dicts to map to.
+
+    Returns:
+        tuple: A tuple containing the from_uuid_points, to_uuid_points, point_offsets.
     """
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
         from_moles, to_moles
@@ -177,10 +180,13 @@ def mole_list_overlap_info(from_moles, to_moles):
 def guess_mole_pos(from_uuid, from_moles, to_moles):
     """Return a numpy.array position guessing the location of uuid_, or None.
 
-    :from_uuid: string uuid of the mole to guess the position of in to_moles.
-    :from_moles: a list of mole dicts to map from.
-    :to_moles: a list of mole dicts to map to.
-    :returns: a numpy.array of the guessed position, or None if no guess.
+    Args:
+        from_uuid (str): The UUID of the mole to guess the position of in to_moles.
+        from_moles (list): A list of mole dicts to map from.
+        to_moles (list): A list of mole dicts to map to.
+
+    Returns:
+        numpy.array or None: A numpy.array of the guessed position, or None if no guess.
     """
     from_points, to_points, point_offsets, _ = offset_theory_points(
         from_moles, to_moles
