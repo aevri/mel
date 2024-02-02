@@ -1,6 +1,5 @@
 """Mel - a command-line utility to help with mole management."""
 
-
 import argparse
 import sys
 

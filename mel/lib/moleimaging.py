@@ -1,6 +1,5 @@
 """Routines for analysing images of moles."""
 
-
 import math
 
 import cv2

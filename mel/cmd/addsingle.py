@@ -1,6 +1,5 @@
 """A tool for adding a single mole from photographs."""
 
-
 import cv2
 
 import mel.lib.common

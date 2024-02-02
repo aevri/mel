@@ -1,6 +1,5 @@
 """Show a live view through an attached microscope."""
 
-
 import cv2
 
 import mel.lib.moleimaging
