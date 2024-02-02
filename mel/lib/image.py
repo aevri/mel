@@ -1,6 +1,5 @@
 """Image processing routines."""
 
-
 import cv2
 import numpy
 

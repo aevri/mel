@@ -1,6 +1,5 @@
 """Work with a collection of moles."""
 
-
 import argparse
 import json
 import math

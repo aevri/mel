@@ -1,6 +1,5 @@
 """Provide a full-screen UI."""
 
-
 import contextlib
 
 import cv2

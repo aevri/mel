@@ -1,6 +1,5 @@
 """Pick colours for moles, based on a tricolour scheme."""
 
-
 # "9 class set1" from http://colorbrewer2.org/
 # This set seems to be the most colour-blind friendly for 9 colours
 _NINE_CLASS_SET1 = [

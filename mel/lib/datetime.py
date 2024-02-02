@@ -1,6 +1,5 @@
 """Utilities for working with datetime."""
 
-
 import datetime
 import os
 

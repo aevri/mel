@@ -1,6 +1,5 @@
 """List the uuids of moles in supplied files."""
 
-
 import argparse
 import json
 

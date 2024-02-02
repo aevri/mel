@@ -1,6 +1,5 @@
 """List the uuids of moles that match a prefix, from a list of json files."""
 
-
 import argparse
 import json
 

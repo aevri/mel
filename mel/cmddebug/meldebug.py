@@ -1,6 +1,5 @@
 """Mel Debug - for debugging the internals of the 'mel' command."""
 
-
 import argparse
 import sys
 
