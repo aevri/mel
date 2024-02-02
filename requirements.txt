@@ -1,4 +1,4 @@
-black==23.3.0
+black==24.1.1
 colorama==0.4.6
 docformatter==1.7.5
 isort==5.13.2
