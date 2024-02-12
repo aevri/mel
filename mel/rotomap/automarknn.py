@@ -109,6 +109,7 @@ class PlModule(pl.LightningModule):
 
     def training_step(self, batch, _batch_idx):
         x, y = batch
+        self.model.train()  # Oddly this seemst to be necessary.
         assert self.model.training
         loss_dict = self.model(x, y)
         if not isinstance(loss_dict, dict):
