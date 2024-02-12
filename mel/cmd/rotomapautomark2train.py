@@ -44,6 +44,9 @@ def setup_parser(parser):
         action="store_true",
         help="No training, just calc validation score.",
     )
+    parser.add_argument(
+        "--min-session", help="e.g. '2020_' to exclude anything pre-2020."
+    )
 
 
 def process_args(args):
@@ -91,7 +94,9 @@ def process_args(args):
         valid_images,
         train_sessions,
         valid_sessions,
-    ) = mel.rotomap.automarknn.list_train_valid_images()
+    ) = mel.rotomap.automarknn.list_train_valid_images(
+        min_session=args.min_session
+    )
     train_images = mel.rotomap.automarknn.drop_paths_without_moles(
         train_images
     )

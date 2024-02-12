@@ -202,7 +202,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
 #     return image
 
 
-def list_train_valid_images():
+def list_train_valid_images(min_session=None):
     melroot = mel.lib.fs.find_melroot()
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
     exclude_parts = [
@@ -216,7 +216,9 @@ def list_train_valid_images():
     session_images = mel.lib.fs.list_rotomap_images_by_session(
         parts_path, exclude_parts=exclude_parts
     )
-    sessions = [s for s in sorted(session_images.keys()) if s > "2020_"]
+    sessions = sorted(session_images.keys())
+    if min_session:
+        sessions = [s for s in sessions if s > min_session]
     train_sessions = sessions[:-1]
     valid_sessions = sessions[-1:]
     train_images = [
