@@ -42,7 +42,7 @@ def setup_parser(parser):
     parser.add_argument(
         "--just-validate",
         action="store_true",
-        help="Learning rate, choose carefully.",
+        help="No training, just calc validation score.",
     )
 
 
