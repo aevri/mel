@@ -74,6 +74,9 @@ def test_smoke():
         expect_ok(
             "mel", "rotomap", "filter-marks-train", "--train-proportion", "1"
         )
+        expect_ok(
+            "mel", "rotomap", "automark2-train", "-e", "1", "-b", "1", "--limit-train-batches", "1", "--limit-valid-batches", "1", "--no-post-validate"
+        )
 
         for json_file in target_json_files:
             json_file.rename(json_file.with_suffix(".json.bak"))
