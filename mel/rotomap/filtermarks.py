@@ -43,7 +43,7 @@ def get_model_weights_version():
     import torchvision
 
     model_url = (
-        torchvision.models.efficientnet.EfficientNet_B0_Weights.DEFAULT.url
+        torchvision.models.efficientnet.EfficientNet_B0_Weights.IMAGENET1K_V1.url
     )
     weights_version = model_url.split("/")[-1]
     return weights_version
@@ -58,7 +58,9 @@ def make_model_and_transform():
     # we only pay the import cost when we use it.
     import torchvision
 
-    model = torchvision.models.efficientnet_b0(pretrained=True)
+    model = torchvision.models.efficientnet_b0(
+        weights=torchvision.models.EfficientNet_B0_Weights.IMAGENET1K_V1
+    )
     model.eval()
     num_features = 1280
     transform = torchvision.transforms.Compose(
