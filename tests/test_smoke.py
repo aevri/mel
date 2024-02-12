@@ -68,14 +68,21 @@ def test_smoke():
         target_json_files = list(target_rotomap_2.glob("*.jpg.json"))
 
         expect_ok("mel", "rotomap", "automask", *target_image_files)
+        expect_ok("mel", "rotomap", "filter-marks-pretrain", *target_image_files)
+        expect_ok("mel", "rotomap", "filter-marks-train", "--train-proportion", "1")
         expect_ok(
-            "mel", "rotomap", "filter-marks-pretrain", *target_image_files
-        )
-        expect_ok(
-            "mel", "rotomap", "filter-marks-train", "--train-proportion", "1"
-        )
-        expect_ok(
-            "mel", "rotomap", "automark2-train", "-e", "1", "-b", "1", "--limit-train-batches", "1", "--limit-valid-batches", "1", "--no-post-validate"
+            "mel",
+            "rotomap",
+            "automark2-train",
+            "-e",
+            "1",
+            "-b",
+            "1",
+            "--limit-train-batches",
+            "1",
+            "--limit-valid-batches",
+            "1",
+            "--no-post-validate",
         )
 
         for json_file in target_json_files:
@@ -90,12 +97,7 @@ def test_smoke():
             json_file.with_suffix(".json.bak").rename(json_file)
 
         expect_ok(
-            "mel",
-            "rotomap",
-            "automark",
-            "--extra-stem",
-            "smoke",
-            *target_image_files
+            "mel", "rotomap", "automark", "--extra-stem", "smoke", *target_image_files
         )
         expect_ok(
             "mel",
@@ -105,27 +107,10 @@ def test_smoke():
             "smoke",
             *target_image_files
         )
+        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
+        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
         expect_ok(
-            "mel",
-            "rotomap",
-            "compare-extra-stem",
-            "smoke",
-            *target_image_files
-        )
-        expect_ok(
-            "mel",
-            "rotomap",
-            "compare-extra-stem",
-            "smoke",
-            *target_image_files
-        )
-        expect_ok(
-            "mel",
-            "rotomap",
-            "identify",
-            "--extra-stem",
-            "smoke",
-            *target_image_files
+            "mel", "rotomap", "identify", "--extra-stem", "smoke", *target_image_files
         )
         expect_ok(
             "mel",
@@ -135,9 +120,7 @@ def test_smoke():
             "smoke",
             *target_image_files
         )
-        expect_ok(
-            "mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files
-        )
+        expect_ok("mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files)
         expect_ok("mel", "rotomap", "identify-train", "--extra-stem", "smoke")
 
         expect_ok("mel", "rotomap", "confirm", *target_json_files)
