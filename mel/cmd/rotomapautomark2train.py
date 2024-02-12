@@ -13,6 +13,18 @@ def setup_parser(parser):
         help="Number of epochs to train for.",
     )
     parser.add_argument(
+        "--limit-train-batches",
+        type=int,
+        default=None,
+        help="Limit the number of training batches, useful for debugging.",
+    )
+    parser.add_argument(
+        "--limit-valid-batches",
+        type=int,
+        default=None,
+        help="Limit the number of validation batches, useful for debugging.",
+    )
+    parser.add_argument(
         "--wandb",
         nargs=2,
         metavar=("project", "run_name"),
@@ -43,6 +55,11 @@ def setup_parser(parser):
         "--just-validate",
         action="store_true",
         help="No training, just calc validation score.",
+    )
+    parser.add_argument(
+        "--no-post-validate",
+        action="store_true",
+        help="No full validation at the end, useful for debugging.",
     )
     parser.add_argument(
         "--min-session", help="e.g. '2020_' to exclude anything pre-2020."
@@ -141,9 +158,9 @@ def process_args(args):
         # "accumulate_grad_batches": args.accumulate_grad_batches,
         "max_epochs": args.epochs,
         # "max_epochs": 1,
-        # "limit_train_batches": 10,
-        "limit_val_batches": 10,
-        "val_check_interval": 50,
+        "limit_train_batches": args.limit_train_batches,
+        "limit_val_batches": args.limit_valid_batches,
+        "val_check_interval": 50 if len(train_loader) > 50 else None,
         # "auto_lr_find": True,
     }
 
@@ -169,15 +186,16 @@ def process_args(args):
         torch.save(model.model.state_dict(), model_path)
         print(f"Saved {model_path}")
 
-    pl.Trainer(accelerator="auto").validate(
-        model,
-        torch.utils.data.DataLoader(
-            valid_dataset,
-            batch_size=args.batch_size,
-            collate_fn=mel.rotomap.automarknn.collate_fn,
-            num_workers=args.num_workers,
-        ),
-    )
+    if not args.no_post_validate:
+        pl.Trainer(accelerator="auto").validate(
+            model,
+            torch.utils.data.DataLoader(
+                valid_dataset,
+                batch_size=args.batch_size,
+                collate_fn=mel.rotomap.automarknn.collate_fn,
+                num_workers=args.num_workers,
+            ),
+        )
 
     if args.wandb:
         import wandb
