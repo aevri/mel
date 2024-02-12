@@ -1,4 +1,14 @@
-"""Generate a mel repo for developing and testing."""
+"""Generate a mel repo for developing and testing.
+
+---
+
+For example, testing some commands:
+
+    $ mel-debug gen-repo testrepo
+    $ mel roto automask testrepo/rotomaps/parts/*/*/*/*.jpg
+    $ mel roto calc-space testrepo/rotomaps/parts/*/°/*/*.jpg
+
+"""
 
 import pathlib
 import random
