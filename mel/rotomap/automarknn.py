@@ -1,7 +1,5 @@
 """Automatically mark moles on rotomap images."""
 
-import pathlib
-
 import cv2
 import numpy as np
 import pytorch_lightning as pl
@@ -205,9 +203,8 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
 
 
 def list_train_valid_images():
-    parts_path = pathlib.Path(
-        "~/angelos_mel/angelos_mel/rotomaps/parts"
-    ).expanduser()
+    melroot = mel.lib.fs.find_melroot()
+    parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
     exclude_parts = [
         "LeftArm/Hand",
         "RightArm/Hand",
