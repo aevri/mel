@@ -189,11 +189,18 @@ class ZoomableMixin:
     def __init__(self):
         self._transform = None
         self._zoom_pos = None
+        self._zoom_virt_pos = None
         self._is_zoomed = False
         self._zoom_level = 1
 
     def zoomable_transform_update(self, image, window_rect):
         if self._is_zoomed:
+            if self._zoom_pos is None:
+                raise Exception("Zoomed, but no zoom position set.")
+            if self._zoom_virt_pos is None:
+                self._zoom_virt_pos = self._zoom_pos / image.shape[:2]
+            else:
+                self._zoom_pos = self._zoom_virt_pos * image.shape[:2]
             self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
                 image, self._zoom_pos, window_rect, scale=self._zoom_level
             )
@@ -213,6 +220,7 @@ class ZoomableMixin:
 
     def set_zoomed(self, x, y, zoom_level=None):
         self._zoom_pos = numpy.array((x, y))
+        self._zoom_virt_pos = None
         self._is_zoomed = True
         if zoom_level is not None:
             self._zoom_level = zoom_level
