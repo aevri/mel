@@ -11,7 +11,6 @@ pygame==2.5.2
 pylint==3.0.3
 pytest==8.0.1
 pytorch-lightning==2.2.0.post0
-torch==2.2.0
 torchvision==0.17.0
 tqdm==4.66.2
 vulture==2.11
