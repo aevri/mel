@@ -470,6 +470,10 @@ def check_rotomap_list(notices, rotomap_list):
         newest.path, mel.rotomap.moles.IGNORE_MISSING_FILENAME
     )
 
+    ignore_missing |= mel.rotomap.moles.load_potential_set_file(
+        newest.path, mel.rotomap.moles.IGNORE_MISSING_CARRYFORWARD_FILENAME
+    )
+
     diff = mel.rotomap.moles.MoleListDiff(
         old_uuids, new_uuids, ignore_new, ignore_missing
     )
