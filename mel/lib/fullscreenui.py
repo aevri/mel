@@ -190,6 +190,7 @@ class ZoomableMixin:
         self._transform = None
         self._zoom_pos = None
         self._zoom_virt_pos = None
+        self._zoom_orig_shape = None
         self._is_zoomed = False
         self._zoom_level = 1
 
@@ -201,8 +202,20 @@ class ZoomableMixin:
                 self._zoom_virt_pos = self._zoom_pos / image.shape[:2]
             else:
                 self._zoom_pos = self._zoom_virt_pos * image.shape[:2]
+            if self._zoom_orig_shape is None:
+                self._zoom_orig_shape = image.shape[:2]
+            zoom_scale = (
+                sum(
+                    [
+                        self._zoom_orig_shape[0] / image.shape[0],
+                        self._zoom_orig_shape[1] / image.shape[1],
+                    ]
+                )
+                / 2
+            )
+            zoom_level = self._zoom_level * zoom_scale
             self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
-                image, self._zoom_pos, window_rect, scale=self._zoom_level
+                image, self._zoom_pos, window_rect, scale=zoom_level
             )
         else:
             self._transform = mel.lib.fullscreenui.FittedImageTransform(
@@ -214,6 +227,7 @@ class ZoomableMixin:
 
     def set_fitted(self):
         self._is_zoomed = False
+        self._zoom_orig_shape = None
 
     def set_zoom_level(self, zoom_level=1):
         self._zoom_level = zoom_level
