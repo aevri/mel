@@ -16,6 +16,7 @@ Mode selection:
     Press '2' for mask edit mode.
     Press '3' for bounding area mode.
     Press '4' for mole marking mode.
+    Press '5' for mole compare boundary mode.
     Press '0' for auto-mole debug mode.
 
 In 'mole edit' mode:
@@ -409,6 +410,41 @@ class MoleMarkController:
             editor.show_current()
 
 
+class MoleCompareBoundaryController:
+    def __init__(self):
+        pass
+
+    def on_mouse_event(self, editor, event):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if event.type != pygame.MOUSEBUTTONDOWN:
+            return
+
+        key_mods = pygame.key.get_mods()
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        if event.button == 1:
+            if key_mods & pygame.KMOD_SHIFT:
+                editor.remove_mole(mouse_x, mouse_y)
+            else:
+                editor.add_mole(mouse_x, mouse_y)
+
+    def pre_key(self, editor, key):
+        pass
+
+    def on_key(self, editor, key):
+        # Import pygame as late as possible, to avoid displaying its
+        # startup-text where it is not actually used.
+        import pygame
+
+        if key == pygame.K_a:
+            is_alt = editor.marked_mole_overlay.is_accentuate_marked_mode
+            editor.marked_mole_overlay.is_accentuate_marked_mode = not is_alt
+            editor.show_current()
+
+
 class BoundingAreaController:
     def __init__(self):
         pass
@@ -468,6 +504,7 @@ class Controller:
         )
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
+        self.molecompareboundary_controller = MoleCompareBoundaryController()
         self.boundingarea_controller = BoundingAreaController()
         self.automoledebug_controller = AutomoleDebugController()
         self.current_controller = self.moleedit_controller
@@ -546,6 +583,11 @@ class Controller:
             self.current_controller = self.molemark_controller
             self._logger.reset(mode="molemark")
             editor.set_molemark_mode()
+        elif key == pygame.K_5:
+            # Switch to mole compare boundary mode
+            self.current_controller = self.molecompareboundary_controller
+            self._logger.reset(mode="molecompareboundary")
+            editor.set_molecompareboundary_mode()
         elif key == pygame.K_b:
             # Go back in the visit list
             if self._visit_list:
