@@ -265,6 +265,36 @@ class MarkedMoleOverlay:
         return image
 
 
+class MoleCompareBoundaryOverlay:
+    """An overlay to show how much context a rotomap compare window will
+    show."""
+
+    def __init__(self):
+        self.moles = None
+
+    def __call__(self, image, transform):
+        return self._draw(image, transform)
+
+    def _draw(self, image, transform):
+        # Reveal the moles that have been marked, whilst still showing
+        # markers. This is good for verifying that markers are actually
+        # positioned on moles.
+
+        mask_radius = 50
+
+        image = image.copy() // 2
+        mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
+
+        for mole in self.moles:
+            x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
+            cv2.circle(mask, (x, y), mask_radius, 255, -1)
+
+        masked_faded = cv2.bitwise_and(image, image, mask=mask)
+        image = cv2.add(masked_faded, image)
+
+        return image
+
+
 class BoundingAreaOverlay:
     """An overlay to show the bounding area, if any."""
 
@@ -312,6 +342,7 @@ class EditorMode(enum.Enum):
     edit_mask = 2
     bounding_area = 3
     mole_mark = 4
+    mole_compare_boundary = 5
     debug_automole = 0
 
 
@@ -328,6 +359,7 @@ class Editor:
         self._follow = None
         self._mole_overlay = MoleMarkerOverlay(self._uuid_to_tricolour)
         self.marked_mole_overlay = MarkedMoleOverlay()
+        self.mole_compare_boundary_overlay = MoleCompareBoundaryOverlay()
         self.bounding_area_overlay = BoundingAreaOverlay()
         self._status_overlay = StatusOverlay()
         self.show_current()
@@ -361,6 +393,10 @@ class Editor:
 
     def set_molemark_mode(self):
         self._mode = EditorMode.mole_mark
+        self.show_current()
+
+    def set_molecompareboundary_mode(self):
+        self._mode = EditorMode.mole_compare_boundary
         self.show_current()
 
     def set_status(self, text):
@@ -471,6 +507,11 @@ class Editor:
         elif self._mode is EditorMode.mole_mark:
             self.marked_mole_overlay.moles = self.moledata.moles
             self.display.show_current(image, self.marked_mole_overlay)
+        elif self._mode is EditorMode.mole_compare_boundary:
+            self.mole_compare_boundary_overlay.moles = self.moledata.moles
+            self.display.show_current(
+                image, self.mole_compare_boundary_overlay
+            )
         else:
             raise Exception("Unknown mode", self._mode)
 
