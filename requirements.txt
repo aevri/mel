@@ -10,7 +10,7 @@ pyflakes==3.2.0
 pygame==2.5.2
 pylint==3.1.0
 pytest==8.2.0
-pytorch-lightning==2.2.3
+pytorch-lightning==2.2.4
 torchvision==0.18.0
 tqdm==4.66.2
 vulture==2.11
