@@ -14,4 +14,4 @@ pytorch-lightning==2.2.4
 torchvision==0.18.0
 tqdm==4.66.4
 vulture==2.11
-wandb==0.16.6
+wandb==0.17.0
