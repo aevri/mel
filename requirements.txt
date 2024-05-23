@@ -9,7 +9,7 @@ pycodestyle==2.11.1
 pyflakes==3.2.0
 pygame==2.5.2
 pylint==3.1.1
-pytest==8.2.0
+pytest==8.2.1
 pytorch-lightning==2.2.5
 torchvision==0.18.0
 tqdm==4.66.4
