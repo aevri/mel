@@ -139,29 +139,29 @@ def xval(v):
     """
     assert is_vec3(v)
     assert v.shape[0] == 1
-    return v[0, 0]
+    return int(v[0, 0])  # Convert np.int64 to plain Python int
 
 
 def yval(v):
-    """Return the scalar x value of a single vector.
+    """Return the scalar y value of a single vector.
 
     >>> yval(make(1, 2, 3))
     2
     """
     assert is_vec3(v)
     assert v.shape[0] == 1
-    return v[0, 1]
+    return int(v[0, 1])  # Convert np.int64 to plain Python int
 
 
 def zval(v):
-    """Return the scalar x value of a single vector.
+    """Return the scalar z value of a single vector.
 
     >>> zval(make(1, 2, 3))
     3
     """
     assert is_vec3(v)
     assert v.shape[0] == 1
-    return v[0, 2]
+    return int(v[0, 2])  # Convert np.int64 to plain Python int
 
 
 def make_from_columns(x_array, y_array, z_array):
