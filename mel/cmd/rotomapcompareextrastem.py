@@ -67,24 +67,24 @@ def process_args(args):
             total_matched += len(match_uuids)
             total_missing += len(_missing_uuids)
             total_added += len(added_uuids)
-        print("matched:", total_matched)
-        print("missing:", total_missing)
-        print("added:", total_added)
+    print("matched:", total_matched)
+    print("missing:", total_missing)
+    print("added:", total_added)
 
-        # Calculate recall
-        if total_matched + total_missing == 0:
-            recall = "N/A (no relevant items)"
-        else:
-            recall = f"{total_matched / (total_matched + total_missing):.0%}"
+    # Calculate recall
+    if total_matched + total_missing == 0:
+        recall = "N/A (no relevant items)"
+    else:
+        recall = f"{total_matched / (total_matched + total_missing):.0%}"
         
-        # Calculate precision
-        if total_matched + total_added == 0:
-            precision = "N/A (no retrieved items)"
-        else:
-            precision = f"{total_matched / (total_matched + total_added):.0%}"
+    # Calculate precision
+    if total_matched + total_added == 0:
+        precision = "N/A (no retrieved items)"
+    else:
+        precision = f"{total_matched / (total_matched + total_added):.0%}"
         
-        print(f"Recall: {recall}")
-        print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Precision: {precision}")
 
 
 # -----------------------------------------------------------------------------
