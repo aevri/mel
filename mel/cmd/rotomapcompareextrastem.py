@@ -76,13 +76,13 @@ def process_args(args):
         recall = "N/A (no relevant items)"
     else:
         recall = f"{total_matched / (total_matched + total_missing):.0%}"
-        
+
     # Calculate precision
     if total_matched + total_added == 0:
         precision = "N/A (no retrieved items)"
     else:
         precision = f"{total_matched / (total_matched + total_added):.0%}"
-        
+
     print(f"Recall: {recall}")
     print(f"Precision: {precision}")
 
