@@ -215,7 +215,9 @@ def process_path(
         display.new_row()
 
     if comparison_image_data:
-        display.add_image(comparison_image)
+        display.add_image(
+            comparison_image  # pylint: disable=possibly-used-before-assignment
+        )
 
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
