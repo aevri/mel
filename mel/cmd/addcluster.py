@@ -63,15 +63,15 @@ def process_args(args):
     mel.lib.common.connect_moles(cluster_detail_image, detail_mole_pos)
 
     # Combine context image with cluster detail image to make montage
-    cluster_monatage_image = mel.lib.image.montage_horizontal(
+    cluster_montage_image = mel.lib.image.montage_horizontal(
         50, context_image, cluster_detail_image
     )
-    cluster_monatage_image = mel.lib.common.shrink_to_max_dimension(
-        cluster_monatage_image, montage_size
+    cluster_montage_image = mel.lib.common.shrink_to_max_dimension(
+        cluster_montage_image, montage_size
     )
 
     # Let user review montage
-    mel.lib.common.user_review_image(window_name, cluster_monatage_image)
+    mel.lib.common.user_review_image(window_name, cluster_montage_image)
 
     # Point to moles on individual detail images
     mole_images = []
@@ -95,7 +95,7 @@ def process_args(args):
     mel.lib.common.overwrite_image(
         args.destination,
         mel.lib.common.determine_filename_for_ident(args.context, args.detail),
-        cluster_monatage_image,
+        cluster_montage_image,
     )
     for index, mole in enumerate(args.moles):
         mole_dir = os.path.join(args.destination, mole)
