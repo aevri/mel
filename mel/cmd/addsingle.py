@@ -49,15 +49,15 @@ def process_args(args):
     mel.lib.common.indicate_mole(detail_image, detail_mole_pos[0])
 
     # Combine context image with detail image to make montage
-    monatage_image = mel.lib.image.montage_horizontal(
+    montage_image = mel.lib.image.montage_horizontal(
         50, context_image, detail_image
     )
-    monatage_image = mel.lib.common.shrink_to_max_dimension(
-        monatage_image, montage_size
+    montage_image = mel.lib.common.shrink_to_max_dimension(
+        montage_image, montage_size
     )
 
     # Let user review montage
-    mel.lib.common.user_review_image(window_name, monatage_image)
+    mel.lib.common.user_review_image(window_name, montage_image)
 
     # No more interaction, close all windows
     cv2.destroyAllWindows()
@@ -66,7 +66,7 @@ def process_args(args):
     mel.lib.common.overwrite_image(
         args.destination,
         mel.lib.common.determine_filename_for_ident(args.context, args.detail),
-        monatage_image,
+        montage_image,
     )
 
     # TODO: optionally remove the original images
