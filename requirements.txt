@@ -13,5 +13,5 @@ pytest==8.3.3
 pytorch-lightning==2.4.0
 torchvision==0.19.1
 tqdm==4.66.5
-vulture==2.11
+vulture==2.12
 wandb==0.18.1
