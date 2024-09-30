@@ -7,7 +7,7 @@ opencv-python==4.10.0.84
 pandas==2.2.3
 pycodestyle==2.12.1
 pyflakes==3.2.0
-pygame==2.6.0
+pygame==2.6.1
 pylint==3.3.1
 pytest==8.3.3
 pytorch-lightning==2.4.0
