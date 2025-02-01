@@ -34,6 +34,7 @@ import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
 import mel.cmd.status
 import mel.cmd.timelog
+import mel.cmd.rotoexport  # new import for the export command
 
 COMMANDS = {
     "root": {
@@ -71,6 +72,7 @@ COMMANDS = {
         "organise": mel.cmd.rotomaporganise,
         "rm": mel.cmd.rotomaprm,
         "uuid": mel.cmd.rotomapuuid,
+        "export": mel.cmd.rotoexport  # new export command
     },
 }
 
