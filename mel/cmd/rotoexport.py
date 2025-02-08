@@ -43,11 +43,11 @@ def draw_grid(image):
     import string
 
     height, width, _ = image.shape
-    markers = 5  # number of ticks along each margin
+    markers = 20  # number of ticks along each margin
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 2.8
-    thickness = 20
-    tick_length = 50  # length of tick marks
+    font_scale = 2.8 / 2
+    thickness = 20 // 2
+    tick_length = 50 // 2  # length of tick marks
 
     # Top margin: compute tick positions
     tick_top = int(15 * font_scale)
@@ -136,6 +136,10 @@ def draw_grid(image):
 
 def process_args(args):
     image = load_image(args.source)
+    # crop image to central 50%
+    h, w, _ = image.shape
+    image = image[h//4: h - h//4, w//4: w - w//4]
+    
     image = draw_grid(image)  # added grid markers on margins
 
     # Convert RGB to BGR for cv2.imwrite
