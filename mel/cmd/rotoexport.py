@@ -140,6 +140,14 @@ def process_args(args):
     h, w, _ = image.shape
     image = image[h//4: h - h//4, w//4: w - w//4]
     
+    # scale image down proportionally if larger than 2048x2048
+    h, w, _ = image.shape
+    scale = min(2048 / w, 2048 / h, 1)
+    if scale < 1:
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    
     image = draw_grid(image)  # added grid markers on margins
 
     # Convert RGB to BGR for cv2.imwrite
