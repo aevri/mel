@@ -10,6 +10,7 @@ import mel.cmd.list
 import mel.cmd.microadd
 import mel.cmd.microcompare
 import mel.cmd.microview
+import mel.cmd.rotoexport
 import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomark2
 import mel.cmd.rotomapautomark2train
@@ -71,6 +72,7 @@ COMMANDS = {
         "organise": mel.cmd.rotomaporganise,
         "rm": mel.cmd.rotomaprm,
         "uuid": mel.cmd.rotomapuuid,
+        "export": mel.cmd.rotoexport,
     },
 }
 
