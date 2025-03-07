@@ -45,8 +45,8 @@ def draw_grid(image):
     height, width, _ = image.shape
     markers = 20  # number of ticks along each margin
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 2.8 / 2
-    thickness = 20 // 2
+    font_scale = 2.8 / 4
+    thickness = 15 // 4
     tick_length = 50 // 2  # length of tick marks
 
     # Top margin: compute tick positions
@@ -131,6 +131,13 @@ def draw_grid(image):
             thickness,
             cv2.LINE_AA,
         )
+
+    # Additional grid lines across the entire image (1 pixel wide)
+    for x in ticks_x:
+        cv2.line(image, (x, 0), (x, height), (255, 255, 255), 1)
+    for y in ticks_y:
+        cv2.line(image, (0, y), (width, y), (255, 255, 255), 1)
+
     return image
 
 
@@ -138,11 +145,16 @@ def process_args(args):
     image = load_image(args.source)
     # crop image to central 50%
     h, w, _ = image.shape
-    image = image[h//4: h - h//4, w//4: w - w//4]
+    zoom = 4
+    new_h = int(h / zoom)
+    off_h = (h - new_h) // 2
+    new_w = int(w / zoom)
+    off_w = (w - new_w) // 2
+    image = image[off_h:off_h + new_h, off_w:off_w + new_w]
     
     # scale image down proportionally if larger than 2048x2048
     h, w, _ = image.shape
-    scale = min(2048 / w, 2048 / h, 1)
+    scale = min(1024 / w, 2048 / h, 1)
     if scale < 1:
         new_w = int(w * scale)
         new_h = int(h * scale)
