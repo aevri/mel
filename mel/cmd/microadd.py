@@ -225,10 +225,20 @@ def process_path(
     ret, frame = cap.read()
     if not ret:
         raise Exception("Could not read frame.")
-    capindex = display.add_image(frame, "capture")
+
+    preview = numpy.copy(frame)
+    capindex = display.add_image(preview, "capture")
+
+    rotation_angle = 0
+
     while not is_finished:
         frame = capture(cap, display, capindex, mole_acquirer)
+        preview = numpy.copy(frame)
+        rotation_angle = 0
+        display.update_image(preview, capindex)
+
         print("Press space to save and exit, 'r' to retry, 'u' to rotate 180.")
+        print("Press 'y' to rotate -5 degrees, 'i' to rotate +5 degrees.")
         print("Press 'a' to abort without saving and exit with an error code.")
 
         is_finished = True
@@ -242,18 +252,28 @@ def process_path(
                     print("Retry capture")
                     is_finished = False
                     break
+                elif event.key == pygame.K_y:
+                    print("Rotate -5 degrees")
+                    rotation_angle += 5
+                    preview = mel.lib.image.rotated(frame, rotation_angle)
+                    display.update_image(preview, capindex)
+                elif event.key == pygame.K_i:
+                    print("Rotate +5 degrees")
+                    rotation_angle -= 5
+                    preview = mel.lib.image.rotated(frame, rotation_angle)
+                    display.update_image(preview, capindex)
                 elif event.key == pygame.K_u:
                     print("Rotated 180.")
                     frame = mel.lib.image.rotated180(frame)
-                    display.update_image(frame, capindex)
+                    preview = mel.lib.image.rotated(frame, rotation_angle)
+                    display.update_image(preview, capindex)
 
-    # write the mole image
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
     dirname = os.path.join(mole_path, "__micro__")
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     file_path = os.path.join(dirname, filename)
-    mel.lib.common.write_image(file_path, frame)
+    mel.lib.common.write_image(file_path, preview)
 
 
 def capture(cap, display, capindex, mole_acquirer):
