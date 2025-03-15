@@ -28,37 +28,40 @@ MODEL_PRICING = {
 }
 
 # Prompt templates
-ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. Please examine the image carefully and describe all the moles you can identify.
+ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. The image has a 5x5 grid of lettered dots overlaid on it to help with location references. Please examine the image carefully and describe all the moles you can identify.
 
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
 For each mole:
-1. Describe its appearance (color, size, shape)
-2. Describe its location on the skin
-3. Note any distinctive features or landmarks near the mole that could help with identification
-4. Estimate its approximate pixel coordinates (x, y) if possible
+1. Assign it a number (starting from 1)
+2. Describe its appearance (color, size, shape)
+3. Describe its location relative to the grid points (e.g., "near point C", "between points F and K")
+4. Note any distinctive features or landmarks near the mole that could help with identification
 
-Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar.
+Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar. The numbering will help us track each mole consistently.
 """
 
-COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observations, please provide the precise pixel coordinates (x, y) for each mole you identified in the format:
+COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observations, please provide the location for each numbered mole using the grid reference system in the following format:
 ```json
 [
-  {"x": 123, "y": 456},
-  {"x": 789, "y": 101}
+  {"id": 1, "grid_ref": "C"},
+  {"id": 2, "grid_ref": "FG"},
+  {"id": 3, "grid_ref": "MN"}
 ]
 ```
 
 Important guidelines:
 1. Only include actual moles, not artifacts, shadows, or reflections
-2. Use integer pixel coordinates
-3. Provide coordinates in a valid JSON array of objects
-4. Don't include any other information in the JSON besides x and y values
+2. For moles positioned directly under or very close to a grid point, use a single letter (e.g., "C")
+3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "FG")
+4. Keep the same numbering you used in your analysis
+5. Provide coordinates in a valid JSON array of objects
+6. Don't include any other information in the JSON besides id and grid_ref values
 
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
 
-REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
+REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with the 5x5 grid of lettered points and annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
 
 Here are the moles I detected previously:
 {numbered_moles}
@@ -66,27 +69,31 @@ Here are the moles I detected previously:
 I need you to carefully analyze this image again. For each numbered circle:
 1. Is it actually a mole, or could it be something else (shadow, artifact, etc.)?
 2. Is the circle accurately centered on the mole, or should the position be adjusted?
+3. Provide the grid reference for each confirmed mole (e.g., "point C" or "between points F and K")
 
 Also:
-3. Are there any moles I missed entirely in my first analysis?
-4. If you have access to your previous analysis from the first image, what did you learn that could help with this refined analysis?
+4. Are there any moles I missed entirely in my first analysis?
+5. If you have access to your previous analysis from the first image, what did you learn that could help with this refined analysis?
 
 Please provide a thoughtful analysis of each potential mole and explain your reasoning clearly.
 """
 
-REFINEMENT_COORDINATES_PROMPT = """Thank you for that thoughtful analysis. Now, based on your observations, please provide your final refined list of mole coordinates in the format:
+REFINEMENT_COORDINATES_PROMPT = """Thank you for that thoughtful analysis. Now, based on your observations, please provide your final refined list of mole locations using the grid reference system in the following format:
 ```json
 [
-  {"x": 123, "y": 456},
-  {"x": 789, "y": 101}
+  {"id": 1, "grid_ref": "C"},
+  {"id": 2, "grid_ref": "FG"},
+  {"id": 3, "grid_ref": "MN"}
 ]
 ```
 
 Important guidelines:
 1. Only include actual moles, not artifacts, shadows, or reflections
-2. Use integer pixel coordinates
-3. Provide coordinates in a valid JSON array of objects
-4. Don't include any other information in the JSON besides x and y values
+2. For moles positioned directly under or very close to a grid point, use a single letter (e.g., "C")
+3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "FG")
+4. Keep the same numbering used in the annotated image
+5. Provide coordinates in a valid JSON array of objects
+6. Don't include any other information in the JSON besides id and grid_ref values
 
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
@@ -165,9 +172,19 @@ def process_args(args):
         print(f"  {mole['uuid']} at ({mole['x']}, {mole['y']})")
     print()
 
+    # Create a grid-annotated version of the original image for reference
+    grid_annotated_image, grid_points = create_grid_annotated_image(image_path)
+    
+    # Save grid image if requested
+    if args.save_annotated:
+        grid_path = f"{args.save_annotated}.grid.jpg"
+        cv2.imwrite(grid_path, grid_annotated_image)
+        print(f"Saved grid reference image to {grid_path}")
+
     # First round: Initial analysis with Claude
     start_time = time.time()
     print("Analyzing image with " + args.model + " (first round)")
+    print("  Using a 5x5 lettered grid for coordinate references")
     (
         detected_moles,
         first_cost,
@@ -197,15 +214,21 @@ def process_args(args):
 
     print()
 
-    print("Detected moles (coordinates):")
+    # Print detected moles with both grid references and coordinates
+    print("Detected moles:")
     for mole in detected_moles:
-        print(f"  ({mole['x']}, {mole['y']})")
+        if "id" in mole and "grid_ref" in mole:
+            grid_ref = mole["grid_ref"]
+            x, y = mole.get("x", 0), mole.get("y", 0)
+            print(f"  Mole {mole['id']}: Grid ref {grid_ref} at ({x}, {y})")
+        else:
+            print(f"  ({mole['x']}, {mole['y']})")
     print()
 
     # Second round: Refinement with annotated image
     if not args.no_refine:
         # Create annotated image with the first-round detections
-        annotated_image = create_annotated_image(image_path, detected_moles)
+        annotated_image = create_annotated_image(image_path, detected_moles, grid_points)
 
         # Save annotated image if requested
         if args.save_annotated:
@@ -252,13 +275,22 @@ def process_args(args):
             # Use the refined results
             print(f"First round detected {len(detected_moles)} moles")
             print(f"Second round detected {len(refined_moles)} moles")
+            
+            # Convert grid references to coordinates if needed
+            if "grid_ref" in refined_moles[0]:
+                for mole in refined_moles:
+                    if "grid_ref" in mole and ("x" not in mole or "y" not in mole):
+                        x, y = grid_ref_to_coordinates(mole["grid_ref"], grid_points)
+                        mole["x"] = x
+                        mole["y"] = y
+            
             detected_moles = refined_moles
             total_cost += second_cost
 
             # Save annotated image if requested
             if args.save_annotated:
                 annotated_image = create_annotated_image(
-                    image_path, detected_moles
+                    image_path, detected_moles, grid_points
                 )
                 annotated_path = f"{args.save_annotated}.2.jpg"
                 cv2.imwrite(annotated_path, annotated_image)
@@ -289,7 +321,10 @@ def process_args(args):
     if unmatched_detected:
         print("\nUnmatched detected moles (coordinates):")
         for mole in unmatched_detected:
-            print(f"  ({mole['x']}, {mole['y']})")
+            grid_ref = mole.get("grid_ref", "")
+            id_str = f"Mole {mole['id']}: " if "id" in mole else ""
+            grid_str = f"Grid ref {grid_ref} " if grid_ref else ""
+            print(f"  {id_str}{grid_str}at ({mole['x']}, {mole['y']})")
 
     # Report timing and cost information
     if not args.no_refine:
@@ -337,7 +372,7 @@ def analyze_image_with_claude(
 
     Returns:
         Tuple containing:
-        - List of detected moles with x, y coordinates
+        - List of detected moles with coordinates (either x,y or grid references)
         - Estimated cost of the API call
         - Error message if the request failed, None otherwise
         - Analysis text from the first turn (None if refinement round)
@@ -349,17 +384,23 @@ def analyze_image_with_claude(
         annotated_image is not None and first_round_moles is not None
     )
 
-    # Get image data (either from file or from the annotated numpy array)
-    if is_refinement:
-        # Encode the annotated image
-        success, img_encoded = cv2.imencode(".jpg", annotated_image)
+    # Create the grid-annotated image for the first round
+    grid_points = None
+    if not is_refinement:
+        # Create a grid-annotated image for the first round
+        grid_annotated_image, grid_points = create_grid_annotated_image(image_path)
+        
+        # Encode the grid-annotated image
+        success, img_encoded = cv2.imencode(".jpg", grid_annotated_image)
         if not success:
-            return [], 0.0, "Failed to encode annotated image", None
+            return [], 0.0, "Failed to encode grid-annotated image", None, None, None
         image_data = img_encoded.tobytes()
     else:
-        # Read the original image
-        with open(image_path, "rb") as f:
-            image_data = f.read()
+        # Use the provided annotated image for refinement
+        success, img_encoded = cv2.imencode(".jpg", annotated_image)
+        if not success:
+            return [], 0.0, "Failed to encode annotated image", None, None, None
+        image_data = img_encoded.tobytes()
 
     # Base64 encode the image for the API
     base64_image = base64.b64encode(image_data).decode("utf-8")
@@ -373,12 +414,20 @@ def analyze_image_with_claude(
     try:
         if is_refinement:
             # Prepare numbered moles list for the prompt
-            numbered_moles = "\n".join(
-                [
-                    f"{i+1}. ({m['x']}, {m['y']})"
-                    for i, m in enumerate(first_round_moles)
-                ]
-            )
+            if "id" in first_round_moles[0] and "grid_ref" in first_round_moles[0]:
+                numbered_moles = "\n".join(
+                    [
+                        f"{m['id']}. Grid reference: {m['grid_ref']}"
+                        for m in first_round_moles
+                    ]
+                )
+            else:
+                numbered_moles = "\n".join(
+                    [
+                        f"{i+1}. ({m['x']}, {m['y']})"
+                        for i, m in enumerate(first_round_moles)
+                    ]
+                )
 
             # Setup image content
             image_content = {
@@ -439,7 +488,7 @@ def analyze_image_with_claude(
             print(refinement_analysis)
             print("-" * 60)
             print(
-                "  Asking for coordinates..."
+                "  Asking for grid references..."
             )
 
             # Build the message list for the next turn
@@ -497,7 +546,7 @@ def analyze_image_with_claude(
             ]
 
             # First turn: Get qualitative analysis
-            print("  Step 1: Asking Claude to analyze the image...")
+            print("  Step 1: Asking Claude to analyze the image with grid points...")
             analysis_response = client.messages.create(
                 model=model,
                 max_tokens=1500,
@@ -519,7 +568,7 @@ def analyze_image_with_claude(
                 for block in analysis_response.content:
                     if block.type == "text":
                         mole_analysis = block.text
-                        print("  Analysis received. Asking for coordinates...")
+                        print("  Analysis received. Asking for grid references...")
                         break
 
             # Build the conversation history
@@ -531,7 +580,7 @@ def analyze_image_with_claude(
             # Add coordinates request to conversation
             messages.append({"role": "user", "content": COORDINATES_PROMPT})
 
-            # Second turn: Ask for coordinates based on analysis
+            # Second turn: Ask for grid references based on analysis
             response = client.messages.create(
                 model=model, max_tokens=1000, messages=messages
             )
@@ -553,23 +602,8 @@ def analyze_image_with_claude(
         model_pricing = MODEL_PRICING[model]
 
         # Calculate cost in dollars (use accumulated tokens for multi-turn)
-        if not is_refinement:
-            # Use the accumulated tokens from both turns
-            input_cost = (total_input_tokens / 1_000_000) * model_pricing[
-                "input"
-            ]
-            output_cost = (total_output_tokens / 1_000_000) * model_pricing[
-                "output"
-            ]
-        else:
-            # For refinement, we only have one turn
-            input_cost = (total_input_tokens / 1_000_000) * model_pricing[
-                "input"
-            ]
-            output_cost = (total_output_tokens / 1_000_000) * model_pricing[
-                "output"
-            ]
-
+        input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
+        output_cost = (total_output_tokens / 1_000_000) * model_pricing["output"]
         total_cost = input_cost + output_cost
 
         # Extract moles from response
@@ -589,6 +623,16 @@ def analyze_image_with_claude(
                         if json_start >= 0 and json_end > json_start:
                             json_text = text[json_start:json_end]
                             detected_moles = json.loads(json_text)
+                            
+                            # If we're in the first round and have grid references, convert to x,y coordinates
+                            if not is_refinement and grid_points and "grid_ref" in detected_moles[0]:
+                                # Convert grid references to pixel coordinates
+                                for mole in detected_moles:
+                                    if "grid_ref" in mole:
+                                        x, y = grid_ref_to_coordinates(mole["grid_ref"], grid_points)
+                                        mole["x"] = x
+                                        mole["y"] = y
+                            
                             break
                         else:
                             return (
@@ -628,35 +672,108 @@ def analyze_image_with_claude(
         return [], 0.0, f"Unexpected error: {str(e)}", None, None, None
 
 
+def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, Dict[str, Tuple[int, int]]]:
+    """Create an image with a 5x5 grid of lettered points.
+
+    Args:
+        image_path: Path to the original image
+
+    Returns:
+        Tuple containing:
+        - Annotated image as a numpy array
+        - Dictionary mapping grid labels to (x, y) coordinates
+    """
+    # Load the original image
+    image = mel.lib.image.load_image(image_path)
+    height, width = image.shape[:2]
+    
+    # Create a copy for annotation
+    annotated = image.copy()
+    
+    # Define the grid
+    rows, cols = 5, 5
+    x_step = width // (cols + 1)
+    y_step = height // (rows + 1)
+    
+    # Generate grid labels (A-Y for a 5x5 grid)
+    import string
+    labels = list(string.ascii_uppercase[:25])
+    
+    # Create dictionary to store the grid point coordinates
+    grid_points = {}
+    
+    idx = 0
+    for r in range(1, rows + 1):
+        for c in range(1, cols + 1):
+            x = c * x_step
+            y = r * y_step
+            label = labels[idx]
+            
+            # Draw a small dot at the grid point
+            cv2.circle(annotated, (x, y), 5, (0, 255, 0), -1)
+            
+            # Add the letter label
+            cv2.putText(
+                annotated,
+                label,
+                (x - 10, y - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
+            
+            # Store the coordinates
+            grid_points[label] = (x, y)
+            idx += 1
+    
+    return annotated, grid_points
+
+
 def create_annotated_image(
-    image_path: pathlib.Path, moles: List[Dict]
+    image_path: pathlib.Path, moles: List[Dict], grid_points: Optional[Dict[str, Tuple[int, int]]] = None
 ) -> np.ndarray:
     """Create an annotated image with markers for detected moles.
 
     Args:
         image_path: Path to the original image
-        moles: List of detected moles with x,y coordinates
+        moles: List of detected moles with x,y coordinates or id/grid_ref
+        grid_points: Optional dictionary mapping grid labels to coordinates
 
     Returns:
         Annotated image as a numpy array
     """
-    # Load the original image
-    image = mel.lib.image.load_image(image_path)
-
-    # Create a copy for annotation
-    annotated = image.copy()
+    # Load the original image or use the grid-annotated image
+    if grid_points:
+        # Start with a grid-annotated image
+        annotated, _ = create_grid_annotated_image(image_path)
+    else:
+        # Use the original image
+        image = mel.lib.image.load_image(image_path)
+        annotated = image.copy()
 
     # Add numbered markers for each mole
     for i, mole in enumerate(moles):
-        x, y = int(mole["x"]), int(mole["y"])
+        # Handle both coordinate formats
+        if "x" in mole and "y" in mole:
+            x, y = int(mole["x"]), int(mole["y"])
+        elif "id" in mole and "grid_ref" in mole:
+            # Skip if we don't have grid points and this is a grid reference
+            if not grid_points:
+                continue
+            # Convert grid reference to coordinates
+            x, y = grid_ref_to_coordinates(mole["grid_ref"], grid_points)
+        else:
+            continue
 
         # Draw a circle around the mole
         cv2.circle(annotated, (x, y), 10, (0, 0, 255), 2)
 
-        # Add a number label
+        # Add a number label (use id if available, otherwise i+1)
+        number = str(mole.get("id", i + 1))
         cv2.putText(
             annotated,
-            str(i + 1),
+            number,
             (x + 15, y),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -665,6 +782,33 @@ def create_annotated_image(
         )
 
     return annotated
+
+
+def grid_ref_to_coordinates(grid_ref: str, grid_points: Dict[str, Tuple[int, int]]) -> Tuple[int, int]:
+    """Convert a grid reference to pixel coordinates.
+
+    Args:
+        grid_ref: A string grid reference (e.g., "C" or "FG")
+        grid_points: Dictionary mapping grid labels to (x, y) coordinates
+
+    Returns:
+        Tuple of (x, y) pixel coordinates
+    """
+    if len(grid_ref) == 1:
+        # Single point reference
+        return grid_points.get(grid_ref, (0, 0))
+    elif len(grid_ref) == 2:
+        # Between two points
+        p1 = grid_points.get(grid_ref[0], (0, 0))
+        p2 = grid_points.get(grid_ref[1], (0, 0))
+        # Average the coordinates
+        return (
+            (p1[0] + p2[0]) // 2,
+            (p1[1] + p2[1]) // 2,
+        )
+    else:
+        # Invalid reference, return origin
+        return (0, 0)
 
 
 def compare_moles(
