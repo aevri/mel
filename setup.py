@@ -55,6 +55,7 @@ setuptools.setup(
         ]
     },
     install_requires=[
+        'anthropic',
         'colorama',
         'opencv-python',
         'pandas',
