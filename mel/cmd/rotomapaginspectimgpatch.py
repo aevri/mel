@@ -16,6 +16,17 @@ import numpy as np
 import mel.lib.image
 import mel.rotomap.moles
 
+# Claude model pricing information (per 1M tokens as of March 2025)
+# Check for updates: https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-names
+MODEL_PRICING = {
+    "claude-3-opus-20240229": {"input": 15.0, "output": 75.0},
+    "claude-3-7-sonnet-20250219": {"input": 3.0, "output": 15.0},
+    "claude-3-5-sonnet-20241022": {"input": 3.0, "output": 15.0},
+    "claude-3-5-sonnet-20240620": {"input": 3.0, "output": 15.0},
+    "claude-3-5-haiku-20241022": {"input": 0.8, "output": 4.0},
+    "claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
+}
+
 # Prompt templates
 FIRST_ROUND_PROMPT = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
 
@@ -345,30 +356,13 @@ def analyze_image_with_claude(
             response.usage.output_tokens if hasattr(response, "usage") else 100
         )
 
-        # Set pricing based on model
-        # Prices as of March 2025, check https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-names
-        if model == "claude-3-opus-20240229":
-            input_price_per_million = 15.0
-            output_price_per_million = 75.0
-        elif model == "claude-3-7-sonnet-20250219":
-            input_price_per_million = 3.0
-            output_price_per_million = 15.0
-        elif model == "claude-3-5-sonnet-20241022":
-            input_price_per_million = 3.0
-            output_price_per_million = 15.0
-        elif model == "claude-3-5-sonnet-20240620":
-            input_price_per_million = 3.0
-            output_price_per_million = 15.0
-        elif model == "claude-3-5-haiku-20241022":
-            input_price_per_million = 0.8
-            output_price_per_million = 4.0
-        elif model == "claude-3-haiku-20240307":
-            input_price_per_million = 0.25
-            output_price_per_million = 1.25
+        # Get pricing for the model from global dictionary
+        # Default to Opus pricing if model is not found
+        model_pricing = MODEL_PRICING[model]
 
         # Calculate cost in dollars
-        input_cost = (input_tokens / 1_000_000) * input_price_per_million
-        output_cost = (output_tokens / 1_000_000) * output_price_per_million
+        input_cost = (input_tokens / 1_000_000) * model_pricing["input"]
+        output_cost = (output_tokens / 1_000_000) * model_pricing["output"]
         total_cost = input_cost + output_cost
 
         # Extract moles from response
