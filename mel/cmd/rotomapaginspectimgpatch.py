@@ -10,8 +10,10 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 import anthropic
+import cv2
 import numpy as np
 
+import mel.lib.image
 import mel.rotomap.moles
 
 
@@ -49,6 +51,15 @@ def setup_parser(parser):
         default="claude-3-7-sonnet-20250219",
         help="Claude model to use for analysis (default: claude-3-7-sonnet-20250219).",
     )
+    parser.add_argument(
+        "--no-refine",
+        action="store_true",
+        help="Disable the refinement step (second round with annotated image).",
+    )
+    parser.add_argument(
+        "--save-annotated",
+        help="Save the annotated image to the specified path (for debugging).",
+    )
 
 
 def process_args(args):
@@ -73,22 +84,82 @@ def process_args(args):
 
     # Load ground truth moles
     ground_truth_moles = mel.rotomap.moles.load_json(json_path)
+    print(f"Ground truth moles: {len(ground_truth_moles)}")
+    print("\nUnmatched ground truth moles (UUID):")
+    for mole in ground_truth_moles:
+        print(f"  {mole['uuid']} at ({mole['x']}, {mole['y']})")
+    print()
 
-    # Request analysis from Claude
+    # First round: Initial analysis with Claude
     start_time = time.time()
-    print("Analyzing image with " + args.model)
-    detected_moles, cost, api_error = analyze_image_with_claude(
+    print("Analyzing image with " + args.model + " (first round)")
+    detected_moles, first_cost, api_error = analyze_image_with_claude(
         image_path, api_key, args.model
     )
-    elapsed_time = time.time() - start_time
+    first_round_time = time.time() - start_time
 
     if api_error:
         print(f"Error from Claude API: {api_error}")
         return 1
 
     if not detected_moles:
-        print("No moles detected by Claude.")
+        print("No moles detected by Claude in the first round.")
         return 1
+
+    total_cost = first_cost
+
+    print()
+
+    print("Detected moles (coordinates):")
+    for mole in detected_moles:
+        print(f"  ({mole['x']}, {mole['y']})")
+    print()
+
+    # Second round: Refinement with annotated image
+    if not args.no_refine:
+        # Create annotated image with the first-round detections
+        annotated_image = create_annotated_image(image_path, detected_moles)
+
+        # Save annotated image if requested
+        if args.save_annotated:
+            annotated_path = f"{args.save_annotated}.1.jpg"
+            cv2.imwrite(annotated_path, annotated_image)
+            print(f"Saved annotated image to {annotated_path}")
+
+        # Second round with annotated image
+        second_round_start = time.time()
+        print("Refining analysis with " + args.model + " (second round)")
+        refined_moles, second_cost, api_error = analyze_image_with_claude(
+            image_path,
+            api_key,
+            args.model,
+            annotated_image=annotated_image,
+            first_round_moles=detected_moles,
+        )
+        second_round_time = time.time() - second_round_start
+
+        if api_error:
+            print(f"Error from Claude API in refinement round: {api_error}")
+            print("Using results from first round only.")
+        elif not refined_moles:
+            print(
+                "No moles detected in refinement round. Using results from first round."
+            )
+        else:
+            # Use the refined results
+            print(f"First round detected {len(detected_moles)} moles")
+            print(f"Second round detected {len(refined_moles)} moles")
+            detected_moles = refined_moles
+            total_cost += second_cost
+
+            # Save annotated image if requested
+            if args.save_annotated:
+                annotated_image = create_annotated_image(image_path, detected_moles)
+                annotated_path = f"{args.save_annotated}.2.jpg"
+                cv2.imwrite(annotated_path, annotated_image)
+                print(f"Saved annotated image to {annotated_path}")
+
+    elapsed_time = time.time() - start_time
 
     # Compare detected moles with ground truth
     matches, unmatched_truth, unmatched_detected = compare_moles(
@@ -96,10 +167,6 @@ def process_args(args):
     )
 
     # Print results
-    print(f"\nResults for {image_path}:")
-    print(f"Model used: {args.model}")
-    print(f"Ground truth moles: {len(ground_truth_moles)}")
-    print(f"Claude detected moles: {len(detected_moles)}")
     print(f"Matched moles: {len(matches)}")
     print(f"Unmatched ground truth: {len(unmatched_truth)}")
     print(f"Unmatched detected: {len(unmatched_detected)}")
@@ -119,8 +186,20 @@ def process_args(args):
         for mole in unmatched_detected:
             print(f"  ({mole['x']}, {mole['y']})")
 
-    print(f"\nAPI request completed in {elapsed_time:.2f} seconds")
-    print(f"Estimated API cost: ${cost:.6f}")
+    # Report timing and cost information
+    if not args.no_refine:
+        print(
+            f"\nFirst round completed in {first_round_time:.2f} seconds (cost: ${first_cost:.6f})"
+        )
+        if "second_round_time" in locals():
+            print(
+                f"Second round completed in {second_round_time:.2f} seconds (cost: ${second_cost:.6f})"
+            )
+        print(f"Total processing time: {elapsed_time:.2f} seconds")
+        print(f"Total estimated API cost: ${total_cost:.6f}")
+    else:
+        print(f"\nAPI request completed in {elapsed_time:.2f} seconds")
+        print(f"Estimated API cost: ${total_cost:.6f}")
 
     return 0
 
@@ -129,6 +208,8 @@ def analyze_image_with_claude(
     image_path: pathlib.Path,
     api_key: str,
     model: str = "claude-3-opus-20240229",
+    annotated_image: Optional[np.ndarray] = None,
+    first_round_moles: Optional[List[Dict]] = None,
 ) -> Tuple[List[Dict], float, Optional[str]]:
     """Analyze an image with Claude API to detect moles using the Anthropic
     library.
@@ -137,6 +218,8 @@ def analyze_image_with_claude(
         image_path: Path to the image file
         api_key: Claude API key
         model: Claude model to use (default: claude-3-opus-20240229)
+        annotated_image: Optional annotated image for refinement round
+        first_round_moles: Optional list of moles detected in the first round
 
     Returns:
         Tuple containing:
@@ -144,15 +227,64 @@ def analyze_image_with_claude(
         - Estimated cost of the API call
         - Error message if the request failed, None otherwise
     """
-    # Read and encode the image
-    with open(image_path, "rb") as f:
-        image_data = f.read()
+    # Determine if this is the first or refinement round
+    is_refinement = (
+        annotated_image is not None and first_round_moles is not None
+    )
+
+    # Get image data (either from file or from the annotated numpy array)
+    if is_refinement:
+        # Encode the annotated image
+        success, img_encoded = cv2.imencode(".jpg", annotated_image)
+        if not success:
+            return [], 0.0, "Failed to encode annotated image"
+        image_data = img_encoded.tobytes()
+    else:
+        # Read the original image
+        with open(image_path, "rb") as f:
+            image_data = f.read()
 
     # Base64 encode the image for the API
     base64_image = base64.b64encode(image_data).decode("utf-8")
 
-    # Create prompt for Claude
-    prompt = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
+    # Create prompt for Claude based on whether this is first or refinement round
+    if is_refinement:
+        # Refinement round prompt with initial detections
+        numbered_moles = "\n".join(
+            [
+                f"{i+1}. ({m['x']}, {m['y']})"
+                for i, m in enumerate(first_round_moles)
+            ]
+        )
+        prompt = f"""This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
+
+Here are the moles I detected previously:
+{numbered_moles}
+
+Now I need you to refine these detections. Look carefully at the image and:
+1. Confirm which numbered circles are actually moles
+2. Identify any additional moles I missed 
+3. Correct any positions that aren't accurately centered on moles
+
+Provide your refined assessment as a JSON array with x,y coordinates of all moles:
+```json
+[
+  {{"x": 123, "y": 456}},
+  {{"x": 789, "y": 101}}
+]
+```
+
+Important guidelines:
+1. Only include actual moles, not artifacts, shadows, or reflections
+2. Use integer pixel coordinates
+3. Provide coordinates in a valid JSON array of objects
+4. Don't include any other information in the JSON besides x and y values
+
+Please respond with ONLY the JSON array and no additional explanation or text.
+"""
+    else:
+        # First round prompt
+        prompt = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
 
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
@@ -267,6 +399,45 @@ Please respond with ONLY the JSON array and no additional explanation or text.
         return [], 0.0, f"Anthropic API error: {str(e)}"
     except Exception as e:
         return [], 0.0, f"Unexpected error: {str(e)}"
+
+
+def create_annotated_image(
+    image_path: pathlib.Path, moles: List[Dict]
+) -> np.ndarray:
+    """Create an annotated image with markers for detected moles.
+
+    Args:
+        image_path: Path to the original image
+        moles: List of detected moles with x,y coordinates
+
+    Returns:
+        Annotated image as a numpy array
+    """
+    # Load the original image
+    image = mel.lib.image.load_image(image_path)
+
+    # Create a copy for annotation
+    annotated = image.copy()
+
+    # Add numbered markers for each mole
+    for i, mole in enumerate(moles):
+        x, y = int(mole["x"]), int(mole["y"])
+
+        # Draw a circle around the mole
+        cv2.circle(annotated, (x, y), 10, (0, 0, 255), 2)
+
+        # Add a number label
+        cv2.putText(
+            annotated,
+            str(i + 1),
+            (x + 15, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (0, 0, 255),
+            2,
+        )
+
+    return annotated
 
 
 def compare_moles(
