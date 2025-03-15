@@ -30,6 +30,25 @@ def setup_parser(parser):
         default=20.0,
         help="Maximum distance (in pixels) to consider a mole match (default: 20.0).",
     )
+    # For current model options, see:
+    #
+    #   curl https://api.anthropic.com/v1/models \
+    #       --header "x-api-key: $ANTHROPIC_API_KEY" \
+    #       --header "anthropic-version: 2023-06-01"
+    #
+    parser.add_argument(
+        "--model",
+        choices=[
+            "claude-3-opus-20240229",
+            "claude-3-7-sonnet-20250219",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-sonnet-20240620",
+            "claude-3-5-haiku-20241022",
+            "claude-3-haiku-20240307",
+        ],
+        default="claude-3-7-sonnet-20250219",
+        help="Claude model to use for analysis (default: claude-3-7-sonnet-20250219).",
+    )
 
 
 def process_args(args):
@@ -57,8 +76,9 @@ def process_args(args):
 
     # Request analysis from Claude
     start_time = time.time()
+    print("Analyzing image with " + args.model)
     detected_moles, cost, api_error = analyze_image_with_claude(
-        image_path, api_key
+        image_path, api_key, args.model
     )
     elapsed_time = time.time() - start_time
 
@@ -77,6 +97,7 @@ def process_args(args):
 
     # Print results
     print(f"\nResults for {image_path}:")
+    print(f"Model used: {args.model}")
     print(f"Ground truth moles: {len(ground_truth_moles)}")
     print(f"Claude detected moles: {len(detected_moles)}")
     print(f"Matched moles: {len(matches)}")
@@ -105,7 +126,9 @@ def process_args(args):
 
 
 def analyze_image_with_claude(
-    image_path: pathlib.Path, api_key: str
+    image_path: pathlib.Path,
+    api_key: str,
+    model: str = "claude-3-opus-20240229",
 ) -> Tuple[List[Dict], float, Optional[str]]:
     """Analyze an image with Claude API to detect moles using the Anthropic
     library.
@@ -113,6 +136,7 @@ def analyze_image_with_claude(
     Args:
         image_path: Path to the image file
         api_key: Claude API key
+        model: Claude model to use (default: claude-3-opus-20240229)
 
     Returns:
         Tuple containing:
@@ -168,22 +192,42 @@ Please respond with ONLY the JSON array and no additional explanation or text.
     try:
         # Send the message to Claude
         response = client.messages.create(
-            model="claude-3-opus-20240229",
+            model=model,
             max_tokens=1000,
             messages=[{"role": "user", "content": content}],
         )
 
-        # Calculate approximate cost
-        # Claude-3 Opus costs per 1M input tokens: $15, output tokens: $75
+        # Calculate approximate cost based on model
         # Image processing is roughly equivalent to 1,000 tokens
         input_tokens = 1000  # Approximate for image + short prompt
         output_tokens = (
             response.usage.output_tokens if hasattr(response, "usage") else 100
         )
 
+        # Set pricing based on model
+        # Prices as of March 2025, check https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-names
+        if model == "claude-3-opus-20240229":
+            input_price_per_million = 15.0
+            output_price_per_million = 75.0
+        elif model == "claude-3-7-sonnet-20250219":
+            input_price_per_million = 3.0
+            output_price_per_million = 15.0
+        elif model == "claude-3-5-sonnet-20241022":
+            input_price_per_million = 3.0
+            output_price_per_million = 15.0
+        elif model == "claude-3-5-sonnet-20240620":
+            input_price_per_million = 3.0
+            output_price_per_million = 15.0
+        elif model == "claude-3-5-haiku-20241022":
+            input_price_per_million = 0.8
+            output_price_per_million = 4.0
+        elif model == "claude-3-haiku-20240307":
+            input_price_per_million = 0.25
+            output_price_per_million = 1.25
+
         # Calculate cost in dollars
-        input_cost = (input_tokens / 1_000_000) * 15
-        output_cost = (output_tokens / 1_000_000) * 75
+        input_cost = (input_tokens / 1_000_000) * input_price_per_million
+        output_cost = (output_tokens / 1_000_000) * output_price_per_million
         total_cost = input_cost + output_cost
 
         # Extract moles from response
