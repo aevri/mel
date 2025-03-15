@@ -70,7 +70,6 @@ setuptools.setup(
             'black',
             'docformatter',
             'isort',
-            'nose',
             'pycodestyle',
             'pyflakes',
             'pylint',

@@ -4,7 +4,7 @@
 - Run all tests: `pytest --doctest-modules`
 - Run single test: `pytest tests/path/to/test_file.py::test_function_name`
 - Run static analysis: `./meta/static_tests.sh`
-- Run unit tests: `python3 -m nose mel/ --with-doc --doctest-tests --all-modules`
+- Run unit tests: `./meta/unit_tests.sh`
 - Fix formatting: `./meta/autofix.sh`
 
 ## Code Style
