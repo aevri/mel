@@ -1,7 +1,7 @@
 black==25.1.0
 colorama==0.4.6
 docformatter==1.7.5
-isort==5.13.2
+isort==6.0.1
 opencv-python==4.11.0.86
 pandas==2.2.3
 pycodestyle==2.12.1
