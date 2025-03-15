@@ -11,6 +11,7 @@ import mel.cmd.microadd
 import mel.cmd.microcompare
 import mel.cmd.microview
 import mel.cmd.rotomapaggetimgpatch
+import mel.cmd.rotomapaginspectimgpatch
 import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomark2
 import mel.cmd.rotomapautomark2train
@@ -51,6 +52,7 @@ COMMANDS = {
     },
     "rotomap": {
         "ag-get-image-patch": mel.cmd.rotomapaggetimgpatch,
+        "ag-inspect-image-patch": mel.cmd.rotomapaginspectimgpatch,
         "automark": mel.cmd.rotomapautomark,
         "automark2": mel.cmd.rotomapautomark2,
         "automark2-train": mel.cmd.rotomapautomark2train,
