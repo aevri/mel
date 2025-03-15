@@ -16,6 +16,55 @@ import numpy as np
 import mel.lib.image
 import mel.rotomap.moles
 
+# Prompt templates
+FIRST_ROUND_PROMPT = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
+
+A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
+
+For each mole you identify, provide its pixel coordinates (x, y) in the format:
+```json
+[
+  {"x": 123, "y": 456},
+  {"x": 789, "y": 101}
+]
+```
+
+Important guidelines:
+1. Only include actual moles, not artifacts, shadows, or reflections
+2. Use integer pixel coordinates
+3. Provide coordinates in a valid JSON array of objects
+4. Don't include any other information in the JSON besides x and y values
+
+Please respond with ONLY the JSON array and no additional explanation or text.
+"""
+
+REFINEMENT_ROUND_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
+
+Here are the moles I detected previously:
+{numbered_moles}
+
+Now I need you to refine these detections. Look carefully at the image and:
+1. Confirm which numbered circles are actually moles
+2. Identify any additional moles I missed 
+3. Correct any positions that aren't accurately centered on moles
+
+Provide your refined assessment as a JSON array with x,y coordinates of all moles:
+```json
+[
+  {{"x": 123, "y": 456}},
+  {{"x": 789, "y": 101}}
+]
+```
+
+Important guidelines:
+1. Only include actual moles, not artifacts, shadows, or reflections
+2. Use integer pixel coordinates
+3. Provide coordinates in a valid JSON array of objects
+4. Don't include any other information in the JSON besides x and y values
+
+Please respond with ONLY the JSON array and no additional explanation or text.
+"""
+
 
 def setup_parser(parser):
     parser.add_argument(
@@ -154,7 +203,9 @@ def process_args(args):
 
             # Save annotated image if requested
             if args.save_annotated:
-                annotated_image = create_annotated_image(image_path, detected_moles)
+                annotated_image = create_annotated_image(
+                    image_path, detected_moles
+                )
                 annotated_path = f"{args.save_annotated}.2.jpg"
                 cv2.imwrite(annotated_path, annotated_image)
                 print(f"Saved annotated image to {annotated_path}")
@@ -256,54 +307,12 @@ def analyze_image_with_claude(
                 for i, m in enumerate(first_round_moles)
             ]
         )
-        prompt = f"""This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
-
-Here are the moles I detected previously:
-{numbered_moles}
-
-Now I need you to refine these detections. Look carefully at the image and:
-1. Confirm which numbered circles are actually moles
-2. Identify any additional moles I missed 
-3. Correct any positions that aren't accurately centered on moles
-
-Provide your refined assessment as a JSON array with x,y coordinates of all moles:
-```json
-[
-  {{"x": 123, "y": 456}},
-  {{"x": 789, "y": 101}}
-]
-```
-
-Important guidelines:
-1. Only include actual moles, not artifacts, shadows, or reflections
-2. Use integer pixel coordinates
-3. Provide coordinates in a valid JSON array of objects
-4. Don't include any other information in the JSON besides x and y values
-
-Please respond with ONLY the JSON array and no additional explanation or text.
-"""
+        prompt = REFINEMENT_ROUND_PROMPT_TEMPLATE.format(
+            numbered_moles=numbered_moles
+        )
     else:
         # First round prompt
-        prompt = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
-
-A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
-
-For each mole you identify, provide its pixel coordinates (x, y) in the format:
-```json
-[
-  {"x": 123, "y": 456},
-  {"x": 789, "y": 101}
-]
-```
-
-Important guidelines:
-1. Only include actual moles, not artifacts, shadows, or reflections
-2. Use integer pixel coordinates
-3. Provide coordinates in a valid JSON array of objects
-4. Don't include any other information in the JSON besides x and y values
-
-Please respond with ONLY the JSON array and no additional explanation or text.
-"""
+        prompt = FIRST_ROUND_PROMPT
 
     # Set up the message content with the prompt and image
     content = [
