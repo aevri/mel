@@ -34,4 +34,4 @@ fi
 printf "static tests: "
 ./meta/static_tests.sh || die 'Static tests failed.'
 
-pytest --doctest-modules || die 'Pytest failed.'
+./meta/unit_tests.sh || die 'Pytest failed.'
