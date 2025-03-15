@@ -391,58 +391,61 @@ def analyze_image_with_claude(
             }
 
             # Initialize messages or use previous conversation
-            messages = []
-            refinement_analysis = ""
+            messages = previous_conversation.copy()
 
-            if previous_conversation:
-                # If we have previous conversation, use it
-                messages = previous_conversation.copy()
-            else:
-                # First turn of refinement: Ask for analysis of the annotated image
-                analysis_prompt = REFINEMENT_ANALYSIS_PROMPT_TEMPLATE.format(
-                    numbered_moles=numbered_moles
-                )
+            # First turn of refinement: Ask for analysis of the annotated image
+            analysis_prompt = REFINEMENT_ANALYSIS_PROMPT_TEMPLATE.format(
+                numbered_moles=numbered_moles
+            )
 
-                # First turn: analyze the annotated image
-                print(
-                    "  Step 1: Asking Claude to analyze the annotated image..."
-                )
-                analysis_content = [
-                    {"type": "text", "text": analysis_prompt},
-                    image_content,
-                ]
+            # First turn: analyze the annotated image
+            print(
+                "  Step 1: Asking Claude to analyze the annotated image..."
+            )
+            analysis_content = [
+                {"type": "text", "text": analysis_prompt},
+                image_content,
+            ]
 
-                analysis_response = client.messages.create(
-                    model=model,
-                    max_tokens=1500,
-                    messages=[{"role": "user", "content": analysis_content}],
-                )
+            messages += [{"role": "user", "content": analysis_content}]
 
-                # Track token usage
-                input_tokens = 1000  # Approximate for image + prompt
-                output_tokens = (
-                    analysis_response.usage.output_tokens
-                    if hasattr(analysis_response, "usage")
-                    else 500
-                )
-                total_input_tokens += input_tokens
-                total_output_tokens += output_tokens
+            analysis_response = client.messages.create(
+                model=model,
+                max_tokens=1500,
+                messages=messages,
+            )
 
-                # Extract analysis text and add to conversation
-                if analysis_response.content:
-                    for block in analysis_response.content:
-                        if block.type == "text":
-                            refinement_analysis = block.text
-                            print(
-                                "  Refinement analysis received. Asking for coordinates..."
-                            )
-                            break
+            # Track token usage
+            input_tokens = 1000  # Approximate for image + prompt
+            output_tokens = (
+                analysis_response.usage.output_tokens
+                if hasattr(analysis_response, "usage")
+                else 500
+            )
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
 
-                # Build the message list for the next turn
-                messages = [
-                    {"role": "user", "content": analysis_content},
-                    {"role": "assistant", "content": refinement_analysis},
-                ]
+            if not analysis_response.content:
+                raise ValueError("No content in response")
+
+            if analysis_response.content[-1].type != "text":
+                raise ValueError("Unexpected response content type", analysis_response.content[-1].type)
+
+            refinement_analysis = analysis_response.content[-1].text
+            print(
+                "  Refinement analysis received."
+            )
+            print("-" * 60)
+            print(refinement_analysis)
+            print("-" * 60)
+            print(
+                "  Asking for coordinates..."
+            )
+
+            # Build the message list for the next turn
+            messages.append(
+                {"role": "assistant", "content": analysis_response.content},
+            )
 
             # Second turn: Ask for coordinates based on analysis
             # Add request for coordinates to the conversation
@@ -547,10 +550,7 @@ def analyze_image_with_claude(
             total_output_tokens += output_tokens
 
         # Get pricing for the model from global dictionary
-        # Default to Opus pricing if model is not found
-        model_pricing = MODEL_PRICING.get(
-            model, {"input": 15.0, "output": 75.0}  # Default to Opus pricing
-        )
+        model_pricing = MODEL_PRICING[model]
 
         # Calculate cost in dollars (use accumulated tokens for multi-turn)
         if not is_refinement:
