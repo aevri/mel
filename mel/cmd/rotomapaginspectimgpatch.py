@@ -28,11 +28,20 @@ MODEL_PRICING = {
 }
 
 # Prompt templates
-FIRST_ROUND_PROMPT = """This image is a patch from a skin imaging system that tracks moles. Please identify all moles in this image.
+ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. Please examine the image carefully and describe all the moles you can identify.
 
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
-For each mole you identify, provide its pixel coordinates (x, y) in the format:
+For each mole:
+1. Describe its appearance (color, size, shape)
+2. Describe its location on the skin
+3. Note any distinctive features or landmarks near the mole that could help with identification
+4. Estimate its approximate pixel coordinates (x, y) if possible
+
+Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar.
+"""
+
+COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observations, please provide the precise pixel coordinates (x, y) for each mole you identified in the format:
 ```json
 [
   {"x": 123, "y": 456},
@@ -49,21 +58,27 @@ Important guidelines:
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
 
-REFINEMENT_ROUND_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
+REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
 
 Here are the moles I detected previously:
 {numbered_moles}
 
-Now I need you to refine these detections. Look carefully at the image and:
-1. Confirm which numbered circles are actually moles
-2. Identify any additional moles I missed 
-3. Correct any positions that aren't accurately centered on moles
+I need you to carefully analyze this image again. For each numbered circle:
+1. Is it actually a mole, or could it be something else (shadow, artifact, etc.)?
+2. Is the circle accurately centered on the mole, or should the position be adjusted?
 
-Provide your refined assessment as a JSON array with x,y coordinates of all moles:
+Also:
+3. Are there any moles I missed entirely in my first analysis?
+4. If you have access to your previous analysis from the first image, what did you learn that could help with this refined analysis?
+
+Please provide a thoughtful analysis of each potential mole and explain your reasoning clearly.
+"""
+
+REFINEMENT_COORDINATES_PROMPT = """Thank you for that thoughtful analysis. Now, based on your observations, please provide your final refined list of mole coordinates in the format:
 ```json
 [
-  {{"x": 123, "y": 456}},
-  {{"x": 789, "y": 101}}
+  {"x": 123, "y": 456},
+  {"x": 789, "y": 101}
 ]
 ```
 
@@ -153,9 +168,21 @@ def process_args(args):
     # First round: Initial analysis with Claude
     start_time = time.time()
     print("Analyzing image with " + args.model + " (first round)")
-    detected_moles, first_cost, api_error = analyze_image_with_claude(
-        image_path, api_key, args.model
-    )
+    (
+        detected_moles,
+        first_cost,
+        api_error,
+        analysis_text,
+        conversation_history,
+        _,  # We don't need the refinement analysis in the first round
+    ) = analyze_image_with_claude(image_path, api_key, args.model)
+
+    # Print the analysis text if available
+    if analysis_text:
+        print("\nClaude's analysis:")
+        print("-" * 60)
+        print(analysis_text)
+        print("-" * 60)
     first_round_time = time.time() - start_time
 
     if api_error:
@@ -189,12 +216,21 @@ def process_args(args):
         # Second round with annotated image
         second_round_start = time.time()
         print("Refining analysis with " + args.model + " (second round)")
-        refined_moles, second_cost, api_error = analyze_image_with_claude(
+        print("  Using conversation history from first round for context")
+        (
+            refined_moles,
+            second_cost,
+            api_error,
+            _,
+            refined_conversation,
+            refinement_analysis,
+        ) = analyze_image_with_claude(
             image_path,
             api_key,
             args.model,
             annotated_image=annotated_image,
             first_round_moles=detected_moles,
+            previous_conversation=conversation_history,
         )
         second_round_time = time.time() - second_round_start
 
@@ -206,6 +242,13 @@ def process_args(args):
                 "No moles detected in refinement round. Using results from first round."
             )
         else:
+            # Print the refinement analysis if available
+            if refinement_analysis:
+                print("\nClaude's refinement analysis:")
+                print("-" * 60)
+                print(refinement_analysis)
+                print("-" * 60)
+
             # Use the refined results
             print(f"First round detected {len(detected_moles)} moles")
             print(f"Second round detected {len(refined_moles)} moles")
@@ -272,7 +315,15 @@ def analyze_image_with_claude(
     model: str = "claude-3-opus-20240229",
     annotated_image: Optional[np.ndarray] = None,
     first_round_moles: Optional[List[Dict]] = None,
-) -> Tuple[List[Dict], float, Optional[str]]:
+    previous_conversation: Optional[List[Dict]] = None,
+) -> Tuple[
+    List[Dict],
+    float,
+    Optional[str],
+    Optional[str],
+    Optional[List],
+    Optional[str],
+]:
     """Analyze an image with Claude API to detect moles using the Anthropic
     library.
 
@@ -282,12 +333,16 @@ def analyze_image_with_claude(
         model: Claude model to use (default: claude-3-opus-20240229)
         annotated_image: Optional annotated image for refinement round
         first_round_moles: Optional list of moles detected in the first round
+        previous_conversation: Optional conversation history from the first round
 
     Returns:
         Tuple containing:
         - List of detected moles with x, y coordinates
         - Estimated cost of the API call
         - Error message if the request failed, None otherwise
+        - Analysis text from the first turn (None if refinement round)
+        - Full conversation messages list that can be used in subsequent calls
+        - Refinement analysis text if in refinement mode (None in first round)
     """
     # Determine if this is the first or refinement round
     is_refinement = (
@@ -299,7 +354,7 @@ def analyze_image_with_claude(
         # Encode the annotated image
         success, img_encoded = cv2.imencode(".jpg", annotated_image)
         if not success:
-            return [], 0.0, "Failed to encode annotated image"
+            return [], 0.0, "Failed to encode annotated image", None
         image_data = img_encoded.tobytes()
     else:
         # Read the original image
@@ -309,60 +364,212 @@ def analyze_image_with_claude(
     # Base64 encode the image for the API
     base64_image = base64.b64encode(image_data).decode("utf-8")
 
-    # Create prompt for Claude based on whether this is first or refinement round
-    if is_refinement:
-        # Refinement round prompt with initial detections
-        numbered_moles = "\n".join(
-            [
-                f"{i+1}. ({m['x']}, {m['y']})"
-                for i, m in enumerate(first_round_moles)
-            ]
-        )
-        prompt = REFINEMENT_ROUND_PROMPT_TEMPLATE.format(
-            numbered_moles=numbered_moles
-        )
-    else:
-        # First round prompt
-        prompt = FIRST_ROUND_PROMPT
-
-    # Set up the message content with the prompt and image
-    content = [
-        {"type": "text", "text": prompt},
-        {
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": "image/jpeg",
-                "data": base64_image,
-            },
-        },
-    ]
-
     # Initialize the Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
+    total_input_tokens = 0
+    total_output_tokens = 0
+    mole_analysis = ""
 
     try:
-        # Send the message to Claude
-        response = client.messages.create(
-            model=model,
-            max_tokens=1000,
-            messages=[{"role": "user", "content": content}],
-        )
+        if is_refinement:
+            # Prepare numbered moles list for the prompt
+            numbered_moles = "\n".join(
+                [
+                    f"{i+1}. ({m['x']}, {m['y']})"
+                    for i, m in enumerate(first_round_moles)
+                ]
+            )
 
-        # Calculate approximate cost based on model
-        # Image processing is roughly equivalent to 1,000 tokens
-        input_tokens = 1000  # Approximate for image + short prompt
-        output_tokens = (
-            response.usage.output_tokens if hasattr(response, "usage") else 100
-        )
+            # Setup image content
+            image_content = {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64_image,
+                },
+            }
+
+            # Initialize messages or use previous conversation
+            messages = []
+            refinement_analysis = ""
+
+            if previous_conversation:
+                # If we have previous conversation, use it
+                messages = previous_conversation.copy()
+            else:
+                # First turn of refinement: Ask for analysis of the annotated image
+                analysis_prompt = REFINEMENT_ANALYSIS_PROMPT_TEMPLATE.format(
+                    numbered_moles=numbered_moles
+                )
+
+                # First turn: analyze the annotated image
+                print(
+                    "  Step 1: Asking Claude to analyze the annotated image..."
+                )
+                analysis_content = [
+                    {"type": "text", "text": analysis_prompt},
+                    image_content,
+                ]
+
+                analysis_response = client.messages.create(
+                    model=model,
+                    max_tokens=1500,
+                    messages=[{"role": "user", "content": analysis_content}],
+                )
+
+                # Track token usage
+                input_tokens = 1000  # Approximate for image + prompt
+                output_tokens = (
+                    analysis_response.usage.output_tokens
+                    if hasattr(analysis_response, "usage")
+                    else 500
+                )
+                total_input_tokens += input_tokens
+                total_output_tokens += output_tokens
+
+                # Extract analysis text and add to conversation
+                if analysis_response.content:
+                    for block in analysis_response.content:
+                        if block.type == "text":
+                            refinement_analysis = block.text
+                            print(
+                                "  Refinement analysis received. Asking for coordinates..."
+                            )
+                            break
+
+                # Build the message list for the next turn
+                messages = [
+                    {"role": "user", "content": analysis_content},
+                    {"role": "assistant", "content": refinement_analysis},
+                ]
+
+            # Second turn: Ask for coordinates based on analysis
+            # Add request for coordinates to the conversation
+            messages.append(
+                {"role": "user", "content": REFINEMENT_COORDINATES_PROMPT}
+            )
+
+            # Get the final coordinates from Claude
+            response = client.messages.create(
+                model=model,
+                max_tokens=1000,
+                messages=messages,
+            )
+
+            # Add the response to the conversation history
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Track token usage
+            input_tokens = (
+                len(refinement_analysis) // 4 if refinement_analysis else 500
+            )  # Rough estimate of tokens
+            output_tokens = (
+                response.usage.output_tokens
+                if hasattr(response, "usage")
+                else 100
+            )
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
+
+        else:
+            # Multi-turn approach for first analysis
+            # Initialize conversation history
+            messages = []
+
+            # Setup image content object
+            image_content = {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64_image,
+                },
+            }
+
+            # First turn: Ask for qualitative analysis
+            content = [
+                {"type": "text", "text": ANALYSIS_PROMPT},
+                image_content,
+            ]
+
+            # First turn: Get qualitative analysis
+            print("  Step 1: Asking Claude to analyze the image...")
+            analysis_response = client.messages.create(
+                model=model,
+                max_tokens=1500,
+                messages=[{"role": "user", "content": content}],
+            )
+
+            # Track token usage
+            input_tokens = 1000  # Approximate for image + prompt
+            output_tokens = (
+                analysis_response.usage.output_tokens
+                if hasattr(analysis_response, "usage")
+                else 500
+            )
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
+
+            # Extract the analysis text and build conversation history
+            if analysis_response.content:
+                for block in analysis_response.content:
+                    if block.type == "text":
+                        mole_analysis = block.text
+                        print("  Analysis received. Asking for coordinates...")
+                        break
+
+            # Build the conversation history
+            messages = [
+                {"role": "user", "content": content},
+                {"role": "assistant", "content": analysis_response.content},
+            ]
+
+            # Add coordinates request to conversation
+            messages.append({"role": "user", "content": COORDINATES_PROMPT})
+
+            # Second turn: Ask for coordinates based on analysis
+            response = client.messages.create(
+                model=model, max_tokens=1000, messages=messages
+            )
+
+            # Add response to conversation history
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Track token usage for second turn
+            input_tokens = len(mole_analysis) // 4  # Rough estimate of tokens
+            output_tokens = (
+                response.usage.output_tokens
+                if hasattr(response, "usage")
+                else 100
+            )
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
 
         # Get pricing for the model from global dictionary
         # Default to Opus pricing if model is not found
-        model_pricing = MODEL_PRICING[model]
+        model_pricing = MODEL_PRICING.get(
+            model, {"input": 15.0, "output": 75.0}  # Default to Opus pricing
+        )
 
-        # Calculate cost in dollars
-        input_cost = (input_tokens / 1_000_000) * model_pricing["input"]
-        output_cost = (output_tokens / 1_000_000) * model_pricing["output"]
+        # Calculate cost in dollars (use accumulated tokens for multi-turn)
+        if not is_refinement:
+            # Use the accumulated tokens from both turns
+            input_cost = (total_input_tokens / 1_000_000) * model_pricing[
+                "input"
+            ]
+            output_cost = (total_output_tokens / 1_000_000) * model_pricing[
+                "output"
+            ]
+        else:
+            # For refinement, we only have one turn
+            input_cost = (total_input_tokens / 1_000_000) * model_pricing[
+                "input"
+            ]
+            output_cost = (total_output_tokens / 1_000_000) * model_pricing[
+                "output"
+            ]
+
         total_cost = input_cost + output_cost
 
         # Extract moles from response
@@ -388,20 +595,37 @@ def analyze_image_with_claude(
                                 [],
                                 total_cost,
                                 "No JSON data found in Claude's response",
+                                mole_analysis if not is_refinement else None,
+                                messages if "messages" in locals() else None,
+                                refinement_analysis if is_refinement else None,
                             )
                     except json.JSONDecodeError:
                         return (
                             [],
                             total_cost,
                             "Invalid JSON in Claude's response",
+                            mole_analysis if not is_refinement else None,
+                            messages if "messages" in locals() else None,
+                            refinement_analysis if is_refinement else None,
                         )
 
-        return detected_moles, total_cost, None
+        return (
+            detected_moles,
+            total_cost,
+            None,
+            mole_analysis if not is_refinement else None,
+            messages if "messages" in locals() else None,
+            (
+                refinement_analysis
+                if is_refinement and "refinement_analysis" in locals()
+                else None
+            ),
+        )
 
     except anthropic.APIError as e:
-        return [], 0.0, f"Anthropic API error: {str(e)}"
+        return [], 0.0, f"Anthropic API error: {str(e)}", None, None, None
     except Exception as e:
-        return [], 0.0, f"Unexpected error: {str(e)}"
+        return [], 0.0, f"Unexpected error: {str(e)}", None, None, None
 
 
 def create_annotated_image(
