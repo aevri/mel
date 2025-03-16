@@ -174,7 +174,7 @@ def process_args(args):
 
     # Create a grid-annotated version of the original image for reference
     grid_annotated_image, grid_points = create_grid_annotated_image(image_path)
-    
+
     # Save grid image if requested
     if args.save_annotated:
         grid_path = f"{args.save_annotated}.grid.jpg"
@@ -228,7 +228,9 @@ def process_args(args):
     # Second round: Refinement with annotated image
     if not args.no_refine:
         # Create annotated image with the first-round detections
-        annotated_image = create_annotated_image(image_path, detected_moles, grid_points)
+        annotated_image = create_annotated_image(
+            image_path, detected_moles, grid_points
+        )
 
         # Save annotated image if requested
         if args.save_annotated:
@@ -275,15 +277,19 @@ def process_args(args):
             # Use the refined results
             print(f"First round detected {len(detected_moles)} moles")
             print(f"Second round detected {len(refined_moles)} moles")
-            
+
             # Convert grid references to coordinates if needed
             if "grid_ref" in refined_moles[0]:
                 for mole in refined_moles:
-                    if "grid_ref" in mole and ("x" not in mole or "y" not in mole):
-                        x, y = grid_ref_to_coordinates(mole["grid_ref"], grid_points)
+                    if "grid_ref" in mole and (
+                        "x" not in mole or "y" not in mole
+                    ):
+                        x, y = grid_ref_to_coordinates(
+                            mole["grid_ref"], grid_points
+                        )
                         mole["x"] = x
                         mole["y"] = y
-            
+
             detected_moles = refined_moles
             total_cost += second_cost
 
@@ -388,18 +394,34 @@ def analyze_image_with_claude(
     grid_points = None
     if not is_refinement:
         # Create a grid-annotated image for the first round
-        grid_annotated_image, grid_points = create_grid_annotated_image(image_path)
-        
+        grid_annotated_image, grid_points = create_grid_annotated_image(
+            image_path
+        )
+
         # Encode the grid-annotated image
         success, img_encoded = cv2.imencode(".jpg", grid_annotated_image)
         if not success:
-            return [], 0.0, "Failed to encode grid-annotated image", None, None, None
+            return (
+                [],
+                0.0,
+                "Failed to encode grid-annotated image",
+                None,
+                None,
+                None,
+            )
         image_data = img_encoded.tobytes()
     else:
         # Use the provided annotated image for refinement
         success, img_encoded = cv2.imencode(".jpg", annotated_image)
         if not success:
-            return [], 0.0, "Failed to encode annotated image", None, None, None
+            return (
+                [],
+                0.0,
+                "Failed to encode annotated image",
+                None,
+                None,
+                None,
+            )
         image_data = img_encoded.tobytes()
 
     # Base64 encode the image for the API
@@ -414,7 +436,10 @@ def analyze_image_with_claude(
     try:
         if is_refinement:
             # Prepare numbered moles list for the prompt
-            if "id" in first_round_moles[0] and "grid_ref" in first_round_moles[0]:
+            if (
+                "id" in first_round_moles[0]
+                and "grid_ref" in first_round_moles[0]
+            ):
                 numbered_moles = "\n".join(
                     [
                         f"{m['id']}. Grid reference: {m['grid_ref']}"
@@ -448,9 +473,7 @@ def analyze_image_with_claude(
             )
 
             # First turn: analyze the annotated image
-            print(
-                "  Step 1: Asking Claude to analyze the annotated image..."
-            )
+            print("  Step 1: Asking Claude to analyze the annotated image...")
             analysis_content = [
                 {"type": "text", "text": analysis_prompt},
                 image_content,
@@ -478,18 +501,17 @@ def analyze_image_with_claude(
                 raise ValueError("No content in response")
 
             if analysis_response.content[-1].type != "text":
-                raise ValueError("Unexpected response content type", analysis_response.content[-1].type)
+                raise ValueError(
+                    "Unexpected response content type",
+                    analysis_response.content[-1].type,
+                )
 
             refinement_analysis = analysis_response.content[-1].text
-            print(
-                "  Refinement analysis received."
-            )
+            print("  Refinement analysis received.")
             print("-" * 60)
             print(refinement_analysis)
             print("-" * 60)
-            print(
-                "  Asking for grid references..."
-            )
+            print("  Asking for grid references...")
 
             # Build the message list for the next turn
             messages.append(
@@ -546,7 +568,9 @@ def analyze_image_with_claude(
             ]
 
             # First turn: Get qualitative analysis
-            print("  Step 1: Asking Claude to analyze the image with grid points...")
+            print(
+                "  Step 1: Asking Claude to analyze the image with grid points..."
+            )
             analysis_response = client.messages.create(
                 model=model,
                 max_tokens=1500,
@@ -568,7 +592,9 @@ def analyze_image_with_claude(
                 for block in analysis_response.content:
                     if block.type == "text":
                         mole_analysis = block.text
-                        print("  Analysis received. Asking for grid references...")
+                        print(
+                            "  Analysis received. Asking for grid references..."
+                        )
                         break
 
             # Build the conversation history
@@ -603,7 +629,9 @@ def analyze_image_with_claude(
 
         # Calculate cost in dollars (use accumulated tokens for multi-turn)
         input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
-        output_cost = (total_output_tokens / 1_000_000) * model_pricing["output"]
+        output_cost = (total_output_tokens / 1_000_000) * model_pricing[
+            "output"
+        ]
         total_cost = input_cost + output_cost
 
         # Extract moles from response
@@ -623,16 +651,22 @@ def analyze_image_with_claude(
                         if json_start >= 0 and json_end > json_start:
                             json_text = text[json_start:json_end]
                             detected_moles = json.loads(json_text)
-                            
+
                             # If we're in the first round and have grid references, convert to x,y coordinates
-                            if not is_refinement and grid_points and "grid_ref" in detected_moles[0]:
+                            if (
+                                not is_refinement
+                                and grid_points
+                                and "grid_ref" in detected_moles[0]
+                            ):
                                 # Convert grid references to pixel coordinates
                                 for mole in detected_moles:
                                     if "grid_ref" in mole:
-                                        x, y = grid_ref_to_coordinates(mole["grid_ref"], grid_points)
+                                        x, y = grid_ref_to_coordinates(
+                                            mole["grid_ref"], grid_points
+                                        )
                                         mole["x"] = x
                                         mole["y"] = y
-                            
+
                             break
                         else:
                             return (
@@ -672,8 +706,11 @@ def analyze_image_with_claude(
         return [], 0.0, f"Unexpected error: {str(e)}", None, None, None
 
 
-def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, Dict[str, Tuple[int, int]]]:
-    """Create an image with a 7x7 grid of lettered points that includes edges and corners.
+def create_grid_annotated_image(
+    image_path: pathlib.Path,
+) -> Tuple[np.ndarray, Dict[str, Tuple[int, int]]]:
+    """Create an image with a 7x7 grid of lettered points that includes edges
+    and corners.
 
     Args:
         image_path: Path to the original image
@@ -686,45 +723,46 @@ def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, D
     # Load the original image
     image = mel.lib.image.load_image(image_path)
     height, width = image.shape[:2]
-    
+
     # Create a copy for annotation
     annotated = image.copy()
-    
+
     # Define the grid (7x7 to include edges)
     rows, cols = 7, 7
-    
+
     # Generate grid labels (a-z lowercase, then A-Z uppercase)
     import string
+
     labels = list(string.ascii_lowercase)  # a-z (26 letters)
     labels.extend(list(string.ascii_uppercase[:23]))  # A-W (need 49 total)
     labels = labels[:49]  # Limit to needed number of labels
-    
+
     # Create dictionary to store the grid point coordinates
     grid_points = {}
-    
+
     # Calculate positions including edges
     x_positions = [0]  # Left edge
-    for i in range(1, cols-1):
-        x_positions.append(width * i // (cols-1))
-    x_positions.append(width-1)  # Right edge
-    
+    for i in range(1, cols - 1):
+        x_positions.append(width * i // (cols - 1))
+    x_positions.append(width - 1)  # Right edge
+
     y_positions = [0]  # Top edge
-    for i in range(1, rows-1):
-        y_positions.append(height * i // (rows-1))
-    y_positions.append(height-1)  # Bottom edge
-    
+    for i in range(1, rows - 1):
+        y_positions.append(height * i // (rows - 1))
+    y_positions.append(height - 1)  # Bottom edge
+
     idx = 0
     for y in y_positions:
         for x in x_positions:
             label = labels[idx]
-            
+
             # Adjust drawing position slightly for edge points
-            draw_x = max(5, min(width-5, x))
-            draw_y = max(5, min(height-5, y))
-            
+            draw_x = max(5, min(width - 5, x))
+            draw_y = max(5, min(height - 5, y))
+
             # Draw a small dot at the grid point
             cv2.circle(annotated, (draw_x, draw_y), 5, (0, 255, 0), -1)
-            
+
             # Position label - adjust for edges
             label_x = draw_x - 10
             label_y = draw_y - 10
@@ -732,7 +770,7 @@ def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, D
                 label_x = draw_x + 5
             if y < 20:  # Top edge
                 label_y = draw_y + 15
-                
+
             # Add the letter label
             cv2.putText(
                 annotated,
@@ -743,16 +781,18 @@ def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, D
                 (0, 255, 0),
                 2,
             )
-            
+
             # Store the actual coordinates (not the adjusted drawing coordinates)
             grid_points[label] = (x, y)
             idx += 1
-    
+
     return annotated, grid_points
 
 
 def create_annotated_image(
-    image_path: pathlib.Path, moles: List[Dict], grid_points: Optional[Dict[str, Tuple[int, int]]] = None
+    image_path: pathlib.Path,
+    moles: List[Dict],
+    grid_points: Optional[Dict[str, Tuple[int, int]]] = None,
 ) -> np.ndarray:
     """Create an annotated image with markers for detected moles.
 
@@ -805,7 +845,9 @@ def create_annotated_image(
     return annotated
 
 
-def grid_ref_to_coordinates(grid_ref: str, grid_points: Dict[str, Tuple[int, int]]) -> Tuple[int, int]:
+def grid_ref_to_coordinates(
+    grid_ref: str, grid_points: Dict[str, Tuple[int, int]]
+) -> Tuple[int, int]:
     """Convert a grid reference to pixel coordinates.
 
     Args:
