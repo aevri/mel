@@ -61,43 +61,6 @@ Important guidelines:
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
 
-REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with the 7x7 grid of lettered points and annotations for moles that were detected in a previous step. The grid covers the entire image, including the edges and corners. Grid points are labeled with lowercase letters (a-z) first, and then uppercase letters (A-W). The moles have been numbered and circled in red.
-
-Here are the moles I detected previously:
-{numbered_moles}
-
-I need you to carefully analyze this image again. For each numbered circle:
-1. Is it actually a mole, or could it be something else (shadow, artifact, etc.)?
-2. Is the circle accurately centered on the mole, or should the position be adjusted?
-3. Provide the grid reference for each confirmed mole (e.g., "point c" or "between points f and k" or "near point M")
-
-Also:
-4. Are there any moles I missed entirely in my first analysis?
-5. If you have access to your previous analysis from the first image, what did you learn that could help with this refined analysis?
-
-Please provide a thoughtful analysis of each potential mole and explain your reasoning clearly.
-"""
-
-REFINEMENT_COORDINATES_PROMPT = """Thank you for that thoughtful analysis. Now, based on your observations, please provide your final refined list of mole locations using the grid reference system in the following format:
-```json
-[
-  {"id": 1, "grid_ref": "c"},
-  {"id": 2, "grid_ref": "fk"},
-  {"id": 3, "grid_ref": "M"}
-]
-```
-
-Important guidelines:
-1. Only include actual moles, not artifacts, shadows, or reflections
-2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M")
-3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "fk" or "uA")
-4. Keep the same numbering used in the annotated image
-5. Provide coordinates in a valid JSON array of objects
-6. Don't include any other information in the JSON besides id and grid_ref values
-
-Please respond with ONLY the JSON array and no additional explanation or text.
-"""
-
 
 def setup_parser(parser):
     parser.add_argument(
