@@ -33,9 +33,9 @@ ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that track
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
 For each mole:
-1. Assign it a number (starting from 1)
+1. Assign it a numerical id (starting from 1)
 2. Describe its appearance (color, size, shape)
-3. Describe its location relative to the grid points (e.g., "near point c", "between points f and k" or "close to point M")
+3. Describe its location relative to the grid points (e.g., "under point c", "halfway between points f and k" or "a third of the way between A and B")
 4. Note any distinctive features or landmarks near the mole that could help with identification
 
 Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar. The numbering will help us track each mole consistently.
@@ -45,18 +45,19 @@ COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observat
 ```json
 [
   {"id": 1, "grid_ref": "c"},
-  {"id": 2, "grid_ref": "fk"},
+  {"id": 2, "grid_ref": "ffk"},
   {"id": 3, "grid_ref": "M"}
 ]
 ```
 
 Important guidelines:
-1. Only include actual moles, not artifacts, shadows, or reflections
-2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M")
-3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "fk" or "uA")
-4. Keep the same numbering you used in your analysis
-5. Provide coordinates in a valid JSON array of objects
-6. Don't include any other information in the JSON besides id and grid_ref values
+1. Only include actual moles, not artifacts, shadows, or reflections.
+2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M").
+3. For moles located between grid points, use more letters to indicate the nearest points (e.g., "fk" or "uA").
+4. Note that you may use an arbitrary number of letters, and the position is the mean of the corresponding grid points. This means that "a third of the way between A and B" is represented as "AAB" or "BAA".
+5. Keep the same numbering you used in your analysis.
+6. Provide coordinates in a valid JSON array of objects.
+7. Don't include any other information in the JSON besides id and grid_ref values.
 
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
