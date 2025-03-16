@@ -815,42 +815,7 @@ def grid_ref_to_coordinates(grid_ref: str, grid_points: Dict[str, Tuple[int, int
     Returns:
         Tuple of (x, y) pixel coordinates
     """
-    # First try direct lookup in case it's a single grid point
-    if grid_ref in grid_points:
-        return grid_points[grid_ref]
-    
-    # Split the grid_ref into individual grid points
-    points = []
-    i = 0
-    while i < len(grid_ref):
-        # Check if it's a two-letter label (like AA)
-        if i+2 <= len(grid_ref) and grid_ref[i:i+2] in grid_points:
-            points.append(grid_ref[i:i+2])
-            i += 2
-        # Check if it's a single-letter label (like F)
-        elif grid_ref[i] in grid_points:
-            points.append(grid_ref[i])
-            i += 1
-        else:
-            # Skip invalid characters
-            i += 1
-    
-    # If we couldn't parse any valid grid points, try the legacy method
-    if not points:
-        if len(grid_ref) == 2 and grid_ref[0] in grid_points and grid_ref[1] in grid_points:
-            # Legacy format with two single-letter points (like "FG")
-            p1 = grid_points[grid_ref[0]]
-            p2 = grid_points[grid_ref[1]]
-            return ((p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2)
-        
-        # If all else fails, return the origin
-        return (0, 0)
-    
-    # If we have only one point, return its coordinates
-    if len(points) == 1:
-        return grid_points[points[0]]
-    
-    # If we have multiple points, average their coordinates
+    points = [grid_points[x] for x in grid_ref]
     x_sum = sum(grid_points[p][0] for p in points)
     y_sum = sum(grid_points[p][1] for p in points)
     return (x_sum // len(points), y_sum // len(points))
