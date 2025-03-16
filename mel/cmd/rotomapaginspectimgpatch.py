@@ -236,22 +236,9 @@ def analyze_image_with_claude(
         - Full conversation messages list that can be used in subsequent calls
         - Refinement analysis text if in refinement mode (None in first round)
     """
-    # Create the grid-annotated image for the first round
-    grid_points = None
+    grid_annotated_image, grid_points = create_grid_annotated_image(image_path)
 
-    # Create a grid-annotated image for the first round
-    grid_annotated_image, grid_points = create_grid_annotated_image(
-        image_path
-    )
-
-    # Encode the grid-annotated image
-    success, img_encoded = cv2.imencode(".jpg", grid_annotated_image)
-    if not success:
-        raise ValueError("Failed to encode grid-annotated image")
-    image_data = img_encoded.tobytes()
-
-    # Base64 encode the image for the API
-    base64_image = base64.b64encode(image_data).decode("utf-8")
+    image_content = encode_image_for_api(grid_annotated_image)
 
     # Initialize the Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
@@ -259,34 +246,17 @@ def analyze_image_with_claude(
     total_output_tokens = 0
     mole_analysis = ""
 
-    # Multi-turn approach for first analysis
-    # Initialize conversation history
-    messages = []
-
-    # Setup image content object
-    image_content = {
-        "type": "image",
-        "source": {
-            "type": "base64",
-            "media_type": "image/jpeg",
-            "data": base64_image,
-        },
-    }
-
-    # First turn: Ask for qualitative analysis
-    content = [
+    messages = [{"role": "user", "content": [
         {"type": "text", "text": ANALYSIS_PROMPT},
         image_content,
-    ]
+    ]}]
 
     # First turn: Get qualitative analysis
-    print(
-        "  Step 1: Asking Claude to analyze the image with grid points..."
-    )
+    print("  Step 1: Asking Claude to analyze the image with grid points...")
     analysis_response = client.messages.create(
         model=model,
         max_tokens=1500,
-        messages=[{"role": "user", "content": content}],
+        messages=messages,
     )
 
     # Track token usage
@@ -304,9 +274,7 @@ def analyze_image_with_claude(
         for block in analysis_response.content:
             if block.type == "text":
                 mole_analysis = block.text
-                print(
-                    "  Analysis received. Asking for grid references..."
-                )
+                print("  Analysis received. Asking for grid references...")
                 break
 
     print("\nClaude's analysis:")
@@ -314,16 +282,15 @@ def analyze_image_with_claude(
     print(mole_analysis)
     print("-" * 60)
 
-    # Build the conversation history
-    messages = [
-        {"role": "user", "content": content},
-        {"role": "assistant", "content": analysis_response.content},
-    ]
+    messages.append({"role": "assistant", "content": analysis_response.content})
 
     # Add coordinates request to conversation
-    messages.append({"role": "user", "content": [
-        {"type": "text", "text": COORDINATES_PROMPT}
-    ]})
+    messages.append(
+        {
+            "role": "user",
+            "content": COORDINATES_PROMPT
+        }
+    )
 
     # Second turn: Ask for grid references based on analysis
     response = client.messages.create(
@@ -336,9 +303,7 @@ def analyze_image_with_claude(
     # Track token usage for second turn
     input_tokens = len(mole_analysis) // 4  # Rough estimate of tokens
     output_tokens = (
-        response.usage.output_tokens
-        if hasattr(response, "usage")
-        else 100
+        response.usage.output_tokens if hasattr(response, "usage") else 100
     )
     total_input_tokens += input_tokens
     total_output_tokens += output_tokens
@@ -348,9 +313,7 @@ def analyze_image_with_claude(
 
     # Calculate cost in dollars (use accumulated tokens for multi-turn)
     input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
-    output_cost = (total_output_tokens / 1_000_000) * model_pricing[
-        "output"
-    ]
+    output_cost = (total_output_tokens / 1_000_000) * model_pricing["output"]
     total_cost = input_cost + output_cost
 
     # Extract moles from response
@@ -359,6 +322,34 @@ def analyze_image_with_claude(
     detected_moles = parse_claude_gridref_response(response, grid_points)
 
     return detected_moles, total_cost
+
+
+def encode_image_for_api(image_data: np.ndarray) -> str:
+    """Encode an image for use with the Anthropic API.
+
+    Args:
+        image_data: Image data as a numpy array
+
+    Returns:
+        Base64 encoded image string
+    """
+    success, img_encoded = cv2.imencode(".jpg", image_data)
+    if not success:
+        raise ValueError("Failed to encode image")
+    image_bytes = img_encoded.tobytes()
+
+    base64_image = base64.b64encode(image_bytes).decode("utf-8")
+
+    image_content = {
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": "image/jpeg",
+            "data": base64_image,
+        },
+    }
+
+    return image_content
 
 
 def parse_claude_gridref_response(response, grid_points) -> List[Dict]:
@@ -374,7 +365,9 @@ def parse_claude_gridref_response(response, grid_points) -> List[Dict]:
         raise ValueError("No content in Claude response")
 
     if len(response.content) > 1:
-        raise ValueError("Unexpected number of content blocks in response", response.content)
+        raise ValueError(
+            "Unexpected number of content blocks in response", response.content
+        )
 
     block = response.content[0]
 
@@ -393,12 +386,14 @@ def parse_claude_gridref_response(response, grid_points) -> List[Dict]:
     for m in moles:
         if "id" not in m:
             raise ValueError("Missing 'id' in mole data", m)
-        
+
         if "grid_ref" not in m:
             raise ValueError("Missing 'grid_ref' in mole data", m)
-        
+
         try:
-            m["x"], m["y"] = grid_ref_to_coordinates(m["grid_ref"], grid_points)
+            m["x"], m["y"] = grid_ref_to_coordinates(
+                m["grid_ref"], grid_points
+            )
         except KeyError as e:
             raise ValueError("Invalid grid reference in mole data", m) from e
 
