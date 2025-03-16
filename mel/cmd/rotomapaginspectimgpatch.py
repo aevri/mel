@@ -144,16 +144,11 @@ def process_args(args):
     start_time = time.time()
     print("Analyzing image with " + args.model + " (first round)")
     print("  Using a lettered grid for coordinate references")
-    (
-        detected_moles,
-        first_cost,
-    ) = analyze_image_with_claude(image_path, api_key, args.model)
+    detected_moles = analyze_image_with_claude(image_path, api_key, args.model)
 
     if not detected_moles:
         print("No moles detected by Claude in the first round.")
         return 1
-
-    total_cost = first_cost
 
     print()
 
@@ -202,8 +197,8 @@ def process_args(args):
             grid_str = f"Grid ref {grid_ref} " if grid_ref else ""
             print(f"  {id_str}{grid_str}at ({mole['x']}, {mole['y']})")
 
-    print(f"\nAPI request completed in {elapsed_time:.2f} seconds")
-    print(f"Estimated API cost: ${total_cost:.6f}")
+    print()
+    print(f"API request completed in {elapsed_time:.2f} seconds")
 
     return 0
 
@@ -212,10 +207,7 @@ def analyze_image_with_claude(
     image_path: pathlib.Path,
     api_key: str,
     model: str = "claude-3-opus-20240229",
-) -> Tuple[
-    List[Dict],
-    float,
-]:
+) -> Tuple[List[Dict],]:
     """Analyze an image with Claude API to detect moles using the Anthropic
     library.
 
@@ -242,14 +234,16 @@ def analyze_image_with_claude(
 
     # Initialize the Anthropic client
     client = anthropic.Anthropic(api_key=api_key)
-    total_input_tokens = 0
-    total_output_tokens = 0
-    mole_analysis = ""
 
-    messages = [{"role": "user", "content": [
-        {"type": "text", "text": ANALYSIS_PROMPT},
-        image_content,
-    ]}]
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": ANALYSIS_PROMPT},
+                image_content,
+            ],
+        }
+    ]
 
     # First turn: Get qualitative analysis
     print("  Step 1: Asking Claude to analyze the image with grid points...")
@@ -259,69 +253,44 @@ def analyze_image_with_claude(
         messages=messages,
     )
 
-    # Track token usage
-    input_tokens = 1000  # Approximate for image + prompt
-    output_tokens = (
-        analysis_response.usage.output_tokens
-        if hasattr(analysis_response, "usage")
-        else 500
-    )
-    total_input_tokens += input_tokens
-    total_output_tokens += output_tokens
-
     # Extract the analysis text and build conversation history
-    if analysis_response.content:
-        for block in analysis_response.content:
-            if block.type == "text":
-                mole_analysis = block.text
-                print("  Analysis received. Asking for grid references...")
-                break
+    if not analysis_response.content:
+        raise ValueError("No content in Claude analysis response.")
+
+    if len(analysis_response.content) != 1:
+        raise ValueError(
+            "Unexpected number of content blocks in analysis response",
+            analysis_response.content,
+        )
+
+    if analysis_response.content[0].type != "text":
+        raise ValueError(
+            "Unexpected content type in analysis response",
+            analysis_response.content[0].type,
+        )
+
+    mole_analysis = analysis_response.content[0].text
 
     print("\nClaude's analysis:")
     print("-" * 60)
     print(mole_analysis)
     print("-" * 60)
 
-    messages.append({"role": "assistant", "content": analysis_response.content})
-
-    # Add coordinates request to conversation
     messages.append(
-        {
-            "role": "user",
-            "content": COORDINATES_PROMPT
-        }
+        {"role": "assistant", "content": analysis_response.content}
     )
+
+    messages.append({"role": "user", "content": COORDINATES_PROMPT})
 
     # Second turn: Ask for grid references based on analysis
     response = client.messages.create(
         model=model, max_tokens=1000, messages=messages
     )
-
-    # Add response to conversation history
     messages.append({"role": "assistant", "content": response.content})
-
-    # Track token usage for second turn
-    input_tokens = len(mole_analysis) // 4  # Rough estimate of tokens
-    output_tokens = (
-        response.usage.output_tokens if hasattr(response, "usage") else 100
-    )
-    total_input_tokens += input_tokens
-    total_output_tokens += output_tokens
-
-    # Get pricing for the model from global dictionary
-    model_pricing = MODEL_PRICING[model]
-
-    # Calculate cost in dollars (use accumulated tokens for multi-turn)
-    input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
-    output_cost = (total_output_tokens / 1_000_000) * model_pricing["output"]
-    total_cost = input_cost + output_cost
-
-    # Extract moles from response
-    detected_moles = []
 
     detected_moles = parse_claude_gridref_response(response, grid_points)
 
-    return detected_moles, total_cost
+    return detected_moles
 
 
 def encode_image_for_api(image_data: np.ndarray) -> str:
