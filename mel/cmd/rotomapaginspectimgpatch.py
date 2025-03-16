@@ -134,11 +134,6 @@ def setup_parser(parser):
         help="Claude model to use for analysis (default: claude-3-7-sonnet-20250219).",
     )
     parser.add_argument(
-        "--no-refine",
-        action="store_true",
-        help="Disable the refinement step (second round with annotated image).",
-    )
-    parser.add_argument(
         "--save-annotated",
         help="Save the annotated image to the specified path (for debugging).",
     )
@@ -184,27 +179,11 @@ def process_args(args):
     # First round: Initial analysis with Claude
     start_time = time.time()
     print("Analyzing image with " + args.model + " (first round)")
-    print("  Using a 5x5 lettered grid for coordinate references")
+    print("  Using a lettered grid for coordinate references")
     (
         detected_moles,
         first_cost,
-        api_error,
-        analysis_text,
-        conversation_history,
-        _,  # We don't need the refinement analysis in the first round
     ) = analyze_image_with_claude(image_path, api_key, args.model)
-
-    # Print the analysis text if available
-    if analysis_text:
-        print("\nClaude's analysis:")
-        print("-" * 60)
-        print(analysis_text)
-        print("-" * 60)
-    first_round_time = time.time() - start_time
-
-    if api_error:
-        print(f"Error from Claude API: {api_error}")
-        return 1
 
     if not detected_moles:
         print("No moles detected by Claude in the first round.")
@@ -217,90 +196,18 @@ def process_args(args):
     # Print detected moles with both grid references and coordinates
     print("Detected moles:")
     for mole in detected_moles:
-        if "id" in mole and "grid_ref" in mole:
-            grid_ref = mole["grid_ref"]
-            x, y = mole.get("x", 0), mole.get("y", 0)
-            print(f"  Mole {mole['id']}: Grid ref {grid_ref} at ({x}, {y})")
-        else:
-            print(f"  ({mole['x']}, {mole['y']})")
+        grid_ref = mole["grid_ref"]
+        x, y = mole["x"], mole["y"]
+        print(f"  Mole {mole['id']}: Grid ref {grid_ref} at ({x}, {y})")
     print()
 
-    # Second round: Refinement with annotated image
-    if not args.no_refine:
-        # Create annotated image with the first-round detections
+    if args.save_annotated:
         annotated_image = create_annotated_image(
             image_path, detected_moles, grid_points
         )
-
-        # Save annotated image if requested
-        if args.save_annotated:
-            annotated_path = f"{args.save_annotated}.1.jpg"
-            cv2.imwrite(annotated_path, annotated_image)
-            print(f"Saved annotated image to {annotated_path}")
-
-        # Second round with annotated image
-        second_round_start = time.time()
-        print("Refining analysis with " + args.model + " (second round)")
-        print("  Using conversation history from first round for context")
-        (
-            refined_moles,
-            second_cost,
-            api_error,
-            _,
-            refined_conversation,
-            refinement_analysis,
-        ) = analyze_image_with_claude(
-            image_path,
-            api_key,
-            args.model,
-            annotated_image=annotated_image,
-            first_round_moles=detected_moles,
-            previous_conversation=conversation_history,
-        )
-        second_round_time = time.time() - second_round_start
-
-        if api_error:
-            print(f"Error from Claude API in refinement round: {api_error}")
-            print("Using results from first round only.")
-        elif not refined_moles:
-            print(
-                "No moles detected in refinement round. Using results from first round."
-            )
-        else:
-            # Print the refinement analysis if available
-            if refinement_analysis:
-                print("\nClaude's refinement analysis:")
-                print("-" * 60)
-                print(refinement_analysis)
-                print("-" * 60)
-
-            # Use the refined results
-            print(f"First round detected {len(detected_moles)} moles")
-            print(f"Second round detected {len(refined_moles)} moles")
-
-            # Convert grid references to coordinates if needed
-            if "grid_ref" in refined_moles[0]:
-                for mole in refined_moles:
-                    if "grid_ref" in mole and (
-                        "x" not in mole or "y" not in mole
-                    ):
-                        x, y = grid_ref_to_coordinates(
-                            mole["grid_ref"], grid_points
-                        )
-                        mole["x"] = x
-                        mole["y"] = y
-
-            detected_moles = refined_moles
-            total_cost += second_cost
-
-            # Save annotated image if requested
-            if args.save_annotated:
-                annotated_image = create_annotated_image(
-                    image_path, detected_moles, grid_points
-                )
-                annotated_path = f"{args.save_annotated}.2.jpg"
-                cv2.imwrite(annotated_path, annotated_image)
-                print(f"Saved annotated image to {annotated_path}")
+        annotated_path = f"{args.save_annotated}.1.jpg"
+        cv2.imwrite(annotated_path, annotated_image)
+        print(f"Saved annotated image to {annotated_path}")
 
     elapsed_time = time.time() - start_time
 
@@ -309,7 +216,6 @@ def process_args(args):
         ground_truth_moles, detected_moles, args.threshold
     )
 
-    # Print results
     print(f"Matched moles: {len(matches)}")
     print(f"Unmatched ground truth: {len(unmatched_truth)}")
     print(f"Unmatched detected: {len(unmatched_detected)}")
@@ -332,20 +238,8 @@ def process_args(args):
             grid_str = f"Grid ref {grid_ref} " if grid_ref else ""
             print(f"  {id_str}{grid_str}at ({mole['x']}, {mole['y']})")
 
-    # Report timing and cost information
-    if not args.no_refine:
-        print(
-            f"\nFirst round completed in {first_round_time:.2f} seconds (cost: ${first_cost:.6f})"
-        )
-        if "second_round_time" in locals():
-            print(
-                f"Second round completed in {second_round_time:.2f} seconds (cost: ${second_cost:.6f})"
-            )
-        print(f"Total processing time: {elapsed_time:.2f} seconds")
-        print(f"Total estimated API cost: ${total_cost:.6f}")
-    else:
-        print(f"\nAPI request completed in {elapsed_time:.2f} seconds")
-        print(f"Estimated API cost: ${total_cost:.6f}")
+    print(f"\nAPI request completed in {elapsed_time:.2f} seconds")
+    print(f"Estimated API cost: ${total_cost:.6f}")
 
     return 0
 
@@ -354,16 +248,9 @@ def analyze_image_with_claude(
     image_path: pathlib.Path,
     api_key: str,
     model: str = "claude-3-opus-20240229",
-    annotated_image: Optional[np.ndarray] = None,
-    first_round_moles: Optional[List[Dict]] = None,
-    previous_conversation: Optional[List[Dict]] = None,
 ) -> Tuple[
     List[Dict],
     float,
-    Optional[str],
-    Optional[str],
-    Optional[List],
-    Optional[str],
 ]:
     """Analyze an image with Claude API to detect moles using the Anthropic
     library.
@@ -378,51 +265,26 @@ def analyze_image_with_claude(
 
     Returns:
         Tuple containing:
-        - List of detected moles with coordinates (either x,y or grid references)
+        - List of detected moles with coordinates (x, y)
         - Estimated cost of the API call
         - Error message if the request failed, None otherwise
         - Analysis text from the first turn (None if refinement round)
         - Full conversation messages list that can be used in subsequent calls
         - Refinement analysis text if in refinement mode (None in first round)
     """
-    # Determine if this is the first or refinement round
-    is_refinement = (
-        annotated_image is not None and first_round_moles is not None
-    )
-
     # Create the grid-annotated image for the first round
     grid_points = None
-    if not is_refinement:
-        # Create a grid-annotated image for the first round
-        grid_annotated_image, grid_points = create_grid_annotated_image(
-            image_path
-        )
 
-        # Encode the grid-annotated image
-        success, img_encoded = cv2.imencode(".jpg", grid_annotated_image)
-        if not success:
-            return (
-                [],
-                0.0,
-                "Failed to encode grid-annotated image",
-                None,
-                None,
-                None,
-            )
-        image_data = img_encoded.tobytes()
-    else:
-        # Use the provided annotated image for refinement
-        success, img_encoded = cv2.imencode(".jpg", annotated_image)
-        if not success:
-            return (
-                [],
-                0.0,
-                "Failed to encode annotated image",
-                None,
-                None,
-                None,
-            )
-        image_data = img_encoded.tobytes()
+    # Create a grid-annotated image for the first round
+    grid_annotated_image, grid_points = create_grid_annotated_image(
+        image_path
+    )
+
+    # Encode the grid-annotated image
+    success, img_encoded = cv2.imencode(".jpg", grid_annotated_image)
+    if not success:
+        raise ValueError("Failed to encode grid-annotated image")
+    image_data = img_encoded.tobytes()
 
     # Base64 encode the image for the API
     base64_image = base64.b64encode(image_data).decode("utf-8")
@@ -433,277 +295,150 @@ def analyze_image_with_claude(
     total_output_tokens = 0
     mole_analysis = ""
 
+    # Multi-turn approach for first analysis
+    # Initialize conversation history
+    messages = []
+
+    # Setup image content object
+    image_content = {
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": "image/jpeg",
+            "data": base64_image,
+        },
+    }
+
+    # First turn: Ask for qualitative analysis
+    content = [
+        {"type": "text", "text": ANALYSIS_PROMPT},
+        image_content,
+    ]
+
+    # First turn: Get qualitative analysis
+    print(
+        "  Step 1: Asking Claude to analyze the image with grid points..."
+    )
+    analysis_response = client.messages.create(
+        model=model,
+        max_tokens=1500,
+        messages=[{"role": "user", "content": content}],
+    )
+
+    # Track token usage
+    input_tokens = 1000  # Approximate for image + prompt
+    output_tokens = (
+        analysis_response.usage.output_tokens
+        if hasattr(analysis_response, "usage")
+        else 500
+    )
+    total_input_tokens += input_tokens
+    total_output_tokens += output_tokens
+
+    # Extract the analysis text and build conversation history
+    if analysis_response.content:
+        for block in analysis_response.content:
+            if block.type == "text":
+                mole_analysis = block.text
+                print(
+                    "  Analysis received. Asking for grid references..."
+                )
+                break
+
+    print("\nClaude's analysis:")
+    print("-" * 60)
+    print(mole_analysis)
+    print("-" * 60)
+
+    # Build the conversation history
+    messages = [
+        {"role": "user", "content": content},
+        {"role": "assistant", "content": analysis_response.content},
+    ]
+
+    # Add coordinates request to conversation
+    messages.append({"role": "user", "content": [
+        {"type": "text", "text": COORDINATES_PROMPT}
+    ]})
+
+    # Second turn: Ask for grid references based on analysis
+    response = client.messages.create(
+        model=model, max_tokens=1000, messages=messages
+    )
+
+    # Add response to conversation history
+    messages.append({"role": "assistant", "content": response.content})
+
+    # Track token usage for second turn
+    input_tokens = len(mole_analysis) // 4  # Rough estimate of tokens
+    output_tokens = (
+        response.usage.output_tokens
+        if hasattr(response, "usage")
+        else 100
+    )
+    total_input_tokens += input_tokens
+    total_output_tokens += output_tokens
+
+    # Get pricing for the model from global dictionary
+    model_pricing = MODEL_PRICING[model]
+
+    # Calculate cost in dollars (use accumulated tokens for multi-turn)
+    input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
+    output_cost = (total_output_tokens / 1_000_000) * model_pricing[
+        "output"
+    ]
+    total_cost = input_cost + output_cost
+
+    # Extract moles from response
+    detected_moles = []
+
+    detected_moles = parse_claude_gridref_response(response, grid_points)
+
+    return detected_moles, total_cost
+
+
+def parse_claude_gridref_response(response, grid_points) -> List[Dict]:
+    """Parse a Claude response for grid references to mole coordinates.
+
+    Args:
+        response: Claude response message object
+
+    Returns:
+        List of detected moles. Each mole is a dictionary with "id" and "grid_ref" keys.
+    """
+    if not response.content:
+        raise ValueError("No content in Claude response")
+
+    if len(response.content) > 1:
+        raise ValueError("Unexpected number of content blocks in response", response.content)
+
+    block = response.content[0]
+
+    if block.type != "text":
+        raise ValueError("Unexpected content type in response", block.type)
+
+    # We are likely to get a markdown block with json in it.
+    # Extract whatever might be between '[]'.
+    json_block = block.text[block.text.find("[") : block.text.rfind("]") + 1]
+
     try:
-        if is_refinement:
-            # Prepare numbered moles list for the prompt
-            if (
-                "id" in first_round_moles[0]
-                and "grid_ref" in first_round_moles[0]
-            ):
-                numbered_moles = "\n".join(
-                    [
-                        f"{m['id']}. Grid reference: {m['grid_ref']}"
-                        for m in first_round_moles
-                    ]
-                )
-            else:
-                numbered_moles = "\n".join(
-                    [
-                        f"{i+1}. ({m['x']}, {m['y']})"
-                        for i, m in enumerate(first_round_moles)
-                    ]
-                )
+        moles = json.loads(json_block)
+    except json.JSONDecodeError as e:
+        raise ValueError("Failed to parse JSON in response", block.text) from e
 
-            # Setup image content
-            image_content = {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/jpeg",
-                    "data": base64_image,
-                },
-            }
+    for m in moles:
+        if "id" not in m:
+            raise ValueError("Missing 'id' in mole data", m)
+        
+        if "grid_ref" not in m:
+            raise ValueError("Missing 'grid_ref' in mole data", m)
+        
+        try:
+            m["x"], m["y"] = grid_ref_to_coordinates(m["grid_ref"], grid_points)
+        except KeyError as e:
+            raise ValueError("Invalid grid reference in mole data", m) from e
 
-            # Initialize messages or use previous conversation
-            messages = previous_conversation.copy()
-
-            # First turn of refinement: Ask for analysis of the annotated image
-            analysis_prompt = REFINEMENT_ANALYSIS_PROMPT_TEMPLATE.format(
-                numbered_moles=numbered_moles
-            )
-
-            # First turn: analyze the annotated image
-            print("  Step 1: Asking Claude to analyze the annotated image...")
-            analysis_content = [
-                {"type": "text", "text": analysis_prompt},
-                image_content,
-            ]
-
-            messages += [{"role": "user", "content": analysis_content}]
-
-            analysis_response = client.messages.create(
-                model=model,
-                max_tokens=1500,
-                messages=messages,
-            )
-
-            # Track token usage
-            input_tokens = 1000  # Approximate for image + prompt
-            output_tokens = (
-                analysis_response.usage.output_tokens
-                if hasattr(analysis_response, "usage")
-                else 500
-            )
-            total_input_tokens += input_tokens
-            total_output_tokens += output_tokens
-
-            if not analysis_response.content:
-                raise ValueError("No content in response")
-
-            if analysis_response.content[-1].type != "text":
-                raise ValueError(
-                    "Unexpected response content type",
-                    analysis_response.content[-1].type,
-                )
-
-            refinement_analysis = analysis_response.content[-1].text
-            print("  Refinement analysis received.")
-            print("-" * 60)
-            print(refinement_analysis)
-            print("-" * 60)
-            print("  Asking for grid references...")
-
-            # Build the message list for the next turn
-            messages.append(
-                {"role": "assistant", "content": analysis_response.content},
-            )
-
-            # Second turn: Ask for coordinates based on analysis
-            # Add request for coordinates to the conversation
-            messages.append(
-                {"role": "user", "content": REFINEMENT_COORDINATES_PROMPT}
-            )
-
-            # Get the final coordinates from Claude
-            response = client.messages.create(
-                model=model,
-                max_tokens=1000,
-                messages=messages,
-            )
-
-            # Add the response to the conversation history
-            messages.append({"role": "assistant", "content": response.content})
-
-            # Track token usage
-            input_tokens = (
-                len(refinement_analysis) // 4 if refinement_analysis else 500
-            )  # Rough estimate of tokens
-            output_tokens = (
-                response.usage.output_tokens
-                if hasattr(response, "usage")
-                else 100
-            )
-            total_input_tokens += input_tokens
-            total_output_tokens += output_tokens
-
-        else:
-            # Multi-turn approach for first analysis
-            # Initialize conversation history
-            messages = []
-
-            # Setup image content object
-            image_content = {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/jpeg",
-                    "data": base64_image,
-                },
-            }
-
-            # First turn: Ask for qualitative analysis
-            content = [
-                {"type": "text", "text": ANALYSIS_PROMPT},
-                image_content,
-            ]
-
-            # First turn: Get qualitative analysis
-            print(
-                "  Step 1: Asking Claude to analyze the image with grid points..."
-            )
-            analysis_response = client.messages.create(
-                model=model,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": content}],
-            )
-
-            # Track token usage
-            input_tokens = 1000  # Approximate for image + prompt
-            output_tokens = (
-                analysis_response.usage.output_tokens
-                if hasattr(analysis_response, "usage")
-                else 500
-            )
-            total_input_tokens += input_tokens
-            total_output_tokens += output_tokens
-
-            # Extract the analysis text and build conversation history
-            if analysis_response.content:
-                for block in analysis_response.content:
-                    if block.type == "text":
-                        mole_analysis = block.text
-                        print(
-                            "  Analysis received. Asking for grid references..."
-                        )
-                        break
-
-            # Build the conversation history
-            messages = [
-                {"role": "user", "content": content},
-                {"role": "assistant", "content": analysis_response.content},
-            ]
-
-            # Add coordinates request to conversation
-            messages.append({"role": "user", "content": COORDINATES_PROMPT})
-
-            # Second turn: Ask for grid references based on analysis
-            response = client.messages.create(
-                model=model, max_tokens=1000, messages=messages
-            )
-
-            # Add response to conversation history
-            messages.append({"role": "assistant", "content": response.content})
-
-            # Track token usage for second turn
-            input_tokens = len(mole_analysis) // 4  # Rough estimate of tokens
-            output_tokens = (
-                response.usage.output_tokens
-                if hasattr(response, "usage")
-                else 100
-            )
-            total_input_tokens += input_tokens
-            total_output_tokens += output_tokens
-
-        # Get pricing for the model from global dictionary
-        model_pricing = MODEL_PRICING[model]
-
-        # Calculate cost in dollars (use accumulated tokens for multi-turn)
-        input_cost = (total_input_tokens / 1_000_000) * model_pricing["input"]
-        output_cost = (total_output_tokens / 1_000_000) * model_pricing[
-            "output"
-        ]
-        total_cost = input_cost + output_cost
-
-        # Extract moles from response
-        detected_moles = []
-
-        # Parse the response content
-        if response.content:
-            for block in response.content:
-                if block.type == "text":
-                    text = block.text
-                    # Extract JSON content
-                    try:
-                        # Try to find JSON array in the text
-                        json_start = text.find("[")
-                        json_end = text.rfind("]") + 1
-
-                        if json_start >= 0 and json_end > json_start:
-                            json_text = text[json_start:json_end]
-                            detected_moles = json.loads(json_text)
-
-                            # If we're in the first round and have grid references, convert to x,y coordinates
-                            if (
-                                not is_refinement
-                                and grid_points
-                                and "grid_ref" in detected_moles[0]
-                            ):
-                                # Convert grid references to pixel coordinates
-                                for mole in detected_moles:
-                                    if "grid_ref" in mole:
-                                        x, y = grid_ref_to_coordinates(
-                                            mole["grid_ref"], grid_points
-                                        )
-                                        mole["x"] = x
-                                        mole["y"] = y
-
-                            break
-                        else:
-                            return (
-                                [],
-                                total_cost,
-                                "No JSON data found in Claude's response",
-                                mole_analysis if not is_refinement else None,
-                                messages if "messages" in locals() else None,
-                                refinement_analysis if is_refinement else None,
-                            )
-                    except json.JSONDecodeError:
-                        return (
-                            [],
-                            total_cost,
-                            "Invalid JSON in Claude's response",
-                            mole_analysis if not is_refinement else None,
-                            messages if "messages" in locals() else None,
-                            refinement_analysis if is_refinement else None,
-                        )
-
-        return (
-            detected_moles,
-            total_cost,
-            None,
-            mole_analysis if not is_refinement else None,
-            messages if "messages" in locals() else None,
-            (
-                refinement_analysis
-                if is_refinement and "refinement_analysis" in locals()
-                else None
-            ),
-        )
-
-    except anthropic.APIError as e:
-        return [], 0.0, f"Anthropic API error: {str(e)}", None, None, None
-    except Exception as e:
-        return [], 0.0, f"Unexpected error: {str(e)}", None, None, None
+    return moles
 
 
 def create_grid_annotated_image(
@@ -857,9 +592,9 @@ def grid_ref_to_coordinates(
     Returns:
         Tuple of (x, y) pixel coordinates
     """
-    points = [grid_points[x] for x in grid_ref]
-    x_sum = sum(grid_points[p][0] for p in points)
-    y_sum = sum(grid_points[p][1] for p in points)
+    points = [grid_points[r] for r in grid_ref]
+    x_sum = sum(p[0] for p in points)
+    y_sum = sum(p[1] for p in points)
     return (x_sum // len(points), y_sum // len(points))
 
 
