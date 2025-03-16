@@ -28,14 +28,14 @@ MODEL_PRICING = {
 }
 
 # Prompt templates
-ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. The image has a 5x5 grid of lettered dots overlaid on it to help with location references. Please examine the image carefully and describe all the moles you can identify.
+ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. The image has a 7x7 grid of lettered dots overlaid on it to help with location references. The grid covers the entire image, including the edges and corners. Grid points are labeled with lowercase letters (a-z) first, and then uppercase letters (A-W). Please examine the image carefully and describe all the moles you can identify.
 
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
 For each mole:
 1. Assign it a number (starting from 1)
 2. Describe its appearance (color, size, shape)
-3. Describe its location relative to the grid points (e.g., "near point C", "between points F and K")
+3. Describe its location relative to the grid points (e.g., "near point c", "between points f and k" or "close to point M")
 4. Note any distinctive features or landmarks near the mole that could help with identification
 
 Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar. The numbering will help us track each mole consistently.
@@ -44,16 +44,16 @@ Focus on being thorough and accurate. Distinguish between actual moles and poten
 COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observations, please provide the location for each numbered mole using the grid reference system in the following format:
 ```json
 [
-  {"id": 1, "grid_ref": "C"},
-  {"id": 2, "grid_ref": "FG"},
-  {"id": 3, "grid_ref": "MN"}
+  {"id": 1, "grid_ref": "c"},
+  {"id": 2, "grid_ref": "fk"},
+  {"id": 3, "grid_ref": "M"}
 ]
 ```
 
 Important guidelines:
 1. Only include actual moles, not artifacts, shadows, or reflections
-2. For moles positioned directly under or very close to a grid point, use a single letter (e.g., "C")
-3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "FG")
+2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M")
+3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "fk" or "uA")
 4. Keep the same numbering you used in your analysis
 5. Provide coordinates in a valid JSON array of objects
 6. Don't include any other information in the JSON besides id and grid_ref values
@@ -61,7 +61,7 @@ Important guidelines:
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
 
-REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with the 5x5 grid of lettered points and annotations for moles that were detected in a previous step. The moles have been numbered and circled in red.
+REFINEMENT_ANALYSIS_PROMPT_TEMPLATE = """This image is a patch from a skin imaging system with the 7x7 grid of lettered points and annotations for moles that were detected in a previous step. The grid covers the entire image, including the edges and corners. Grid points are labeled with lowercase letters (a-z) first, and then uppercase letters (A-W). The moles have been numbered and circled in red.
 
 Here are the moles I detected previously:
 {numbered_moles}
@@ -69,7 +69,7 @@ Here are the moles I detected previously:
 I need you to carefully analyze this image again. For each numbered circle:
 1. Is it actually a mole, or could it be something else (shadow, artifact, etc.)?
 2. Is the circle accurately centered on the mole, or should the position be adjusted?
-3. Provide the grid reference for each confirmed mole (e.g., "point C" or "between points F and K")
+3. Provide the grid reference for each confirmed mole (e.g., "point c" or "between points f and k" or "near point M")
 
 Also:
 4. Are there any moles I missed entirely in my first analysis?
@@ -81,16 +81,16 @@ Please provide a thoughtful analysis of each potential mole and explain your rea
 REFINEMENT_COORDINATES_PROMPT = """Thank you for that thoughtful analysis. Now, based on your observations, please provide your final refined list of mole locations using the grid reference system in the following format:
 ```json
 [
-  {"id": 1, "grid_ref": "C"},
-  {"id": 2, "grid_ref": "FG"},
-  {"id": 3, "grid_ref": "MN"}
+  {"id": 1, "grid_ref": "c"},
+  {"id": 2, "grid_ref": "fk"},
+  {"id": 3, "grid_ref": "M"}
 ]
 ```
 
 Important guidelines:
 1. Only include actual moles, not artifacts, shadows, or reflections
-2. For moles positioned directly under or very close to a grid point, use a single letter (e.g., "C")
-3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "FG")
+2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M")
+3. For moles located between grid points, use two letters to indicate the nearest points (e.g., "fk" or "uA")
 4. Keep the same numbering used in the annotated image
 5. Provide coordinates in a valid JSON array of objects
 6. Don't include any other information in the JSON besides id and grid_ref values
@@ -673,7 +673,7 @@ def analyze_image_with_claude(
 
 
 def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, Dict[str, Tuple[int, int]]]:
-    """Create an image with a 5x5 grid of lettered points.
+    """Create an image with a 7x7 grid of lettered points that includes edges and corners.
 
     Args:
         image_path: Path to the original image
@@ -690,40 +690,61 @@ def create_grid_annotated_image(image_path: pathlib.Path) -> Tuple[np.ndarray, D
     # Create a copy for annotation
     annotated = image.copy()
     
-    # Define the grid
-    rows, cols = 5, 5
-    x_step = width // (cols + 1)
-    y_step = height // (rows + 1)
+    # Define the grid (7x7 to include edges)
+    rows, cols = 7, 7
     
-    # Generate grid labels (A-Y for a 5x5 grid)
+    # Generate grid labels (a-z lowercase, then A-Z uppercase)
     import string
-    labels = list(string.ascii_uppercase[:25])
+    labels = list(string.ascii_lowercase)  # a-z (26 letters)
+    labels.extend(list(string.ascii_uppercase[:23]))  # A-W (need 49 total)
+    labels = labels[:49]  # Limit to needed number of labels
     
     # Create dictionary to store the grid point coordinates
     grid_points = {}
     
+    # Calculate positions including edges
+    x_positions = [0]  # Left edge
+    for i in range(1, cols-1):
+        x_positions.append(width * i // (cols-1))
+    x_positions.append(width-1)  # Right edge
+    
+    y_positions = [0]  # Top edge
+    for i in range(1, rows-1):
+        y_positions.append(height * i // (rows-1))
+    y_positions.append(height-1)  # Bottom edge
+    
     idx = 0
-    for r in range(1, rows + 1):
-        for c in range(1, cols + 1):
-            x = c * x_step
-            y = r * y_step
+    for y in y_positions:
+        for x in x_positions:
             label = labels[idx]
             
-            # Draw a small dot at the grid point
-            cv2.circle(annotated, (x, y), 5, (0, 255, 0), -1)
+            # Adjust drawing position slightly for edge points
+            draw_x = max(5, min(width-5, x))
+            draw_y = max(5, min(height-5, y))
             
+            # Draw a small dot at the grid point
+            cv2.circle(annotated, (draw_x, draw_y), 5, (0, 255, 0), -1)
+            
+            # Position label - adjust for edges
+            label_x = draw_x - 10
+            label_y = draw_y - 10
+            if x < 20:  # Left edge
+                label_x = draw_x + 5
+            if y < 20:  # Top edge
+                label_y = draw_y + 15
+                
             # Add the letter label
             cv2.putText(
                 annotated,
                 label,
-                (x - 10, y - 10),
+                (label_x, label_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (0, 255, 0),
                 2,
             )
             
-            # Store the coordinates
+            # Store the actual coordinates (not the adjusted drawing coordinates)
             grid_points[label] = (x, y)
             idx += 1
     
@@ -788,27 +809,51 @@ def grid_ref_to_coordinates(grid_ref: str, grid_points: Dict[str, Tuple[int, int
     """Convert a grid reference to pixel coordinates.
 
     Args:
-        grid_ref: A string grid reference (e.g., "C" or "FG")
+        grid_ref: A string grid reference (e.g., "C", "FG", "AA", or "BAC")
         grid_points: Dictionary mapping grid labels to (x, y) coordinates
 
     Returns:
         Tuple of (x, y) pixel coordinates
     """
-    if len(grid_ref) == 1:
-        # Single point reference
-        return grid_points.get(grid_ref, (0, 0))
-    elif len(grid_ref) == 2:
-        # Between two points
-        p1 = grid_points.get(grid_ref[0], (0, 0))
-        p2 = grid_points.get(grid_ref[1], (0, 0))
-        # Average the coordinates
-        return (
-            (p1[0] + p2[0]) // 2,
-            (p1[1] + p2[1]) // 2,
-        )
-    else:
-        # Invalid reference, return origin
+    # First try direct lookup in case it's a single grid point
+    if grid_ref in grid_points:
+        return grid_points[grid_ref]
+    
+    # Split the grid_ref into individual grid points
+    points = []
+    i = 0
+    while i < len(grid_ref):
+        # Check if it's a two-letter label (like AA)
+        if i+2 <= len(grid_ref) and grid_ref[i:i+2] in grid_points:
+            points.append(grid_ref[i:i+2])
+            i += 2
+        # Check if it's a single-letter label (like F)
+        elif grid_ref[i] in grid_points:
+            points.append(grid_ref[i])
+            i += 1
+        else:
+            # Skip invalid characters
+            i += 1
+    
+    # If we couldn't parse any valid grid points, try the legacy method
+    if not points:
+        if len(grid_ref) == 2 and grid_ref[0] in grid_points and grid_ref[1] in grid_points:
+            # Legacy format with two single-letter points (like "FG")
+            p1 = grid_points[grid_ref[0]]
+            p2 = grid_points[grid_ref[1]]
+            return ((p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2)
+        
+        # If all else fails, return the origin
         return (0, 0)
+    
+    # If we have only one point, return its coordinates
+    if len(points) == 1:
+        return grid_points[points[0]]
+    
+    # If we have multiple points, average their coordinates
+    x_sum = sum(grid_points[p][0] for p in points)
+    y_sum = sum(grid_points[p][1] for p in points)
+    return (x_sum // len(points), y_sum // len(points))
 
 
 def compare_moles(
