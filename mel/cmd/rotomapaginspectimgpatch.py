@@ -32,12 +32,68 @@ ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that track
 A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
 
 For each mole:
-1. Assign it a numerical id (starting from 1)
-2. Describe its appearance (color, size, shape)
-3. Describe its location relative to the grid points (e.g., "under point c", "halfway between points f and k" or "a third of the way between A and B")
-4. Note any distinctive features or landmarks near the mole that could help with identification
+1. Assign it a numerical id (starting from 1).
+2. Describe its appearance (color, size, shape).
+3. Describe its precise location using one of these methods:
+   - If the mole is directly under a grid point, state "directly under point [letter]"
+   - If the mole is between grid points, specify using all relevant points that form the smallest enclosing shape:
+     * For moles in the middle of a grid square: "in the center of square formed by points [a, b, h, i]"
+     * For moles between two points: use appropriate fractions like "halfway between", "a third of the way from [a] to [b]", or "two-thirds between [a] and [b]"
+     * For moles within a grid square but not centered: "in the top third of the square formed by [a, b, h, i]" or "in the bottom right quadrant of the square formed by [a, b, h, i]"
+   - Consider all possible reference patterns (squares, triangles, rectangles) rather than defaulting to horizontal pairs
+4. Note any distinctive features or landmarks near the mole that could help with localization.
+
+Look specifically for moles that may appear in the center regions of grid squares, not just near the grid lines or points. Consider the entire area within each grid cell as potential locations for moles. Use precise fractional descriptions (thirds, quarters, etc.) to accurately pinpoint locations rather than defaulting to simple midpoints or nearest grid references.
 
 Focus on being thorough and accurate. Distinguish between actual moles and potential artifacts, shadows, or reflections that may appear similar. The numbering will help us track each mole consistently.
+"""
+
+MOLE_ANALYSIS_PROMPT = """This image is a patch from a skin imaging system that tracks moles. The image has a 7x7 grid of lettered dots overlaid on it to help with location references. The grid covers the entire image, including the edges and corners. Grid points are labeled with lowercase letters (a-z) first, and then uppercase letters (A-W).
+
+Your task is to:
+1. Identify and analyze all moles in the image
+2. Calculate their precise grid coordinates
+3. Output the final coordinates in a specific JSON format
+
+STEP 1: Examine the image carefully and identify all moles. For each mole:
+- Assign it a numerical id (starting from 1)
+- Describe its appearance (color, size, shape)
+- Analyze its precise location relative to the grid points
+- Note any distinctive features or landmarks near the mole
+
+A mole typically appears as a small, dark spot on the skin. It can be black, brown, or tan in color and circular or oval in shape.
+
+STEP 2: For each mole, convert your location description into a grid reference using the weighted coordinate system:
+- For moles directly under a grid point, use that single letter (e.g., "c")
+- For moles between points, use letter repetition to indicate position:
+  * "Halfway between a and b" → "ab" (equal weight)
+  * "One-third from a to b" → "aab" (more weight on a)
+  * "Two-thirds from a to b" → "abb" (more weight on b)
+- For moles in grid squares, include all relevant points with appropriate weighting:
+  * "Center of square abhi" → "abhi" (equal weight to all four corners)
+  * "Top-left quadrant of square abhi" → "aabhi" (extra weight to point a)
+  * "Near bottom-right of square abhi" → "ahii" (extra weight to point i)
+
+Show your reasoning for each mole's grid reference calculation.
+
+STEP 3: Output your final results in this JSON format:
+```json
+[
+  {"id": 1, "grid_ref": "c"},
+  {"id": 2, "grid_ref": "ffk"},
+  {"id": 3, "grid_ref": "abhi"}
+]
+```
+
+Important guidelines:
+
+- Only include actual moles, not artifacts, shadows, or reflections
+- Look for moles throughout the entire image, including centers of grid squares
+- Use the weighted coordinate system (letter repetition) to precisely indicate positions
+- The position is calculated as the mean of all letters in the grid reference
+- Show your complete analysis and reasoning before providing the final JSON output
+
+Please identify all moles, describe your reasoning clearly, and then provide the final JSON array of coordinates.
 """
 
 COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observations, please provide the location for each numbered mole using the grid reference system in the following format:
@@ -48,15 +104,21 @@ COORDINATES_PROMPT = """Thank you for that analysis. Now, based on your observat
   {"id": 3, "grid_ref": "M"}
 ]
 ```
-
 Important guidelines:
+
 1. Only include actual moles, not artifacts, shadows, or reflections.
 2. For moles positioned directly under or very close to a grid point, use that point's letter (e.g., "c" or "M").
-3. For moles located between grid points, use more letters to indicate the nearest points (e.g., "fk" or "uA").
-4. Note that you may use an arbitrary number of letters, and the position is the mean of the corresponding grid points. This means that "a third of the way between A and B" is represented as "AAB" or "BAA".
-5. Keep the same numbering you used in your analysis.
-6. Provide coordinates in a valid JSON array of objects.
-7. Don't include any other information in the JSON besides id and grid_ref values.
+3. For moles located between grid points, convert fractional descriptions to letter repetitions:
+    - "Halfway between a and b" should be "ab" (equal weight to both points)
+    - "A third of the way from a to b" should be "aab" (twice the weight to starting point)
+    - "Two-thirds of the way from a to b" should be "abb" (twice the weight to ending point)
+4. For moles in grid squares, include all surrounding points with appropriate weighting:
+    - "Center of square formed by a, b, h, i" should be "abhi" (equal weight to all four points)
+    - "Top third of square formed by a, b, h, i" should be "aabhi" (extra weight to top points)
+    - "Bottom right quadrant of square formed by a, b, h, i" should be "ahii" (extra weight to bottom-right)
+5. Remember that the position is calculated as the mean of all letters you include, so repeat letters to shift the position accordingly.
+6. Keep the same numerical IDs from your analysis.
+7. Provide coordinates in a valid JSON array of objects with only id and grid_ref fields.
 
 Please respond with ONLY the JSON array and no additional explanation or text.
 """
@@ -241,7 +303,11 @@ def analyze_image_with_claude(
     print("  Step 1: Asking Claude to analyze the image with grid points...")
     analysis_response = client.messages.create(
         model=model,
-        max_tokens=1500,
+        max_tokens=4_000,  # 1_500
+        # thinking={
+        #     "type": "enabled",
+        #     "budget_tokens": 2000,
+        # },
         messages=messages,
     )
 
@@ -249,19 +315,36 @@ def analyze_image_with_claude(
     if not analysis_response.content:
         raise ValueError("No content in Claude analysis response.")
 
+    mole_analysis = None
     if len(analysis_response.content) != 1:
-        raise ValueError(
-            "Unexpected number of content blocks in analysis response",
-            analysis_response.content,
-        )
+        if len(analysis_response.content) != 2:
+            raise ValueError(
+                "Unexpected number of content blocks in analysis response",
+                analysis_response.content,
+            )
+    
+        if analysis_response.content[0].type != "thinking":
+            raise ValueError(
+                "Unexpected content type in analysis response",
+                analysis_response.content[0].type,
+            )
 
-    if analysis_response.content[0].type != "text":
-        raise ValueError(
-            "Unexpected content type in analysis response",
-            analysis_response.content[0].type,
-        )
+        if analysis_response.content[1].type != "text":
+            raise ValueError(
+                "Unexpected content type in analysis response",
+                analysis_response.content[1].type,
+            )
+        
+        print("Thinking:", analysis_response.content[0].thinking)
+        mole_analysis = analysis_response.content[1].text
+    else:
+        if analysis_response.content[0].type != "text":
+            raise ValueError(
+                "Unexpected content type in analysis response",
+                analysis_response.content[0].type,
+            )
 
-    mole_analysis = analysis_response.content[0].text
+        mole_analysis = analysis_response.content[0].text
 
     print("\nClaude's analysis:")
     print("-" * 60)
@@ -273,8 +356,10 @@ def analyze_image_with_claude(
     for block in analysis_response.content:
         if block.type == "text":
             content_serializable.append({"type": "text", "text": block.text})
+        elif block.type == "thinking":
+            content_serializable.append({"type": "thinking", "thinking": block.thinking, "signature": block.signature})
         elif block.type == "image":
-            content_serializable.append({"type": "image"})
+            raise ValueError("Unexpected image block in analysis response")
     
     messages.append(
         {"role": "assistant", "content": content_serializable}
