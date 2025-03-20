@@ -52,8 +52,8 @@ def generate_offset_candidates(
     # Get image dimensions
     height, width = original_image.shape[:2]
 
-    # Calculate pixel offset based on image size (approximately 5% of width/height)
-    offset_pixels = min(int(min(width, height) * 0.05), 15)
+    # Calculate pixel offset based on image size
+    offset_pixels = int(min(width, height) * 0.1)
 
     # Define 9 offset positions
     candidates = [
@@ -114,15 +114,14 @@ def analyze_candidate_images(
     analysis_content_blocks.append(
         {
             "type": "text",
-            "text": f"""I'm showing you 9 different images of the same skin area, with a red circle drawn in slightly different positions on each image. These are labeled as Image 1 through Image 9.
-
-Please analyze all 9 images and describe what you see in each one. Focus on:
-1. The position of the red circle in each image
-2. How well the circle captures any mole or skin feature
-3. The differences between each image's circle placement
-4. Whether the circle appears to be properly centered on a mole
-
-Provide a brief analysis for each image (1-9), comparing them to help determine which one has the most accurate circle placement.""",
+            "text": f"""Now we'll try to refine the targetting of mole {mole_id}. I'll show you multiple image options, with a red circle drawn in slightly offset positions on each image.
+-
+-Please analyze all the images with respect to the distance from the circle to the target. Please focus on:
+-1. The index of the image, starting from 1.
+-2. Whether the circle appears to be properly centered on a mole.
+-3. Whether this image seems to be closer to correct than the other images.
+-
+-Provide a brief analysis for each image, and then finally comment on which seems to be the closest to correct.""",
         }
     )
 
