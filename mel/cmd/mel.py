@@ -10,6 +10,7 @@ import mel.cmd.list
 import mel.cmd.microadd
 import mel.cmd.microcompare
 import mel.cmd.microview
+import mel.cmd.rotomapagannote
 import mel.cmd.rotomapaggetimgpatch
 import mel.cmd.rotomapaginspectimgpatch
 import mel.cmd.rotomapagrefineimgpatch
@@ -52,6 +53,7 @@ COMMANDS = {
         "view": mel.cmd.microview,
     },
     "rotomap": {
+        "ag-annotate": mel.cmd.rotomapagannote,
         "ag-get-image-patch": mel.cmd.rotomapaggetimgpatch,
         "ag-inspect-image-patch": mel.cmd.rotomapaginspectimgpatch,
         "ag-refine-image-patch": mel.cmd.rotomapagrefineimgpatch,
