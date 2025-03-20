@@ -14,6 +14,7 @@ import mel.cmd.rotomapagannote
 import mel.cmd.rotomapaggetimgpatch
 import mel.cmd.rotomapaginspectimgpatch
 import mel.cmd.rotomapagrefineimgpatch
+import mel.cmd.rotomapagtranslategridref
 import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomark2
 import mel.cmd.rotomapautomark2train
@@ -57,6 +58,7 @@ COMMANDS = {
         "ag-get-image-patch": mel.cmd.rotomapaggetimgpatch,
         "ag-inspect-image-patch": mel.cmd.rotomapaginspectimgpatch,
         "ag-refine-image-patch": mel.cmd.rotomapagrefineimgpatch,
+        "ag-translate-gridref": mel.cmd.rotomapagtranslategridref,
         "automark": mel.cmd.rotomapautomark,
         "automark2": mel.cmd.rotomapautomark2,
         "automark2-train": mel.cmd.rotomapautomark2train,
