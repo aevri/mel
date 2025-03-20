@@ -205,8 +205,12 @@ def process_args(args):
         image_path, api_key, args.model
     )
 
-    pathlib.Path(f"{args.IMAGE}.messages.json").write_text(json.dumps(messages))
-    pathlib.Path(f"{args.IMAGE}.moles.json").write_text(json.dumps(detected_moles))
+    pathlib.Path(f"{args.IMAGE}.messages.json").write_text(
+        json.dumps(messages)
+    )
+    pathlib.Path(f"{args.IMAGE}.moles.json").write_text(
+        json.dumps(detected_moles)
+    )
 
     if not detected_moles:
         print("No moles detected by Claude.")
@@ -322,7 +326,7 @@ def analyze_image_with_claude(
                 "Unexpected number of content blocks in analysis response",
                 analysis_response.content,
             )
-    
+
         if analysis_response.content[0].type != "thinking":
             raise ValueError(
                 "Unexpected content type in analysis response",
@@ -334,7 +338,7 @@ def analyze_image_with_claude(
                 "Unexpected content type in analysis response",
                 analysis_response.content[1].type,
             )
-        
+
         print("Thinking:", analysis_response.content[0].thinking)
         mole_analysis = analysis_response.content[1].text
     else:
@@ -357,13 +361,17 @@ def analyze_image_with_claude(
         if block.type == "text":
             content_serializable.append({"type": "text", "text": block.text})
         elif block.type == "thinking":
-            content_serializable.append({"type": "thinking", "thinking": block.thinking, "signature": block.signature})
+            content_serializable.append(
+                {
+                    "type": "thinking",
+                    "thinking": block.thinking,
+                    "signature": block.signature,
+                }
+            )
         elif block.type == "image":
             raise ValueError("Unexpected image block in analysis response")
-    
-    messages.append(
-        {"role": "assistant", "content": content_serializable}
-    )
+
+    messages.append({"role": "assistant", "content": content_serializable})
 
     messages.append({"role": "user", "content": COORDINATES_PROMPT})
 
@@ -371,7 +379,7 @@ def analyze_image_with_claude(
     response = client.messages.create(
         model=model, max_tokens=1000, messages=messages
     )
-    
+
     # Convert content to JSON-serializable format
     content_serializable = []
     for block in response.content:
@@ -379,7 +387,7 @@ def analyze_image_with_claude(
             content_serializable.append({"type": "text", "text": block.text})
         elif block.type == "image":
             content_serializable.append({"type": "image"})
-    
+
     messages.append({"role": "assistant", "content": content_serializable})
 
     detected_moles = parse_claude_gridref_response(response, grid_points)
