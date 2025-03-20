@@ -196,6 +196,29 @@ def create_annotated_image_with_radial_lines(
         else:
             continue
 
+        # Draw radial lines
+        for j in range(num_lines):
+            angle = 2 * math.pi * j / num_lines
+            end_x = int(x + line_length * math.cos(angle))
+            end_y = int(y + line_length * math.sin(angle))
+
+            # Draw the line
+            cv2.line(annotated, (x, y), (end_x, end_y), (0, 255, 0), 2)
+
+            # Add a label at the end of the line
+            label_x = int(x + (line_length + 15) * math.cos(angle))
+            label_y = int(y + (line_length + 15) * math.sin(angle))
+
+            cv2.putText(
+                annotated,
+                radial_labels[j],
+                (label_x, label_y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+            )
+
         # Draw a circle around the mole
         cv2.circle(annotated, (x, y), 10, (0, 0, 255), 2)
 
@@ -222,29 +245,6 @@ def create_annotated_image_with_radial_lines(
             (0, 0, 255),
             2,
         )
-
-        # Draw radial lines
-        for j in range(num_lines):
-            angle = 2 * math.pi * j / num_lines
-            end_x = int(x + line_length * math.cos(angle))
-            end_y = int(y + line_length * math.sin(angle))
-
-            # Draw the line
-            cv2.line(annotated, (x, y), (end_x, end_y), (0, 255, 0), 2)
-
-            # Add a label at the end of the line
-            label_x = int(x + (line_length + 15) * math.cos(angle))
-            label_y = int(y + (line_length + 15) * math.sin(angle))
-
-            cv2.putText(
-                annotated,
-                radial_labels[j],
-                (label_x, label_y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
 
     return annotated
 
