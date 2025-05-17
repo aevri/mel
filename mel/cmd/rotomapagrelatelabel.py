@@ -26,6 +26,12 @@ def setup_parser(parser):
         "modified versions will be placed in the same directories as originals "
         "with '_labeled' added to filenames.",
     )
+    parser.add_argument(
+        "--output-width-height",
+        type=str,
+        help="Output image dimensions as 'width,height'. Images will be scaled "
+        "to fit these dimensions while maintaining aspect ratio.",
+    )
 
 
 def process_args(args):
@@ -35,6 +41,24 @@ def process_args(args):
     for path in image_paths:
         if not path.exists():
             print(f"Error: Input image does not exist: {path}")
+            return 1
+
+    # Parse output dimensions if provided
+    output_width = None
+    output_height = None
+    if args.output_width_height:
+        try:
+            width_height = args.output_width_height.split(",")
+            if len(width_height) != 2:
+                print(
+                    "Error: --output-width-height must be in format 'width,height'"
+                )
+                return 1
+            output_width = int(width_height[0])
+            output_height = int(width_height[1])
+            print(f"Output dimensions set to {output_width}x{output_height}")
+        except ValueError:
+            print("Error: --output-width-height must contain valid integers")
             return 1
 
     # Load all moles from the images
@@ -53,9 +77,14 @@ def process_args(args):
     # Process each image
     for path, moles in all_moles:
         try:
-            # Create labeled image
+            # Create labeled image with optional resizing
             labeled_image = create_labeled_image(
-                path, moles, canonical_moles, non_canonical_moles
+                path,
+                moles,
+                canonical_moles,
+                non_canonical_moles,
+                output_width,
+                output_height,
             )
 
             # Determine output path
@@ -65,7 +94,7 @@ def process_args(args):
             cv2.imwrite(str(output_path), labeled_image)
             print(f"Saved labeled image to {output_path}")
 
-            # Save JSON file with mole data
+            # Save JSON file with mole data - use original mole positions, not scaled ones
             json_output_path = get_json_output_path(path, args.output_dir)
             save_moles_json(
                 json_output_path, moles, canonical_moles, non_canonical_moles
@@ -137,6 +166,8 @@ def create_labeled_image(
     moles: List[Dict],
     canonical_labels: Dict[str, str],
     non_canonical_labels: Dict[str, str],
+    output_width: int = None,
+    output_height: int = None,
 ) -> np.ndarray:
     """Create a labeled image with moles marked and labeled.
 
@@ -145,6 +176,8 @@ def create_labeled_image(
         moles: List of mole dictionaries
         canonical_labels: Dictionary mapping canonical UUIDs to letter labels
         non_canonical_labels: Dictionary mapping non-canonical UUIDs to numeric labels
+        output_width: Optional width for the output image
+        output_height: Optional height for the output image
 
     Returns:
         A new image with moles labeled
@@ -152,12 +185,37 @@ def create_labeled_image(
     # Load the original image
     image = mel.lib.image.load_image(image_path)
 
+    # Get original dimensions
+    original_height, original_width = image.shape[:2]
+
+    # Calculate scale if output dimensions are specified
+    scale_x, scale_y = 1.0, 1.0
+    if output_width is not None and output_height is not None:
+        scale_x = output_width / original_width
+        scale_y = output_height / original_height
+        scale = min(scale_x, scale_y)  # Maintain aspect ratio
+
+        # Resize image before annotation
+        new_width = int(original_width * scale)
+        new_height = int(original_height * scale)
+        image = cv2.resize(image, (new_width, new_height))
+    else:
+        scale = 1.0
+
     # Create output image
     labeled_image = image.copy()
 
     # Apply mask if available to green out the background
     mask = mel.rotomap.mask.load_or_none(image_path)
     if mask is not None:
+        # Scale mask if necessary
+        if scale != 1.0:
+            mask = cv2.resize(
+                mask,
+                (labeled_image.shape[1], labeled_image.shape[0]),
+                interpolation=cv2.INTER_NEAREST,
+            )
+
         # Create a green background where mask is 0
         green_background = np.zeros_like(labeled_image)
         green_background[:, :, 1] = 255  # Set green channel to max
@@ -168,8 +226,19 @@ def create_labeled_image(
             mask_3channel > 0, labeled_image, green_background
         )
 
-    # Draw circles and labels for each mole
+    # Adjust mole positions based on scale
+    scaled_moles = []
     for mole in moles:
+        scaled_mole = mole.copy()
+        scaled_mole["x"] = int(mole["x"] * scale)
+        scaled_mole["y"] = int(mole["y"] * scale)
+        scaled_moles.append(scaled_mole)
+
+    # Track label positions to avoid overlaps
+    label_positions = set()
+
+    # Draw circles and labels for each mole
+    for mole in scaled_moles:
         uuid = mole["uuid"]
         x, y = int(mole["x"]), int(mole["y"])
 
@@ -182,17 +251,34 @@ def create_labeled_image(
             color = (255, 0, 0)  # Blue for non-canonical moles
 
         # Draw a circle around the mole
-        cv2.circle(labeled_image, (x, y), 15, color, 2)
+        cv2.circle(
+            labeled_image,
+            (x, y),
+            15,
+            color,
+            max(1, int(2 * scale)),
+        )
+
+        # Calculate label position
+        label_x = x + int(20 * scale)
+        label_y = y
+
+        # Check for overlaps with existing labels
+        label_key = (label_x, label_y)
+        if label_key in label_positions:
+            continue  # Skip this label if position already occupied
+
+        label_positions.add(label_key)
 
         # Draw the label next to the mole
         cv2.putText(
             labeled_image,
             label,
-            (x + 20, y),
+            (label_x, label_y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
+            max(0.4, 0.9 * scale),
             color,
-            2,
+            max(1, int(2 * scale)),
         )
 
     return labeled_image
