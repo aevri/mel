@@ -15,6 +15,7 @@ import mel.cmd.rotomapagannoteradial
 import mel.cmd.rotomapaggetimgpatch
 import mel.cmd.rotomapaginspectimgpatch
 import mel.cmd.rotomapagrefineimgpatch
+import mel.cmd.rotomapagrelatelabel
 import mel.cmd.rotomapagtranslategridref
 import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomark2
@@ -60,6 +61,7 @@ COMMANDS = {
         "ag-get-image-patch": mel.cmd.rotomapaggetimgpatch,
         "ag-inspect-image-patch": mel.cmd.rotomapaginspectimgpatch,
         "ag-refine-image-patch": mel.cmd.rotomapagrefineimgpatch,
+        "ag-relate-label": mel.cmd.rotomapagrelatelabel,
         "ag-translate-gridref": mel.cmd.rotomapagtranslategridref,
         "automark": mel.cmd.rotomapautomark,
         "automark2": mel.cmd.rotomapautomark2,
