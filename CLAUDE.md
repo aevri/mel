@@ -20,3 +20,21 @@
 ## Development Environment
 - Python 3.8+
 - Install dev dependencies: `pip install -e '.[dev]'`
+
+## Adding New Commands
+- Commands are located in `mel/cmd/` directory
+- Each command is a separate Python module with `setup_parser()` and `process_args()` functions
+- Register new commands in `mel/cmd/mel.py` in the `COMMANDS` dictionary under appropriate category
+- Import the command module at the top of `mel.py`
+- Follow the pattern of existing commands like `rotomapagrelatelabel.py`
+- Use `mel.rotomap.moles.load_image_moles()` to load mole data from images
+- Use `mel.lib.image.load_image()` to load images
+- Use `mel.rotomap.mask.load_or_none()` to load optional mask files
+
+## MEL Project Structure
+- `mel/cmd/` - CLI command implementations
+- `mel/lib/` - Core utility libraries (image, math, UI, etc.)
+- `mel/rotomap/` - Rotomap-specific functionality (moles, masks, detection, etc.)
+- `mel/micro/` - Microscope image functionality
+- `tests/` - Test files organized by module
+- `meta/` - Development scripts (tests, linting, formatting)
