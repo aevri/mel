@@ -32,6 +32,12 @@ def setup_parser(parser):
         help="Output image dimensions as 'width,height'. Images will be scaled "
         "to fit these dimensions while maintaining aspect ratio.",
     )
+    parser.add_argument(
+        "--zoom",
+        type=str,
+        help="UUID,SCALE where UUID is the mole UUID to center on and SCALE is "
+        "the zoom factor. SCALE>1 means zoom out (e.g. 2 = half size).",
+    )
 
 
 def process_args(args):
@@ -61,6 +67,22 @@ def process_args(args):
             print("Error: --output-width-height must contain valid integers")
             return 1
 
+    # Parse zoom parameters if provided
+    zoom_uuid = None
+    zoom_scale = None
+    if args.zoom:
+        try:
+            zoom_params = args.zoom.split(",")
+            if len(zoom_params) != 2:
+                print("Error: --zoom must be in format 'UUID,SCALE'")
+                return 1
+            zoom_uuid = zoom_params[0]
+            zoom_scale = float(zoom_params[1])
+            print(f"Zoom set to UUID={zoom_uuid}, scale={zoom_scale}")
+        except ValueError:
+            print("Error: --zoom SCALE must be a valid number")
+            return 1
+
     # Load all moles from the images
     all_moles = []
     for path in image_paths:
@@ -77,7 +99,7 @@ def process_args(args):
     # Process each image
     for path, moles in all_moles:
         try:
-            # Create labeled image with optional resizing
+            # Create labeled image with optional resizing and zooming
             labeled_image = create_labeled_image(
                 path,
                 moles,
@@ -85,6 +107,8 @@ def process_args(args):
                 non_canonical_moles,
                 output_width,
                 output_height,
+                zoom_uuid,
+                zoom_scale,
             )
 
             # Determine output path
@@ -168,6 +192,8 @@ def create_labeled_image(
     non_canonical_labels: Dict[str, str],
     output_width: int = None,
     output_height: int = None,
+    zoom_uuid: str = None,
+    zoom_scale: float = None,
 ) -> np.ndarray:
     """Create a labeled image with moles marked and labeled.
 
@@ -178,6 +204,8 @@ def create_labeled_image(
         non_canonical_labels: Dictionary mapping non-canonical UUIDs to numeric labels
         output_width: Optional width for the output image
         output_height: Optional height for the output image
+        zoom_uuid: Optional UUID of the mole to center the image on
+        zoom_scale: Optional scale factor for zooming (>1 means zoom out)
 
     Returns:
         A new image with moles labeled
@@ -188,21 +216,54 @@ def create_labeled_image(
     # Get original dimensions
     original_height, original_width = image.shape[:2]
 
-    # Calculate scale if output dimensions are specified
-    scale_x, scale_y = 1.0, 1.0
-    if output_width is not None and output_height is not None:
-        scale_x = output_width / original_width
-        scale_y = output_height / original_height
-        scale = min(scale_x, scale_y)  # Maintain aspect ratio
+    # Find the center mole if zoom_uuid is specified
+    center_x, center_y = None, None
+    if zoom_uuid is not None:
+        for mole in moles:
+            if mole["uuid"] == zoom_uuid:
+                center_x, center_y = int(mole["x"]), int(mole["y"])
+                break
 
-        # Resize image before annotation
-        new_width = int(original_width * scale)
-        new_height = int(original_height * scale)
-        image = cv2.resize(image, (new_width, new_height))
+        if center_x is None:
+            print(
+                f"Warning: Mole with UUID {zoom_uuid} not found in image {image_path}"
+            )
+            # Default to center of image if mole not found
+            center_x, center_y = original_width // 2, original_height // 2
+
+    # Apply fixed zoom scale if specified
+    if zoom_scale is not None:
+        scale = 1.0 / zoom_scale  # Convert zoom scale to resize scale
     else:
         scale = 1.0
 
-    # Create output image
+    # Calculate output dimensions for cropping (if both zoom and output dimensions specified)
+    crop_to_output = False
+    if output_width is not None and output_height is not None:
+        if zoom_uuid is not None:
+            # If both zoom and output dimensions specified, we'll crop to output dimensions
+            crop_to_output = True
+        else:
+            # If only output dimensions specified (no zoom), calculate scale to fit
+            scale_x = output_width / original_width
+            scale_y = output_height / original_height
+            if scale_x < scale_y:
+                scale = scale_x  # Maintain aspect ratio
+            else:
+                scale = scale_y  # Maintain aspect ratio
+
+    # Resize image before annotation if scale isn't 1.0
+    if scale != 1.0:
+        new_width = int(original_width * scale)
+        new_height = int(original_height * scale)
+        image = cv2.resize(image, (new_width, new_height))
+
+        # Also scale the center point if we're zooming on a mole
+        if center_x is not None:
+            center_x = int(center_x * scale)
+            center_y = int(center_y * scale)
+
+    # Create base labeled image
     labeled_image = image.copy()
 
     # Apply mask if available to green out the background
@@ -226,21 +287,128 @@ def create_labeled_image(
             mask_3channel > 0, labeled_image, green_background
         )
 
-    # Adjust mole positions based on scale
+    # Prepare for centering and/or cropping
+    if (
+        center_x is not None
+        and crop_to_output
+        and output_width is not None
+        and output_height is not None
+    ):
+        # Calculate the crop rectangle
+        current_height, current_width = labeled_image.shape[:2]
+
+        # Calculate the top-left corner of the crop area
+        crop_start_x = max(0, center_x - output_width // 2)
+        crop_start_y = max(0, center_y - output_height // 2)
+
+        # Make sure the crop area doesn't go beyond the image boundaries
+        if crop_start_x + output_width > current_width:
+            crop_start_x = current_width - output_width
+        if crop_start_y + output_height > current_height:
+            crop_start_y = current_height - output_height
+
+        # Ensure we don't have negative values (can happen with small images)
+        crop_start_x = max(0, crop_start_x)
+        crop_start_y = max(0, crop_start_y)
+    else:
+        # No centering/cropping
+        crop_start_x = 0
+        crop_start_y = 0
+
+    # Adjust mole positions based on scale and crop
     scaled_moles = []
     for mole in moles:
         scaled_mole = mole.copy()
-        scaled_mole["x"] = int(mole["x"] * scale)
-        scaled_mole["y"] = int(mole["y"] * scale)
-        scaled_moles.append(scaled_mole)
+        # First scale the coordinates
+        scaled_x = int(mole["x"] * scale)
+        scaled_y = int(mole["y"] * scale)
+
+        # Adjust for cropping
+        scaled_x -= crop_start_x
+        scaled_y -= crop_start_y
+
+        # Only include moles that will be visible in the cropped area
+        if (
+            center_x is not None
+            and crop_to_output
+            and output_width is not None
+            and output_height is not None
+        ):
+            if 0 <= scaled_x < output_width and 0 <= scaled_y < output_height:
+                scaled_mole["x"] = scaled_x
+                scaled_mole["y"] = scaled_y
+                scaled_moles.append(scaled_mole)
+        else:
+            scaled_mole["x"] = scaled_x
+            scaled_mole["y"] = scaled_y
+            scaled_moles.append(scaled_mole)
+
+    # Handle cropping if needed
+    if (
+        center_x is not None
+        and crop_to_output
+        and output_width is not None
+        and output_height is not None
+    ):
+        current_height, current_width = labeled_image.shape[:2]
+
+        # Make sure we don't try to crop more than the image size
+        end_x = min(crop_start_x + output_width, current_width)
+        end_y = min(crop_start_y + output_height, current_height)
+        actual_width = end_x - crop_start_x
+        actual_height = end_y - crop_start_y
+
+        # Crop the image
+        cropped_image = labeled_image[crop_start_y:end_y, crop_start_x:end_x]
+
+        # If the cropped area is smaller than requested output size, pad it
+        if actual_width < output_width or actual_height < output_height:
+            padded_image = np.zeros(
+                (output_height, output_width, 3), dtype=np.uint8
+            )
+            padded_image[:actual_height, :actual_width] = cropped_image
+            labeled_image = padded_image
+        else:
+            labeled_image = cropped_image
+    elif (
+        output_width is not None
+        and output_height is not None
+        and not crop_to_output
+    ):
+        # Just resize to fit output dimensions if no centering/cropping
+        current_height, current_width = labeled_image.shape[:2]
+        if current_width != output_width or current_height != output_height:
+            labeled_image = cv2.resize(
+                labeled_image, (output_width, output_height)
+            )
+
+            # Need to adjust mole positions again for this final resize
+            final_scale_x = output_width / current_width
+            final_scale_y = output_height / current_height
+
+            for mole in scaled_moles:
+                mole["x"] = int(mole["x"] * final_scale_x)
+                mole["y"] = int(mole["y"] * final_scale_y)
 
     # Track label positions to avoid overlaps
     label_positions = set()
+
+    # Calculate circle size based on image size
+    circle_radius = int(max(5, min(15, labeled_image.shape[1] / 40)))
 
     # Draw circles and labels for each mole
     for mole in scaled_moles:
         uuid = mole["uuid"]
         x, y = int(mole["x"]), int(mole["y"])
+
+        # Skip if outside the image bounds
+        if (
+            x < 0
+            or y < 0
+            or x >= labeled_image.shape[1]
+            or y >= labeled_image.shape[0]
+        ):
+            continue
 
         # Determine label and color based on whether mole is canonical
         if mole["is_uuid_canonical"]:
@@ -254,14 +422,18 @@ def create_labeled_image(
         cv2.circle(
             labeled_image,
             (x, y),
-            15,
+            circle_radius,
             color,
             max(1, int(2 * scale)),
         )
 
         # Calculate label position
-        label_x = x + int(20 * scale)
+        label_x = x + circle_radius + 5
         label_y = y
+
+        # Make sure label is within image bounds
+        if label_x >= labeled_image.shape[1]:
+            label_x = x - circle_radius - 20
 
         # Check for overlaps with existing labels
         label_key = (label_x, label_y)
@@ -270,15 +442,18 @@ def create_labeled_image(
 
         label_positions.add(label_key)
 
+        # Calculate font scale based on image size
+        font_scale = max(0.4, min(0.9, labeled_image.shape[1] / 800))
+
         # Draw the label next to the mole
         cv2.putText(
             labeled_image,
             label,
             (label_x, label_y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            max(0.4, 0.9 * scale),
+            font_scale,
             color,
-            max(1, int(2 * scale)),
+            max(1, int(1.5 * scale)),
         )
 
     return labeled_image
