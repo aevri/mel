@@ -93,14 +93,19 @@ def process_args(args):
 
     # Create labeled images with grid overlay
     try:
-        # Create source image with labels and grid
+        # Create source image with labels and grid (zoomed to target mole location)
+        target_src_x, target_src_y = target_mole["x"], target_mole["y"]
         src_labeled = create_labeled_image_with_grid(
-            src_path, src_moles, canonical_moles, non_canonical_moles
+            src_path,
+            src_moles,
+            canonical_moles,
+            non_canonical_moles,
+            guessed_location=(target_src_x, target_src_y),
         )
         cv2.imwrite(str(output_src_path), src_labeled)
         print(f"Saved labeled source image to {output_src_path}")
 
-        # Create target image with labels, grid, and guessed location
+        # Create target image with labels and grid (zoomed to guessed location)
         tgt_labeled = create_labeled_image_with_grid(
             tgt_path,
             tgt_moles,
@@ -421,34 +426,6 @@ def create_labeled_image_with_grid(
                 font_scale,
                 color,
                 max(1, int(1.5)),
-            )
-
-    # Draw guessed location if provided
-    if guessed_location is not None:
-        guess_x, guess_y = guessed_location
-        if 0 <= guess_x < width and 0 <= guess_y < height:
-            # Draw a larger yellow circle for the guessed location
-            cv2.circle(
-                labeled_image,
-                (guess_x, guess_y),
-                circle_radius + 5,
-                (0, 255, 255),
-                3,
-            )
-            # Draw crosshairs
-            cv2.line(
-                labeled_image,
-                (guess_x - 15, guess_y),
-                (guess_x + 15, guess_y),
-                (0, 255, 255),
-                2,
-            )
-            cv2.line(
-                labeled_image,
-                (guess_x, guess_y - 15),
-                (guess_x, guess_y + 15),
-                (0, 255, 255),
-                2,
             )
 
     return labeled_image
