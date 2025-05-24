@@ -65,6 +65,8 @@ def calculate_alignment_transform(
 ):
     """Calculate scale and rotation to align source with target based on
     neighboring moles."""
+    return 0.75, 0, "FAKE"
+
     src_uuid = src_mole["uuid"]
     tgt_uuid = tgt_mole["uuid"]
     assert src_uuid == tgt_uuid
@@ -143,27 +145,63 @@ def apply_transform_to_point(point, scale, rotation_degrees, center):
 def transform_image_patch(
     image, center_x, center_y, patch_size, scale, rotation_degrees
 ):
-    """Extract and transform an image patch with given scale and rotation."""
-    half_size = int(patch_size * scale) // 2 + 50  # Extra margin for rotation
+    """Transform the full image first, then extract patch to preserve maximum
+    context."""
+    # Transform the full image first to preserve context
+    transformed_image = image.copy()
 
-    # Extract larger patch to allow for rotation and scaling
-    y_start = max(0, center_y - half_size)
-    y_end = min(image.shape[0], center_y + half_size)
-    x_start = max(0, center_x - half_size)
-    x_end = min(image.shape[1], center_x + half_size)
-
-    patch = image[y_start:y_end, x_start:x_end]
-
-    # Apply scale
+    # Apply scale to the full image
     if scale != 1.0:
-        patch = mel.lib.image.scale_image(patch, scale)
+        transformed_image = mel.lib.image.scale_image(transformed_image, scale)
+        # Update center coordinates for the scaled image
+        scaled_center_x = int(center_x * scale)
+        scaled_center_y = int(center_y * scale)
+    else:
+        scaled_center_x = center_x
+        scaled_center_y = center_y
 
-    # Apply rotation
+    # Apply rotation to the full image
     if abs(rotation_degrees) > 0.1:
-        patch = mel.lib.image.rotated(patch, rotation_degrees)
+        transformed_image = mel.lib.image.rotated(
+            transformed_image, rotation_degrees
+        )
 
-    # Center crop to desired size
-    if patch.shape[0] >= patch_size and patch.shape[1] >= patch_size:
+        # Transform the mole coordinates for the rotated image
+        # Rotation is applied around the center of the image
+        img_center_x = transformed_image.shape[1] // 2
+        img_center_y = transformed_image.shape[0] // 2
+
+        # Apply rotation transformation to the mole center
+        rotated_center = apply_transform_to_point(
+            np.array([scaled_center_x, scaled_center_y]),
+            1.0,  # No additional scaling
+            rotation_degrees,
+            np.array([img_center_x, img_center_y]),
+        )
+        scaled_center_x = int(rotated_center[0])
+        scaled_center_y = int(rotated_center[1])
+
+    # Now extract the patch from the transformed image
+    half_size = patch_size // 2
+    y_start = max(0, scaled_center_y - half_size)
+    y_end = min(transformed_image.shape[0], scaled_center_y + half_size)
+    x_start = max(0, scaled_center_x - half_size)
+    x_end = min(transformed_image.shape[1], scaled_center_x + half_size)
+
+    patch = transformed_image[y_start:y_end, x_start:x_end]
+
+    # Pad if necessary to ensure patch is patch_size x patch_size
+    if patch.shape[0] < patch_size or patch.shape[1] < patch_size:
+        padded_patch = np.zeros((patch_size, patch_size, 3), dtype=patch.dtype)
+        y_offset = (patch_size - patch.shape[0]) // 2
+        x_offset = (patch_size - patch.shape[1]) // 2
+        padded_patch[
+            y_offset : y_offset + patch.shape[0],
+            x_offset : x_offset + patch.shape[1],
+        ] = patch
+        patch = padded_patch
+    elif patch.shape[0] > patch_size or patch.shape[1] > patch_size:
+        # Center crop if too large
         patch_center_y, patch_center_x = (
             patch.shape[0] // 2,
             patch.shape[1] // 2,
@@ -174,16 +212,6 @@ def transform_image_patch(
         x_start = patch_center_x - half_patch
         x_end = patch_center_x + half_patch
         patch = patch[y_start:y_end, x_start:x_end]
-    else:
-        # Pad if too small
-        padded_patch = np.zeros((patch_size, patch_size, 3), dtype=patch.dtype)
-        y_offset = (patch_size - patch.shape[0]) // 2
-        x_offset = (patch_size - patch.shape[1]) // 2
-        padded_patch[
-            y_offset : y_offset + patch.shape[0],
-            x_offset : x_offset + patch.shape[1],
-        ] = patch
-        patch = padded_patch
 
     return patch
 
@@ -261,6 +289,110 @@ def save_debug_search_area(
         print(f"  Debug: Saved search area to {filename}")
     except Exception as e:
         print(f"  Debug: Failed to save search area to {filename}: {e}")
+
+
+def save_similarity_heatmap(
+    image,
+    center_x,
+    center_y,
+    search_radius,
+    positions,
+    similarities,
+    step,
+    filename,
+):
+    """Save a heatmap showing similarity scores across the search area."""
+    try:
+        # Calculate search area bounds
+        half_patch = 112  # Use a reasonable patch size for visualization
+        search_left = max(0, center_x - search_radius - half_patch)
+        search_right = min(
+            image.shape[1], center_x + search_radius + half_patch
+        )
+        search_top = max(0, center_y - search_radius - half_patch)
+        search_bottom = min(
+            image.shape[0], center_y + search_radius + half_patch
+        )
+
+        # Extract search area
+        search_area = image[
+            search_top:search_bottom, search_left:search_right
+        ].copy()
+
+        # Create heatmap overlay
+        heatmap = np.zeros(search_area.shape[:2], dtype=np.float32)
+
+        # Normalize similarities to 0-1 range for visualization
+        if similarities:
+            valid_similarities = [
+                s for s in similarities if s >= -0.5
+            ]  # Filter out invalid positions
+            if valid_similarities:
+                min_sim = min(valid_similarities)
+                max_sim = max(valid_similarities)
+                sim_range = max_sim - min_sim if max_sim > min_sim else 1.0
+
+                # Draw similarity blocks on heatmap
+                for (pos_x, pos_y), similarity in zip(positions, similarities):
+                    if similarity < -0.5:  # Skip invalid positions
+                        continue
+
+                    # Convert global coordinates to search area coordinates
+                    local_x = pos_x - search_left
+                    local_y = pos_y - search_top
+
+                    # Normalize similarity to 0-1
+                    normalized_sim = (similarity - min_sim) / sim_range
+
+                    # Draw a block centered at the position
+                    block_half = step // 2
+                    y_start = max(0, local_y - block_half)
+                    y_end = min(heatmap.shape[0], local_y + block_half)
+                    x_start = max(0, local_x - block_half)
+                    x_end = min(heatmap.shape[1], local_x + block_half)
+
+                    heatmap[y_start:y_end, x_start:x_end] = normalized_sim
+
+        # Convert heatmap to red channel overlay
+        heatmap_colored = np.zeros(search_area.shape, dtype=np.uint8)
+        heatmap_colored[:, :, 2] = (heatmap * 255).astype(
+            np.uint8
+        )  # Red channel
+
+        # Blend with original image (70% original, 30% heatmap)
+        blended = cv2.addWeighted(search_area, 0.7, heatmap_colored, 0.3, 0)
+
+        # Draw center cross
+        center_in_area_x = center_x - search_left
+        center_in_area_y = center_y - search_top
+        cv2.line(
+            blended,
+            (center_in_area_x - 15, center_in_area_y),
+            (center_in_area_x + 15, center_in_area_y),
+            (0, 255, 0),
+            2,
+        )
+        cv2.line(
+            blended,
+            (center_in_area_x, center_in_area_y - 15),
+            (center_in_area_x, center_in_area_y + 15),
+            (0, 255, 0),
+            2,
+        )
+
+        # Draw search radius circle
+        cv2.circle(
+            blended,
+            (center_in_area_x, center_in_area_y),
+            search_radius,
+            (255, 255, 0),
+            2,
+        )
+
+        cv2.imwrite(filename, blended)
+        print(f"  Debug: Saved similarity heatmap to {filename}")
+    except Exception as e:
+        print(f"  Debug: Failed to save similarity heatmap to {filename}: {e}")
 
 
 def extract_cls_token(features):
@@ -341,17 +473,25 @@ def find_best_match_location(
     patch_size,
     model,
     transform,
+    debug_images=False,
+    uuid=None,
 ):
     """Find the best matching location within search_radius of the initial
     guess."""
     best_similarity = -float("inf")
     best_x, best_y = center_x, center_y
 
+    step = 14
+
+    # Store similarity scores for heatmap if debug mode is enabled
+    similarity_scores = []
+    candidate_positions = []
+
     # Search in a grid around the initial location
     for dy in range(
-        -search_radius, search_radius + 1, 2
-    ):  # Step by 2 for efficiency
-        for dx in range(-search_radius, search_radius + 1, 2):
+        -search_radius, search_radius + 1, step
+    ):  # Step by step for efficiency
+        for dx in range(-search_radius, search_radius + 1, step):
             candidate_x = center_x + dx
             candidate_y = center_y + dy
 
@@ -363,6 +503,10 @@ def find_best_match_location(
                 or candidate_y - half_size < 0
                 or candidate_y + half_size >= tgt_image.shape[0]
             ):
+                if debug_images:
+                    # Store invalid positions with low similarity for heatmap
+                    similarity_scores.append(-1.0)
+                    candidate_positions.append((candidate_x, candidate_y))
                 continue
 
             # Extract features from candidate location
@@ -380,9 +524,26 @@ def find_best_match_location(
                 src_features, candidate_features, dim=0
             ).item()
 
+            if debug_images:
+                similarity_scores.append(similarity)
+                candidate_positions.append((candidate_x, candidate_y))
+
             if similarity > best_similarity:
                 best_similarity = similarity
                 best_x, best_y = candidate_x, candidate_y
+
+    # Generate heatmap if debug mode is enabled
+    if debug_images and uuid:
+        save_similarity_heatmap(
+            tgt_image,
+            center_x,
+            center_y,
+            search_radius,
+            candidate_positions,
+            similarity_scores,
+            step,
+            f"{uuid}_tgt_heatmap.jpg",
+        )
 
     return best_x, best_y, best_similarity
 
@@ -583,6 +744,8 @@ def process_args(args):
                 patch_size,
                 model,
                 transform,
+                debug_images,
+                uuid,
             )
 
             # Update the mole location if we found a better match
