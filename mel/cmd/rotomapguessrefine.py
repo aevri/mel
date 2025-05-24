@@ -9,6 +9,7 @@ import torch
 import torchvision.transforms as transforms
 
 import mel.lib.image
+import mel.lib.math
 import mel.rotomap.moles
 
 
@@ -54,6 +55,134 @@ def load_dinov2_model():
         ) from e
 
 
+def calculate_alignment_transform(
+    src_mole, tgt_mole, src_canonical_moles, tgt_canonical_moles
+):
+    """Calculate scale and rotation to align source with target based on
+    neighboring moles."""
+    src_uuid = src_mole["uuid"]
+    tgt_uuid = tgt_mole["uuid"]
+    assert src_uuid == tgt_uuid
+
+    # Find common neighboring canonical moles
+    src_canonical_uuids = {m["uuid"] for m in src_canonical_moles}
+    tgt_canonical_uuids = {m["uuid"] for m in tgt_canonical_moles}
+    common_uuids = src_canonical_uuids & tgt_canonical_uuids
+    common_uuids.discard(src_uuid)  # Remove the target mole itself
+
+    if not common_uuids:
+        # No common neighbors, return identity transform
+        return 1.0, 0.0, None
+
+    # Create lookup dictionaries
+    src_mole_lookup = {
+        m["uuid"]: (m["x"], m["y"]) for m in src_canonical_moles
+    }
+    tgt_mole_lookup = {
+        m["uuid"]: (m["x"], m["y"]) for m in tgt_canonical_moles
+    }
+
+    src_target_pos = np.array([src_mole["x"], src_mole["y"]])
+    tgt_target_pos = np.array([tgt_mole["x"], tgt_mole["y"]])
+
+    # Find nearest common neighbor
+    nearest_common_uuid = min(
+        common_uuids,
+        key=lambda u: mel.lib.math.distance_sq_2d(
+            src_mole_lookup[u], src_target_pos
+        ),
+    )
+
+    # Calculate distances from target mole to nearest neighbor
+    src_neighbor_pos = np.array(src_mole_lookup[nearest_common_uuid])
+    tgt_neighbor_pos = np.array(tgt_mole_lookup[nearest_common_uuid])
+
+    src_distance = mel.lib.math.distance_2d(src_neighbor_pos, src_target_pos)
+    tgt_distance = mel.lib.math.distance_2d(tgt_neighbor_pos, tgt_target_pos)
+
+    # Calculate scale factor
+    if src_distance > 0:
+        scale = tgt_distance / src_distance
+    else:
+        scale = 1.0
+
+    # Calculate rotation
+    src_angle = mel.lib.math.angle(src_neighbor_pos - src_target_pos)
+    tgt_angle = mel.lib.math.angle(tgt_neighbor_pos - tgt_target_pos)
+    rotation_degrees = tgt_angle - src_angle
+
+    return scale, rotation_degrees, nearest_common_uuid
+
+
+def apply_transform_to_point(point, scale, rotation_degrees, center):
+    """Apply scale and rotation transformation to a point around a center."""
+    # Translate to origin
+    translated = point - center
+
+    # Apply scale
+    scaled = translated * scale
+
+    # Apply rotation
+    rotation_radians = np.radians(rotation_degrees)
+    cos_rot = np.cos(rotation_radians)
+    sin_rot = np.sin(rotation_radians)
+
+    rotation_matrix = np.array([[cos_rot, -sin_rot], [sin_rot, cos_rot]])
+
+    rotated = rotation_matrix @ scaled
+
+    # Translate back
+    return rotated + center
+
+
+def transform_image_patch(
+    image, center_x, center_y, patch_size, scale, rotation_degrees
+):
+    """Extract and transform an image patch with given scale and rotation."""
+    half_size = int(patch_size * scale) // 2 + 50  # Extra margin for rotation
+
+    # Extract larger patch to allow for rotation and scaling
+    y_start = max(0, center_y - half_size)
+    y_end = min(image.shape[0], center_y + half_size)
+    x_start = max(0, center_x - half_size)
+    x_end = min(image.shape[1], center_x + half_size)
+
+    patch = image[y_start:y_end, x_start:x_end]
+
+    # Apply scale
+    if scale != 1.0:
+        patch = mel.lib.image.scale_image(patch, scale)
+
+    # Apply rotation
+    if abs(rotation_degrees) > 0.1:
+        patch = mel.lib.image.rotated(patch, rotation_degrees)
+
+    # Center crop to desired size
+    if patch.shape[0] >= patch_size and patch.shape[1] >= patch_size:
+        patch_center_y, patch_center_x = (
+            patch.shape[0] // 2,
+            patch.shape[1] // 2,
+        )
+        half_patch = patch_size // 2
+        y_start = patch_center_y - half_patch
+        y_end = patch_center_y + half_patch
+        x_start = patch_center_x - half_patch
+        x_end = patch_center_x + half_patch
+        patch = patch[y_start:y_end, x_start:x_end]
+    else:
+        # Pad if too small
+        padded_patch = np.zeros((patch_size, patch_size, 3), dtype=patch.dtype)
+        y_offset = (patch_size - patch.shape[0]) // 2
+        x_offset = (patch_size - patch.shape[1]) // 2
+        padded_patch[
+            y_offset : y_offset + patch.shape[0],
+            x_offset : x_offset + patch.shape[1],
+        ] = patch
+        patch = padded_patch
+
+    return patch
+
+
 def extract_patch_features(
     image, center_x, center_y, patch_size, model, transform
 ):
@@ -77,6 +206,17 @@ def extract_patch_features(
     elif patch.shape[0] > patch_size or patch.shape[1] > patch_size:
         patch = patch[:patch_size, :patch_size]
 
+    # Convert to tensor and normalize
+    patch_tensor = transform(patch).unsqueeze(0)
+
+    with torch.no_grad():
+        features = model(patch_tensor)
+
+    return features.squeeze(0)  # Remove batch dimension
+
+
+def extract_patch_features_from_patch(patch, model, transform):
+    """Extract DINOv2 features from a pre-processed patch."""
     # Convert to tensor and normalize
     patch_tensor = transform(patch).unsqueeze(0)
 
@@ -221,16 +361,49 @@ def process_args(args):
 
         print(f"Refining mole {uuid}...")
 
-        # Extract features from source mole location (canonical)
-        try:
-            src_features = extract_patch_features(
-                src_image,
-                src_mole["x"],
-                src_mole["y"],
-                patch_size,
-                model,
-                transform,
+        # Calculate alignment transformation based on neighboring moles
+        scale, rotation_degrees, neighbor_uuid = calculate_alignment_transform(
+            src_mole, tgt_mole, src_canonical_moles, tgt_canonical_moles
+        )
+
+        if neighbor_uuid:
+            print(
+                f"  Using neighbor {neighbor_uuid} for alignment: scale={scale:.3f}, rotation={rotation_degrees:.1f}°"
             )
+        else:
+            print("  No common neighbors found, using identity transform")
+
+        # Extract and transform features from source mole location (canonical)
+        try:
+            if neighbor_uuid:
+                # Use transformed patch
+                src_patch = transform_image_patch(
+                    src_image,
+                    src_mole["x"],
+                    src_mole["y"],
+                    patch_size,
+                    scale,
+                    rotation_degrees,
+                )
+                src_features = extract_patch_features_from_patch(
+                    src_patch, model, transform
+                )
+
+                # Transform the source mole position for reference
+                src_center = np.array([src_mole["x"], src_mole["y"]])
+                transformed_src_pos = apply_transform_to_point(
+                    src_center, scale, rotation_degrees, src_center
+                )
+            else:
+                # Use original patch
+                src_features = extract_patch_features(
+                    src_image,
+                    src_mole["x"],
+                    src_mole["y"],
+                    patch_size,
+                    model,
+                    transform,
+                )
         except Exception as e:
             print(f"Error extracting source features for mole {uuid}: {e}")
             continue
