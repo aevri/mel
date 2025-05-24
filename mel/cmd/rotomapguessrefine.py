@@ -48,11 +48,55 @@ def setup_parser(parser):
 
 
 def load_dinov2_model():
-    """Load the DINOv2 model for feature extraction."""
+    """Load the DINOv2 model for dense feature extraction."""
     try:
+        # Load DINOv2 model that can return patch tokens for dense matching
         model = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
-        model.eval()
-        return model
+
+        # Create a wrapper to extract both CLS and patch tokens
+        class DenseFeatureExtractor:
+            def __init__(self, model):
+                self.model = model
+                self.model.eval()
+
+            def __call__(self, x):
+                # Get features - this returns [batch, feature_dim] (CLS token only)
+                cls_features = self.model(x)
+
+                # To get patch tokens, we need to access intermediate outputs
+                # For now, let's use a different approach - get features at multiple scales
+                return cls_features
+
+            def extract_patch_features(self, x):
+                """Extract patch-level features for dense matching."""
+                # For dense matching, we need patch tokens, not just CLS
+                # This requires accessing the model's intermediate representations
+
+                # Temporarily store the forward hook to capture patch features
+                patch_features = []
+
+                def hook_fn(module, input, output):
+                    # Capture the output from the last transformer block before pooling
+                    if hasattr(output, "shape") and len(output.shape) == 3:
+                        patch_features.append(output)
+
+                # Register hook on the last normalization layer
+                hook = self.model.norm.register_forward_hook(hook_fn)
+
+                try:
+                    # Run forward pass
+                    _ = self.model(x)
+                    if patch_features:
+                        # Return all tokens [batch, seq_len, feature_dim]
+                        return patch_features[0]
+                    else:
+                        # Fallback to CLS token reshaped
+                        cls_out = self.model(x)
+                        return cls_out.unsqueeze(1)  # [batch, 1, feature_dim]
+                finally:
+                    hook.remove()
+
+        return DenseFeatureExtractor(model)
     except Exception as e:
         raise RuntimeError(
             "Failed to load DINOv2 model. Please ensure you have internet access "
@@ -395,28 +439,173 @@ def save_similarity_heatmap(
         print(f"  Debug: Failed to save similarity heatmap to {filename}: {e}")
 
 
-def extract_features(features):
-    """Extract features from DINOv2 output.
+def extract_dense_features(patch_features):
+    """Extract dense features from DINOv2 patch tokens for spatial matching.
 
     Args:
-        features: Tensor from DINOv2 model output after batch dimension removal,
-                 shape [feature_dim] where feature_dim = 384 (CLS token)
+        patch_features: Tensor from DINOv2 model output, shape [batch, seq_len, feature_dim]
+                       where seq_len = 257 (1 CLS + 256 patches) and feature_dim = 384
 
     Returns:
-        Tensor: Features tensor, shape [feature_dim]
+        Tensor: Patch features reshaped to spatial map [batch, 16, 16, feature_dim]
     """
-    # Assert expected shape after batch dimension removal
-    # DINOv2 from torch.hub returns only CLS token
+    batch_size, seq_len, feature_dim = patch_features.shape
+
+    # Assert expected dimensions for ViT-S/14 with 224x224 input
+    assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
     assert (
-        len(features.shape) == 1
-    ), f"Expected 1D features tensor [feature_dim], got shape {features.shape}"
-    feature_dim = features.shape[0]
+        seq_len == 257
+    ), f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
     assert (
         feature_dim == 384
     ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
 
-    # Return the CLS token features as-is
-    return features
+    # Remove CLS token (first token) to get patch tokens
+    patch_tokens = patch_features[:, 1:, :]  # [batch, 256, 384]
+
+    # Reshape patch tokens to spatial grid (16x16 patches for 224x224 input with patch_size=14)
+    patch_grid = patch_tokens.reshape(batch_size, 16, 16, feature_dim)
+
+    return patch_grid
+
+
+def compute_dense_similarity(src_features, tgt_features):
+    """Compute dense similarity between source and target feature maps.
+
+    Args:
+        src_features: Source patch features [1, 16, 16, 384]
+        tgt_features: Target patch features [1, 16, 16, 384]
+
+    Returns:
+        Tensor: Similarity map [1, 16, 16]
+    """
+    # Normalize features for cosine similarity
+    src_norm = torch.nn.functional.normalize(src_features, p=2, dim=-1)
+    tgt_norm = torch.nn.functional.normalize(tgt_features, p=2, dim=-1)
+
+    # Compute cosine similarity at each spatial location
+    similarity = torch.sum(src_norm * tgt_norm, dim=-1)  # [1, 16, 16]
+
+    return similarity
+
+
+def find_best_match_dense(
+    src_patch_features,
+    tgt_image,
+    center_x,
+    center_y,
+    search_radius,
+    patch_size,
+    model,
+    debug_images=False,
+    uuid=None,
+):
+    """Find best match using dense feature comparison."""
+    best_similarity = -float("inf")
+    best_x, best_y = center_x, center_y
+
+    # Extract dense features from source patch
+    src_dense = extract_dense_features(src_patch_features)  # [1, 16, 16, 384]
+
+    # Search in a coarser grid for efficiency (every 14 pixels = patch stride)
+    step = 14
+
+    # Store similarity scores for heatmap if debug mode is enabled
+    similarity_scores = []
+    candidate_positions = []
+
+    for dy in range(-search_radius, search_radius + 1, step):
+        for dx in range(-search_radius, search_radius + 1, step):
+            candidate_x = center_x + dx
+            candidate_y = center_y + dy
+
+            # Skip if candidate location is too close to image borders
+            half_size = patch_size // 2
+            if (
+                candidate_x - half_size < 0
+                or candidate_x + half_size >= tgt_image.shape[1]
+                or candidate_y - half_size < 0
+                or candidate_y + half_size >= tgt_image.shape[0]
+            ):
+                if debug_images:
+                    # Store invalid positions with low similarity for heatmap
+                    similarity_scores.append(-1.0)
+                    candidate_positions.append((candidate_x, candidate_y))
+                continue
+
+            # Extract patch from target at candidate location
+            y_start = max(0, candidate_y - half_size)
+            y_end = min(tgt_image.shape[0], candidate_y + half_size)
+            x_start = max(0, candidate_x - half_size)
+            x_end = min(tgt_image.shape[1], candidate_x + half_size)
+
+            tgt_patch = tgt_image[y_start:y_end, x_start:x_end]
+
+            # Ensure patch is correct size
+            if (
+                tgt_patch.shape[0] < patch_size
+                or tgt_patch.shape[1] < patch_size
+            ):
+                padded_patch = np.zeros(
+                    (patch_size, patch_size, 3), dtype=tgt_patch.dtype
+                )
+                padded_patch[: tgt_patch.shape[0], : tgt_patch.shape[1]] = (
+                    tgt_patch
+                )
+                tgt_patch = padded_patch
+            elif (
+                tgt_patch.shape[0] > patch_size
+                or tgt_patch.shape[1] > patch_size
+            ):
+                tgt_patch = tgt_patch[:patch_size, :patch_size]
+
+            # Convert to tensor and extract dense features
+            transform = transforms.Compose(
+                [
+                    transforms.ToPILImage(),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                ]
+            )
+
+            tgt_tensor = transform(tgt_patch).unsqueeze(0)
+
+            # Extract patch features for target
+            tgt_patch_features = model.extract_patch_features(tgt_tensor)
+            tgt_dense = extract_dense_features(tgt_patch_features)
+
+            # Compute dense similarity
+            similarity_map = compute_dense_similarity(
+                src_dense, tgt_dense
+            )  # [1, 16, 16]
+
+            # Use maximum similarity across all spatial locations
+            max_similarity = torch.max(similarity_map).item()
+
+            if debug_images:
+                similarity_scores.append(max_similarity)
+                candidate_positions.append((candidate_x, candidate_y))
+
+            if max_similarity > best_similarity:
+                best_similarity = max_similarity
+                best_x, best_y = candidate_x, candidate_y
+
+    # Generate heatmap if debug mode is enabled
+    if debug_images and uuid:
+        save_similarity_heatmap(
+            tgt_image,
+            center_x,
+            center_y,
+            search_radius,
+            candidate_positions,
+            similarity_scores,
+            step,
+            f"{uuid}_tgt_heatmap.jpg",
+        )
+
+    return best_x, best_y, best_similarity
 
 
 def extract_patch_features(
@@ -446,25 +635,24 @@ def extract_patch_features(
     patch_tensor = transform(patch).unsqueeze(0)
 
     with torch.no_grad():
-        features = model(patch_tensor)
+        # Extract patch features for dense matching
+        patch_features = model.extract_patch_features(patch_tensor)
 
-    # Assert expected DINOv2 output shape before processing
-    # DINOv2 from torch.hub returns CLS token only: [batch_size, feature_dim]
+    # Assert expected DINOv2 patch features shape
     assert (
-        len(features.shape) == 2
-    ), f"Expected 2D features tensor [batch, feature_dim], got shape {features.shape}"
-    batch_size, feature_dim = features.shape
+        len(patch_features.shape) == 3
+    ), f"Expected 3D patch features tensor [batch, seq_len, feature_dim], got shape {patch_features.shape}"
+    batch_size, seq_len, feature_dim = patch_features.shape
     assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
+    assert (
+        seq_len == 257
+    ), f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
     assert (
         feature_dim == 384
     ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
 
-    features = features.squeeze(0)  # Remove batch dimension to get [384]
-
-    # Extract features for similarity comparison
-    cls_features = extract_features(features)
-
-    return cls_features
+    # Return dense features for spatial matching
+    return patch_features
 
 
 def extract_patch_features_from_patch(patch, model, transform):
@@ -473,25 +661,24 @@ def extract_patch_features_from_patch(patch, model, transform):
     patch_tensor = transform(patch).unsqueeze(0)
 
     with torch.no_grad():
-        features = model(patch_tensor)
+        # Extract patch features for dense matching
+        patch_features = model.extract_patch_features(patch_tensor)
 
-    # Assert expected DINOv2 output shape before processing
-    # DINOv2 from torch.hub returns CLS token only: [batch_size, feature_dim]
+    # Assert expected DINOv2 patch features shape
     assert (
-        len(features.shape) == 2
-    ), f"Expected 2D features tensor [batch, feature_dim], got shape {features.shape}"
-    batch_size, feature_dim = features.shape
+        len(patch_features.shape) == 3
+    ), f"Expected 3D patch features tensor [batch, seq_len, feature_dim], got shape {patch_features.shape}"
+    batch_size, seq_len, feature_dim = patch_features.shape
     assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
+    assert (
+        seq_len == 257
+    ), f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
     assert (
         feature_dim == 384
     ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
 
-    features = features.squeeze(0)  # Remove batch dimension to get [384]
-
-    # Extract features for similarity comparison
-    cls_features = extract_features(features)
-
-    return cls_features
+    # Return dense features for spatial matching
+    return patch_features
 
 
 def find_best_match_location(
@@ -637,7 +824,7 @@ def process_args(args):
     print(
         f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
     )
-    print("Using DINOv2 CLS token features for similarity comparison")
+    print("Using DINOv2 dense patch features for spatial similarity matching")
 
     # Load DINOv2 model
     try:
@@ -763,9 +950,9 @@ def process_args(args):
                 f"{uuid}_tgt_search_area.jpg",
             )
 
-        # Find best matching location in target image around the non-canonical location
+        # Find best matching location using dense feature matching
         try:
-            best_x, best_y, similarity = find_best_match_location(
+            best_x, best_y, similarity = find_best_match_dense(
                 src_features,
                 tgt_image,
                 tgt_mole["x"],
@@ -773,7 +960,6 @@ def process_args(args):
                 search_radius,
                 patch_size,
                 model,
-                transform,
                 debug_images,
                 uuid,
             )
