@@ -479,12 +479,25 @@ def compute_dense_similarity(src_features, tgt_features):
     Returns:
         Tensor: Similarity map [1, 16, 16]
     """
+    # Assert expected feature map shapes
+    assert (
+        src_features.shape == (1, 16, 16, 384)
+    ), f"Expected src_features shape (1, 16, 16, 384), got {src_features.shape}"
+    assert (
+        tgt_features.shape == (1, 16, 16, 384)
+    ), f"Expected tgt_features shape (1, 16, 16, 384), got {tgt_features.shape}"
+
     # Normalize features for cosine similarity
     src_norm = torch.nn.functional.normalize(src_features, p=2, dim=-1)
     tgt_norm = torch.nn.functional.normalize(tgt_features, p=2, dim=-1)
 
     # Compute cosine similarity at each spatial location
     similarity = torch.sum(src_norm * tgt_norm, dim=-1)  # [1, 16, 16]
+
+    # Assert output shape
+    assert (
+        similarity.shape == (1, 16, 16)
+    ), f"Expected similarity shape (1, 16, 16), got {similarity.shape}"
 
     return similarity
 
@@ -581,15 +594,14 @@ def find_best_match_dense(
                 src_dense, tgt_dense
             )  # [1, 16, 16]
 
-            # Use maximum similarity across all spatial locations
-            max_similarity = torch.max(similarity_map).item()
+            agg_similarity = torch.mean(similarity_map).item()
 
             if debug_images:
-                similarity_scores.append(max_similarity)
+                similarity_scores.append(agg_similarity)
                 candidate_positions.append((candidate_x, candidate_y))
 
-            if max_similarity > best_similarity:
-                best_similarity = max_similarity
+            if agg_similarity > best_similarity:
+                best_similarity = agg_similarity
                 best_x, best_y = candidate_x, candidate_y
 
     # Generate heatmap if debug mode is enabled
