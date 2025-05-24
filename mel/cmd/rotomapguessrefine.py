@@ -395,20 +395,28 @@ def save_similarity_heatmap(
         print(f"  Debug: Failed to save similarity heatmap to {filename}: {e}")
 
 
-def extract_cls_token(features):
-    """Extract the CLS token from DINOv2 features for similarity comparison."""
-    # DINOv2 outputs features of shape [num_patches + 1, feature_dim]
-    # For ViT-S/14: [257, 384] where index 0 is the CLS token
-    # For ViT-B/14: [257, 768] where index 0 is the CLS token
+def extract_features(features):
+    """Extract features from DINOv2 output.
 
-    if len(features.shape) == 2:
-        # Standard DINOv2 output: [num_patches + 1, feature_dim]
-        cls_token = features[0]  # Take the first token (CLS)
-    else:
-        # Fallback for unexpected shapes - just return as-is
-        cls_token = features
+    Args:
+        features: Tensor from DINOv2 model output after batch dimension removal,
+                 shape [feature_dim] where feature_dim = 384 (CLS token)
 
-    return cls_token
+    Returns:
+        Tensor: Features tensor, shape [feature_dim]
+    """
+    # Assert expected shape after batch dimension removal
+    # DINOv2 from torch.hub returns only CLS token
+    assert (
+        len(features.shape) == 1
+    ), f"Expected 1D features tensor [feature_dim], got shape {features.shape}"
+    feature_dim = features.shape[0]
+    assert (
+        feature_dim == 384
+    ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
+
+    # Return the CLS token features as-is
+    return features
 
 
 def extract_patch_features(
@@ -440,10 +448,21 @@ def extract_patch_features(
     with torch.no_grad():
         features = model(patch_tensor)
 
-    features = features.squeeze(0)  # Remove batch dimension
+    # Assert expected DINOv2 output shape before processing
+    # DINOv2 from torch.hub returns CLS token only: [batch_size, feature_dim]
+    assert (
+        len(features.shape) == 2
+    ), f"Expected 2D features tensor [batch, feature_dim], got shape {features.shape}"
+    batch_size, feature_dim = features.shape
+    assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
+    assert (
+        feature_dim == 384
+    ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
 
-    # Extract CLS token for similarity comparison
-    cls_features = extract_cls_token(features)
+    features = features.squeeze(0)  # Remove batch dimension to get [384]
+
+    # Extract features for similarity comparison
+    cls_features = extract_features(features)
 
     return cls_features
 
@@ -456,10 +475,21 @@ def extract_patch_features_from_patch(patch, model, transform):
     with torch.no_grad():
         features = model(patch_tensor)
 
-    features = features.squeeze(0)  # Remove batch dimension
+    # Assert expected DINOv2 output shape before processing
+    # DINOv2 from torch.hub returns CLS token only: [batch_size, feature_dim]
+    assert (
+        len(features.shape) == 2
+    ), f"Expected 2D features tensor [batch, feature_dim], got shape {features.shape}"
+    batch_size, feature_dim = features.shape
+    assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
+    assert (
+        feature_dim == 384
+    ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
 
-    # Extract CLS token for similarity comparison
-    cls_features = extract_cls_token(features)
+    features = features.squeeze(0)  # Remove batch dimension to get [384]
+
+    # Extract features for similarity comparison
+    cls_features = extract_features(features)
 
     return cls_features
 
@@ -607,7 +637,7 @@ def process_args(args):
     print(
         f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
     )
-    print("Using DINOv2 CLS token for feature similarity comparison")
+    print("Using DINOv2 CLS token features for similarity comparison")
 
     # Load DINOv2 model
     try:
