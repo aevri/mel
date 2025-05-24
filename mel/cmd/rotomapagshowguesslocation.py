@@ -2,7 +2,7 @@
 
 import pathlib
 import string
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
 import cv2
 import numpy as np
@@ -147,7 +147,8 @@ def guess_mole_location(
     src_moles: List[Dict],
     tgt_moles: List[Dict],
 ) -> Tuple[int, int]:
-    """Guess the location of target_mole in target image using overlapping reference moles."""
+    """Guess the location of target_mole in target image using overlapping
+    reference moles."""
     # Get positions of overlapping moles in both images
     src_ref_positions = {}
     tgt_ref_positions = {}
@@ -256,7 +257,8 @@ def create_labeled_image_with_grid(
     zoom_factor: float = 2.0,
     zoom_size: int = 800,
 ) -> np.ndarray:
-    """Create a labeled image with moles marked, labeled, and purple grid overlay."""
+    """Create a labeled image with moles marked, labeled, and purple grid
+    overlay."""
     # Load the original image
     image = mel.lib.image.load_image(image_path)
     original_height, original_width = image.shape[:2]
