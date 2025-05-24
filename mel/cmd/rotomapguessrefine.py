@@ -263,11 +263,27 @@ def save_debug_search_area(
         print(f"  Debug: Failed to save search area to {filename}: {e}")
 
 
+def extract_cls_token(features):
+    """Extract the CLS token from DINOv2 features for similarity comparison."""
+    # DINOv2 outputs features of shape [num_patches + 1, feature_dim]
+    # For ViT-S/14: [257, 384] where index 0 is the CLS token
+    # For ViT-B/14: [257, 768] where index 0 is the CLS token
+
+    if len(features.shape) == 2:
+        # Standard DINOv2 output: [num_patches + 1, feature_dim]
+        cls_token = features[0]  # Take the first token (CLS)
+    else:
+        # Fallback for unexpected shapes - just return as-is
+        cls_token = features
+
+    return cls_token
+
+
 def extract_patch_features(
     image, center_x, center_y, patch_size, model, transform
 ):
-    """Extract DINOv2 features from a 140x140 pixel patch centered at
-    (center_x, center_y)."""
+    """Extract DINOv2 CLS token from a patch centered at (center_x,
+    center_y)."""
     half_size = patch_size // 2
 
     # Extract patch with bounds checking
@@ -292,18 +308,28 @@ def extract_patch_features(
     with torch.no_grad():
         features = model(patch_tensor)
 
-    return features.squeeze(0)  # Remove batch dimension
+    features = features.squeeze(0)  # Remove batch dimension
+
+    # Extract CLS token for similarity comparison
+    cls_features = extract_cls_token(features)
+
+    return cls_features
 
 
 def extract_patch_features_from_patch(patch, model, transform):
-    """Extract DINOv2 features from a pre-processed patch."""
+    """Extract DINOv2 CLS token from a pre-processed patch."""
     # Convert to tensor and normalize
     patch_tensor = transform(patch).unsqueeze(0)
 
     with torch.no_grad():
         features = model(patch_tensor)
 
-    return features.squeeze(0)  # Remove batch dimension
+    features = features.squeeze(0)  # Remove batch dimension
+
+    # Extract CLS token for similarity comparison
+    cls_features = extract_cls_token(features)
+
+    return cls_features
 
 
 def find_best_match_location(
@@ -420,6 +446,7 @@ def process_args(args):
     print(
         f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
     )
+    print("Using DINOv2 CLS token for feature similarity comparison")
 
     # Load DINOv2 model
     try:
