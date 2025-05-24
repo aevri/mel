@@ -40,6 +40,11 @@ def setup_parser(parser):
         default=35,
         help="Search radius around non-canonical mole location (default: 35 pixels).",
     )
+    parser.add_argument(
+        "--debug-images",
+        action="store_true",
+        help="Save debug images showing source patches and target search areas.",
+    )
 
 
 def load_dinov2_model():
@@ -183,6 +188,81 @@ def transform_image_patch(
     return patch
 
 
+def save_debug_patch(patch, filename):
+    """Save a patch for debugging purposes."""
+    try:
+        cv2.imwrite(filename, patch)
+        print(f"  Debug: Saved patch to {filename}")
+    except Exception as e:
+        print(f"  Debug: Failed to save patch to {filename}: {e}")
+
+
+def save_debug_search_area(
+    image, center_x, center_y, search_radius, patch_size, filename
+):
+    """Save the target search area for debugging."""
+    try:
+        # Calculate search area bounds
+        half_patch = patch_size // 2
+        search_left = max(0, center_x - search_radius - half_patch)
+        search_right = min(
+            image.shape[1], center_x + search_radius + half_patch
+        )
+        search_top = max(0, center_y - search_radius - half_patch)
+        search_bottom = min(
+            image.shape[0], center_y + search_radius + half_patch
+        )
+
+        # Extract search area
+        search_area = image[
+            search_top:search_bottom, search_left:search_right
+        ].copy()
+
+        # Draw search grid and center marker
+        # Center point in search area coordinates
+        center_in_area_x = center_x - search_left
+        center_in_area_y = center_y - search_top
+
+        # Draw center cross
+        cv2.line(
+            search_area,
+            (center_in_area_x - 10, center_in_area_y),
+            (center_in_area_x + 10, center_in_area_y),
+            (0, 255, 0),
+            2,
+        )
+        cv2.line(
+            search_area,
+            (center_in_area_x, center_in_area_y - 10),
+            (center_in_area_x, center_in_area_y + 10),
+            (0, 255, 0),
+            2,
+        )
+
+        # Draw search radius circle
+        cv2.circle(
+            search_area,
+            (center_in_area_x, center_in_area_y),
+            search_radius,
+            (255, 0, 0),
+            2,
+        )
+
+        # Draw patch size box
+        cv2.rectangle(
+            search_area,
+            (center_in_area_x - half_patch, center_in_area_y - half_patch),
+            (center_in_area_x + half_patch, center_in_area_y + half_patch),
+            (0, 0, 255),
+            2,
+        )
+
+        cv2.imwrite(filename, search_area)
+        print(f"  Debug: Saved search area to {filename}")
+    except Exception as e:
+        print(f"  Debug: Failed to save search area to {filename}: {e}")
+
+
 def extract_patch_features(
     image, center_x, center_y, patch_size, model, transform
 ):
@@ -285,6 +365,7 @@ def process_args(args):
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG
     search_radius = args.search_radius
+    debug_images = args.debug_images
 
     # Load images
     try:
@@ -306,10 +387,20 @@ def process_args(args):
         print(f"Error loading moles: {e}")
         return 1
 
-    # Filter to get canonical moles from source and non-canonical from target
+    # Filter to get canonical moles from source and target
     src_canonical_moles = [
         m for m in src_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
     ]
+    tgt_canonical_moles = [
+        m for m in tgt_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
+    ]
+
+    if not src_canonical_moles:
+        print("Error: No canonical moles found in source image")
+        return 1
+    if not tgt_canonical_moles:
+        print("Error: No canonical moles found in target image")
+        return 1
 
     # Find non-canonical moles in target that have matching UUIDs with canonical moles in source
     src_canonical_uuids = {m["uuid"] for m in src_canonical_moles}
@@ -394,6 +485,10 @@ def process_args(args):
                 transformed_src_pos = apply_transform_to_point(
                     src_center, scale, rotation_degrees, src_center
                 )
+
+                # Save debug image for transformed source patch
+                if debug_images:
+                    save_debug_patch(src_patch, f"src_{uuid}_transformed.jpg")
             else:
                 # Use original patch
                 src_features = extract_patch_features(
@@ -404,9 +499,51 @@ def process_args(args):
                     model,
                     transform,
                 )
+
+                # Save debug image for original source patch
+                if debug_images:
+                    # Extract just the patch without features for debug
+                    half_size = patch_size // 2
+                    y_start = max(0, src_mole["y"] - half_size)
+                    y_end = min(src_image.shape[0], src_mole["y"] + half_size)
+                    x_start = max(0, src_mole["x"] - half_size)
+                    x_end = min(src_image.shape[1], src_mole["x"] + half_size)
+                    src_patch_img = src_image[y_start:y_end, x_start:x_end]
+
+                    # Pad if necessary
+                    if (
+                        src_patch_img.shape[0] < patch_size
+                        or src_patch_img.shape[1] < patch_size
+                    ):
+                        padded_patch = np.zeros(
+                            (patch_size, patch_size, 3),
+                            dtype=src_patch_img.dtype,
+                        )
+                        padded_patch[
+                            : src_patch_img.shape[0], : src_patch_img.shape[1]
+                        ] = src_patch_img
+                        src_patch_img = padded_patch
+                    elif (
+                        src_patch_img.shape[0] > patch_size
+                        or src_patch_img.shape[1] > patch_size
+                    ):
+                        src_patch_img = src_patch_img[:patch_size, :patch_size]
+
+                    save_debug_patch(src_patch_img, f"src_{uuid}_original.jpg")
         except Exception as e:
             print(f"Error extracting source features for mole {uuid}: {e}")
             continue
+
+        # Save debug image for target search area
+        if debug_images:
+            save_debug_search_area(
+                tgt_image,
+                tgt_mole["x"],
+                tgt_mole["y"],
+                search_radius,
+                patch_size,
+                f"tgt_{uuid}_search_area.jpg",
+            )
 
         # Find best matching location in target image around the non-canonical location
         try:
@@ -435,6 +572,44 @@ def process_args(args):
                     f"  Refined from ({old_x}, {old_y}) to ({best_x}, {best_y}) "
                     f"(moved {distance_moved:.1f} pixels, similarity: {similarity:.3f})"
                 )
+
+                # Save debug image for final refined patch
+                if debug_images:
+                    try:
+                        half_size = patch_size // 2
+                        y_start = max(0, best_y - half_size)
+                        y_end = min(tgt_image.shape[0], best_y + half_size)
+                        x_start = max(0, best_x - half_size)
+                        x_end = min(tgt_image.shape[1], best_x + half_size)
+                        refined_patch = tgt_image[y_start:y_end, x_start:x_end]
+
+                        # Pad if necessary
+                        if (
+                            refined_patch.shape[0] < patch_size
+                            or refined_patch.shape[1] < patch_size
+                        ):
+                            padded_patch = np.zeros(
+                                (patch_size, patch_size, 3),
+                                dtype=refined_patch.dtype,
+                            )
+                            padded_patch[
+                                : refined_patch.shape[0],
+                                : refined_patch.shape[1],
+                            ] = refined_patch
+                            refined_patch = padded_patch
+                        elif (
+                            refined_patch.shape[0] > patch_size
+                            or refined_patch.shape[1] > patch_size
+                        ):
+                            refined_patch = refined_patch[
+                                :patch_size, :patch_size
+                            ]
+
+                        save_debug_patch(
+                            refined_patch, f"tgt_{uuid}_refined.jpg"
+                        )
+                    except Exception as e:
+                        print(f"  Debug: Failed to save refined patch: {e}")
             else:
                 print(f"  No refinement needed (similarity: {similarity:.3f})")
 
