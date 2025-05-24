@@ -48,55 +48,72 @@ def setup_parser(parser):
 
 
 def load_dinov2_model():
-    """Load the DINOv2 model for dense feature extraction."""
+    """Load the DINOv2 model for semantic feature extraction with context."""
     try:
-        # Load DINOv2 model that can return patch tokens for dense matching
+        # Load DINOv2 model for semantic patch features with rich context
         model = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
 
-        # Create a wrapper to extract both CLS and patch tokens
-        class DenseFeatureExtractor:
+        # Create a wrapper to extract patch tokens for context-aware matching
+        class ContextualFeatureExtractor:
             def __init__(self, model):
                 self.model = model
                 self.model.eval()
 
-            def __call__(self, x):
-                # Get features - this returns [batch, feature_dim] (CLS token only)
-                cls_features = self.model(x)
+            def extract_contextual_patch_features(
+                self, x, center_patch_idx=None
+            ):
+                """Extract patch features with full context for semantic
+                matching.
 
-                # To get patch tokens, we need to access intermediate outputs
-                # For now, let's use a different approach - get features at multiple scales
-                return cls_features
+                Args:
+                    x: Input tensor [batch, channels, height, width]
+                    center_patch_idx: Index of center patch to extract (if None, extract all)
 
-            def extract_patch_features(self, x):
-                """Extract patch-level features for dense matching."""
-                # For dense matching, we need patch tokens, not just CLS
-                # This requires accessing the model's intermediate representations
-
-                # Temporarily store the forward hook to capture patch features
+                Returns:
+                    If center_patch_idx is None: All patch features [batch, num_patches, feature_dim]
+                    If center_patch_idx is provided: Center patch features [batch, feature_dim]
+                """
+                # Use forward hook to capture patch tokens with full context
                 patch_features = []
 
                 def hook_fn(module, input, output):
-                    # Capture the output from the last transformer block before pooling
                     if hasattr(output, "shape") and len(output.shape) == 3:
                         patch_features.append(output)
 
-                # Register hook on the last normalization layer
+                # Register hook on the normalization layer to get contextualized features
                 hook = self.model.norm.register_forward_hook(hook_fn)
 
                 try:
-                    # Run forward pass
+                    # Run forward pass to get contextualized features
                     _ = self.model(x)
                     if patch_features:
-                        # Return all tokens [batch, seq_len, feature_dim]
-                        return patch_features[0]
+                        # patch_features[0] shape: [batch, seq_len, feature_dim] where seq_len = 1 + num_patches
+                        all_tokens = patch_features[0]
+                        # Remove CLS token to get just patch tokens
+                        patch_tokens = all_tokens[
+                            :, 1:, :
+                        ]  # [batch, num_patches, feature_dim]
+
+                        if center_patch_idx is not None:
+                            # Extract specific center patch
+                            return patch_tokens[
+                                :, center_patch_idx, :
+                            ]  # [batch, feature_dim]
+                        else:
+                            # Return all patch features
+                            return patch_tokens
                     else:
-                        # Fallback to CLS token reshaped
-                        cls_out = self.model(x)
-                        return cls_out.unsqueeze(1)  # [batch, 1, feature_dim]
+                        # Fallback: use CLS token
+                        cls_features = self.model(x)
+                        return (
+                            cls_features.unsqueeze(1)
+                            if center_patch_idx is None
+                            else cls_features
+                        )
                 finally:
                     hook.remove()
 
-        return DenseFeatureExtractor(model)
+        return ContextualFeatureExtractor(model)
     except Exception as e:
         raise RuntimeError(
             "Failed to load DINOv2 model. Please ensure you have internet access "
@@ -439,67 +456,406 @@ def save_similarity_heatmap(
         print(f"  Debug: Failed to save similarity heatmap to {filename}: {e}")
 
 
-def extract_dense_features(patch_features):
-    """Extract dense features from DINOv2 patch tokens for spatial matching.
+def save_contextual_similarity_heatmap(
+    image,
+    center_x,
+    center_y,
+    context_size,
+    similarities,
+    patches_per_side,
+    filename,
+):
+    """Save a heatmap showing cosine similarities for each patch in the context
+    window.
 
     Args:
-        patch_features: Tensor from DINOv2 model output, shape [batch, seq_len, feature_dim]
-                       where seq_len = 257 (1 CLS + 256 patches) and feature_dim = 384
-
-    Returns:
-        Tensor: Patch features reshaped to spatial map [batch, 16, 16, feature_dim]
+        image: Target image
+        center_x, center_y: Center of context window
+        context_size: Size of context window (e.g., 910)
+        similarities: Tensor of similarities [num_patches] for each patch
+        patches_per_side: Number of patches per side (e.g., 65)
+        filename: Output filename
     """
-    batch_size, seq_len, feature_dim = patch_features.shape
+    try:
+        # Extract context area for visualization
+        half_context = context_size // 2
+        context_left = max(0, center_x - half_context)
+        context_right = min(image.shape[1], center_x + half_context)
+        context_top = max(0, center_y - half_context)
+        context_bottom = min(image.shape[0], center_y + half_context)
 
-    # Assert expected dimensions for ViT-S/14 with 224x224 input
-    assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
-    assert (
-        seq_len == 257
-    ), f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
-    assert (
-        feature_dim == 384
-    ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
+        context_area = image[
+            context_top:context_bottom, context_left:context_right
+        ].copy()
 
-    # Remove CLS token (first token) to get patch tokens
-    patch_tokens = patch_features[:, 1:, :]  # [batch, 256, 384]
+        # Pad if necessary
+        if (
+            context_area.shape[0] < context_size
+            or context_area.shape[1] < context_size
+        ):
+            padded_area = np.zeros(
+                (context_size, context_size, 3), dtype=context_area.dtype
+            )
+            y_offset = (context_size - context_area.shape[0]) // 2
+            x_offset = (context_size - context_area.shape[1]) // 2
+            padded_area[
+                y_offset : y_offset + context_area.shape[0],
+                x_offset : x_offset + context_area.shape[1],
+            ] = context_area
+            context_area = padded_area
 
-    # Reshape patch tokens to spatial grid (16x16 patches for 224x224 input with patch_size=14)
-    patch_grid = patch_tokens.reshape(batch_size, 16, 16, feature_dim)
+        # Create heatmap overlay
+        heatmap = np.zeros(context_area.shape[:2], dtype=np.float32)
 
-    return patch_grid
+        # Reshape similarities to 2D grid
+        similarity_grid = (
+            similarities.cpu()
+            .numpy()
+            .reshape(patches_per_side, patches_per_side)
+        )
+
+        # Normalize similarities to 0-1 range for visualization
+        sim_min = similarity_grid.min()
+        sim_max = similarity_grid.max()
+        sim_range = sim_max - sim_min if sim_max > sim_min else 1.0
+        normalized_grid = (similarity_grid - sim_min) / sim_range
+
+        # Map each patch similarity to pixel regions
+        patch_size_pixels = 14
+        for patch_row in range(patches_per_side):
+            for patch_col in range(patches_per_side):
+                # Calculate pixel coordinates for this patch
+                y_start = patch_row * patch_size_pixels
+                y_end = min(context_size, (patch_row + 1) * patch_size_pixels)
+                x_start = patch_col * patch_size_pixels
+                x_end = min(context_size, (patch_col + 1) * patch_size_pixels)
+
+                # Set heatmap values for this patch region
+                heatmap[y_start:y_end, x_start:x_end] = normalized_grid[
+                    patch_row, patch_col
+                ]
+
+        # Convert heatmap to red channel overlay
+        heatmap_colored = np.zeros(context_area.shape, dtype=np.uint8)
+        heatmap_colored[:, :, 2] = (heatmap * 255).astype(
+            np.uint8
+        )  # Red channel
+
+        # Blend with original image (70% original, 30% heatmap)
+        blended = cv2.addWeighted(context_area, 0.7, heatmap_colored, 0.3, 0)
+
+        # Find and mark the best match location
+        best_patch_idx = torch.argmax(similarities).item()
+        best_patch_row = best_patch_idx // patches_per_side
+        best_patch_col = best_patch_idx % patches_per_side
+
+        # Convert to pixel coordinates within context
+        best_y_pixel = (
+            best_patch_row * patch_size_pixels + patch_size_pixels // 2
+        )
+        best_x_pixel = (
+            best_patch_col * patch_size_pixels + patch_size_pixels // 2
+        )
+
+        # Draw best match marker (bright green cross)
+        cv2.line(
+            blended,
+            (best_x_pixel - 15, best_y_pixel),
+            (best_x_pixel + 15, best_y_pixel),
+            (0, 255, 0),
+            3,
+        )
+        cv2.line(
+            blended,
+            (best_x_pixel, best_y_pixel - 15),
+            (best_x_pixel, best_y_pixel + 15),
+            (0, 255, 0),
+            3,
+        )
+
+        # Draw center marker (yellow cross)
+        center_pixel_x = context_size // 2
+        center_pixel_y = context_size // 2
+        cv2.line(
+            blended,
+            (center_pixel_x - 15, center_pixel_y),
+            (center_pixel_x + 15, center_pixel_y),
+            (0, 255, 255),
+            2,
+        )
+        cv2.line(
+            blended,
+            (center_pixel_x, center_pixel_y - 15),
+            (center_pixel_x, center_pixel_y + 15),
+            (0, 255, 255),
+            2,
+        )
+
+        cv2.imwrite(filename, blended)
+        print(f"  Debug: Saved contextual similarity heatmap to {filename}")
+        print(f"  Debug: Similarity range: {sim_min:.3f} to {sim_max:.3f}")
+
+    except Exception as e:
+        print(
+            f"  Debug: Failed to save contextual similarity heatmap to {filename}: {e}"
+        )
 
 
-def compute_dense_similarity(src_features, tgt_features):
-    """Compute dense similarity between source and target feature maps.
+def extract_contextual_patch_feature(
+    image, center_x, center_y, context_size, model, transform
+):
+    """Extract contextual patch feature from a large context window.
 
     Args:
-        src_features: Source patch features [1, 16, 16, 384]
-        tgt_features: Target patch features [1, 16, 16, 384]
+        image: Input image array
+        center_x, center_y: Center coordinates of the mole
+        context_size: Size of context window (e.g., 910 for 910x910)
+        model: DINOv2 model wrapper
+        transform: Image transform pipeline
 
     Returns:
-        Tensor: Similarity map [1, 16, 16]
+        Tensor: Context-aware feature for center patch [384]
     """
-    # Assert expected feature map shapes
-    assert (
-        src_features.shape == (1, 16, 16, 384)
-    ), f"Expected src_features shape (1, 16, 16, 384), got {src_features.shape}"
-    assert (
-        tgt_features.shape == (1, 16, 16, 384)
-    ), f"Expected tgt_features shape (1, 16, 16, 384), got {tgt_features.shape}"
+    # Extract large context patch centered on the mole
+    half_context = context_size // 2
+    y_start = max(0, center_y - half_context)
+    y_end = min(image.shape[0], center_y + half_context)
+    x_start = max(0, center_x - half_context)
+    x_end = min(image.shape[1], center_x + half_context)
 
-    # Normalize features for cosine similarity
-    src_norm = torch.nn.functional.normalize(src_features, p=2, dim=-1)
-    tgt_norm = torch.nn.functional.normalize(tgt_features, p=2, dim=-1)
+    context_patch = image[y_start:y_end, x_start:x_end]
 
-    # Compute cosine similarity at each spatial location
-    similarity = torch.sum(src_norm * tgt_norm, dim=-1)  # [1, 16, 16]
+    # Pad if necessary to ensure context_size x context_size
+    if (
+        context_patch.shape[0] < context_size
+        or context_patch.shape[1] < context_size
+    ):
+        padded_patch = np.zeros(
+            (context_size, context_size, 3), dtype=context_patch.dtype
+        )
+        y_offset = (context_size - context_patch.shape[0]) // 2
+        x_offset = (context_size - context_patch.shape[1]) // 2
+        padded_patch[
+            y_offset : y_offset + context_patch.shape[0],
+            x_offset : x_offset + context_patch.shape[1],
+        ] = context_patch
+        context_patch = padded_patch
+    elif (
+        context_patch.shape[0] > context_size
+        or context_patch.shape[1] > context_size
+    ):
+        # Center crop if too large
+        patch_center_y, patch_center_x = (
+            context_patch.shape[0] // 2,
+            context_patch.shape[1] // 2,
+        )
+        half_size = context_size // 2
+        context_patch = context_patch[
+            patch_center_y - half_size : patch_center_y + half_size,
+            patch_center_x - half_size : patch_center_x + half_size,
+        ]
 
-    # Assert output shape
-    assert (
-        similarity.shape == (1, 16, 16)
-    ), f"Expected similarity shape (1, 16, 16), got {similarity.shape}"
+    # Convert to tensor and normalize
+    context_tensor = transform(context_patch).unsqueeze(0)
 
-    return similarity
+    # Calculate which patch corresponds to the center
+    # For context_size=910 and patch_size=14: 910/14 = 65 patches per side
+    patches_per_side = context_size // 14
+    center_patch_row = patches_per_side // 2
+    center_patch_col = patches_per_side // 2
+    center_patch_idx = center_patch_row * patches_per_side + center_patch_col
+
+    with torch.no_grad():
+        # Extract contextual features for the center patch
+        center_features = model.extract_contextual_patch_features(
+            context_tensor, center_patch_idx=center_patch_idx
+        )
+
+    # Remove batch dimension and assert shape
+    center_features = center_features.squeeze(0)  # [384]
+    assert center_features.shape == (
+        384,
+    ), f"Expected shape (384,), got {center_features.shape}"
+
+    return center_features
+
+
+def extract_all_contextual_features(
+    image, center_x, center_y, context_size, model, transform
+):
+    """Extract features for all patches in a context window.
+
+    Args:
+        image: Input image array
+        center_x, center_y: Center coordinates
+        context_size: Size of context window (e.g., 910 for 910x910)
+        model: DINOv2 model wrapper
+        transform: Image transform pipeline
+
+    Returns:
+        Tensor: All patch features [num_patches, 384] where num_patches = (context_size//14)^2
+    """
+    # Extract large context patch centered on the location
+    half_context = context_size // 2
+    y_start = max(0, center_y - half_context)
+    y_end = min(image.shape[0], center_y + half_context)
+    x_start = max(0, center_x - half_context)
+    x_end = min(image.shape[1], center_x + half_context)
+
+    context_patch = image[y_start:y_end, x_start:x_end]
+
+    # Pad if necessary to ensure context_size x context_size
+    if (
+        context_patch.shape[0] < context_size
+        or context_patch.shape[1] < context_size
+    ):
+        padded_patch = np.zeros(
+            (context_size, context_size, 3), dtype=context_patch.dtype
+        )
+        y_offset = (context_size - context_patch.shape[0]) // 2
+        x_offset = (context_size - context_patch.shape[1]) // 2
+        padded_patch[
+            y_offset : y_offset + context_patch.shape[0],
+            x_offset : x_offset + context_patch.shape[1],
+        ] = context_patch
+        context_patch = padded_patch
+    elif (
+        context_patch.shape[0] > context_size
+        or context_patch.shape[1] > context_size
+    ):
+        # Center crop if too large
+        patch_center_y, patch_center_x = (
+            context_patch.shape[0] // 2,
+            context_patch.shape[1] // 2,
+        )
+        half_size = context_size // 2
+        context_patch = context_patch[
+            patch_center_y - half_size : patch_center_y + half_size,
+            patch_center_x - half_size : patch_center_x + half_size,
+        ]
+
+    # Convert to tensor and normalize
+    context_tensor = transform(context_patch).unsqueeze(0)
+
+    with torch.no_grad():
+        # Extract features for ALL patches (not just center)
+        all_patch_features = model.extract_contextual_patch_features(
+            context_tensor, center_patch_idx=None
+        )
+
+    # Remove batch dimension: [1, num_patches, 384] -> [num_patches, 384]
+    all_patch_features = all_patch_features.squeeze(0)
+
+    # Assert expected shape for 65x65 patches
+    patches_per_side = context_size // 14
+    expected_patches = patches_per_side * patches_per_side
+    assert all_patch_features.shape == (
+        expected_patches,
+        384,
+    ), f"Expected shape ({expected_patches}, 384), got {all_patch_features.shape}"
+
+    return all_patch_features
+
+
+def find_best_contextual_match(
+    src_center_features,
+    tgt_image,
+    center_x,
+    center_y,
+    search_radius,
+    context_size,
+    model,
+    transform,
+    debug_images=False,
+    uuid=None,
+):
+    """Find best match using contextual semantic features.
+
+    Args:
+        src_center_features: Contextual features of source mole center patch [384]
+        tgt_image: Target image
+        center_x, center_y: Initial target location
+        search_radius: Search radius in pixels
+        context_size: Size of context window for feature extraction
+        model: DINOv2 model wrapper
+        transform: Image transform pipeline
+        debug_images: Whether to save debug images
+        uuid: Mole UUID for debug filenames
+
+    Returns:
+        tuple: (best_x, best_y, best_similarity)
+    """
+    # Check if we can extract a full context window at the initial location
+    half_context = context_size // 2
+    if (
+        center_x - half_context < 0
+        or center_x + half_context >= tgt_image.shape[1]
+        or center_y - half_context < 0
+        or center_y + half_context >= tgt_image.shape[0]
+    ):
+        print(
+            f"  Warning: Cannot extract full context window at ({center_x}, {center_y})"
+        )
+        return center_x, center_y, -1.0
+
+    try:
+        # Extract features for all patches in the target context window ONCE
+        tgt_all_features = extract_all_contextual_features(
+            tgt_image, center_x, center_y, context_size, model, transform
+        )
+
+        # Normalize source and target features for cosine similarity
+        src_norm = torch.nn.functional.normalize(
+            src_center_features, p=2, dim=0
+        )  # [384]
+        tgt_norm = torch.nn.functional.normalize(
+            tgt_all_features, p=2, dim=1
+        )  # [num_patches, 384]
+
+        # Compute cosine similarity between source center and all target patches
+        similarities = torch.mm(tgt_norm, src_norm.unsqueeze(1)).squeeze(
+            1
+        )  # [num_patches]
+
+        # Find the patch with highest similarity
+        best_patch_idx = torch.argmax(similarities).item()
+        best_similarity = similarities[best_patch_idx].item()
+
+        # Convert patch index to spatial coordinates
+        patches_per_side = context_size // 14  # 65 for 910x910 context
+        patch_row = best_patch_idx // patches_per_side
+        patch_col = best_patch_idx % patches_per_side
+
+        # Convert patch coordinates to pixel coordinates (relative to context center)
+        # Each patch is 14x14 pixels, so offset from center of context
+        offset_x = (patch_col - patches_per_side // 2) * 14
+        offset_y = (patch_row - patches_per_side // 2) * 14
+
+        best_x = center_x + offset_x
+        best_y = center_y + offset_y
+
+        print(
+            f"  Found best match at patch ({patch_row}, {patch_col}) -> pixel ({best_x}, {best_y})"
+        )
+        print(f"  Similarity: {best_similarity:.3f}")
+
+        # Generate spatial heatmap if debug mode is enabled
+        if debug_images and uuid:
+            save_contextual_similarity_heatmap(
+                tgt_image,
+                center_x,
+                center_y,
+                context_size,
+                similarities,
+                patches_per_side,
+                f"{uuid}_tgt_heatmap.jpg",
+            )
+
+        return best_x, best_y, best_similarity
+
+    except Exception as e:
+        print(f"  Error in contextual matching: {e}")
+        return center_x, center_y, -1.0
 
 
 def find_best_match_dense(
@@ -836,7 +1192,7 @@ def process_args(args):
     print(
         f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
     )
-    print("Using DINOv2 dense patch features for spatial similarity matching")
+    print("Using DINOv2 contextual semantic features for mole matching")
 
     # Load DINOv2 model
     try:
@@ -859,7 +1215,7 @@ def process_args(args):
     # Create lookup dict for src canonical moles
     src_mole_lookup = {m["uuid"]: m for m in src_canonical_moles}
 
-    patch_size = 224
+    context_size = 910  # Large context window for rich semantic features
     refined_count = 0
 
     # Process each non-canonical mole in target
@@ -869,84 +1225,49 @@ def process_args(args):
 
         print(f"Refining mole {uuid}...")
 
-        # Calculate alignment transformation based on neighboring moles
-        scale, rotation_degrees, neighbor_uuid = calculate_alignment_transform(
-            src_mole, tgt_mole, src_canonical_moles, tgt_canonical_moles
-        )
-
-        if neighbor_uuid:
-            print(
-                f"  Using neighbor {neighbor_uuid} for alignment: scale={scale:.3f}, rotation={rotation_degrees:.1f}°"
-            )
-        else:
-            print("  No common neighbors found, using identity transform")
-
-        # Extract and transform features from source mole location (canonical)
+        # Extract contextual semantic features from source mole location
         try:
-            if neighbor_uuid:
-                # Use transformed patch
-                src_patch = transform_image_patch(
-                    src_image,
-                    src_mole["x"],
-                    src_mole["y"],
-                    patch_size,
-                    scale,
-                    rotation_degrees,
-                )
-                src_features = extract_patch_features_from_patch(
-                    src_patch, model, transform
-                )
+            src_features = extract_contextual_patch_feature(
+                src_image,
+                src_mole["x"],
+                src_mole["y"],
+                context_size,
+                model,
+                transform,
+            )
+            print(
+                f"  Extracted contextual features from {context_size}x{context_size} source context"
+            )
 
-                # Transform the source mole position for reference
-                src_center = np.array([src_mole["x"], src_mole["y"]])
-                transformed_src_pos = apply_transform_to_point(
-                    src_center, scale, rotation_degrees, src_center
-                )
+            # Save debug image for source context patch
+            if debug_images:
+                # Extract context patch for debug visualization
+                half_context = context_size // 2
+                y_start = max(0, src_mole["y"] - half_context)
+                y_end = min(src_image.shape[0], src_mole["y"] + half_context)
+                x_start = max(0, src_mole["x"] - half_context)
+                x_end = min(src_image.shape[1], src_mole["x"] + half_context)
+                src_context_img = src_image[y_start:y_end, x_start:x_end]
 
-                # Save debug image for transformed source patch
-                if debug_images:
-                    save_debug_patch(src_patch, f"{uuid}_src_transformed.jpg")
-            else:
-                # Use original patch
-                src_features = extract_patch_features(
-                    src_image,
-                    src_mole["x"],
-                    src_mole["y"],
-                    patch_size,
-                    model,
-                    transform,
-                )
+                # Pad if necessary
+                if (
+                    src_context_img.shape[0] < context_size
+                    or src_context_img.shape[1] < context_size
+                ):
+                    padded_patch = np.zeros(
+                        (context_size, context_size, 3),
+                        dtype=src_context_img.dtype,
+                    )
+                    y_offset = (context_size - src_context_img.shape[0]) // 2
+                    x_offset = (context_size - src_context_img.shape[1]) // 2
+                    padded_patch[
+                        y_offset : y_offset + src_context_img.shape[0],
+                        x_offset : x_offset + src_context_img.shape[1],
+                    ] = src_context_img
+                    src_context_img = padded_patch
 
-                # Save debug image for original source patch
-                if debug_images:
-                    # Extract just the patch without features for debug
-                    half_size = patch_size // 2
-                    y_start = max(0, src_mole["y"] - half_size)
-                    y_end = min(src_image.shape[0], src_mole["y"] + half_size)
-                    x_start = max(0, src_mole["x"] - half_size)
-                    x_end = min(src_image.shape[1], src_mole["x"] + half_size)
-                    src_patch_img = src_image[y_start:y_end, x_start:x_end]
+                save_debug_patch(src_context_img, f"{uuid}_src_context.jpg")
 
-                    # Pad if necessary
-                    if (
-                        src_patch_img.shape[0] < patch_size
-                        or src_patch_img.shape[1] < patch_size
-                    ):
-                        padded_patch = np.zeros(
-                            (patch_size, patch_size, 3),
-                            dtype=src_patch_img.dtype,
-                        )
-                        padded_patch[
-                            : src_patch_img.shape[0], : src_patch_img.shape[1]
-                        ] = src_patch_img
-                        src_patch_img = padded_patch
-                    elif (
-                        src_patch_img.shape[0] > patch_size
-                        or src_patch_img.shape[1] > patch_size
-                    ):
-                        src_patch_img = src_patch_img[:patch_size, :patch_size]
-
-                    save_debug_patch(src_patch_img, f"{uuid}_src_original.jpg")
         except Exception as e:
             print(f"Error extracting source features for mole {uuid}: {e}")
             continue
@@ -958,20 +1279,21 @@ def process_args(args):
                 tgt_mole["x"],
                 tgt_mole["y"],
                 search_radius,
-                patch_size,
+                context_size,
                 f"{uuid}_tgt_search_area.jpg",
             )
 
-        # Find best matching location using dense feature matching
+        # Find best matching location using contextual semantic matching
         try:
-            best_x, best_y, similarity = find_best_match_dense(
+            best_x, best_y, similarity = find_best_contextual_match(
                 src_features,
                 tgt_image,
                 tgt_mole["x"],
                 tgt_mole["y"],
                 search_radius,
-                patch_size,
+                context_size,
                 model,
+                transform,
                 debug_images,
                 uuid,
             )
@@ -991,43 +1313,44 @@ def process_args(args):
                     f"(moved {distance_moved:.1f} pixels, similarity: {similarity:.3f})"
                 )
 
-                # Save debug image for final refined patch
+                # Save debug image for final refined context
                 if debug_images:
                     try:
-                        half_size = patch_size // 2
-                        y_start = max(0, best_y - half_size)
-                        y_end = min(tgt_image.shape[0], best_y + half_size)
-                        x_start = max(0, best_x - half_size)
-                        x_end = min(tgt_image.shape[1], best_x + half_size)
-                        refined_patch = tgt_image[y_start:y_end, x_start:x_end]
+                        half_context = context_size // 2
+                        y_start = max(0, best_y - half_context)
+                        y_end = min(tgt_image.shape[0], best_y + half_context)
+                        x_start = max(0, best_x - half_context)
+                        x_end = min(tgt_image.shape[1], best_x + half_context)
+                        refined_context = tgt_image[
+                            y_start:y_end, x_start:x_end
+                        ]
 
                         # Pad if necessary
                         if (
-                            refined_patch.shape[0] < patch_size
-                            or refined_patch.shape[1] < patch_size
+                            refined_context.shape[0] < context_size
+                            or refined_context.shape[1] < context_size
                         ):
                             padded_patch = np.zeros(
-                                (patch_size, patch_size, 3),
-                                dtype=refined_patch.dtype,
+                                (context_size, context_size, 3),
+                                dtype=refined_context.dtype,
                             )
+                            y_offset = (
+                                context_size - refined_context.shape[0]
+                            ) // 2
+                            x_offset = (
+                                context_size - refined_context.shape[1]
+                            ) // 2
                             padded_patch[
-                                : refined_patch.shape[0],
-                                : refined_patch.shape[1],
-                            ] = refined_patch
-                            refined_patch = padded_patch
-                        elif (
-                            refined_patch.shape[0] > patch_size
-                            or refined_patch.shape[1] > patch_size
-                        ):
-                            refined_patch = refined_patch[
-                                :patch_size, :patch_size
-                            ]
+                                y_offset : y_offset + refined_context.shape[0],
+                                x_offset : x_offset + refined_context.shape[1],
+                            ] = refined_context
+                            refined_context = padded_patch
 
                         save_debug_patch(
-                            refined_patch, f"{uuid}_tgt_refined.jpg"
+                            refined_context, f"{uuid}_tgt_refined.jpg"
                         )
                     except Exception as e:
-                        print(f"  Debug: Failed to save refined patch: {e}")
+                        print(f"  Debug: Failed to save refined context: {e}")
             else:
                 print(f"  No refinement needed (similarity: {similarity:.3f})")
 
