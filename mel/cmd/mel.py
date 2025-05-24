@@ -23,6 +23,7 @@ import mel.cmd.rotomapfiltermarks
 import mel.cmd.rotomapfiltermarkspretrain
 import mel.cmd.rotomapfiltermarkstrain
 import mel.cmd.rotomapguessmissing
+import mel.cmd.rotomapguessrefine
 import mel.cmd.rotomapidentify
 import mel.cmd.rotomapidentifytrain
 import mel.cmd.rotomaplist
@@ -64,6 +65,7 @@ COMMANDS = {
         "filter-marks-pretrain": mel.cmd.rotomapfiltermarkspretrain,
         "filter-marks-train": mel.cmd.rotomapfiltermarkstrain,
         "guess-missing": mel.cmd.rotomapguessmissing,
+        "guess-refine": mel.cmd.rotomapguessrefine,
         "identify": mel.cmd.rotomapidentify,
         "identify-train": mel.cmd.rotomapidentifytrain,
         "list": mel.cmd.rotomaplist,
