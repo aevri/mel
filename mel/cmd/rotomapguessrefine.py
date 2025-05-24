@@ -442,7 +442,7 @@ def process_args(args):
     # Create lookup dict for src canonical moles
     src_mole_lookup = {m["uuid"]: m for m in src_canonical_moles}
 
-    patch_size = 70
+    patch_size = 224
     refined_count = 0
 
     # Process each non-canonical mole in target
