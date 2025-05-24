@@ -488,7 +488,7 @@ def process_args(args):
 
                 # Save debug image for transformed source patch
                 if debug_images:
-                    save_debug_patch(src_patch, f"src_{uuid}_transformed.jpg")
+                    save_debug_patch(src_patch, f"{uuid}_src_transformed.jpg")
             else:
                 # Use original patch
                 src_features = extract_patch_features(
@@ -529,7 +529,7 @@ def process_args(args):
                     ):
                         src_patch_img = src_patch_img[:patch_size, :patch_size]
 
-                    save_debug_patch(src_patch_img, f"src_{uuid}_original.jpg")
+                    save_debug_patch(src_patch_img, f"{uuid}_src_original.jpg")
         except Exception as e:
             print(f"Error extracting source features for mole {uuid}: {e}")
             continue
@@ -542,7 +542,7 @@ def process_args(args):
                 tgt_mole["y"],
                 search_radius,
                 patch_size,
-                f"tgt_{uuid}_search_area.jpg",
+                f"{uuid}_tgt_search_area.jpg",
             )
 
         # Find best matching location in target image around the non-canonical location
@@ -606,7 +606,7 @@ def process_args(args):
                             ]
 
                         save_debug_patch(
-                            refined_patch, f"tgt_{uuid}_refined.jpg"
+                            refined_patch, f"{uuid}_tgt_refined.jpg"
                         )
                     except Exception as e:
                         print(f"  Debug: Failed to save refined patch: {e}")
