@@ -127,6 +127,14 @@ def test_smoke():
         expect_ok("mel", "rotomap", "mark-unchanged", target_rotomap_2)
         expect_ok("mel", "rotomap", "list", *target_json_files)
         expect_ok("mel", "rotomap", "loadsave", *target_json_files)
+
+        # Test resize functionality with smaller dimensions
+        if target_image_files:
+            expect_ok(
+                "mel", "rotomap", "resize", "--width", "100", "--height", "100",
+                str(target_image_files[0])
+            )
+
         expect_ok("mel", "status", "-ttdd")
         expect_ok("mel", "micro", "list")
 
