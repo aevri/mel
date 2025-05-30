@@ -127,6 +127,14 @@ def test_smoke():
         expect_ok("mel", "rotomap", "mark-unchanged", target_rotomap_2)
         expect_ok("mel", "rotomap", "list", *target_json_files)
         expect_ok("mel", "rotomap", "loadsave", *target_json_files)
+
+        # Test resize functionality with smaller dimensions
+        assert target_image_files, "No target image files found for resize test"
+        expect_ok(
+            "mel", "rotomap", "resize", "--width", "100", "--height", "100",
+            str(target_image_files[0])
+        )
+
         expect_ok("mel", "status", "-ttdd")
         expect_ok("mel", "micro", "list")
 
@@ -152,7 +160,8 @@ def expect_returncode(expected_code, *args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2020 Angelos Evripiotis.
+# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
