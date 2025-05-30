@@ -28,7 +28,6 @@ def record_input_context(module_to_record):
     activations = []
 
     def record_response(module, input_):
-        nonlocal activations
         activations.append(input_)
 
     hook = module_to_record.register_forward_pre_hook(record_response)
