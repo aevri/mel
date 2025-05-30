@@ -22,6 +22,7 @@ import mel.cmd.rotomapedit
 import mel.cmd.rotomapfiltermarks
 import mel.cmd.rotomapfiltermarkspretrain
 import mel.cmd.rotomapfiltermarkstrain
+import mel.cmd.rotomapguessmissing
 import mel.cmd.rotomapidentify
 import mel.cmd.rotomapidentifytrain
 import mel.cmd.rotomaplist
@@ -30,6 +31,7 @@ import mel.cmd.rotomapmarkunchanged
 import mel.cmd.rotomapmergeextrastem
 import mel.cmd.rotomapmontagesingle
 import mel.cmd.rotomaporganise
+import mel.cmd.rotomapresize
 import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
 import mel.cmd.status
@@ -61,6 +63,7 @@ COMMANDS = {
         "filter-marks": mel.cmd.rotomapfiltermarks,
         "filter-marks-pretrain": mel.cmd.rotomapfiltermarkspretrain,
         "filter-marks-train": mel.cmd.rotomapfiltermarkstrain,
+        "guess-missing": mel.cmd.rotomapguessmissing,
         "identify": mel.cmd.rotomapidentify,
         "identify-train": mel.cmd.rotomapidentifytrain,
         "list": mel.cmd.rotomaplist,
@@ -69,6 +72,7 @@ COMMANDS = {
         "merge-extra-stem": mel.cmd.rotomapmergeextrastem,
         "montage-single": mel.cmd.rotomapmontagesingle,
         "organise": mel.cmd.rotomaporganise,
+        "resize": mel.cmd.rotomapresize,
         "rm": mel.cmd.rotomaprm,
         "uuid": mel.cmd.rotomapuuid,
     },

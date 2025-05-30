@@ -20,3 +20,19 @@
 ## Development Environment
 - Python 3.8+
 - Install dev dependencies: `pip install -e '.[dev]'`
+
+## Rotomap File System Structure
+- **Mole files**: `{image}.jpg.json` - JSON arrays with mole coordinates and metadata
+- **Mask files**: `{image}.jpg.mask.png` - Binary masks defining body regions
+- **Meta files**: `{image}.jpg.meta.json` - Ellipse geometry data for coordinate transformation
+- **Extra stem files**: `{image}.jpg.{stem}.json` - Additional mole data with specific stems
+
+## Image Operations
+- Use `mel.lib.image.save_image()` instead of `cv2.imwrite()` directly
+- This function respects file permissions and prevents overwriting read-only files
+- For JSON operations, use `mel.rotomap.moles.save_json()` for consistent formatting
+
+## Command Structure
+- Rotomap commands follow pattern: `mel rotomap {action} [options] FILES...`
+- Add new commands to `mel/cmd/rotomap{action}.py` with `setup_parser()` and `process_args()` functions
+- Register commands in `mel/cmd/mel.py` by importing module and adding to `COMMANDS["rotomap"]` dict
