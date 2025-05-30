@@ -51,7 +51,7 @@ def load_dinov2_model():
     """Load the DINOv2 model for semantic feature extraction with context."""
     try:
         # Load DINOv2 model for semantic patch features with rich context
-        model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")
+        model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14")
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
@@ -70,8 +70,8 @@ def load_dinov2_model():
                     center_patch_idx: Index of center patch to extract (if None, extract all)
 
                 Returns:
-                    If center_patch_idx is None: All patch features [batch, num_patches, 768]
-                    If center_patch_idx is provided: Center patch features [batch, 768]
+                    If center_patch_idx is None: All patch features [batch, num_patches, 1024]
+                    If center_patch_idx is provided: Center patch features [batch, 1024]
                 """
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
@@ -614,7 +614,7 @@ def extract_contextual_patch_feature(
         transform: Image transform pipeline
 
     Returns:
-        Tensor: Context-aware feature for center patch [768]
+        Tensor: Context-aware feature for center patch [1024]
     """
     # Extract large context patch centered on the mole
     half_context = context_size // 2
@@ -672,10 +672,10 @@ def extract_contextual_patch_feature(
         )
 
     # Remove batch dimension and assert shape
-    center_features = center_features.squeeze(0)  # [768]
+    center_features = center_features.squeeze(0)  # [1024]
     assert center_features.shape == (
-        768,
-    ), f"Expected shape (768,), got {center_features.shape}"
+        1024,
+    ), f"Expected shape (1024,), got {center_features.shape}"
 
     return center_features
 
@@ -693,7 +693,7 @@ def extract_all_contextual_features(
         transform: Image transform pipeline
 
     Returns:
-        Tensor: All patch features [num_patches, 768] where num_patches = (context_size//14)^2
+        Tensor: All patch features [num_patches, 1024] where num_patches = (context_size//14)^2
     """
     # Extract large context patch centered on the location
     half_context = context_size // 2
@@ -751,8 +751,8 @@ def extract_all_contextual_features(
     expected_patches = patches_per_side * patches_per_side
     assert all_patch_features.shape == (
         expected_patches,
-        768,
-    ), f"Expected shape ({expected_patches}, 768), got {all_patch_features.shape}"
+        1024,
+    ), f"Expected shape ({expected_patches}, 1024), got {all_patch_features.shape}"
 
     return all_patch_features
 
@@ -772,7 +772,7 @@ def find_best_contextual_match(
     """Find best match using contextual semantic features.
 
     Args:
-        src_center_features: Contextual features of source mole center patch [768]
+        src_center_features: Contextual features of source mole center patch [1024]
         tgt_image: Target image
         center_x, center_y: Initial target location
         search_radius: Search radius in pixels
@@ -807,10 +807,10 @@ def find_best_contextual_match(
         # Normalize source and target features for cosine similarity
         src_norm = torch.nn.functional.normalize(
             src_center_features, p=2, dim=0
-        )  # [768]
+        )  # [1024]
         tgt_norm = torch.nn.functional.normalize(
             tgt_all_features, p=2, dim=1
-        )  # [num_patches, 768]
+        )  # [num_patches, 1024]
 
         # Compute cosine similarity between source center and all target patches
         similarities = torch.mm(tgt_norm, src_norm.unsqueeze(1)).squeeze(
