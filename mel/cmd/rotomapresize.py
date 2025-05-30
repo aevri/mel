@@ -59,7 +59,7 @@ def process_args(args):
         resized_image = cv2.resize(
             image, (target_width, target_height), interpolation=cv2.INTER_CUBIC
         )
-        cv2.imwrite(image_path, resized_image)
+        mel.lib.image.save_image(resized_image, image_path)
 
         # Resize mole coordinates
         _resize_mole_files(image_path, scale_x, scale_y)
@@ -96,7 +96,7 @@ def _resize_mask_file(image_path, target_width, target_height):
                 (target_width, target_height),
                 interpolation=cv2.INTER_CUBIC,
             )
-            cv2.imwrite(mask_path, resized_mask)
+            mel.lib.image.save_image(resized_mask, mask_path)
 
 
 def _resize_ellipse_metadata(image_path, scale_x, scale_y):
