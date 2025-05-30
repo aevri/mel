@@ -1,5 +1,8 @@
 """Image processing routines."""
 
+import os
+import stat
+
 import cv2
 import numpy
 
@@ -12,6 +15,30 @@ def load_image(path):
         raise Exception(f'Failed to load image: "{path}"')
 
     return image
+
+
+def save_image(image, path):
+    """Save image to path, respecting file permissions.
+
+    Args:
+        image (numpy.ndarray): OpenCV image to save
+        path (str): File path to save to
+
+    Raises:
+        Exception: If the file is read-only or the image cannot be saved
+    """
+    path_str = str(path)
+
+    # Check if file exists and is read-only
+    if os.path.exists(path_str):
+        file_mode = os.stat(path_str).st_mode
+        if not (file_mode & stat.S_IWUSR):
+            raise Exception(f'Cannot save to read-only file: "{path_str}"')
+
+    # Save the image
+    success = cv2.imwrite(path_str, image)
+    if not success:
+        raise Exception(f'Failed to save image: "{path_str}"')
 
 
 def calc_letterbox(width, height, fit_width, fit_height):
@@ -362,7 +389,8 @@ def scale_image(image, scale):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code and Cursor.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
