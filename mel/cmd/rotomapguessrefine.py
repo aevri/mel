@@ -813,9 +813,9 @@ def find_best_contextual_match(
         )  # [num_patches, 768]
 
         # Compute cosine similarity between source center and all target patches
-        similarities = torch.mm(tgt_norm, src_norm.unsqueeze(1)).squeeze(
-            1
-        )  # [num_patches]
+        # Calculate Euclidean distance between source and target features
+        # Note: We negate the distance to maintain the convention that higher values = better matches
+        similarities = -torch.cdist(tgt_norm, src_norm.unsqueeze(0)).squeeze(1)  # [num_patches]
 
         # Find the patch with highest similarity
         best_patch_idx = torch.argmax(similarities).item()
