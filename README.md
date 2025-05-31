@@ -31,6 +31,24 @@ identify significant differences in moles over time. The tools will help you to
 normalise the rotation and centering of your mole images so that they are
 easier to compare.
 
+Installation
+------------
+
+Requirements: Python 3.8+
+
+Install uv (recommended):
+```bash
+pip install uv
+# or
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Install mel:
+```bash
+uv venv
+uv pip install -e '.[dev]'
+```
+
 Things you can use now
 ----------------------
 

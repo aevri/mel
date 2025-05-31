@@ -9,13 +9,21 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Install
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
         run: |
-          pip3 install -r requirements.txt
-          pip3 install -e .[dev] --no-deps
-          #pip3 check
+          uv venv
+          uv pip install -r requirements.txt
+          uv pip install -e .[dev] --no-deps
 
       - name: Test
         run: ./meta/run_tests.sh
+
+# Copyright (C) 2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.

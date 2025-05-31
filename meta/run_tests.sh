@@ -35,3 +35,7 @@ printf "static tests: "
 ./meta/static_tests.sh || die 'Static tests failed.'
 
 ./meta/unit_tests.sh || die 'Pytest failed.'
+
+# -----------------------------------------------------------------------------
+# Copyright (C) 2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
