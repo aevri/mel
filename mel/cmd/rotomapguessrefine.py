@@ -860,7 +860,6 @@ def find_best_contextual_match(
         return center_x, center_y, -1.0
 
 
-
 def extract_patch_features(
     image, center_x, center_y, patch_size, model, transform
 ):
