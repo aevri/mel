@@ -6,13 +6,11 @@ set -e # exit immediately on error
 # cd to the root of the repository, so all the paths are relative to that
 cd "$(dirname "$0")"/..
 
-allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
-
 printf '.'
 python3 -m pylint --errors-only mel/
 
 printf '.'
-python3 -m pyflakes $allscripts
+python3 -m ruff check mel/
 
 printf '.'
 python3 -m vulture \

@@ -74,6 +74,7 @@ setuptools.setup(
             'pyflakes',
             'pylint',
             'pytest',
+            'ruff',
             'vulture',
         ]
     },
