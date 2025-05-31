@@ -19,7 +19,8 @@
 
 ## Development Environment
 - Python 3.8+
-- Install dev dependencies: `pip install -e '.[dev]'`
+- Install uv: `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Install dev dependencies: `uv venv && uv pip install -e '.[dev]'`
 
 ## Rotomap File System Structure
 - **Mole files**: `{image}.jpg.json` - JSON arrays with mole coordinates and metadata
