@@ -126,18 +126,19 @@ def yield_frames_keys(video_capture, display, error_key):
             else:
                 raise Exception("Could not read video frame.")
 
-        keys = []
-
         # Inject debug keypresses if available
         if debug_keypresses and keypress_index < len(debug_keypresses):
-            keys.append(debug_keypresses[keypress_index])
+            key = debug_keypresses[keypress_index]
             keypress_index += 1
-        else:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                if event.type == pygame.KEYDOWN:
-                    keys.append(event.key)
+            # Post the keypress to pygame's event queue
+            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=key))
+
+        keys = []
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN:
+                keys.append(event.key)
 
         display.update_screen_if_needed()
 
@@ -172,18 +173,8 @@ def yield_events_until_quit(
         if debug_keypresses and keypress_index < len(debug_keypresses):
             key = debug_keypresses[keypress_index]
             keypress_index += 1
-
-            # Create a synthetic KEYDOWN event
-            event = type("Event", (), {"type": pygame.KEYDOWN, "key": key})()
-
-            if key == quit_key:
-                return
-            elif error_key is not None and key == error_key:
-                raise mel.lib.ui.AbortKeyInterruptError()
-
-            yield event
-            display.update_screen_if_needed()
-            continue
+            # Post the keypress to pygame's event queue
+            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=key))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
