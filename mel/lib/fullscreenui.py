@@ -1,6 +1,7 @@
 """Provide a full-screen UI."""
 
 import contextlib
+import os
 
 import cv2
 import numpy
@@ -8,6 +9,49 @@ import numpy
 import mel.lib.common
 import mel.lib.image
 import mel.lib.ui
+
+
+def _parse_debug_keypresses():
+    """Parse MEL_DEBUG_ENQUEUE_KEYPRESSES environment variable into pygame keys.
+    
+    Returns:
+        List of pygame key constants, or empty list if not set.
+    """
+    keypress_str = os.environ.get('MEL_DEBUG_ENQUEUE_KEYPRESSES')
+    if not keypress_str:
+        return []
+    
+    # Import pygame as late as possible
+    import pygame
+    
+    # Map key names to pygame constants
+    key_map = {
+        'K_q': pygame.K_q,
+        'K_w': pygame.K_w,
+        'K_1': pygame.K_1,
+        'K_2': pygame.K_2,
+        'K_3': pygame.K_3,
+        'K_4': pygame.K_4,
+        'K_LEFT': pygame.K_LEFT,
+        'K_RIGHT': pygame.K_RIGHT,
+        'K_UP': pygame.K_UP,
+        'K_DOWN': pygame.K_DOWN,
+        'K_SPACE': pygame.K_SPACE,
+        'K_ESCAPE': pygame.K_ESCAPE,
+        'K_RETURN': pygame.K_RETURN,
+        'K_z': pygame.K_z,
+        'K_x': pygame.K_x,
+    }
+    
+    keypresses = []
+    for key_name in keypress_str.split(','):
+        key_name = key_name.strip()
+        if key_name in key_map:
+            keypresses.append(key_map[key_name])
+        else:
+            print(f"Warning: Unknown key name '{key_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES")
+    
+    return keypresses
 
 
 class FittedImageTransform:
@@ -64,6 +108,10 @@ def yield_frames_keys(video_capture, display, error_key):
     # so we don't need to retry much. We also probably don't want to retry
     # indefinitely, freezing the program.
     retries = 5
+    
+    # Support for debug keypress injection
+    debug_keypresses = _parse_debug_keypresses()
+    keypress_index = 0
 
     while True:
         ret, frame = video_capture.read()
@@ -76,11 +124,17 @@ def yield_frames_keys(video_capture, display, error_key):
                 raise Exception("Could not read video frame.")
 
         keys = []
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                keys.append(event.key)
+        
+        # Inject debug keypresses if available
+        if debug_keypresses and keypress_index < len(debug_keypresses):
+            keys.append(debug_keypresses[keypress_index])
+            keypress_index += 1
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return
+                if event.type == pygame.KEYDOWN:
+                    keys.append(event.key)
 
         display.update_screen_if_needed()
 
@@ -106,7 +160,31 @@ def yield_events_until_quit(
 
     display.update_screen_if_needed()
 
+    # Support for debug keypress injection
+    debug_keypresses = _parse_debug_keypresses()
+    keypress_index = 0
+
     while True:
+        # Inject debug keypresses if available
+        if debug_keypresses and keypress_index < len(debug_keypresses):
+            key = debug_keypresses[keypress_index]
+            keypress_index += 1
+            
+            # Create a synthetic KEYDOWN event
+            event = type('Event', (), {
+                'type': pygame.KEYDOWN,
+                'key': key
+            })()
+            
+            if key == quit_key:
+                return
+            elif error_key is not None and key == error_key:
+                raise mel.lib.ui.AbortKeyInterruptError()
+                
+            yield event
+            display.update_screen_if_needed()
+            continue
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
@@ -383,7 +461,8 @@ class MultiImageDisplay:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020-2023 Angelos Evripiotis.
+# Copyright (C) 2020-2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
