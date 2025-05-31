@@ -5,14 +5,17 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-docformatter -i $allscripts
+uv run docformatter -i $allscripts
 printf "."
 
-# Use ruff for formatting and import sorting (replaces black and isort)
-python3 -m ruff format --line-length 79 mel/
+uv run ruff format --line-length 79 $allscripts
 printf "."
 
-python3 -m ruff check --fix mel/
+uv run ruff check --fix $allscripts
 printf "."
 
 echo
+
+# -----------------------------------------------------------------------------
+# Copyright (C) 2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
