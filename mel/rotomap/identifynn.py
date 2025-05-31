@@ -522,23 +522,19 @@ def split_train_valid(rotomaps, train_split=0.8):
 
 def get_lower_limb_rotomaps(parts_path):
     parts = {
-        parts_path
-        / "LeftLeg": [
+        parts_path / "LeftLeg": [
             parts_path / "LeftLeg" / "Lower",
             # parts_path / "LeftLeg" / "Upper",
         ],
-        parts_path
-        / "RightLeg": [
+        parts_path / "RightLeg": [
             parts_path / "RightLeg" / "Lower",
             # parts_path / "RightLeg" / "Upper",
         ],
-        parts_path
-        / "LeftArm": [
+        parts_path / "LeftArm": [
             parts_path / "LeftArm" / "Lower",
             # parts_path / "LeftArm" / "Upper",
         ],
-        parts_path
-        / "RightArm": [
+        parts_path / "RightArm": [
             parts_path / "RightArm" / "Lower",
             # parts_path / "RightArm" / "Upper",
         ],

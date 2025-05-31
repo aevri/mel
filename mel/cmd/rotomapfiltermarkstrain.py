@@ -119,7 +119,9 @@ def process_args(args):
     print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
         metadata = {
-            "model_weights_version": mel.rotomap.filtermarks.get_model_weights_version()
+            "model_weights_version": (
+                mel.rotomap.filtermarks.get_model_weights_version()
+            )
         }
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")

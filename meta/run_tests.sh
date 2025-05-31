@@ -22,7 +22,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 printf "autofix: "
-./meta/autofix.sh || die "Could not run autofix."
+time ./meta/autofix.sh || die "Could not run autofix."
 git diff --exit-code
 if [ "$?" -ne 0 ]; then
     echo
@@ -32,9 +32,9 @@ if [ "$?" -ne 0 ]; then
 fi
 
 printf "static tests: "
-./meta/static_tests.sh || die 'Static tests failed.'
+time ./meta/static_tests.sh || die 'Static tests failed.'
 
-./meta/unit_tests.sh || die 'Pytest failed.'
+time ./meta/unit_tests.sh || die 'Pytest failed.'
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2025 Angelos Evripiotis.

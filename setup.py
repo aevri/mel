@@ -67,13 +67,12 @@ setuptools.setup(
     ],
     extras_require={
         'dev': [
-            'black',
             'docformatter',
-            'isort',
             'pycodestyle',
             'pyflakes',
             'pylint',
             'pytest',
+            'ruff',
             'vulture',
         ]
     },

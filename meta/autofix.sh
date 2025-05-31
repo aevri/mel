@@ -5,13 +5,13 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-uv run docformatter -i $allscripts
+time uv run ruff check --fix mel/
 printf "."
 
-uv run black --quiet --line-length 79 $allscripts
+time uv run ruff format mel/
 printf "."
 
-uv run isort --quiet --apply $allscripts
+time uv run docformatter -i $allscripts
 printf "."
 
 echo
