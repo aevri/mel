@@ -15,7 +15,7 @@
 - Documentation: Google-style docstrings with Args/Returns sections for complex functions
 - Error handling: Explicit exceptions with descriptive messages, exception chaining with `raise X from Y`
 - Indentation: 4 spaces
-- Linting: pylint, pyflakes, vulture
+- Linting: pylint, ruff (preferred) or pyflakes (fallback), vulture
 
 ## Development Environment
 - Python 3.8+

@@ -9,13 +9,18 @@ cd "$(dirname "$0")"/..
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
 printf '.'
-uv run python -m pylint --errors-only mel/
+time uv run python -m pylint --errors-only mel/
 
 printf '.'
-uv run python -m pyflakes $allscripts
+# Use ruff check for fast linting, fallback to pyflakes if ruff unavailable
+if uv run python -c "import ruff" 2>/dev/null; then
+    time uv run ruff check mel/
+else
+    time uv run python -m pyflakes $allscripts
+fi
 
 printf '.'
-uv run python -m vulture \
+time uv run python -m vulture \
     --ignore-names training_step,validation_step,configure_optimizers \
     --exclude '*__t.py,mel/rotomap/detectmoles.py,mel/rotomap/identifynn.py' \
     mel/

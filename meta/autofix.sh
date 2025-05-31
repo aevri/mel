@@ -5,13 +5,19 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-uv run docformatter -i $allscripts
+# Use ruff for fast auto-fixing if available
+if uv run python -c "import ruff" 2>/dev/null; then
+    time uv run ruff check --fix mel/
+    printf "."
+fi
+
+time uv run docformatter -i $allscripts
 printf "."
 
-uv run black --quiet --line-length 79 $allscripts
+time uv run black --quiet --line-length 79 $allscripts
 printf "."
 
-uv run isort --quiet --apply $allscripts
+time uv run isort --quiet --apply $allscripts
 printf "."
 
 echo
