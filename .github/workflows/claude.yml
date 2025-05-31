@@ -29,9 +29,17 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install dependencies
+        run: |
+          pip3 install -r requirements.txt
+          pip3 install -e .[dev] --no-deps
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash(meta/run_tests.sh),Bash(meta/autofix.sh),Bash(meta/static_tests.sh),Bash(meta/unit_tests.sh)"
 
+# Copyright (C) 2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
