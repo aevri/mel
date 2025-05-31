@@ -38,5 +38,5 @@
 - Register commands in `mel/cmd/mel.py` by importing module and adding to `COMMANDS["rotomap"]` dict
 
 ## Copyright and Generation
-- Update copyright notice to current year.
-- Ensure "Generated with assistance from Claude Code." under copyright.
+- In changed files, update copyright notice to include current year.
+- Ensure "Generated with assistance from Claude Code." under copyright line.
