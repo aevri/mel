@@ -41,10 +41,7 @@ def get_model_weights_version():
     # we only pay the import cost when we use it.
     import torchvision
 
-    model_url = (
-        torchvision.models.efficientnet.EfficientNet_B0_Weights
-        .IMAGENET1K_V1.url
-    )
+    model_url = torchvision.models.efficientnet.EfficientNet_B0_Weights.IMAGENET1K_V1.url
     weights_version = model_url.split("/")[-1]
     return weights_version
 

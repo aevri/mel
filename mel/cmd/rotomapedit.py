@@ -275,9 +275,7 @@ class MoleEditController:
             )
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(
-                    self.mole_uuid_list[0]
-                )
+                mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
             # Auto-identify
             #

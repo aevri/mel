@@ -15,7 +15,6 @@ Answers the question 'What's happening here, and what shall I do next?'.
 #
 # Potentially we can also try to fit to a certain amount of screen real-estate.
 
-
 import collections
 import datetime
 import os
