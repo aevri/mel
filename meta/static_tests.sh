@@ -12,12 +12,7 @@ printf '.'
 time uv run python -m pylint --errors-only mel/
 
 printf '.'
-# Use ruff check for fast linting, fallback to pyflakes if ruff unavailable
-if uv run python -c "import ruff" 2>/dev/null; then
-    time uv run ruff check mel/
-else
-    time uv run python -m pyflakes $allscripts
-fi
+time uv run ruff check mel/
 
 printf '.'
 time uv run python -m vulture \
