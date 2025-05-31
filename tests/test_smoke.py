@@ -2,6 +2,7 @@
 """Smoke-test mel from the CLI, make sure nothing errors out."""
 
 import contextlib
+import json
 import os
 import pathlib
 import subprocess
@@ -163,7 +164,6 @@ def test_smoke():
                   str(target_image_files[0]), str(target_image_files[1]))
         # For montage-single, we need a UUID, so let's get one from the first JSON file
         # and use the corresponding image file
-        import json
         json_file = target_json_files[0]
         corresponding_image = str(json_file).replace('.jpg.json', '.jpg')
         
