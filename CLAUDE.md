@@ -36,3 +36,7 @@
 - Rotomap commands follow pattern: `mel rotomap {action} [options] FILES...`
 - Add new commands to `mel/cmd/rotomap{action}.py` with `setup_parser()` and `process_args()` functions
 - Register commands in `mel/cmd/mel.py` by importing module and adding to `COMMANDS["rotomap"]` dict
+
+## Copyright and Generation
+- Update copyright notice to current year.
+- Ensure "Generated with assistance from Claude Code." under copyright.
