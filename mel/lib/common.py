@@ -42,8 +42,7 @@ def overwrite_image(directory, filename, image):
 
 
 def write_image(path, image):
-    if not cv2.imwrite(str(path), image):
-        raise Exception("Was unable to write image to '{}'.".format(path))
+    mel.lib.image.save_image(image, path)
 
 
 def user_mark_moles(window_name, context_image, detail_image, num_moles):
@@ -360,7 +359,8 @@ def timelogger_context(command):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2022 Angelos Evripiotis.
+# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
