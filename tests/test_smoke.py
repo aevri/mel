@@ -136,7 +136,14 @@ def test_smoke():
         )
 
         expect_ok("mel", "status", "-ttdd")
+        expect_ok("mel", "timelog")
         expect_ok("mel", "micro", "list")
+        
+        # Test additional non-interactive rotomap commands
+        expect_ok("mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files)
+        expect_ok("mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files", *target_json_files)
+        expect_ok("mel", "rotomap", "guess-missing", *target_json_files)
+        expect_ok("mel", "rotomap", "montage-single", str(target_image_files[0]))
 
 
 @contextlib.contextmanager
