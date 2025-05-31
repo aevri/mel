@@ -45,6 +45,12 @@ def setup_parser(parser):
         action="store_true",
         help="Save debug images showing source patches and target search areas.",
     )
+    parser.add_argument(
+        "--max-moles",
+        type=int,
+        default=None,
+        help="Maximum number of moles to refine (for testing, default: refine all).",
+    )
 
 
 def load_dinov2_model():
@@ -652,6 +658,7 @@ def process_args(args):
     tgt_path = args.TGT_JPG
     search_radius = args.search_radius
     debug_images = args.debug_images
+    max_moles = args.max_moles
 
     # Load images
     try:
@@ -703,9 +710,18 @@ def process_args(args):
         )
         return 0
 
-    print(
-        f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
-    )
+    # Limit the number of moles to refine if max_moles is specified
+    if max_moles is not None and max_moles > 0:
+        original_count = len(tgt_non_canonical_to_refine)
+        tgt_non_canonical_to_refine = tgt_non_canonical_to_refine[:max_moles]
+        print(
+            f"Found {original_count} non-canonical moles to refine, "
+            f"limiting to first {len(tgt_non_canonical_to_refine)} moles"
+        )
+    else:
+        print(
+            f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
+        )
     print("Using DINOv2 contextual semantic features for mole matching")
 
     # Load DINOv2 model
