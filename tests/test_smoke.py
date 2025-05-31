@@ -107,8 +107,12 @@ def test_smoke():
             "smoke",
             *target_image_files
         )
-        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
-        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
+        expect_ok(
+            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
+        )
+        expect_ok(
+            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
+        )
         expect_ok(
             "mel", "rotomap", "identify", "--extra-stem", "smoke", *target_image_files
         )
@@ -141,9 +145,14 @@ def test_smoke():
         
         # Test additional non-interactive rotomap commands
         expect_ok("mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files)
-        expect_ok("mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files", *target_json_files)
+        expect_ok(
+            "mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files",
+            *target_json_files
+        )
         expect_ok("mel", "rotomap", "guess-missing", *target_json_files)
-        expect_ok("mel", "rotomap", "montage-single", str(target_image_files[0]))
+        expect_ok(
+            "mel", "rotomap", "montage-single", str(target_image_files[0])
+        )
 
 
 @contextlib.contextmanager
