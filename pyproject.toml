@@ -1,0 +1,24 @@
+[project]
+name = "mel"
+version = "0.0.0"
+requires-python = ">=3.8"
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+]
+
+[tool.ruff.lint.isort]
+# Sort imports according to the guidelines: stdlib, third-party, project modules
+known-first-party = ["mel"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

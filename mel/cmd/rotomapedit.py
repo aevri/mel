@@ -275,7 +275,7 @@ class MoleEditController:
             )
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(  # pylint: disable=possibly-used-before-assignment
+                mel.lib.ui.set_clipboard_contents(
                     self.mole_uuid_list[0]
                 )
         elif key == pygame.K_i:
@@ -283,9 +283,9 @@ class MoleEditController:
             #
             # Import mel.rotomap.identifynn as late as possible, because it has
             # some expensive dependencies.
-            import mel.rotomap.identifynn
+            from mel.rotomap import identifynn
 
-            identifier = mel.rotomap.identifynn.make_identifier()
+            identifier = identifynn.make_identifier()
             target = editor.moledata.current_image_path()
             frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
             new_moles = identifier.get_new_moles(frame)

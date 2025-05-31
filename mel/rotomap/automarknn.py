@@ -240,6 +240,7 @@ def drop_paths_without_moles(path_list):
     ]
 
 
-# See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
+# See https://github.com/pytorch/vision/blob/
+# 59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
 def collate_fn(batch):
     return tuple(zip(*batch))

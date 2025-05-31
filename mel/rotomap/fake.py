@@ -23,7 +23,8 @@ import mel.rotomap.raytrace
 #
 #   "Unreal Engine: Creating Human Skin"
 #
-# https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/HowTo/Human_Skin
+# https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/HowTo/
+# Human_Skin
 
 
 def random_moles(num_moles):

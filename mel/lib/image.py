@@ -293,8 +293,10 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
     Note that the bottom right point will not be included in the selection.
 
     Args:
-        top_left_inclusive (numpy.ndarray): A NumPy array of (top, left) coordinates.
-        bottom_right_exclusive (numpy.ndarray): A NumPy array of (bottom, right) coordinates.
+        top_left_inclusive (numpy.ndarray): A NumPy array of (top, left)
+            coordinates.
+        bottom_right_exclusive (numpy.ndarray): A NumPy array of (bottom,
+            right) coordinates.
 
     Returns:
         tuple: A tuple (rows, columns) slices as a selection object.
@@ -309,12 +311,16 @@ def slice_square_or_none(image, lefttop, rightbottom):
     """Return a slice of the supplied image or None.
 
     Args:
-        image (numpy.ndarray): A NumPy array representing an OpenCV image, stored in yx order.
-        lefttop (numpy.ndarray): A NumPy array of xy coordinates, the inclusive top-left.
-        rightbottom (numpy.ndarray): A NumPy array of xy coordinates, the exclusive bottom-right.
+        image (numpy.ndarray): A NumPy array representing an OpenCV image,
+            stored in yx order.
+        lefttop (numpy.ndarray): A NumPy array of xy coordinates, the
+            inclusive top-left.
+        rightbottom (numpy.ndarray): A NumPy array of xy coordinates, the
+            exclusive bottom-right.
 
     Returns:
-        numpy.ndarray or None: A NumPy array representing an OpenCV image, stored in yx order.
+        numpy.ndarray or None: A NumPy array representing an OpenCV image,
+            stored in yx order.
     """
     height_width = image.shape[:2]
     width_height = (height_width[1], height_width[0])
@@ -342,8 +348,10 @@ def recentered_at(image, x, y):
 
     Args:
         image (numpy.ndarray): An OpenCV image.
-        x (int): The horizontal coordinate to put at the center of the new image.
-        y (int): The vertical coordinate to put at the center of the new image.
+        x (int): The horizontal coordinate to put at the center of the new
+            image.
+        y (int): The vertical coordinate to put at the center of the new
+            image.
 
     Returns:
         numpy.ndarray: A new OpenCV image.
