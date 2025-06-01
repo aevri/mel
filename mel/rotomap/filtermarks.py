@@ -116,15 +116,10 @@ def pretrain_image(image_path, moles, batch_size):
     marks = select_marks(moles_and_marks)
 
     metadata = moles + marks
-    images = [
-        get_item_image(image, mask, item, _HALF_IMAGE_SIZE)
-        for item in metadata
-    ]
+    images = [get_item_image(image, mask, item, _HALF_IMAGE_SIZE) for item in metadata]
     is_mole = [True] * len(moles) + [False] * len(marks)
     is_mole = [item for i, item in enumerate(is_mole) if images[i] is not None]
-    metadata = [
-        item for i, item in enumerate(metadata) if images[i] is not None
-    ]
+    metadata = [item for i, item in enumerate(metadata) if images[i] is not None]
     images = [item for item in images if item is not None]
     assert len(images) == len(is_mole)
     assert len(images) == len(metadata)
@@ -225,11 +220,7 @@ class Evaluator:
     def precision(self):
         if not self.num_predicted_moles:
             raise ValueError("No predicted moles.")
-        return (
-            100
-            * self.num_moles_correct.item()
-            / self.num_predicted_moles.item()
-        )
+        return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()
 
     def recall(self):
         if not self.num_moles:
@@ -250,18 +241,14 @@ def make_model(num_features):
 
 
 def prepare_data(pretrained_data, sessions):
-    image_dicts = (
-        data for session in sessions for data in pretrained_data[session]
-    )
+    image_dicts = (data for session in sessions for data in pretrained_data[session])
     return [
         {
             "features": features,
             "is_mole": int(is_mole),
         }
         for image_data in image_dicts
-        for features, is_mole in zip(
-            image_data["features"], image_data["is_mole"]
-        )
+        for features, is_mole in zip(image_data["features"], image_data["is_mole"])
     ]
 
 
@@ -274,12 +261,8 @@ def split_data(pretrained_data, training_split=0.8):
     num_validation_sessions = num_sessions - num_training_sessions
     if training_split != 1:
         assert num_validation_sessions
-    training_data = prepare_data(
-        pretrained_data, sessions[:num_training_sessions]
-    )
-    validation_data = prepare_data(
-        pretrained_data, sessions[num_training_sessions:]
-    )
+    training_data = prepare_data(pretrained_data, sessions[:num_training_sessions])
+    validation_data = prepare_data(pretrained_data, sessions[num_training_sessions:])
     return training_data, validation_data
 
 

@@ -48,9 +48,7 @@ def merge_in_radiuses(
         targets, radii_sources, error_distance
     )
 
-    target_to_radii_src = {
-        from_uuid: to_uuid for from_uuid, to_uuid in match_uuids
-    }
+    target_to_radii_src = {from_uuid: to_uuid for from_uuid, to_uuid in match_uuids}
     radii_src_radius = {s["uuid"]: s["radius"] for s in radii_sources}
     target_uuid_radius = {
         t_uuid: radii_src_radius[target_to_radii_src[t_uuid]]

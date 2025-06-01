@@ -42,9 +42,7 @@ class MoleDetector:
 
 
 def make_model(model_path=None):
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
-        weights="DEFAULT"
-    )
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = (
@@ -187,9 +185,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         if not moles:
             raise ValueError("Mole list must not be empty.")
         fr = 10
-        boxes = [
-            [m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles
-        ]
+        boxes = [[m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles]
 
         target = {}
         target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
@@ -225,19 +221,13 @@ def list_train_valid_images(min_session=None):
         sessions = [s for s in sessions if s > min_session]
     train_sessions = sessions[:-1]
     valid_sessions = sessions[-1:]
-    train_images = [
-        img for sess in train_sessions for img in session_images[sess]
-    ]
-    valid_images = [
-        img for sess in valid_sessions for img in session_images[sess]
-    ]
+    train_images = [img for sess in train_sessions for img in session_images[sess]]
+    valid_images = [img for sess in valid_sessions for img in session_images[sess]]
     return train_images, valid_images, train_sessions, valid_sessions
 
 
 def drop_paths_without_moles(path_list):
-    return [
-        path for path in path_list if mel.rotomap.moles.load_image_moles(path)
-    ]
+    return [path for path in path_list if mel.rotomap.moles.load_image_moles(path)]
 
 
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203

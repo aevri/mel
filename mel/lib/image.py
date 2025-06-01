@@ -176,9 +176,7 @@ def montage_horizontal(border_size, *image_list):
     size_xy = geometry[0]
     geometry = geometry[1:]
 
-    return arrange_images(
-        size_xy[0], size_xy[1], *list(zip(image_list, geometry))
-    )
+    return arrange_images(size_xy[0], size_xy[1], *list(zip(image_list, geometry)))
 
 
 def montage_vertical(border_size, *image_list):
@@ -189,14 +187,10 @@ def montage_vertical(border_size, *image_list):
     size_xy = geometry[0]
     geometry = geometry[1:]
 
-    return arrange_images(
-        size_xy[0], size_xy[1], *list(zip(image_list, geometry))
-    )
+    return arrange_images(size_xy[0], size_xy[1], *list(zip(image_list, geometry)))
 
 
-def measure_text_height_width(
-    text, font_face=None, font_scale=None, thickness=None
-):
+def measure_text_height_width(text, font_face=None, font_scale=None, thickness=None):
     if font_face is None:
         font_face = cv2.FONT_HERSHEY_DUPLEX
     if font_scale is None:
@@ -204,9 +198,7 @@ def measure_text_height_width(
     if thickness is None:
         thickness = 1
 
-    (width, height), baseline = cv2.getTextSize(
-        text, font_face, font_scale, thickness
-    )
+    (width, height), baseline = cv2.getTextSize(text, font_face, font_scale, thickness)
 
     baseline += thickness
 
@@ -225,9 +217,7 @@ def render_text_as_image(
     if color is None:
         color = (255, 255, 255)
 
-    (width, height), baseline = cv2.getTextSize(
-        text, font_face, font_scale, thickness
-    )
+    (width, height), baseline = cv2.getTextSize(text, font_face, font_scale, thickness)
 
     baseline += thickness
 

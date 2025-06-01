@@ -15,13 +15,9 @@ import mel.lib.image
 
 def determine_filename_for_ident(*source_filenames):
     if not source_filenames:
-        raise ValueError(
-            "{} is not a valid list of filenames".format(source_filenames)
-        )
+        raise ValueError("{} is not a valid list of filenames".format(source_filenames))
 
-    dates = [
-        mel.lib.datetime.guess_datetime_from_path(x) for x in source_filenames
-    ]
+    dates = [mel.lib.datetime.guess_datetime_from_path(x) for x in source_filenames]
     valid_dates = [x for x in dates if x is not None]
     if valid_dates:
         latest_date = max(valid_dates)
@@ -201,9 +197,7 @@ def indicate_mole(image, mole):
     draw_radial_line(image, pos, radius * 4, radius * 6, (0, -1), radius)
 
 
-def draw_radial_line(
-    image, origin, inner_radius, outer_radius, direction, thickness
-):
+def draw_radial_line(image, origin, inner_radius, outer_radius, direction, thickness):
     origin = numpy.array(origin)
     direction = numpy.array(direction)
     line_start = origin + direction * inner_radius

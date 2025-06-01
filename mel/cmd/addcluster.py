@@ -32,9 +32,7 @@ def process_args(args):
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
-    context_image, detail_image = mel.lib.common.process_context_detail_args(
-        args
-    )
+    context_image, detail_image = mel.lib.common.process_context_detail_args(args)
 
     montage_size = 1024
     mole_size = 512

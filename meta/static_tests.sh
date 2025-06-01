@@ -9,10 +9,7 @@ cd "$(dirname "$0")"/..
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
 printf '.'
-uv run python -m pylint --errors-only mel/
-
-printf '.'
-uv run python -m pyflakes $allscripts
+time uv run ruff check --quiet mel/
 
 printf '.'
 uv run python -m vulture \

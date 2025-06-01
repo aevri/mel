@@ -25,8 +25,7 @@ def setup_parser(parser):
         "--error-distance",
         default=5,
         type=int,
-        help="Consider guesses this far from their target to be misses / "
-        "errors.",
+        help="Consider guesses this far from their target to be misses / errors.",
     )
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
@@ -37,9 +36,7 @@ def process_args(args):
     num_missing = 0
     num_added = 0
     for common_path, from_moles, to_moles in from_to_pairs:
-        matches, missing, added = match_moles(
-            from_moles, to_moles, args.error_distance
-        )
+        matches, missing, added = match_moles(from_moles, to_moles, args.error_distance)
         if args.verbose > 1:
             print_items(common_path, matches, "MATCH")
             print_items(common_path, missing, "MISSING")
@@ -72,9 +69,7 @@ def _pair_off_inputs(from_, to):
 
 def _common_path(from_path, to_path):
     common = []
-    for char_from, char_to in zip(
-        reversed(str(from_path)), reversed(str(to_path))
-    ):
+    for char_from, char_to in zip(reversed(str(from_path)), reversed(str(to_path))):
         if char_from != char_to:
             break
         common.insert(0, char_from)
@@ -160,9 +155,7 @@ def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
             break
         # It seems pylint doesn't know about numpy indexing.
         # pylint: disable=invalid-sequence-index
-        matches.append(
-            (matindex_to_fromindex[from_i], matindex_to_toindex[to_i])
-        )
+        matches.append((matindex_to_fromindex[from_i], matindex_to_toindex[to_i]))
         del matindex_to_fromindex[from_i]
         del matindex_to_toindex[to_i]
         sqdistmat = numpy.delete(sqdistmat, from_i, axis=0)

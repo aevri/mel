@@ -52,9 +52,7 @@ def process_args(args):
             only_merge=args.only_merge,
         )
 
-        mel.rotomap.moles.save_image_moles(
-            moles, path, extra_stem=args.extra_stem
-        )
+        mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.extra_stem)
 
 
 # -----------------------------------------------------------------------------

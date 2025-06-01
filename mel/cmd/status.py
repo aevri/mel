@@ -15,7 +15,6 @@ Answers the question 'What's happening here, and what shall I do next?'.
 #
 # Potentially we can also try to fit to a certain amount of screen real-estate.
 
-
 import collections
 import datetime
 import os
@@ -340,13 +339,9 @@ def process_args(args):
     any_notices = bool(alerts_to_notices or errors_to_notices)
 
     print_klass_to_notices(alerts_to_notices, args.detail, colorama.Fore.RED)
-    print_klass_to_notices(
-        errors_to_notices, args.detail, colorama.Fore.MAGENTA
-    )
+    print_klass_to_notices(errors_to_notices, args.detail, colorama.Fore.MAGENTA)
     if args.trivia > 0:
-        print_klass_to_notices(
-            info_to_notices, args.detail, colorama.Fore.BLUE
-        )
+        print_klass_to_notices(info_to_notices, args.detail, colorama.Fore.BLUE)
         if not any_notices and info_to_notices:
             any_notices = True
     if any_notices:
@@ -397,9 +392,7 @@ def check_rotomaps(path, notices, importance_level):
             if major_part.is_dir():
                 for minor_part in major_part.iterdir():
                     if minor_part.is_dir():
-                        check_rotomap_minor_part(
-                            minor_part, notices, importance_level
-                        )
+                        check_rotomap_minor_part(minor_part, notices, importance_level)
                     else:
                         notices.append(UnexpectedFileInfo(minor_part))
             else:
@@ -428,9 +421,7 @@ def make_rotomap_list(path, notices):
             except ValueError:
                 notices.append(InvalidDateError(rotomap_path))
             else:
-                rotomap_list.append(
-                    mel.rotomap.moles.RotomapDirectory(rotomap_path)
-                )
+                rotomap_list.append(mel.rotomap.moles.RotomapDirectory(rotomap_path))
         else:
             notices.append(UnexpectedFileInfo(rotomap_path))
     rotomap_list.sort(key=lambda x: x.path)
@@ -539,9 +530,7 @@ def check_rotomap(notices, rotomap, importance_level):
 
 
 def check_newest_rotomap(notices, rotomap):
-    missing_unchanged_status = RotomapMissingLesionUnchangedStatus(
-        rotomap.path
-    )
+    missing_unchanged_status = RotomapMissingLesionUnchangedStatus(rotomap.path)
 
     changed = RotomapLesionChangedAlert(rotomap.path)
 

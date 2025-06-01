@@ -65,17 +65,13 @@ def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     return did_intersect, p_intersection
 
 
-def light_cylinder(
-    p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offset_rads
-):
+def light_cylinder(p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offset_rads):
     assert vec3.is_vec3(p_ray)
     assert vec3.is_vec3(d_ray)
     assert vec3.is_vec3(p_hit)
     assert vec3.is_vec3(p_light)
     assert vec3.is_vec3(p_cyl)
-    skin_color = skin_colour_cylinder(
-        p_cyl, radius, p_hit, moles, rot_offset_rads
-    )
+    skin_color = skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads)
     # Ambient lighting.
     color = skin_color * 0.2
     # Diffuse lighting.
@@ -92,9 +88,7 @@ def light_cylinder(
 def cylinder_mole_pos(p_cyl, cyl_radius, mole_y_pos, mole_rot):
     d_mole = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
     p_flat_mole = p_cyl + d_mole * cyl_radius
-    p_mole = vec3.make(
-        vec3.xval(p_flat_mole), mole_y_pos, vec3.zval(p_flat_mole)
-    )
+    p_mole = vec3.make(vec3.xval(p_flat_mole), mole_y_pos, vec3.zval(p_flat_mole))
     return p_mole
 
 
@@ -125,9 +119,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
         else:
             dark_param |= curr_dark_param
 
-    colour = (dark_skin_colour * dark_param) + (
-        light_skin_colour * (1 - dark_param)
-    )
+    colour = (dark_skin_colour * dark_param) + (light_skin_colour * (1 - dark_param))
 
     return colour
 

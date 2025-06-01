@@ -7,9 +7,7 @@ import mel.rotomap.moles
 
 
 def setup_parser(parser):
-    parser.add_argument(
-        "EXTRA_STEM", help="The 'extra stem' namespace to merge to."
-    )
+    parser.add_argument("EXTRA_STEM", help="The 'extra stem' namespace to merge to.")
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
@@ -33,9 +31,7 @@ def process_args(args):
             print(path)
 
         from_moles = mel.rotomap.moles.load_image_moles(path)
-        to_moles = mel.rotomap.moles.load_image_moles(
-            path, extra_stem=args.EXTRA_STEM
-        )
+        to_moles = mel.rotomap.moles.load_image_moles(path, extra_stem=args.EXTRA_STEM)
 
         moles = _merge(
             from_moles=from_moles,
@@ -43,9 +39,7 @@ def process_args(args):
             error_distance=args.error_distance,
         )
 
-        mel.rotomap.moles.save_image_moles(
-            moles, path, extra_stem=args.EXTRA_STEM
-        )
+        mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.EXTRA_STEM)
 
 
 def _merge(from_moles, to_moles, error_distance):
@@ -53,13 +47,9 @@ def _merge(from_moles, to_moles, error_distance):
         match_uuids,
         _missing_uuids,
         added_uuids,
-    ) = mel.rotomap.automark.match_moles_by_pos(
-        from_moles, to_moles, error_distance
-    )
+    ) = mel.rotomap.automark.match_moles_by_pos(from_moles, to_moles, error_distance)
 
-    old_to_new_uuids = {
-        to_uuid: from_uuid for from_uuid, to_uuid in match_uuids
-    }
+    old_to_new_uuids = {to_uuid: from_uuid for from_uuid, to_uuid in match_uuids}
 
     results = []
     for to_m in to_moles:

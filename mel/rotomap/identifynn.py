@@ -37,9 +37,7 @@ class MoleIdentifier:
         self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
 
         self.in_fields = ["part_index"]
-        self.in_fields.extend(
-            ["molemap", "molemap_detail_2", "molemap_detail_4"]
-        )
+        self.in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
         self.out_fields = ["uuid_index", "mole_count"]
 
         self.model = mel.rotomap.identifynn.Model(**model_args)
@@ -411,14 +409,12 @@ def make_data(repo_path, data_config, channel_cache=None):
 
     if not train_dataset:
         raise Exception(
-            f"No data in training dataset. "
-            f"Tried these rotomaps: {train_rotomaps}"
+            f"No data in training dataset. Tried these rotomaps: {train_rotomaps}"
         )
 
     if not valid_dataset and data_config["train_proportion"] != 1:
         raise Exception(
-            f"No data in validation dataset. "
-            f"Tried these rotomaps: {valid_rotomaps}"
+            f"No data in validation dataset. Tried these rotomaps: {valid_rotomaps}"
         )
 
     train_dataloader = torch.utils.data.DataLoader(
@@ -483,9 +479,7 @@ def split_train_valid_last(rotomaps):
             for r in rotomap_list
             if all(("ellipse" not in f.metadata) for f in r.yield_frames())
         ]
-        nonempty_rotomaps = [
-            r for r in rotomap_list if r not in empty_rotomaps
-        ]
+        nonempty_rotomaps = [r for r in rotomap_list if r not in empty_rotomaps]
         nonempty_rotomaps.sort(key=lambda x: x.path)
         num_train_rotomaps = max(0, len(nonempty_rotomaps) - 1)
         num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
@@ -506,9 +500,7 @@ def split_train_valid(rotomaps, train_split=0.8):
             for r in rotomap_list
             if all(("ellipse" not in f.metadata) for f in r.yield_frames())
         ]
-        nonempty_rotomaps = [
-            r for r in rotomap_list if r not in empty_rotomaps
-        ]
+        nonempty_rotomaps = [r for r in rotomap_list if r not in empty_rotomaps]
         num_train_rotomaps = int(len(nonempty_rotomaps) * train_split)
         num_valid_rotomaps = len(nonempty_rotomaps) - num_train_rotomaps
         if train_split != 1:
@@ -522,23 +514,19 @@ def split_train_valid(rotomaps, train_split=0.8):
 
 def get_lower_limb_rotomaps(parts_path):
     parts = {
-        parts_path
-        / "LeftLeg": [
+        parts_path / "LeftLeg": [
             parts_path / "LeftLeg" / "Lower",
             # parts_path / "LeftLeg" / "Upper",
         ],
-        parts_path
-        / "RightLeg": [
+        parts_path / "RightLeg": [
             parts_path / "RightLeg" / "Lower",
             # parts_path / "RightLeg" / "Upper",
         ],
-        parts_path
-        / "LeftArm": [
+        parts_path / "LeftArm": [
             parts_path / "LeftArm" / "Lower",
             # parts_path / "LeftArm" / "Upper",
         ],
-        parts_path
-        / "RightArm": [
+        parts_path / "RightArm": [
             parts_path / "RightArm" / "Lower",
             # parts_path / "RightArm" / "Upper",
         ],
@@ -652,8 +640,7 @@ def frame_to_framedata(frame, part_to_index):
         for mole in frame.moledata.moles
     }
     uuid_points = [
-        (uuid_ if is_confirmed[uuid_] else None, point)
-        for uuid_, point in uuid_points
+        (uuid_ if is_confirmed[uuid_] else None, point) for uuid_, point in uuid_points
     ]
     ellipse = frame.metadata["ellipse"]
     part_name = frame_to_part_name(frame)
@@ -676,18 +663,12 @@ def extend_dataset_by_frame_data(
     drop_none_uuids,
 ):
     uuid_list = [
-        uuid_
-        for uuid_, pos in uuid_points
-        if not (drop_none_uuids and uuid_ is None)
+        uuid_ for uuid_, pos in uuid_points if not (drop_none_uuids and uuid_ is None)
     ]
     dataset["uuid"].extend(uuid_list)
 
     dataset["pos"].extend(
-        [
-            pos
-            for uuid_, pos in uuid_points
-            if not (drop_none_uuids and uuid_ is None)
-        ]
+        [pos for uuid_, pos in uuid_points if not (drop_none_uuids and uuid_ is None)]
     )
 
     dataset["uuid_index"].extend(
@@ -774,9 +755,7 @@ class Model(torch.nn.Module):
         if num_parts:
             self.embedding = torch.nn.Embedding(num_parts, num_parts // 2)
 
-        self.conv = make_convnet2d(
-            cnn_width, cnn_depth, channels_in=channels_in
-        )
+        self.conv = make_convnet2d(cnn_width, cnn_depth, channels_in=channels_in)
 
         self._num_cnns = num_cnns
         self.end_width = (cnn_width * num_cnns) + self.embedding_len

@@ -39,9 +39,7 @@ import mel.lib.moleimaging
 import mel.rotomap.display
 import mel.rotomap.moles
 
-_PosInfo = collections.namedtuple(
-    "_PosInfo", "path pos ellipse_xpos uuid uuid_points"
-)
+_PosInfo = collections.namedtuple("_PosInfo", "path pos ellipse_xpos uuid uuid_points")
 
 
 def setup_parser(parser):
@@ -68,8 +66,7 @@ def process_args(args):
         for frame in rotomap.yield_frames():
             if "ellipse" not in frame.metadata:
                 raise Exception(
-                    f"{frame} has no ellipse metadata, "
-                    'try running "rotomap calc-space"'
+                    f'{frame} has no ellipse metadata, try running "rotomap calc-space"'
                 )
             ellipse = frame.metadata["ellipse"]
             elspace = mel.lib.ellipsespace.Transform(ellipse)
@@ -83,9 +80,7 @@ def process_args(args):
                     uuid=uuid_,
                     uuid_points=frame.moledata.uuid_points,
                 )
-                uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(
-                    posinfo
-                )
+                uuid_to_rotomaps_imagepos_list[uuid_][rotomap.path].append(posinfo)
 
     # We can't compare moles that are only in one rotomap, cull these.
     uuid_to_rotomaps_imagepos_list = {
@@ -119,9 +114,7 @@ def process_args(args):
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
     with mel.lib.common.timelogger_context("rotomap-compare") as logger:
         with mel.lib.fullscreenui.fullscreen_context() as screen:
-            display = ImageCompareDisplay(
-                logger, screen, path_images_tuple, uuid_
-            )
+            display = ImageCompareDisplay(logger, screen, path_images_tuple, uuid_)
 
             on_keydown = _make_on_keydown(
                 display,
@@ -164,9 +157,7 @@ def _make_on_keydown(
             index += 1
             index %= num_uuids
             uuid_ = uuid_order[index]
-            path_images_tuple = tuple(
-                uuid_to_rotomaps_imagepos_list[uuid_].values()
-            )
+            path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
             display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
@@ -176,9 +167,7 @@ def _make_on_keydown(
             index -= 1
             index %= num_uuids
             uuid_ = uuid_order[index]
-            path_images_tuple = tuple(
-                uuid_to_rotomaps_imagepos_list[uuid_].values()
-            )
+            path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
             display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
@@ -231,9 +220,7 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged):
         target_lesion = {"uuid": uuid_}
         rotomap.lesions.append(target_lesion)
     target_lesion[mel.rotomap.moles.KEY_IS_UNCHANGED] = is_unchanged
-    mel.rotomap.moles.save_rotomap_dir_lesions_file(
-        rotomap.path, rotomap.lesions
-    )
+    mel.rotomap.moles.save_rotomap_dir_lesions_file(rotomap.path, rotomap.lesions)
 
 
 class ImageCompareDisplay:
@@ -355,9 +342,7 @@ class ImageCompareDisplay:
         target_uuid = left_posinfo.uuid
         assert right_posinfo.uuid == target_uuid
 
-        common_uuids = set(left_posinfo.uuid_points) & set(
-            right_posinfo.uuid_points
-        )
+        common_uuids = set(left_posinfo.uuid_points) & set(right_posinfo.uuid_points)
         common_uuids.remove(target_uuid)
         if not common_uuids:
             self._show()
@@ -438,9 +423,7 @@ class ImageCompareDisplay:
             )
             for i in self._indices
         ]
-        self._image_path = self._path_pos_zoom_rotation_moles(
-            self._indices[-1]
-        )[0]
+        self._image_path = self._path_pos_zoom_rotation_moles(self._indices[-1])[0]
         montage = mel.lib.image.montage_horizontal(10, *images)
         self._display.show_opencv_image(montage)
 
