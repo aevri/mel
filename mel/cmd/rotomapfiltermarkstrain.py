@@ -17,9 +17,7 @@ def proportion_arg(x):
         raise argparse.ArgumentTypeError(f"'{x}' is not a float")
 
     if not (0.0 < x <= 1.0):
-        raise argparse.ArgumentTypeError(
-            f"'{x}' is not in range 0.0 < x <= 1.0"
-        )
+        raise argparse.ArgumentTypeError(f"'{x}' is not in range 0.0 < x <= 1.0")
 
     return x
 
@@ -47,8 +45,7 @@ def setup_parser(parser):
         default=200,
         type=int,
         help=(
-            "How many times to learn from each image. "
-            "Higher is better, up to a point."
+            "How many times to learn from each image. Higher is better, up to a point."
         ),
     )
 
@@ -68,8 +65,7 @@ def setup_parser(parser):
         type=proportion_arg,
         default=0.9,
         help=(
-            "Proportion (0.0 < x <= 1.0) of data to use for training. "
-            "Defaults to 0.9."
+            "Proportion (0.0 < x <= 1.0) of data to use for training. Defaults to 0.9."
         ),
     )
 
@@ -109,11 +105,7 @@ def process_args(args):
     if args.train_proportion < 1:
         print(f"{'threshold':<12} {'precision':<12} {'recall':<12}")
         for e in evaluators:
-            print(
-                f"{e.threshold:<12} "
-                f"{int(e.precision()):<12} "
-                f"{int(e.recall()):<12}"
-            )
+            print(f"{e.threshold:<12} {int(e.precision()):<12} {int(e.recall()):<12}")
 
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")

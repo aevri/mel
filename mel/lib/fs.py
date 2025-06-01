@@ -68,10 +68,7 @@ def list_rotomap_images_by_session(parts_path, *, exclude_parts=None):
     images = collections.defaultdict(list)
     for part in sorted(parts_path.iterdir()):
         for subpart in sorted(part.iterdir()):
-            if (
-                exclude_parts
-                and f"{part.stem}/{subpart.stem}" in exclude_parts
-            ):
+            if exclude_parts and f"{part.stem}/{subpart.stem}" in exclude_parts:
                 continue
             for session in sorted(subpart.iterdir()):
                 files = sorted(yield_only_jpegs_from_dir(session))

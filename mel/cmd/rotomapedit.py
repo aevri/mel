@@ -172,9 +172,7 @@ class MoleEditController:
     def __init__(self, editor, follow, copy_to_clipboard):
         self.mole_uuid_list = [None]
 
-        self.follow_controller = FollowController(
-            editor, follow, self.mole_uuid_list
-        )
+        self.follow_controller = FollowController(editor, follow, self.mole_uuid_list)
         self.move_controller = MoveController()
         self.sub_controller = None
 
@@ -270,12 +268,10 @@ class MoleEditController:
         elif key == pygame.K_RETURN:
             editor.toggle_markers()
         elif key == pygame.K_PLUS:
-            self.mole_uuid_list[0] = editor.get_mole_uuid(
-                self.mouse_x, self.mouse_y
-            )
+            self.mole_uuid_list[0] = editor.get_mole_uuid(self.mouse_x, self.mouse_y)
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(  # pylint: disable=possibly-used-before-assignment
+                mel.lib.ui.set_clipboard_contents(  # noqa: F823
                     self.mole_uuid_list[0]
                 )
         elif key == pygame.K_i:
@@ -465,9 +461,7 @@ class Controller:
 
         self._logger = logger
         self._melroot = mel.lib.fs.find_melroot()
-        self.moleedit_controller = MoleEditController(
-            editor, follow, copy_to_clipboard
-        )
+        self.moleedit_controller = MoleEditController(editor, follow, copy_to_clipboard)
         self.maskedit_controller = MaskEditController()
         self.molemark_controller = MoleMarkController()
         self.boundingarea_controller = BoundingAreaController()
@@ -608,10 +602,7 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
     guess_pos = None
     editor.follow(follow_uuid)
 
-    if (
-        mel.rotomap.moles.uuid_mole_index(editor.moledata.moles, follow_uuid)
-        is None
-    ):
+    if mel.rotomap.moles.uuid_mole_index(editor.moledata.moles, follow_uuid) is None:
         guess_pos = mel.rotomap.relate.guess_mole_pos(
             follow_uuid, prev_moles, editor.moledata.moles
         )
@@ -629,9 +620,7 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             editor.show_zoomed_display(guess_pos[0], guess_pos[1])
 
             if is_paste_mode:
-                editor.add_mole_display(
-                    guess_pos[0], guess_pos[1], follow_uuid
-                )
+                editor.add_mole_display(guess_pos[0], guess_pos[1], follow_uuid)
 
     return guess_pos
 
