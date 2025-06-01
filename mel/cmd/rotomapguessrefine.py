@@ -5,8 +5,6 @@ import pathlib
 
 import cv2
 import numpy as np
-import torch
-import torchvision.transforms as transforms
 
 import mel.lib.image
 import mel.lib.math
@@ -69,6 +67,10 @@ def load_dinov2_model(dino_size="base"):
     Returns:
         tuple: (model_wrapper, feature_dimension)
     """
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     # Map size names to actual model names and their feature dimensions
     model_configs = {
         "small": ("dinov2_vits14", 384),
@@ -373,6 +375,10 @@ def extract_contextual_patch_feature(
     Returns:
         Tensor: Context-aware feature for center patch [feature_dim]
     """
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     # Extract large context patch centered on the mole
     half_context = context_size // 2
     y_start = max(0, center_y - half_context)
@@ -447,6 +453,10 @@ def extract_all_contextual_features(
     Returns:
         Tensor: All patch features [num_patches, feature_dim] where num_patches = (context_size//14)^2
     """
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     # Extract large context patch centered on the location
     half_context = context_size // 2
     y_start = max(0, center_y - half_context)
@@ -535,6 +545,10 @@ def find_best_contextual_match(
     Returns:
         tuple: (best_x, best_y, best_similarity)
     """
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     # Check if we can extract a full context window at the initial location
     half_context = context_size // 2
     if (
@@ -613,6 +627,10 @@ def find_best_contextual_match(
 def extract_patch_features(image, center_x, center_y, patch_size, model, transform):
     """Extract DINOv2 CLS token from a patch centered at (center_x,
     center_y)."""
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     half_size = patch_size // 2
 
     # Extract patch with bounds checking
@@ -654,6 +672,10 @@ def extract_patch_features(image, center_x, center_y, patch_size, model, transfo
 
 
 def process_args(args):
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torchvision.transforms as transforms
+
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG
     search_radius = args.search_radius
