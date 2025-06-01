@@ -50,9 +50,7 @@ def process_args(args):
                     elif event.key == pygame.K_SPACE:
                         display.set_fitted()
                         display.show()
-                elif (
-                    event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
-                ):
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     key_mods = pygame.key.get_mods()
                     if key_mods & pygame.KMOD_CTRL:
                         mouse_x, mouse_y = pygame.mouse.get_pos()

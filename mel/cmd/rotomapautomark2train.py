@@ -111,15 +111,9 @@ def process_args(args):
         valid_images,
         train_sessions,
         valid_sessions,
-    ) = mel.rotomap.automarknn.list_train_valid_images(
-        min_session=args.min_session
-    )
-    train_images = mel.rotomap.automarknn.drop_paths_without_moles(
-        train_images
-    )
-    valid_images = mel.rotomap.automarknn.drop_paths_without_moles(
-        valid_images
-    )
+    ) = mel.rotomap.automarknn.list_train_valid_images(min_session=args.min_session)
+    train_images = mel.rotomap.automarknn.drop_paths_without_moles(train_images)
+    valid_images = mel.rotomap.automarknn.drop_paths_without_moles(valid_images)
 
     def print_sessions(kind, sessions):
         print(f"{kind} image sessions:")

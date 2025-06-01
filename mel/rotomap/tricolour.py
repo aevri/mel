@@ -87,9 +87,7 @@ def yield_triband_mapping_in_distinctive_order(num_colours):
             if colour1 == colour2:
                 continue
             for band in range(3):
-                yield tuple(
-                    _list_rotated_left([colour1, colour2, colour2], band)
-                )
+                yield tuple(_list_rotated_left([colour1, colour2, colour2], band))
 
     yield from _yield_tricolours_no_repeats(num_colours)
 
@@ -125,9 +123,7 @@ class UuidTriColourPicker:
             yellow = (0, 255, 255)
             self._uuid_to_colours[uuid_] = (red, yellow, red)
         else:
-            self._uuid_to_colours[uuid_] = tuple(
-                self._palette[x] for x in indices
-            )
+            self._uuid_to_colours[uuid_] = tuple(self._palette[x] for x in indices)
 
     def __call__(self, uuid_):
         self._ensure_uuid(uuid_)

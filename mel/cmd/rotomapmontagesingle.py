@@ -15,9 +15,7 @@ def setup_parser(parser):
         help="Path to the rotomap or image to copy from.",
     )
 
-    parser.add_argument(
-        "UUID", type=str, help="Unique id of the mole to copy."
-    )
+    parser.add_argument("UUID", type=str, help="Unique id of the mole to copy.")
 
     parser.add_argument("OUTPUT", type=str, help="Name of the image to write.")
 
@@ -88,9 +86,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
 
     context_scale = montage_height / context_image.shape[0]
     context_scaled_width = int(context_image.shape[1] * context_scale)
-    context_image = cv2.resize(
-        context_image, (context_scaled_width, montage_height)
-    )
+    context_image = cv2.resize(context_image, (context_scaled_width, montage_height))
 
     return mel.lib.image.montage_horizontal_inner_border(
         25, context_image, detail_image

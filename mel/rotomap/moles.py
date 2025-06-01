@@ -41,9 +41,7 @@ class RotomapDirectory:
         self.lesions = load_rotomap_dir_lesions_file(self.path)
 
         if not self.image_paths:
-            raise ValueError(
-                '"{}" has no images, so not a rotomap.'.format(self.path)
-            )
+            raise ValueError('"{}" has no images, so not a rotomap.'.format(self.path))
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""
@@ -56,9 +54,7 @@ class RotomapDirectory:
 
     def calc_uuids(self):
         return {
-            uuid_
-            for frame in self.yield_frames()
-            for uuid_ in frame.moledata.uuids
+            uuid_ for frame in self.yield_frames() for uuid_ in frame.moledata.uuids
         }
 
     def __repr__(self):
@@ -108,9 +104,7 @@ class MoleData:
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
-        self.uuid_points_list = [
-            (m["uuid"], mole_to_point(m)) for m in self.moles
-        ]
+        self.uuid_points_list = [(m["uuid"], mole_to_point(m)) for m in self.moles]
 
         # vulture will report this as unused unless we do this
         #
@@ -229,9 +223,7 @@ def load_image_metadata(image_path):
 def load_rotomap_dir_lesions_file(rotomap_dir_path):
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
-        raise ValueError(
-            f"Rotomap directory does not exist: '{rotomap_dir_path}'."
-        )
+        raise ValueError(f"Rotomap directory does not exist: '{rotomap_dir_path}'.")
 
     lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
 
@@ -255,9 +247,7 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
 def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions):
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
-        raise ValueError(
-            f"Rotomap directory does not exist: '{rotomap_dir_path}'."
-        )
+        raise ValueError(f"Rotomap directory does not exist: '{rotomap_dir_path}'.")
 
     lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
     save_json(lesions_path, lesions)

@@ -7,9 +7,7 @@ import mel.rotomap.mask
 
 
 def setup_parser(parser):
-    parser.add_argument(
-        "TARGET", nargs="+", help="Paths to images to automask."
-    )
+    parser.add_argument("TARGET", nargs="+", help="Paths to images to automask.")
     parser.add_argument(
         "--verbose",
         "-v",

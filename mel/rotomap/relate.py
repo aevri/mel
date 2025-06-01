@@ -136,9 +136,7 @@ def best_offset_field_theory(from_moles, to_moles):
     if not point_offsets:
         return None
 
-    return make_offset_field_theory(
-        from_points, to_points, point_offsets, theory
-    )
+    return make_offset_field_theory(from_points, to_points, point_offsets, theory)
 
 
 def offset_theory_points(from_moles, to_moles):
@@ -157,9 +155,7 @@ def offset_theory_points(from_moles, to_moles):
 
     theory = []
     theory.extend((u, u) for u in in_both)
-    point_offsets = to_point_offsets(
-        [(from_dict[m], to_dict[m]) for m in in_both]
-    )
+    point_offsets = to_point_offsets([(from_dict[m], to_dict[m]) for m in in_both])
     new_from_moles = [from_dict[m] for m in from_set - in_both]
     new_to_moles = [to_dict[m] for m in to_set - in_both]
     from_uuid_points = mel.rotomap.moles.to_uuid_points(new_from_moles)
@@ -212,9 +208,7 @@ def to_point_offsets(mole_pairs):
     return point_offsets
 
 
-def make_offset_field_theory(
-    from_uuid_points, to_uuid_points, point_offsets, theory
-):
+def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets, theory):
     to_uuid_points = dict(to_uuid_points)
     inv_point_offsets = invert_point_offsets(point_offsets)
     for uuid_, point in from_uuid_points.items():
@@ -234,12 +228,8 @@ def make_offset_field_theory(
             # Make sure that the closest match for the 'to' mole is also the
             # 'from' mole.
             to_point = to_uuid_points[to_uuid]
-            inv_offset, inv_error = pick_value_from_field(
-                to_point, inv_point_offsets
-            )
-            from_uuid, _ = nearest_uuid_point(
-                to_point + inv_offset, from_uuid_points
-            )
+            inv_offset, inv_error = pick_value_from_field(to_point, inv_point_offsets)
+            from_uuid, _ = nearest_uuid_point(to_point + inv_offset, from_uuid_points)
 
             if from_uuid == uuid_:
                 theory.append((uuid_, to_uuid))
@@ -384,9 +374,7 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     for i, a in enumerate(from_moles):
         point = mel.rotomap.moles.mole_to_point(a)
         point += offset
-        best_index, best_dist_sq = _nearest_mole_index_to_point(
-            point, to_moles
-        )
+        best_index, best_dist_sq = _nearest_mole_index_to_point(point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
             r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
             r_point -= offset

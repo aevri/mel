@@ -97,9 +97,7 @@ def load_context_images(path):
     return image_list
 
 
-def pick_comparison_path(
-    path, path_list, min_compare_age_days, use_last_changed
-):
+def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed):
     """Return the most appropriate image path to compare with, or None."""
 
     # Check for the __last_changed__ file if the --last-changed flag is used
@@ -152,9 +150,7 @@ def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
     images = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
-    path = pick_comparison_path(
-        path, images, min_compare_age_days, use_last_changed
-    )
+    path = pick_comparison_path(path, images, min_compare_age_days, use_last_changed)
     if path:
         return os.path.join(micro_path, path)
     else:
@@ -162,9 +158,7 @@ def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
 
 
 def load_comparison_image(path, min_compare_age_days, use_last_changed):
-    micro_path = get_comparison_image_path(
-        path, min_compare_age_days, use_last_changed
-    )
+    micro_path = get_comparison_image_path(path, min_compare_age_days, use_last_changed)
     if micro_path is None:
         return None
     return micro_path, mel.lib.image.load_image(micro_path)
@@ -190,9 +184,7 @@ def process_args(args):
             )
 
 
-def process_path(
-    mole_path, min_compare_age_days, display, cap, use_last_changed
-):
+def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

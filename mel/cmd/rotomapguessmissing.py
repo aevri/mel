@@ -67,9 +67,7 @@ def process_args(args):
         )
         return 0
 
-    print(
-        f"Found {len(missing_uuids)} missing canonical moles to guess locations for"
-    )
+    print(f"Found {len(missing_uuids)} missing canonical moles to guess locations for")
 
     # Guess positions for missing moles using canonical moles as reference
     guessed_count = 0
@@ -97,9 +95,7 @@ def process_args(args):
     if guessed_count > 0:
         try:
             mel.rotomap.moles.save_image_moles(tgt_moles, tgt_path)
-            print(
-                f"Successfully added {guessed_count} guessed moles to {tgt_path}"
-            )
+            print(f"Successfully added {guessed_count} guessed moles to {tgt_path}")
         except Exception as e:
             print(f"Error saving moles: {e}")
             return 1

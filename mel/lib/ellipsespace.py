@@ -80,9 +80,7 @@ def ellipse_center_up_right(ellipse):
     up = mel.lib.moleimaging.rotate_point_around_pivot(up, (0, 0), angle_degs)
 
     right = (1, 0)
-    right = mel.lib.moleimaging.rotate_point_around_pivot(
-        right, (0, 0), angle_degs
-    )
+    right = mel.lib.moleimaging.rotate_point_around_pivot(right, (0, 0), angle_degs)
 
     umag = ellipse[1][1] / 2
     rmag = ellipse[1][0] / 2
