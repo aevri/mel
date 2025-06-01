@@ -245,6 +245,10 @@ def save_contextual_similarity_heatmap(
         patches_per_side: Number of patches per side (e.g., 65)
         filename: Output filename
     """
+    # Import this as lazily as possible as it takes a while to import, so that
+    # we only pay the import cost when we use it.
+    import torch
+
     try:
         # Extract context area for visualization
         half_context = context_size // 2
