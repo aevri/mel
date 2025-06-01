@@ -152,9 +152,7 @@ def yield_frames_keys(video_capture, display, error_key):
             yield frame, None
 
 
-def yield_events_until_quit(
-    display, *, quit_key=None, quit_func=None, error_key=None
-):
+def yield_events_until_quit(display, *, quit_key=None, quit_func=None, error_key=None):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
@@ -206,9 +204,7 @@ def fullscreen_context():
 
     global _PYGAME_HAD_EXCLUSIVE_INIT
     if _PYGAME_HAD_EXCLUSIVE_INIT:
-        raise Exception(
-            "An exclusive context was already started, only 1 per run."
-        )
+        raise Exception("An exclusive context was already started, only 1 per run.")
     _PYGAME_HAD_EXCLUSIVE_INIT = True
 
     pygame.init()
@@ -325,17 +321,13 @@ class LeftRightDisplay(ZoomableMixin):
 
     def __init__(self, screen, image_list):
         if not image_list:
-            raise ValueError(
-                "image_list must be a list with at least one image."
-            )
+            raise ValueError("image_list must be a list with at least one image.")
         super().__init__()
 
         rect = numpy.array((screen.width, screen.height))
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 10
-        self._image_rect = rect - numpy.array(
-            (0, title_height + self._spacer_height)
-        )
+        self._image_rect = rect - numpy.array((0, title_height + self._spacer_height))
 
         self.display = screen
         self.image_path = None
@@ -351,9 +343,7 @@ class LeftRightDisplay(ZoomableMixin):
     def prev_image(self):
         if self._image_list:
             num_images = len(self._image_list)
-            self._index = (self._index + num_images - 1) % len(
-                self._image_list
-            )
+            self._index = (self._index + num_images - 1) % len(self._image_list)
         self.show()
 
     def _get_image(self, path):
@@ -372,16 +362,12 @@ class LeftRightDisplay(ZoomableMixin):
             image = self._get_image(path)
             self.zoomable_transform_update(image, self._image_rect)
             image = self.zoomable_transform_render()
-            image = mel.lib.image.montage_vertical(
-                self._spacer_height, image, caption
-            )
+            image = mel.lib.image.montage_vertical(self._spacer_height, image, caption)
             self.display.show_opencv_image(image)
         else:
             self.image_path = None
             self.display.show_opencv_image(
-                mel.lib.common.new_image(
-                    self.display.height, self.display.width
-                )
+                mel.lib.common.new_image(self.display.height, self.display.width)
             )
 
 
@@ -393,9 +379,7 @@ class MultiImageDisplay:
         rect = numpy.array((display.width, display.height))
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 5
-        self._image_rect = rect - numpy.array(
-            (0, title_height + self._spacer_height)
-        )
+        self._image_rect = rect - numpy.array((0, title_height + self._spacer_height))
 
         self.reset()
 

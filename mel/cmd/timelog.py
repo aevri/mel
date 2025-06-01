@@ -39,9 +39,9 @@ def process_args(args):
         parse_dates=["start"],
     )
 
-    timelog["major_part"] = timelog.path.str.removeprefix(
-        "rotomaps/parts/"
-    ).str.split("/", expand=True)[0]
+    timelog["major_part"] = timelog.path.str.removeprefix("rotomaps/parts/").str.split(
+        "/", expand=True
+    )[0]
     timelog.loc[
         ~timelog.path.str.startswith("rotomaps/parts/").fillna(False),
         "major_part",
@@ -74,12 +74,7 @@ def process_args(args):
     print()
 
     print("Events logged, per command:")
-    print(
-        timelog[["command"]]
-        .groupby("command")
-        .size()
-        .sort_values(ascending=False)
-    )
+    print(timelog[["command"]].groupby("command").size().sort_values(ascending=False))
 
     print()
 

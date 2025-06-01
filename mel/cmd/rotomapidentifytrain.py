@@ -78,10 +78,7 @@ def setup_parser(parser):
         "-t",
         type=proportion_arg,
         default=0.9,
-        help=(
-            "Proportion (0.0-1.0) of data to use for training. "
-            "Defaults to 0.9."
-        ),
+        help=("Proportion (0.0-1.0) of data to use for training. Defaults to 0.9."),
     )
     parser.add_argument(
         "--no-train-conv",
@@ -138,9 +135,7 @@ def process_args(args):
     old_metadata = None
     if model_path.exists():
         if not metadata_path.exists():
-            raise Exception(
-                f"Metadata for model does not exist: " f"{metadata_path}"
-            )
+            raise Exception(f"Metadata for model does not exist: {metadata_path}")
 
         if not os.access(model_path, os.W_OK):
             print("No permission to write to", model_path)
@@ -159,25 +154,15 @@ def process_args(args):
         def check_old_matches_new(name, old, new):
             if old != new:
                 raise Exception(
-                    f"Old {name} is not the same.\n"
-                    f"old: {old}\n"
-                    f"new: {new}\n"
+                    f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
                 )
 
         old_model_args = old_metadata["model_args"]
-        check_old_matches_new(
-            "cnn width", old_model_args["cnn_width"], cnn_width
-        )
-        check_old_matches_new(
-            "cnn depth", old_model_args["cnn_depth"], cnn_depth
-        )
+        check_old_matches_new("cnn width", old_model_args["cnn_width"], cnn_width)
+        check_old_matches_new("cnn depth", old_model_args["cnn_depth"], cnn_depth)
         check_old_matches_new("num cnns", old_model_args["num_cnns"], num_cnns)
-        check_old_matches_new(
-            "channels_in", old_model_args["channels_in"], channels_in
-        )
-        check_old_matches_new(
-            "image size", old_metadata["image_size"], image_size
-        )
+        check_old_matches_new("channels_in", old_model_args["channels_in"], channels_in)
+        check_old_matches_new("image size", old_metadata["image_size"], image_size)
     else:
         print(f"Will save to {model_path}")
         print(f"         and {metadata_path}")

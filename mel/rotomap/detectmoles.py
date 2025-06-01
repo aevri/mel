@@ -31,9 +31,7 @@ def moles(image, mask):
 
         # Exclude points that are near mask boundaries
         if mask is not None:
-            if not _is_mask_region_all_set(
-                mask, xy, _MASK_EXCLUSION_SQUARE_SIZE
-            ):
+            if not _is_mask_region_all_set(mask, xy, _MASK_EXCLUSION_SQUARE_SIZE):
                 continue
 
         mel.rotomap.moles.add_mole(moles_, int(xy[0]), int(xy[1]))

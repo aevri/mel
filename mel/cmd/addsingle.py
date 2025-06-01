@@ -21,9 +21,7 @@ def process_args(args):
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
-    context_image, detail_image = mel.lib.common.process_context_detail_args(
-        args
-    )
+    context_image, detail_image = mel.lib.common.process_context_detail_args(args)
 
     # TODO: extract this choice to a common place
     montage_size = 1024
@@ -49,12 +47,8 @@ def process_args(args):
     mel.lib.common.indicate_mole(detail_image, detail_mole_pos[0])
 
     # Combine context image with detail image to make montage
-    montage_image = mel.lib.image.montage_horizontal(
-        50, context_image, detail_image
-    )
-    montage_image = mel.lib.common.shrink_to_max_dimension(
-        montage_image, montage_size
-    )
+    montage_image = mel.lib.image.montage_horizontal(50, context_image, detail_image)
+    montage_image = mel.lib.common.shrink_to_max_dimension(montage_image, montage_size)
 
     # Let user review montage
     mel.lib.common.user_review_image(window_name, montage_image)

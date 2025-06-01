@@ -87,9 +87,7 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
             image = overlay(image, self._transform)
 
         caption = mel.lib.image.render_text_as_image(self._title)
-        image = mel.lib.image.montage_vertical(
-            self._spacer_height, image, caption
-        )
+        image = mel.lib.image.montage_vertical(self._spacer_height, image, caption)
         self._image_display.show_opencv_image(image)
 
     def set_title(self, title):
@@ -383,9 +381,7 @@ class Editor:
                         self.moledata.get_image()
                         self._follow = visit_uuid
                         self._mole_overlay.set_highlight_uuid(self._follow)
-                        self.marked_mole_overlay.set_highlight_uuid(
-                            self._follow
-                        )
+                        self.marked_mole_overlay.set_highlight_uuid(self._follow)
                         self.show_zoomed_display(m["x"], m["y"])
                         return
                 self.show_current()
@@ -448,15 +444,11 @@ class Editor:
             self._mole_overlay.moles = self.moledata.moles
             self.display.show_current(
                 image,
-                make_composite_overlay(
-                    self._mole_overlay, self._status_overlay
-                ),
+                make_composite_overlay(self._mole_overlay, self._status_overlay),
             )
         elif self._mode is EditorMode.debug_automole:
             image = image[:]
-            image = mel.rotomap.detectmoles.draw_debug(
-                image, self.moledata.mask
-            )
+            image = mel.rotomap.detectmoles.draw_debug(image, self.moledata.mask)
             self.display.show_current(image, None)
         elif self._mode is EditorMode.edit_mask:
             mask = self.moledata.mask
@@ -546,9 +538,7 @@ class Editor:
         self.show_current()
 
     def add_mole_display(self, image_x, image_y, mole_uuid=None):
-        mel.rotomap.moles.add_mole(
-            self.moledata.moles, image_x, image_y, mole_uuid
-        )
+        mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y, mole_uuid)
         self.moledata.save_moles()
         self.show_current()
 
@@ -595,17 +585,13 @@ class Editor:
 
     def move_nearest_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
-        mel.rotomap.moles.move_nearest_mole(
-            self.moledata.moles, image_x, image_y
-        )
+        mel.rotomap.moles.move_nearest_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
     def remove_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
-        mel.rotomap.moles.remove_nearest_mole(
-            self.moledata.moles, image_x, image_y
-        )
+        mel.rotomap.moles.remove_nearest_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
@@ -617,9 +603,7 @@ class Editor:
             self.moledata.moles[i]["x"] = image_x
             self.moledata.moles[i]["y"] = image_y
         else:
-            mel.rotomap.moles.add_mole(
-                self.moledata.moles, image_x, image_y, mole_uuid
-            )
+            mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y, mole_uuid)
 
         self.moledata.save_moles()
         self.show_current()

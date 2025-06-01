@@ -36,9 +36,7 @@ def log10_zero(x):
 
 
 def biggest_contour(image):
-    contours, _ = cv2.findContours(
-        image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
         raise Exception("No contours found.")
@@ -75,9 +73,7 @@ def process_contours(mole_regions, original):
         mole_regions.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
     )
 
-    mole_contour, mole_area = find_mole_contour(
-        contours, mole_regions.shape[0:2]
-    )
+    mole_contour, mole_area = find_mole_contour(contours, mole_regions.shape[0:2])
 
     ellipse = None
 
@@ -175,9 +171,7 @@ class MoleAcquirer(object):
 
                 should_lock = all([int(x) == 0 for x in self._last_stats_diff])
 
-                should_unlock = any(
-                    [abs(int(x)) > 1 for x in self._last_stats_diff]
-                )
+                should_unlock = any([abs(int(x)) > 1 for x in self._last_stats_diff])
 
                 if not self._is_locked and should_lock:
                     self._is_locked = True
@@ -250,9 +244,7 @@ def annotate_image(original, is_rot_sensitive):
             angle_degs = ellipse[2]
 
             top_xy = (center_xy[0], center_xy[1] - int(ellipse[1][1] / 2))
-            ellipse_top_xy = rotate_point_around_pivot(
-                top_xy, center_xy, angle_degs
-            )
+            ellipse_top_xy = rotate_point_around_pivot(top_xy, center_xy, angle_degs)
             ellipse_top_xy = point_to_int_point(ellipse_top_xy)
 
             yellow = (0, 255, 255)
@@ -331,9 +323,7 @@ def find_mole_ellipse(original, centre, radius):
     lefttop = centre - (radius, radius)
     rightbottom = centre + (radius + 1, radius + 1)
 
-    original = mel.lib.image.slice_square_or_none(
-        original, lefttop, rightbottom
-    )
+    original = mel.lib.image.slice_square_or_none(original, lefttop, rightbottom)
 
     if original is None:
         return None

@@ -20,9 +20,7 @@ def set_clipboard_contents(text):
             "{} was not found, cannot write clipboard".format(pbcopy)
         )
 
-    p = subprocess.Popen(
-        [pbcopy], stdin=subprocess.PIPE, universal_newlines=True
-    )
+    p = subprocess.Popen([pbcopy], stdin=subprocess.PIPE, universal_newlines=True)
     p.communicate(input=text)
 
 

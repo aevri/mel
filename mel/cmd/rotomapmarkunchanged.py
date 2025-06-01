@@ -28,9 +28,7 @@ def process_args(args):
             if not lesion.get(mel.rotomap.moles.KEY_IS_UNCHANGED, False):
                 changed_count += 1
             lesion[mel.rotomap.moles.KEY_IS_UNCHANGED] = True
-        mel.rotomap.moles.save_rotomap_dir_lesions_file(
-            rotomap.path, rotomap.lesions
-        )
+        mel.rotomap.moles.save_rotomap_dir_lesions_file(rotomap.path, rotomap.lesions)
 
     print(f"Marked {changed_count} moles as unchanged.")
 
