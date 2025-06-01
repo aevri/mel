@@ -62,10 +62,10 @@ def setup_parser(parser):
 
 def load_dinov2_model(dino_size="base"):
     """Load the DINOv2 model for semantic feature extraction with context.
-    
+
     Args:
         dino_size: Model size variant ("small", "base", "large", "giant")
-    
+
     Returns:
         tuple: (model_wrapper, feature_dimension)
     """
@@ -76,12 +76,14 @@ def load_dinov2_model(dino_size="base"):
         "large": ("dinov2_vitl14", 1024),
         "giant": ("dinov2_vitg14", 1536),
     }
-    
+
     if dino_size not in model_configs:
-        raise ValueError(f"Invalid dino_size: {dino_size}. Must be one of {list(model_configs.keys())}")
-        
+        raise ValueError(
+            f"Invalid dino_size: {dino_size}. Must be one of {list(model_configs.keys())}"
+        )
+
     model_name, feature_dim = model_configs[dino_size]
-    
+
     try:
         # Load DINOv2 model for semantic patch features with rich context
         model = torch.hub.load("facebookresearch/dinov2", model_name)
@@ -92,9 +94,7 @@ def load_dinov2_model(dino_size="base"):
                 self.model = model
                 self.model.eval()
 
-            def extract_contextual_patch_features(
-                self, x, center_patch_idx=None
-            ):
+            def extract_contextual_patch_features(self, x, center_patch_idx=None):
                 """Extract patch features with full context for semantic
                 matching.
 
@@ -171,18 +171,12 @@ def save_debug_search_area(
         # Calculate search area bounds
         half_patch = patch_size // 2
         search_left = max(0, center_x - search_radius - half_patch)
-        search_right = min(
-            image.shape[1], center_x + search_radius + half_patch
-        )
+        search_right = min(image.shape[1], center_x + search_radius + half_patch)
         search_top = max(0, center_y - search_radius - half_patch)
-        search_bottom = min(
-            image.shape[0], center_y + search_radius + half_patch
-        )
+        search_bottom = min(image.shape[0], center_y + search_radius + half_patch)
 
         # Extract search area
-        search_area = image[
-            search_top:search_bottom, search_left:search_right
-        ].copy()
+        search_area = image[search_top:search_bottom, search_left:search_right].copy()
 
         # Draw search grid and center marker
         # Center point in search area coordinates
@@ -262,10 +256,7 @@ def save_contextual_similarity_heatmap(
         ].copy()
 
         # Pad if necessary
-        if (
-            context_area.shape[0] < context_size
-            or context_area.shape[1] < context_size
-        ):
+        if context_area.shape[0] < context_size or context_area.shape[1] < context_size:
             padded_area = np.zeros(
                 (context_size, context_size, 3), dtype=context_area.dtype
             )
@@ -282,9 +273,7 @@ def save_contextual_similarity_heatmap(
 
         # Reshape similarities to 2D grid
         similarity_grid = (
-            similarities.cpu()
-            .numpy()
-            .reshape(patches_per_side, patches_per_side)
+            similarities.cpu().numpy().reshape(patches_per_side, patches_per_side)
         )
 
         # Normalize similarities to 0-1 range for visualization
@@ -310,9 +299,7 @@ def save_contextual_similarity_heatmap(
 
         # Convert heatmap to red channel overlay
         heatmap_colored = np.zeros(context_area.shape, dtype=np.uint8)
-        heatmap_colored[:, :, 2] = (heatmap * 255).astype(
-            np.uint8
-        )  # Red channel
+        heatmap_colored[:, :, 2] = (heatmap * 255).astype(np.uint8)  # Red channel
 
         # Blend with original image (70% original, 30% heatmap)
         blended = cv2.addWeighted(context_area, 0.7, heatmap_colored, 0.3, 0)
@@ -323,12 +310,8 @@ def save_contextual_similarity_heatmap(
         best_patch_col = best_patch_idx % patches_per_side
 
         # Convert to pixel coordinates within context
-        best_y_pixel = (
-            best_patch_row * patch_size_pixels + patch_size_pixels // 2
-        )
-        best_x_pixel = (
-            best_patch_col * patch_size_pixels + patch_size_pixels // 2
-        )
+        best_y_pixel = best_patch_row * patch_size_pixels + patch_size_pixels // 2
+        best_x_pixel = best_patch_col * patch_size_pixels + patch_size_pixels // 2
 
         # Draw best match marker (bright green cross)
         cv2.line(
@@ -400,10 +383,7 @@ def extract_contextual_patch_feature(
     context_patch = image[y_start:y_end, x_start:x_end]
 
     # Pad if necessary to ensure context_size x context_size
-    if (
-        context_patch.shape[0] < context_size
-        or context_patch.shape[1] < context_size
-    ):
+    if context_patch.shape[0] < context_size or context_patch.shape[1] < context_size:
         padded_patch = np.zeros(
             (context_size, context_size, 3), dtype=context_patch.dtype
         )
@@ -414,10 +394,7 @@ def extract_contextual_patch_feature(
             x_offset : x_offset + context_patch.shape[1],
         ] = context_patch
         context_patch = padded_patch
-    elif (
-        context_patch.shape[0] > context_size
-        or context_patch.shape[1] > context_size
-    ):
+    elif context_patch.shape[0] > context_size or context_patch.shape[1] > context_size:
         # Center crop if too large
         patch_center_y, patch_center_x = (
             context_patch.shape[0] // 2,
@@ -447,9 +424,9 @@ def extract_contextual_patch_feature(
 
     # Remove batch dimension and assert shape
     center_features = center_features.squeeze(0)  # [feature_dim]
-    assert center_features.shape == (
-        feature_dim,
-    ), f"Expected shape ({feature_dim},), got {center_features.shape}"
+    assert center_features.shape == (feature_dim,), (
+        f"Expected shape ({feature_dim},), got {center_features.shape}"
+    )
 
     return center_features
 
@@ -480,10 +457,7 @@ def extract_all_contextual_features(
     context_patch = image[y_start:y_end, x_start:x_end]
 
     # Pad if necessary to ensure context_size x context_size
-    if (
-        context_patch.shape[0] < context_size
-        or context_patch.shape[1] < context_size
-    ):
+    if context_patch.shape[0] < context_size or context_patch.shape[1] < context_size:
         padded_patch = np.zeros(
             (context_size, context_size, 3), dtype=context_patch.dtype
         )
@@ -494,10 +468,7 @@ def extract_all_contextual_features(
             x_offset : x_offset + context_patch.shape[1],
         ] = context_patch
         context_patch = padded_patch
-    elif (
-        context_patch.shape[0] > context_size
-        or context_patch.shape[1] > context_size
-    ):
+    elif context_patch.shape[0] > context_size or context_patch.shape[1] > context_size:
         # Center crop if too large
         patch_center_y, patch_center_x = (
             context_patch.shape[0] // 2,
@@ -527,7 +498,9 @@ def extract_all_contextual_features(
     assert all_patch_features.shape == (
         expected_patches,
         feature_dim,
-    ), f"Expected shape ({expected_patches}, {feature_dim}), got {all_patch_features.shape}"
+    ), (
+        f"Expected shape ({expected_patches}, {feature_dim}), got {all_patch_features.shape}"
+    )
 
     return all_patch_features
 
@@ -637,9 +610,7 @@ def find_best_contextual_match(
         return center_x, center_y, -1.0
 
 
-def extract_patch_features(
-    image, center_x, center_y, patch_size, model, transform
-):
+def extract_patch_features(image, center_x, center_y, patch_size, model, transform):
     """Extract DINOv2 CLS token from a patch centered at (center_x,
     center_y)."""
     half_size = patch_size // 2
@@ -668,17 +639,15 @@ def extract_patch_features(
         patch_features = model.extract_patch_features(patch_tensor)
 
     # Assert expected DINOv2 patch features shape
-    assert (
-        len(patch_features.shape) == 3
-    ), f"Expected 3D patch features tensor [batch, seq_len, feature_dim], got shape {patch_features.shape}"
+    assert len(patch_features.shape) == 3, (
+        f"Expected 3D patch features tensor [batch, seq_len, feature_dim], got shape {patch_features.shape}"
+    )
     batch_size, seq_len, feature_dim = patch_features.shape
     assert batch_size == 1, f"Expected batch size 1, got {batch_size}"
-    assert (
-        seq_len == 257
-    ), f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
-    assert (
-        feature_dim == 384
-    ), f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
+    assert seq_len == 257, f"Expected seq_len=257 (1 CLS + 256 patches), got {seq_len}"
+    assert feature_dim == 384, (
+        f"Expected feature_dim=384 for ViT-S/14, got {feature_dim}"
+    )
 
     # Return dense features for spatial matching
     return patch_features
@@ -737,9 +706,7 @@ def process_args(args):
     ]
 
     if not tgt_non_canonical_to_refine:
-        print(
-            "No non-canonical moles in target that match canonical moles in source"
-        )
+        print("No non-canonical moles in target that match canonical moles in source")
         return 0
 
     # Limit the number of moles to refine if max_moles is specified
@@ -751,15 +718,15 @@ def process_args(args):
             f"limiting to first {len(tgt_non_canonical_to_refine)} moles"
         )
     else:
-        print(
-            f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine"
-        )
+        print(f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine")
     print("Using DINOv2 contextual semantic features for mole matching")
 
     # Load DINOv2 model
     try:
         model, feature_dim = load_dinov2_model(dino_size)
-        print(f"DINOv2 model ({dino_size}) loaded successfully with {feature_dim} feature dimensions")
+        print(
+            f"DINOv2 model ({dino_size}) loaded successfully with {feature_dim} feature dimensions"
+        )
     except RuntimeError as e:
         print(f"Error loading DINOv2 model: {e}")
         return 1
@@ -768,9 +735,7 @@ def process_args(args):
         [
             transforms.ToPILImage(),
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
 
@@ -864,9 +829,7 @@ def process_args(args):
 
             # Update the mole location if we found a better match
             old_x, old_y = tgt_mole["x"], tgt_mole["y"]
-            distance_moved = (
-                (best_x - old_x) ** 2 + (best_y - old_y) ** 2
-            ) ** 0.5
+            distance_moved = ((best_x - old_x) ** 2 + (best_y - old_y) ** 2) ** 0.5
 
             if distance_moved > 1:  # Only update if we moved more than 1 pixel
                 tgt_mole["x"] = best_x
@@ -885,9 +848,7 @@ def process_args(args):
                         y_end = min(tgt_image.shape[0], best_y + half_context)
                         x_start = max(0, best_x - half_context)
                         x_end = min(tgt_image.shape[1], best_x + half_context)
-                        refined_context = tgt_image[
-                            y_start:y_end, x_start:x_end
-                        ]
+                        refined_context = tgt_image[y_start:y_end, x_start:x_end]
 
                         # Pad if necessary
                         if (
@@ -898,21 +859,15 @@ def process_args(args):
                                 (context_size, context_size, 3),
                                 dtype=refined_context.dtype,
                             )
-                            y_offset = (
-                                context_size - refined_context.shape[0]
-                            ) // 2
-                            x_offset = (
-                                context_size - refined_context.shape[1]
-                            ) // 2
+                            y_offset = (context_size - refined_context.shape[0]) // 2
+                            x_offset = (context_size - refined_context.shape[1]) // 2
                             padded_patch[
                                 y_offset : y_offset + refined_context.shape[0],
                                 x_offset : x_offset + refined_context.shape[1],
                             ] = refined_context
                             refined_context = padded_patch
 
-                        save_debug_patch(
-                            refined_context, f"{uuid}_tgt_refined.jpg"
-                        )
+                        save_debug_patch(refined_context, f"{uuid}_tgt_refined.jpg")
                     except Exception as e:
                         print(f"  Debug: Failed to save refined context: {e}")
             else:
@@ -926,9 +881,7 @@ def process_args(args):
     if refined_count > 0:
         try:
             mel.rotomap.moles.save_image_moles(tgt_moles, tgt_path)
-            print(
-                f"Successfully refined {refined_count} mole locations in {tgt_path}"
-            )
+            print(f"Successfully refined {refined_count} mole locations in {tgt_path}")
         except Exception as e:
             print(f"Error saving refined moles: {e}")
             return 1
