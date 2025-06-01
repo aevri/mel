@@ -162,7 +162,7 @@ def test_smoke():
         )
         expect_ok("mel", "rotomap", "guess-missing", 
                   str(target_image_files[0]), str(target_image_files[1]))
-        expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1",
+        expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1", "--dino-size", "small",
                   str(target_image_files[0]), str(target_image_files[1]))
         # For montage-single, we need a UUID, so let's get one from the first JSON file
         # and use the corresponding image file

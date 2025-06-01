@@ -51,13 +51,40 @@ def setup_parser(parser):
         default=None,
         help="Maximum number of moles to refine (for testing, default: refine all).",
     )
+    parser.add_argument(
+        "--dino-size",
+        type=str,
+        choices=["small", "base", "large", "giant"],
+        default="base",
+        help="DINOv2 model size variant (default: base). Smaller models are faster.",
+    )
 
 
-def load_dinov2_model():
-    """Load the DINOv2 model for semantic feature extraction with context."""
+def load_dinov2_model(dino_size="base"):
+    """Load the DINOv2 model for semantic feature extraction with context.
+    
+    Args:
+        dino_size: Model size variant ("small", "base", "large", "giant")
+    
+    Returns:
+        tuple: (model_wrapper, feature_dimension)
+    """
+    # Map size names to actual model names and their feature dimensions
+    model_configs = {
+        "small": ("dinov2_vits14", 384),
+        "base": ("dinov2_vitb14", 768),
+        "large": ("dinov2_vitl14", 1024),
+        "giant": ("dinov2_vitg14", 1536),
+    }
+    
+    if dino_size not in model_configs:
+        raise ValueError(f"Invalid dino_size: {dino_size}. Must be one of {list(model_configs.keys())}")
+        
+    model_name, feature_dim = model_configs[dino_size]
+    
     try:
         # Load DINOv2 model for semantic patch features with rich context
-        model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")
+        model = torch.hub.load("facebookresearch/dinov2", model_name)
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
@@ -76,8 +103,8 @@ def load_dinov2_model():
                     center_patch_idx: Index of center patch to extract (if None, extract all)
 
                 Returns:
-                    If center_patch_idx is None: All patch features [batch, num_patches, 768]
-                    If center_patch_idx is provided: Center patch features [batch, 768]
+                    If center_patch_idx is None: All patch features [batch, num_patches, feature_dim]
+                    If center_patch_idx is provided: Center patch features [batch, feature_dim]
                 """
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
@@ -119,7 +146,7 @@ def load_dinov2_model():
                 finally:
                     hook.remove()
 
-        return ContextualFeatureExtractor(model)
+        return ContextualFeatureExtractor(model), feature_dim
     except Exception as e:
         raise RuntimeError(
             "Failed to load DINOv2 model. Please ensure you have internet access "
@@ -348,7 +375,7 @@ def save_contextual_similarity_heatmap(
 
 
 def extract_contextual_patch_feature(
-    image, center_x, center_y, context_size, model, transform
+    image, center_x, center_y, context_size, model, transform, feature_dim
 ):
     """Extract contextual patch feature from a large context window.
 
@@ -358,9 +385,10 @@ def extract_contextual_patch_feature(
         context_size: Size of context window (e.g., 910 for 910x910)
         model: DINOv2 model wrapper
         transform: Image transform pipeline
+        feature_dim: Feature dimension of the model
 
     Returns:
-        Tensor: Context-aware feature for center patch [768]
+        Tensor: Context-aware feature for center patch [feature_dim]
     """
     # Extract large context patch centered on the mole
     half_context = context_size // 2
@@ -418,16 +446,16 @@ def extract_contextual_patch_feature(
         )
 
     # Remove batch dimension and assert shape
-    center_features = center_features.squeeze(0)  # [768]
+    center_features = center_features.squeeze(0)  # [feature_dim]
     assert center_features.shape == (
-        768,
-    ), f"Expected shape (768,), got {center_features.shape}"
+        feature_dim,
+    ), f"Expected shape ({feature_dim},), got {center_features.shape}"
 
     return center_features
 
 
 def extract_all_contextual_features(
-    image, center_x, center_y, context_size, model, transform
+    image, center_x, center_y, context_size, model, transform, feature_dim
 ):
     """Extract features for all patches in a context window.
 
@@ -437,9 +465,10 @@ def extract_all_contextual_features(
         context_size: Size of context window (e.g., 910 for 910x910)
         model: DINOv2 model wrapper
         transform: Image transform pipeline
+        feature_dim: Feature dimension of the model
 
     Returns:
-        Tensor: All patch features [num_patches, 768] where num_patches = (context_size//14)^2
+        Tensor: All patch features [num_patches, feature_dim] where num_patches = (context_size//14)^2
     """
     # Extract large context patch centered on the location
     half_context = context_size // 2
@@ -497,8 +526,8 @@ def extract_all_contextual_features(
     expected_patches = patches_per_side * patches_per_side
     assert all_patch_features.shape == (
         expected_patches,
-        768,
-    ), f"Expected shape ({expected_patches}, 768), got {all_patch_features.shape}"
+        feature_dim,
+    ), f"Expected shape ({expected_patches}, {feature_dim}), got {all_patch_features.shape}"
 
     return all_patch_features
 
@@ -512,19 +541,21 @@ def find_best_contextual_match(
     context_size,
     model,
     transform,
+    feature_dim,
     debug_images=False,
     uuid=None,
 ):
     """Find best match using contextual semantic features.
 
     Args:
-        src_center_features: Contextual features of source mole center patch [768]
+        src_center_features: Contextual features of source mole center patch [feature_dim]
         tgt_image: Target image
         center_x, center_y: Initial target location
         search_radius: Search radius in pixels
         context_size: Size of context window for feature extraction
         model: DINOv2 model wrapper
         transform: Image transform pipeline
+        feature_dim: Feature dimension of the model
         debug_images: Whether to save debug images
         uuid: Mole UUID for debug filenames
 
@@ -547,16 +578,16 @@ def find_best_contextual_match(
     try:
         # Extract features for all patches in the target context window ONCE
         tgt_all_features = extract_all_contextual_features(
-            tgt_image, center_x, center_y, context_size, model, transform
+            tgt_image, center_x, center_y, context_size, model, transform, feature_dim
         )
 
         # Normalize source and target features for cosine similarity
         src_norm = torch.nn.functional.normalize(
             src_center_features, p=2, dim=0
-        )  # [768]
+        )  # [feature_dim]
         tgt_norm = torch.nn.functional.normalize(
             tgt_all_features, p=2, dim=1
-        )  # [num_patches, 768]
+        )  # [num_patches, feature_dim]
 
         # Compute cosine similarity between source center and all target patches
         # Calculate Euclidean distance between source and target features
@@ -659,6 +690,7 @@ def process_args(args):
     search_radius = args.search_radius
     debug_images = args.debug_images
     max_moles = args.max_moles
+    dino_size = args.dino_size
 
     # Load images
     try:
@@ -726,8 +758,8 @@ def process_args(args):
 
     # Load DINOv2 model
     try:
-        model = load_dinov2_model()
-        print("DINOv2 model loaded successfully")
+        model, feature_dim = load_dinov2_model(dino_size)
+        print(f"DINOv2 model ({dino_size}) loaded successfully with {feature_dim} feature dimensions")
     except RuntimeError as e:
         print(f"Error loading DINOv2 model: {e}")
         return 1
@@ -764,6 +796,7 @@ def process_args(args):
                 context_size,
                 model,
                 transform,
+                feature_dim,
             )
             print(
                 f"  Extracted contextual features from {context_size}x{context_size} source context"
@@ -824,6 +857,7 @@ def process_args(args):
                 context_size,
                 model,
                 transform,
+                feature_dim,
                 debug_images,
                 uuid,
             )
