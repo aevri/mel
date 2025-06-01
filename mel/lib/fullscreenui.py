@@ -50,8 +50,8 @@ def _parse_debug_keypresses():
         if key_name in key_map:
             keypresses.append(key_map[key_name])
         else:
-            print(
-                f"Warning: Unknown key name '{key_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
+            raise ValueError(
+                f"Unknown key name '{key_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
             )
 
     return keypresses
