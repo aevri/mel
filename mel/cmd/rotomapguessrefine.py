@@ -33,12 +33,6 @@ def setup_parser(parser):
         help="Path to the target image with non-canonical moles to refine.",
     )
     parser.add_argument(
-        "--search-radius",
-        type=int,
-        default=35,
-        help="Search radius around non-canonical mole location (default: 35 pixels).",
-    )
-    parser.add_argument(
         "--debug-images",
         action="store_true",
         help="Save debug images showing source patches and target search areas.",
@@ -165,17 +159,15 @@ def save_debug_patch(patch, filename):
         print(f"  Debug: Failed to save patch to {filename}: {e}")
 
 
-def save_debug_search_area(
-    image, center_x, center_y, search_radius, patch_size, filename
-):
+def save_debug_search_area(image, center_x, center_y, patch_size, filename):
     """Save the target search area for debugging."""
     try:
-        # Calculate search area bounds
-        half_patch = patch_size // 2
-        search_left = max(0, center_x - search_radius - half_patch)
-        search_right = min(image.shape[1], center_x + search_radius + half_patch)
-        search_top = max(0, center_y - search_radius - half_patch)
-        search_bottom = min(image.shape[0], center_y + search_radius + half_patch)
+        # Calculate search area bounds (use actual context size for accuracy)
+        half_context = patch_size // 2
+        search_left = max(0, center_x - half_context)
+        search_right = min(image.shape[1], center_x + half_context)
+        search_top = max(0, center_y - half_context)
+        search_bottom = min(image.shape[0], center_y + half_context)
 
         # Extract search area
         search_area = image[search_top:search_bottom, search_left:search_right].copy()
@@ -201,11 +193,11 @@ def save_debug_search_area(
             2,
         )
 
-        # Draw search radius circle
+        # Draw context boundary circle
         cv2.circle(
             search_area,
             (center_in_area_x, center_in_area_y),
-            search_radius,
+            half_context,
             (255, 0, 0),
             2,
         )
@@ -524,7 +516,6 @@ def find_best_contextual_match(
     tgt_image,
     center_x,
     center_y,
-    search_radius,
     context_size,
     model,
     transform,
@@ -538,7 +529,6 @@ def find_best_contextual_match(
         src_center_features: Contextual features of source mole center patch [feature_dim]
         tgt_image: Target image
         center_x, center_y: Initial target location
-        search_radius: Search radius in pixels
         context_size: Size of context window for feature extraction
         model: DINOv2 model wrapper
         transform: Image transform pipeline
@@ -682,7 +672,6 @@ def process_args(args):
 
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG
-    search_radius = args.search_radius
     debug_images = args.debug_images
     max_moles = args.max_moles
     dino_size = args.dino_size
@@ -832,7 +821,6 @@ def process_args(args):
                 tgt_image,
                 tgt_mole["x"],
                 tgt_mole["y"],
-                search_radius,
                 context_size,
                 f"{uuid}_tgt_search_area.jpg",
             )
@@ -844,7 +832,6 @@ def process_args(args):
                 tgt_image,
                 tgt_mole["x"],
                 tgt_mole["y"],
-                search_radius,
                 context_size,
                 model,
                 transform,
