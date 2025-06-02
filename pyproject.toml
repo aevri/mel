@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mel"
+dynamic = ["version"]
+description = "Mole Evolution Laboratory"
+authors = [
+    {name = "Angelos Evripiotis"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "colorama",
+    "opencv-python",
+    "pandas",
+    "pygame",
+    "pytorch-lightning",
+    "torch",
+    "torchvision",
+    "tqdm",
+    "wandb",
+]
+
+[project.optional-dependencies]
+dev = [
+    "docformatter",
+    "pytest",
+    "ruff",
+    "vulture",
+]
+
+[project.scripts]
+mel = "mel.cmd.mel:main"
+mel-debug = "mel.cmddebug.meldebug:main"
+
+[project.urls]
+Homepage = "https://github.com/aevri/mel"
+Repository = "https://github.com/aevri/mel"
+
+[tool.setuptools]
+packages = [
+    "mel",
+    "mel.cmd",
+    "mel.cmddebug",
+    "mel.lib",
+    "mel.micro",
+    "mel.rotomap",
+]
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = {attr = "mel.__version__"}
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+extend-select = ["A", "FURB", "N", "PLE"]
+
+[tool.vulture]
+ignore_names = ["training_step", "validation_step", "configure_optimizers"]
+exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
