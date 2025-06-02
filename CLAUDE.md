@@ -7,6 +7,10 @@
 - Run unit tests: `./meta/unit_tests.sh`
 - Fix formatting: `./meta/autofix.sh`
 
+## Pre-commit Checklist
+- Fix formatting
+- Fix all tests
+
 ## Code Style
 - Formatting: ruff format
 - Imports: Standard lib first, third-party second, project modules last (alphabetically sorted in groups)
