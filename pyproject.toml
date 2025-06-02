@@ -7,7 +7,7 @@ name = "mel"
 dynamic = ["version"]
 description = "Mole Evolution Laboratory"
 authors = [
-    {name = "Angelos Evripiotis", email = "angelos.evripiotis@gmail.com"}
+    {name = "Angelos Evripiotis"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
