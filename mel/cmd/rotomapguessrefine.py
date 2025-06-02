@@ -164,6 +164,8 @@ def save_debug_search_area(image, center_x, center_y, patch_size, filename):
     try:
         # Calculate search area bounds (use actual context size for accuracy)
         half_context = patch_size // 2
+        # DINOv2 patch size is 14x14 pixels
+        half_patch = 7
         search_left = max(0, center_x - half_context)
         search_right = min(image.shape[1], center_x + half_context)
         search_top = max(0, center_y - half_context)
