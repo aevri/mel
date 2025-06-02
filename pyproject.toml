@@ -58,7 +58,7 @@ version = {attr = "mel.__version__"}
 target-version = "py38"
 
 [tool.ruff.lint]
-extend-select = ["A", "FURB", "N", "PLE"]
+extend-select = ["A", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
