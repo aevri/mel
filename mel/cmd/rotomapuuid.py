@@ -26,8 +26,7 @@ def process_args(args):
     if results:
         print("\n".join(results))
         return 0
-    else:
-        return 1
+    return 1
 
 
 def mole_uuid_set_from_map_list(mole_map_list):

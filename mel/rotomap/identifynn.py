@@ -179,8 +179,7 @@ class LightningModel(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        return optimizer
+        return torch.optim.Adam(self.parameters(), lr=self.lr)
 
 
 def yield_frame_mole_maps_detail(
@@ -632,7 +631,7 @@ def extend_dataset_by_frame(
 
 def frame_to_framedata(frame, part_to_index):
     if "ellipse" not in frame.metadata:
-        return
+        return None
 
     uuid_points = list(frame.moledata.uuid_points_list)
     is_confirmed = {
@@ -781,9 +780,7 @@ class Model(torch.nn.Module):
 
         combined = torch.cat((*convs_out, part_embedding), 1)
 
-        result = [self.fc(combined)]
-
-        return result
+        return [self.fc(combined)]
 
     def reset_num_parts_classes(self, new_num_parts, new_num_classes):
         self.end_width -= self.embedding_len

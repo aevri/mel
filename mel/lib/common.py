@@ -22,8 +22,7 @@ def determine_filename_for_ident(*source_filenames):
     if valid_dates:
         latest_date = max(valid_dates)
         return "{}.jpg".format(latest_date.date().isoformat())
-    else:
-        return "ident.jpg"
+    return "ident.jpg"
 
 
 def overwrite_image(directory, filename, image):
@@ -181,10 +180,9 @@ def shrink_to_max_dimension(image, max_dimension):
     scaling_factor = max_dimension / max(width, height)
     if scaling_factor >= 1:
         return image
-    else:
-        new_width = int(width * scaling_factor)
-        new_height = int(height * scaling_factor)
-        return cv2.resize(image, (new_width, new_height))
+    new_width = int(width * scaling_factor)
+    new_height = int(height * scaling_factor)
+    return cv2.resize(image, (new_width, new_height))
 
 
 def indicate_mole(image, mole):

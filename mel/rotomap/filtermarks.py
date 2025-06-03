@@ -44,8 +44,7 @@ def get_model_weights_version():
     model_url = (
         torchvision.models.efficientnet.EfficientNet_B0_Weights.IMAGENET1K_V1.url
     )
-    weights_version = model_url.split("/")[-1]
-    return weights_version
+    return model_url.split("/")[-1]
 
 
 def make_model_and_transform():
@@ -354,7 +353,7 @@ def make_model_and_fit(
 def open_image_for_classifier(image_path):
     if not os.path.exists(image_path):
         raise OSError("No such file or directory: {}".format(image_path))
-    elif os.path.isdir(image_path):
+    if os.path.isdir(image_path):
         raise OSError("Is a directory: {}".format(image_path))
 
     flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
@@ -384,9 +383,9 @@ def select_moles(moles_and_marks):
         looks_like = item.get("looks_like", None)
         if looks_like == "unsure":
             continue
-        elif kind == "mole" and looks_like == "non-mole":
+        if kind == "mole" and looks_like == "non-mole":
             continue
-        elif kind == "non-mole" and looks_like == "mole":
+        if kind == "non-mole" and looks_like == "mole":
             pass
         elif not item[mel.rotomap.moles.KEY_IS_CONFIRMED]:
             continue
@@ -403,15 +402,15 @@ def select_marks(moles_and_marks):
         looks_like = item.get("looks_like", None)
         if looks_like == "unsure":
             continue
-        elif kind == "non-mole" and looks_like == "mole":
+        if kind == "non-mole" and looks_like == "mole":
             continue
-        elif kind == "mole":
+        if kind == "mole":
             # Even if this looks_like a non-mole, exclude it from the dataset.
             # Even humans may find those cases ambiguous, perhaps it's better
             # to stick to unambiguous cases for training and evaluating.
             # There seem to be plenty of real marks to consider instead.
             continue
-        elif item[mel.rotomap.moles.KEY_IS_CONFIRMED]:
+        if item[mel.rotomap.moles.KEY_IS_CONFIRMED]:
             continue
         marks.append(item)
 
@@ -492,9 +491,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
         assert class_scores.shape == (1, 2)
 
-        is_mole_detected = class_scores[0][1] > softmax_threshold
-
-        return is_mole_detected
+        return class_scores[0][1] > softmax_threshold
 
     return is_mole
 

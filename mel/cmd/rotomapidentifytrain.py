@@ -266,6 +266,8 @@ def process_args(args):
         import wandb
 
         wandb.finish()
+        return None
+    return None
 
 
 def _fixup_old_model(old_metadata, new_metadata, model):

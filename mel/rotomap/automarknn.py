@@ -73,8 +73,7 @@ def load_image(image_path):
     image = cv2.bitwise_and(original_image, original_image, mask=mask)
     not_mask = cv2.bitwise_not(mask)
     green = cv2.bitwise_and(green, green, mask=not_mask)
-    image = cv2.bitwise_or(image, green)
-    return image
+    return cv2.bitwise_or(image, green)
 
 
 def boxes_to_poslist(boxes):
@@ -141,7 +140,7 @@ class PlModule(pl.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
+        return torch.optim.AdamW(
             [
                 {
                     "params": self.model.backbone.parameters(),
@@ -158,7 +157,6 @@ class PlModule(pl.LightningModule):
             ],
             lr=self.lr,
         )
-        return optimizer
 
 
 class MoleImageBoxesDataset(torch.utils.data.Dataset):

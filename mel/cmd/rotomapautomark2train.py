@@ -195,6 +195,8 @@ def process_args(args):
         import wandb
 
         wandb.finish()
+        return None
+    return None
 
 
 # -----------------------------------------------------------------------------

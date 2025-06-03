@@ -190,8 +190,7 @@ class MarkedMoleOverlay:
     def __call__(self, image, transform):
         if self.is_accentuate_marked_mode:
             return self._draw_accentuated(image, transform)
-        else:
-            return self._draw_markers(image, transform)
+        return self._draw_markers(image, transform)
 
     def _draw_accentuated(self, image, transform):
         # Reveal the moles that have been marked, whilst still showing
@@ -278,8 +277,7 @@ class BoundingAreaOverlay:
 
             def toimage(point):
                 point = space.from_space((point))
-                point = transform.imagexy_to_transformedxy(*point)
-                return point
+                return transform.imagexy_to_transformedxy(*point)
 
             border = [
                 toimage((-1, -1)),

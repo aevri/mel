@@ -87,8 +87,7 @@ class RotomapFrame:
     def has_mole_file(self):
         if self.extra_stem is None:
             return pathlib.Path(f"{self.path}.json").exists()
-        else:
-            return pathlib.Path(f"{self.path}.{self.extra_stem}.json").exists()
+        return pathlib.Path(f"{self.path}.{self.extra_stem}.json").exists()
 
     def has_mask(self):
         return mel.rotomap.mask.has_mask(self.path)
@@ -197,11 +196,11 @@ def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
 
     if ellipse[1][0] < 1 or ellipse[1][1] < 1:
         raise ValueError(f"Ellipse too small: {ellipse}")
-    elif ellipse[1][0] > max_length or ellipse[1][1] > max_length:
+    if ellipse[1][0] > max_length or ellipse[1][1] > max_length:
         raise ValueError(f"Ellipse too big: {ellipse}")
-    elif ellipse[0][0] < 0 or ellipse[0][1] < 0:
+    if ellipse[0][0] < 0 or ellipse[0][1] < 0:
         raise ValueError(f"Ellipse out of bounds: {ellipse}")
-    elif ellipse[0][0] > max_x or ellipse[0][1] > max_y:
+    if ellipse[0][0] > max_x or ellipse[0][1] > max_y:
         raise ValueError(f"Ellipse out of bounds: {ellipse}")
 
 

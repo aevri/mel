@@ -43,6 +43,7 @@ def process_args(args):
 
         metadata = {"ellipse": ellipse}
         mel.rotomap.moles.save_image_metadata(metadata, path)
+    return None
 
 
 # -----------------------------------------------------------------------------
