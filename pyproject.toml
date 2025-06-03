@@ -58,7 +58,19 @@ version = {attr = "mel.__version__"}
 target-version = "py38"
 
 [tool.ruff.lint]
-extend-select = ["A", "FURB", "N", "PLE"]
+# Rule codes enabled for static analysis:
+# - A: flake8-builtins (prevent shadowing built-ins)
+# - FURB: refurb (modernize Python code)
+# - N: pep8-naming (naming conventions)
+# - PLE: pylint errors (subset of pylint)
+# - I: isort (import sorting and organization)
+# - W: pycodestyle warnings (whitespace and formatting issues)
+# - F: pyflakes (unused imports, variables, undefined names)
+# - PIE: flake8-pie (miscellaneous lints and performance improvements)
+# - Q: flake8-quotes (enforce consistent quote style)
+# - T10: flake8-debugger (detect debugger imports like pdb)
+# - ISC: flake8-implicit-str-concat (implicit string concatenation issues)
+extend-select = ["A", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]

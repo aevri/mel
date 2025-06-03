@@ -141,7 +141,7 @@ def test_smoke():
         )
 
         expect_ok("mel", "status", "-ttdd")
-        
+
         # Create empty timelog for timelog command test
         timelog_path = pathlib.Path("timelog.csv")
         if not timelog_path.exists():
@@ -149,10 +149,10 @@ def test_smoke():
                 "command,mode,path,start,elapsed_secs\n"
                 "test-command,test,rotomaps/parts/TestPart/Lower,2020-01-01T00:00:00,1.0\n"
             )
-        
+
         expect_ok("mel", "timelog")
         expect_ok("mel", "micro", "list")
-        
+
         # Test additional non-interactive rotomap commands
         # uuid command returns 1 when no matches found, so expect that
         expect_returncode(1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files)
@@ -160,21 +160,21 @@ def test_smoke():
             "mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files",
             *target_json_files
         )
-        expect_ok("mel", "rotomap", "guess-missing", 
+        expect_ok("mel", "rotomap", "guess-missing",
                   str(target_image_files[0]), str(target_image_files[1]))
         expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1", "--dino-size", "small",
                   str(target_image_files[0]), str(target_image_files[1]))
         # For montage-single, we need a UUID, so let's get one from the first JSON file
         # and use the corresponding image file
         json_file = target_json_files[0]
-        corresponding_image = str(json_file).replace('.jpg.json', '.jpg')
-        
+        corresponding_image = str(json_file).replace(".jpg.json", ".jpg")
+
         with open(json_file) as f:
             moles_data = json.load(f)
         if moles_data:
-            test_uuid = moles_data[0]['uuid']
+            test_uuid = moles_data[0]["uuid"]
             expect_ok(
-                "mel", "rotomap", "montage-single", 
+                "mel", "rotomap", "montage-single",
                 corresponding_image, test_uuid, "test_montage.jpg"
             )
         else:
@@ -189,21 +189,21 @@ def test_smoke_interactive():
         target_part = pathlib.Path("rotomaps/parts/LeftLeg/Lower")
         target_rotomap_0 = target_part / "2016_01_01"
         target_image_files = list(target_rotomap_0.glob("*.jpg"))
-        
+
         # Set up basic data needed for interactive commands
         expect_ok("mel", "rotomap", "automask", *target_image_files)
         expect_ok("mel", "rotomap", "calc-space", *target_image_files)
-        
+
         # Test interactive commands with headless mode and quit key injection
         env = os.environ.copy()
-        env['SDL_VIDEODRIVER'] = 'dummy'
-        env['MEL_DEBUG_ENQUEUE_KEYPRESSES'] = 'K_q'
-        
+        env["SDL_VIDEODRIVER"] = "dummy"
+        env["MEL_DEBUG_ENQUEUE_KEYPRESSES"] = "K_q"
+
         # Test rotomap edit command (quit immediately)
         expect_ok_with_env(
             env, "mel", "rotomap", "edit", str(target_rotomap_0)
         )
-        
+
         # Test rotomap compare command with multiple rotomaps
         # Skip for now due to division by zero error in existing code
         # target_rotomap_1 = target_part / "2017_01_01"
@@ -212,22 +212,22 @@ def test_smoke_interactive():
         #     expect_ok("mel", "rotomap", "automask", *target_image_files_1)
         #     expect_ok("mel", "rotomap", "calc-space", *target_image_files_1)
         #     expect_ok_with_env(
-        #         env, "mel", "rotomap", "compare", 
+        #         env, "mel", "rotomap", "compare",
         #         str(target_rotomap_0), str(target_rotomap_1)
         #     )
-        
+
         # Test rotomap organise command (quit immediately)
         expect_ok_with_env(
             env, "mel", "rotomap", "organise", str(target_image_files[0])
         )
-        
+
         # Test micro compare if micro images exist
         micro_path = pathlib.Path("micro")
         if micro_path.exists():
             micro_images = list(micro_path.glob("*.jpg"))
             if len(micro_images) >= 2:
                 expect_ok_with_env(
-                    env, "mel", "micro", "compare", 
+                    env, "mel", "micro", "compare",
                     str(micro_images[0]), str(micro_images[1])
                 )
 
