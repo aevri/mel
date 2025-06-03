@@ -29,9 +29,7 @@ class RotomapDirectory:
     def __init__(self, path):
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
-            raise ValueError(
-                '"{}" is not a directory, so not a rotomap.'.format(self.path)
-            )
+            raise ValueError(f'"{self.path}" is not a directory, so not a rotomap.')
 
         self.image_paths = [
             str(f) for f in self.path.iterdir() if mel.lib.fs.is_jpeg_name(f)
@@ -41,7 +39,7 @@ class RotomapDirectory:
         self.lesions = load_rotomap_dir_lesions_file(self.path)
 
         if not self.image_paths:
-            raise ValueError('"{}" has no images, so not a rotomap.'.format(self.path))
+            raise ValueError(f'"{self.path}" has no images, so not a rotomap.')
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""

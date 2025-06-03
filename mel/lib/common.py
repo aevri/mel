@@ -15,13 +15,13 @@ import mel.lib.image
 
 def determine_filename_for_ident(*source_filenames):
     if not source_filenames:
-        raise ValueError("{} is not a valid list of filenames".format(source_filenames))
+        raise ValueError(f"{source_filenames} is not a valid list of filenames")
 
     dates = [mel.lib.datetime.guess_datetime_from_path(x) for x in source_filenames]
     valid_dates = [x for x in dates if x is not None]
     if valid_dates:
         latest_date = max(valid_dates)
-        return "{}.jpg".format(latest_date.date().isoformat())
+        return f"{latest_date.date().isoformat()}.jpg"
     return "ident.jpg"
 
 
@@ -114,10 +114,10 @@ def make_null_mouse_callback():
 
 
 def box_moles(image, mole_positions, thickness):
-    left = min((m[0] - m[2] for m in mole_positions))
-    top = min((m[1] - m[2] for m in mole_positions))
-    right = max((m[0] + m[2] for m in mole_positions))
-    bottom = max((m[1] + m[2] for m in mole_positions))
+    left = min(m[0] - m[2] for m in mole_positions)
+    top = min(m[1] - m[2] for m in mole_positions)
+    right = max(m[0] + m[2] for m in mole_positions)
+    bottom = max(m[1] + m[2] for m in mole_positions)
 
     left -= 2 * thickness
     top -= 2 * thickness

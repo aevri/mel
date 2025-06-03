@@ -462,7 +462,7 @@ def captioned_mole_image(
     return image
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
     image = mel.lib.image.load_image(path)
     image = mel.lib.image.scale_image(image, zoom)
