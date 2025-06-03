@@ -121,7 +121,6 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
     return (dark_skin_colour * dark_param) + (light_skin_colour * (1 - dark_param))
 
 
-
 # -----------------------------------------------------------------------------
 # Copyright (C) 2020 Angelos Evripiotis.
 #

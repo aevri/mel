@@ -22,7 +22,6 @@ def draw_debug(image, mask):
     )
 
 
-
 def moles(image, mask):
     moles_ = []
     for point in keypoints(image, mask):

@@ -782,7 +782,6 @@ class Model(torch.nn.Module):
 
         return [self.fc(combined)]
 
-
     def reset_num_parts_classes(self, new_num_parts, new_num_classes):
         self.end_width -= self.embedding_len
         self.embedding_len = new_num_parts // 2

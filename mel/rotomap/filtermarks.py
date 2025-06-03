@@ -493,7 +493,6 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
         return class_scores[0][1] > softmax_threshold
 
-
     return is_mole
 
 
