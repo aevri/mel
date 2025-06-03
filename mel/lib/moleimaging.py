@@ -166,9 +166,9 @@ class MoleAcquirer(object):
                     )
                 )
 
-                should_lock = all([int(x) == 0 for x in self._last_stats_diff])
+                should_lock = all(int(x) == 0 for x in self._last_stats_diff)
 
-                should_unlock = any([abs(int(x)) > 1 for x in self._last_stats_diff])
+                should_unlock = any(abs(int(x)) > 1 for x in self._last_stats_diff)
 
                 if not self._is_locked and should_lock:
                     self._is_locked = True

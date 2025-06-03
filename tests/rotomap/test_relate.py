@@ -12,7 +12,6 @@
 # [ A] test_a_breathing
 # =============================================================================
 
-
 import unittest
 
 import numpy
@@ -31,7 +30,6 @@ class Test(unittest.TestCase):
         pass
 
     def test_b_pick_value_from_field(self):
-
         value, error = mel.rotomap.relate.pick_value_from_field(
             numpy.array([0, 0]), [(numpy.array([0, 0]), [1, 2])]
         )

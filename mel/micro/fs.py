@@ -102,7 +102,7 @@ def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple)
 
 def _list_micro_dir_if_exists(path):
     if not path.exists():
-        return tuple()
+        return ()
 
     image_names = []
     for sub in path.iterdir():

@@ -204,14 +204,14 @@ def process_args(args):
     num_parts = len(part_to_index)
     num_classes = len(train_dataset.classes)
 
-    model_args = dict(
-        cnn_width=cnn_width,
-        cnn_depth=cnn_depth,
-        num_parts=num_parts,
-        num_classes=num_classes,
-        num_cnns=num_cnns,
-        channels_in=channels_in,
-    )
+    model_args = {
+        "cnn_width": cnn_width,
+        "cnn_depth": cnn_depth,
+        "num_parts": num_parts,
+        "num_classes": num_classes,
+        "num_cnns": num_cnns,
+        "channels_in": channels_in,
+    }
 
     init_model_args = model_args
     if old_metadata is not None:

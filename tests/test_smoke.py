@@ -12,7 +12,6 @@ import mel.cmd.mel
 
 
 def test_mel_help():
-
     mel_cmd = "mel"
 
     expect_returncode(2, mel_cmd)
@@ -29,7 +28,6 @@ def test_mel_help():
 
 
 def test_mel_debug_help():
-
     mel_cmd = "mel-debug"
 
     expect_returncode(2, mel_cmd)
@@ -106,14 +104,10 @@ def test_smoke():
             "filter-marks",
             "--extra-stem",
             "smoke",
-            *target_image_files
+            *target_image_files,
         )
-        expect_ok(
-            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
-        )
-        expect_ok(
-            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
-        )
+        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
+        expect_ok("mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files)
         expect_ok(
             "mel", "rotomap", "identify", "--extra-stem", "smoke", *target_image_files
         )
@@ -123,7 +117,7 @@ def test_smoke():
             "compare-extra-stem",
             "--compare-uuids",
             "smoke",
-            *target_image_files
+            *target_image_files,
         )
         expect_ok("mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files)
         expect_ok("mel", "rotomap", "identify-train", "--extra-stem", "smoke")
@@ -136,8 +130,14 @@ def test_smoke():
         # Test resize functionality with smaller dimensions
         assert target_image_files, "No target image files found for resize test"
         expect_ok(
-            "mel", "rotomap", "resize", "--width", "100", "--height", "100",
-            str(target_image_files[0])
+            "mel",
+            "rotomap",
+            "resize",
+            "--width",
+            "100",
+            "--height",
+            "100",
+            str(target_image_files[0]),
         )
 
         expect_ok("mel", "status", "-ttdd")
@@ -155,15 +155,36 @@ def test_smoke():
 
         # Test additional non-interactive rotomap commands
         # uuid command returns 1 when no matches found, so expect that
-        expect_returncode(1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files)
-        expect_ok(
-            "mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files",
-            *target_json_files
+        expect_returncode(
+            1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files
         )
-        expect_ok("mel", "rotomap", "guess-missing",
-                  str(target_image_files[0]), str(target_image_files[1]))
-        expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1", "--dino-size", "small",
-                  str(target_image_files[0]), str(target_image_files[1]))
+        expect_ok(
+            "mel",
+            "rotomap",
+            "rm",
+            "--uuids",
+            "nonexistent-uuid",
+            "--files",
+            *target_json_files,
+        )
+        expect_ok(
+            "mel",
+            "rotomap",
+            "guess-missing",
+            str(target_image_files[0]),
+            str(target_image_files[1]),
+        )
+        expect_ok(
+            "mel",
+            "rotomap",
+            "guess-refine",
+            "--max-moles",
+            "1",
+            "--dino-size",
+            "small",
+            str(target_image_files[0]),
+            str(target_image_files[1]),
+        )
         # For montage-single, we need a UUID, so let's get one from the first JSON file
         # and use the corresponding image file
         json_file = target_json_files[0]
@@ -174,8 +195,12 @@ def test_smoke():
         if moles_data:
             test_uuid = moles_data[0]["uuid"]
             expect_ok(
-                "mel", "rotomap", "montage-single",
-                corresponding_image, test_uuid, "test_montage.jpg"
+                "mel",
+                "rotomap",
+                "montage-single",
+                corresponding_image,
+                test_uuid,
+                "test_montage.jpg",
             )
         else:
             # Skip montage-single test if no moles found
@@ -200,9 +225,7 @@ def test_smoke_interactive():
         env["MEL_DEBUG_ENQUEUE_KEYPRESSES"] = "K_q"
 
         # Test rotomap edit command (quit immediately)
-        expect_ok_with_env(
-            env, "mel", "rotomap", "edit", str(target_rotomap_0)
-        )
+        expect_ok_with_env(env, "mel", "rotomap", "edit", str(target_rotomap_0))
 
         # Test rotomap compare command with multiple rotomaps
         # Skip for now due to division by zero error in existing code
@@ -227,8 +250,12 @@ def test_smoke_interactive():
             micro_images = list(micro_path.glob("*.jpg"))
             if len(micro_images) >= 2:
                 expect_ok_with_env(
-                    env, "mel", "micro", "compare",
-                    str(micro_images[0]), str(micro_images[1])
+                    env,
+                    "mel",
+                    "micro",
+                    "compare",
+                    str(micro_images[0]),
+                    str(micro_images[1]),
                 )
 
 

@@ -1,6 +1,5 @@
 """Test suite for mel.rotomap.tricolour."""
 
-
 import unittest
 
 import mel.rotomap.tricolour
@@ -42,7 +41,7 @@ class Test(unittest.TestCase):
             )
         )
 
-        self.assertEqual(len(mapping), num_colours ** 3)
+        self.assertEqual(len(mapping), num_colours**3)
 
         mapping_set = set(mapping)
         self.assertEqual(len(mapping_set), len(mapping))
