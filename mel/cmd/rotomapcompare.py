@@ -112,20 +112,22 @@ def process_args(args):
     import pygame
 
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
-    with mel.lib.common.timelogger_context("rotomap-compare") as logger:
-        with mel.lib.fullscreenui.fullscreen_context() as screen:
-            display = ImageCompareDisplay(logger, screen, path_images_tuple, uuid_)
+    with (
+        mel.lib.common.timelogger_context("rotomap-compare") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
+        display = ImageCompareDisplay(logger, screen, path_images_tuple, uuid_)
 
-            on_keydown = _make_on_keydown(
-                display,
-                uuid_order,
-                target_rotomap,
-                uuid_to_rotomaps_imagepos_list,
-            )
+        on_keydown = _make_on_keydown(
+            display,
+            uuid_order,
+            target_rotomap,
+            uuid_to_rotomaps_imagepos_list,
+        )
 
-            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-                if event.type == pygame.KEYDOWN:
-                    on_keydown(event)
+        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+            if event.type == pygame.KEYDOWN:
+                on_keydown(event)
 
 
 def _make_on_keydown(
@@ -440,9 +442,8 @@ def captioned_mole_image(
     draw_moles=False,
 ):
     points = None
-    if draw_moles:
-        if uuid_points is not None:
-            points = tuple(tuple(p) for p in uuid_points.values())
+    if draw_moles and uuid_points is not None:
+        points = tuple(tuple(p) for p in uuid_points.values())
 
     image, caption_shape = _cached_captioned_mole_image(
         str(path), tuple(pos), zoom, tuple(size), rotation_degs, points

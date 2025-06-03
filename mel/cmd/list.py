@@ -116,9 +116,12 @@ def _yield_mole_dirs(rootpath, args):
         if args.with_assistance and not mole.need_assistance:
             continue
 
-        if mole.last_micro_age_days is not None and no_recent_days is not None:
-            if mole.last_micro_age_days < no_recent_days:
-                continue
+        if (
+            mole.last_micro_age_days is not None
+            and no_recent_days is not None
+            and mole.last_micro_age_days < no_recent_days
+        ):
+            continue
 
         yield mole
 

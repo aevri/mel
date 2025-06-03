@@ -87,10 +87,12 @@ def images_to_features(images, batch_size):
         [transform(i) for i in images], batch_size=batch_size
     )
 
-    with record_input_context(model.classifier[1]) as fc_in:
-        with torch.no_grad():
-            for batch in batcher:
-                model(batch)
+    with (
+        record_input_context(model.classifier[1]) as fc_in,
+        torch.no_grad(),
+    ):
+        for batch in batcher:
+            model(batch)
 
     features = torch.cat([batch[0].flatten(1) for batch in fc_in])
     assert features.shape == (len(images), num_features), features.shape
