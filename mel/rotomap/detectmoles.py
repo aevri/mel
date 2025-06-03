@@ -13,7 +13,7 @@ _MASK_EXCLUSION_SQUARE_SIZE = 5
 
 def draw_debug(image, mask):
     keypoints_, image = _keypoints(image, mask)
-    image = cv2.drawKeypoints(
+    return cv2.drawKeypoints(
         image,
         keypoints_,
         numpy.array([]),
@@ -21,7 +21,6 @@ def draw_debug(image, mask):
         cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
     )
 
-    return image
 
 
 def moles(image, mask):

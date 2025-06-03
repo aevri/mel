@@ -23,16 +23,14 @@ def calc_hist(image, channel, mask):
     hist = cv2.calcHist([image], [channel], mask, [8], [0, 256])
     hist = [int(x) for x in hist]
     hist_sum = sum(hist)
-    hist = [100 * x / hist_sum for x in hist]
-    return hist
+    return [100 * x / hist_sum for x in hist]
 
 
 def log10_zero(x):
     """Return the log10 of x, map log10(0) -> 0."""
     if x == 0:
         return 0
-    else:
-        return math.log10(x)
+    return math.log10(x)
 
 
 def biggest_contour(image):
@@ -59,8 +57,7 @@ def biggest_contour(image):
                 "No suitable contours found. Some contours were found, "
                 "but were too short."
             )
-        else:
-            raise Exception("No non-None contours found.")
+        raise Exception("No non-None contours found.")
 
     return contours[max_index]
 
@@ -202,8 +199,7 @@ def rotate_point_around_pivot(point, pivot, degrees):
         centre_point[0] * math.cos(theta) - centre_point[1] * math.sin(theta),
         centre_point[0] * math.sin(theta) + centre_point[1] * math.cos(theta),
     )
-    new_point = (rotated_point[0] + pivot[0], rotated_point[1] + pivot[1])
-    return new_point
+    return (rotated_point[0] + pivot[0], rotated_point[1] + pivot[1])
 
 
 def draw_vertical_lines(image, left, top, right, bottom, color, width):

@@ -28,10 +28,9 @@ def get_comparison_images(path):
     for i, (path, img) in enumerate(zip(paths, images)):
         if img is None:
             raise ValueError("Failed to load file: {}".format(path))
-        else:
-            images[i] = mel.lib.image.montage_vertical(
-                10, img, mel.lib.image.render_text_as_image(names[i])
-            )[:]
+        images[i] = mel.lib.image.montage_vertical(
+            10, img, mel.lib.image.render_text_as_image(names[i])
+        )[:]
 
     return images
 

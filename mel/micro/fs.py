@@ -97,8 +97,7 @@ def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple)
     if image_names:
         image_names.sort()
         return context_image_name_tuple_tuple + (tuple(image_names),)
-    else:
-        return context_image_name_tuple_tuple
+    return context_image_name_tuple_tuple
 
 
 def _list_micro_dir_if_exists(path):
@@ -134,8 +133,7 @@ def _list_micro_dir_if_exists(path):
 
 def calc_micro_datetime(micro_image_name):
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
-    dt = datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S")
-    return dt
+    return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S")
 
 
 def calc_last_micro(micro_image_details):

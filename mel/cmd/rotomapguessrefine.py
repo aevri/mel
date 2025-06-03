@@ -128,17 +128,15 @@ def load_dinov2_model(dino_size="base"):
                             return patch_tokens[
                                 :, center_patch_idx, :
                             ]  # [batch, feature_dim]
-                        else:
-                            # Return all patch features
-                            return patch_tokens
-                    else:
-                        # Fallback: use CLS token
-                        cls_features = self.model(x)
-                        return (
-                            cls_features.unsqueeze(1)
-                            if center_patch_idx is None
-                            else cls_features
-                        )
+                        # Return all patch features
+                        return patch_tokens
+                    # Fallback: use CLS token
+                    cls_features = self.model(x)
+                    return (
+                        cls_features.unsqueeze(1)
+                        if center_patch_idx is None
+                        else cls_features
+                    )
                 finally:
                     hook.remove()
 

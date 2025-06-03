@@ -229,8 +229,7 @@ def render_text_as_image(
 
 def calc_centering_offset(centre_xy, dst_size_xy):
     dst_centre = [i // 2 for i in dst_size_xy]
-    offset = [i[1] - i[0] for i in zip(centre_xy, dst_centre)]
-    return offset
+    return [i[1] - i[0] for i in zip(centre_xy, dst_centre)]
 
 
 def centered_at(image, src_pos, dst_rect):

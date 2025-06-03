@@ -130,9 +130,9 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
 def match_moles_by_pos(from_moles, to_moles, error_distance):
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
-    elif not from_moles and to_moles:
+    if not from_moles and to_moles:
         return [], [], [m["uuid"] for m in to_moles]
-    elif not from_moles and not to_moles:
+    if not from_moles and not to_moles:
         return [], [], []
 
     from_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(from_moles)

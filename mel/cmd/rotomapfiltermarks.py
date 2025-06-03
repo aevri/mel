@@ -114,6 +114,7 @@ def process_args(args):
             mel.rotomap.moles.save_image_moles(
                 filtered_moles, image_path, extra_stem=args.extra_stem
             )
+    return None
 
 
 # -----------------------------------------------------------------------------

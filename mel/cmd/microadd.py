@@ -153,8 +153,7 @@ def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
     path = pick_comparison_path(path, images, min_compare_age_days, use_last_changed)
     if path:
         return os.path.join(micro_path, path)
-    else:
-        return None
+    return None
 
 
 def load_comparison_image(path, min_compare_age_days, use_last_changed):
@@ -244,7 +243,7 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
                     print("Retry capture")
                     is_finished = False
                     break
-                elif event.key == pygame.K_y:
+                if event.key == pygame.K_y:
                     print("Rotate -5 degrees")
                     rotation_angle += 5
                     preview = mel.lib.image.rotated(frame, rotation_angle)
@@ -298,8 +297,7 @@ def capture(cap, display, capindex, mole_acquirer):
 
         if mole_acquirer.is_locked and is_aligned:
             break
-        else:
-            display.update_image(asys_image, capindex)
+        display.update_image(asys_image, capindex)
 
     normal_image = numpy.copy(frame)
     if centre is not None:

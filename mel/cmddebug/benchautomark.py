@@ -103,9 +103,9 @@ def print_items(common_path, items, label):
 def match_moles(from_moles, to_moles, error_distance):
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
-    elif not from_moles and to_moles:
+    if not from_moles and to_moles:
         return [], [], [m["uuid"] for m in to_moles]
-    elif not from_moles and not to_moles:
+    if not from_moles and not to_moles:
         return [], [], []
 
     from_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(from_moles)

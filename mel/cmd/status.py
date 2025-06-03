@@ -561,7 +561,7 @@ def check_newest_rotomap(notices, rotomap):
                 continue
             missing_unchanged_status.uuid_list.append(u)
             continue
-        elif not unchanged_status:
+        if not unchanged_status:
             if u not in ignore_changed:
                 changed.uuid_list.append(u)
             continue
