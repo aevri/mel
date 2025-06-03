@@ -37,7 +37,7 @@ class Test(unittest.TestCase):
         )
 
         self.assertEqual(0.0, error)
-        self.assertTrue(([1.0, 2.0] == value).all(), True)
+        self.assertTrue((value == [1.0, 2.0]).all(), True)
 
 
 # -----------------------------------------------------------------------------

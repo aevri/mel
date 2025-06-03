@@ -74,34 +74,30 @@ def process_contours(mole_regions, original):
 
     ellipse = None
 
-    if mole_contour is not None:
-        if len(mole_contour) > 5:
-            ellipse = cv2.fitEllipse(mole_contour)
+    if mole_contour is not None and len(mole_contour) > 5:
+        ellipse = cv2.fitEllipse(mole_contour)
 
-            blue = (255, 0, 0)
+        blue = (255, 0, 0)
 
-            moments = cv2.moments(mole_contour)
-            hu_moments = cv2.HuMoments(moments)
-            hu_moments = [log10_zero(abs(float(x))) for x in hu_moments]
+        moments = cv2.moments(mole_contour)
+        hu_moments = cv2.HuMoments(moments)
+        hu_moments = [log10_zero(abs(float(x))) for x in hu_moments]
 
-            hsv = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
-            hist = calc_hist(hsv, 1, mole_regions)
-            hist_surrounding = calc_hist(hsv, 1, None)
+        hsv = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
+        hist = calc_hist(hsv, 1, mole_regions)
+        hist_surrounding = calc_hist(hsv, 1, None)
 
-            cv2.ellipse(final, ellipse, blue, 5)
-            sqrt_area = math.sqrt(mole_area)
-            aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
-            ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
+        cv2.ellipse(final, ellipse, blue, 5)
+        sqrt_area = math.sqrt(mole_area)
+        aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
+        ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
 
-            if ellipse_area:
-                coverage_percent = (mole_area / ellipse_area) * 100
-            else:
-                coverage_percent = 0
+        coverage_percent = (mole_area / ellipse_area) * 100 if ellipse_area else 0
 
-            stats = (sqrt_area, aspect_ratio, coverage_percent)
-            stats += tuple(hist)
-            stats += tuple(hist_surrounding)
-            stats += tuple(hu_moments)
+        stats = (sqrt_area, aspect_ratio, coverage_percent)
+        stats += tuple(hist)
+        stats += tuple(hist_surrounding)
+        stats += tuple(hu_moments)
 
     return final, stats, ellipse
 
@@ -126,11 +122,9 @@ def find_mole_contour(contours, width_height):
                 dx = centre[0] - cx
                 dy = centre[1] - cy
                 distance = (dx**2 + dy**2) ** 0.5
-                if mole_area and area > 10 * mole_area:
-                    mole_contour = contour
-                    mole_area = area
-                    mole_distance = distance
-                elif mole_distance is None or distance < mole_distance:
+                if (mole_area and area > 10 * mole_area) or (
+                    mole_distance is None or distance < mole_distance
+                ):
                     mole_contour = contour
                     mole_area = area
                     mole_distance = distance
@@ -230,86 +224,85 @@ def annotate_image(original, is_rot_sensitive):
 
     mole_contour, _ = find_mole_contour(contours, img.shape[0:2])
 
-    if mole_contour is not None:
-        if len(mole_contour) > 5:
-            ellipse = cv2.fitEllipse(mole_contour)
-            guide_ellipse = (ellipse[0], ellipse[1], 0)
+    if mole_contour is not None and len(mole_contour) > 5:
+        ellipse = cv2.fitEllipse(mole_contour)
+        guide_ellipse = (ellipse[0], ellipse[1], 0)
 
-            center_xy = ellipse[0]
-            center_xy = point_to_int_point(center_xy)
-            angle_degs = ellipse[2]
+        center_xy = ellipse[0]
+        center_xy = point_to_int_point(center_xy)
+        angle_degs = ellipse[2]
 
-            top_xy = (center_xy[0], center_xy[1] - int(ellipse[1][1] / 2))
-            ellipse_top_xy = rotate_point_around_pivot(top_xy, center_xy, angle_degs)
-            ellipse_top_xy = point_to_int_point(ellipse_top_xy)
+        top_xy = (center_xy[0], center_xy[1] - int(ellipse[1][1] / 2))
+        ellipse_top_xy = rotate_point_around_pivot(top_xy, center_xy, angle_degs)
+        ellipse_top_xy = point_to_int_point(ellipse_top_xy)
 
-            yellow = (0, 255, 255)
-            green = (0, 255, 0)
-            red = (0, 0, 255)
-            blue = (255, 0, 0)
+        yellow = (0, 255, 255)
+        green = (0, 255, 0)
+        red = (0, 0, 255)
+        blue = (255, 0, 0)
 
-            is_rotation_aligned = not is_rot_sensitive
+        is_rotation_aligned = not is_rot_sensitive
 
-            color = yellow
-            thickness = 10
-            if is_rot_sensitive:
-                if angle_degs <= 20 or angle_degs >= 160:
-                    is_rotation_aligned = True
-                    color = green
-                    thickness = 2
-                else:
-                    if angle_degs >= 45 and angle_degs <= 135:
-                        color = red
-                    cv2.ellipse(final, guide_ellipse, green, 10)
-                    cv2.line(final, center_xy, top_xy, green, 10)
-                    cv2.line(final, center_xy, ellipse_top_xy, color, 10)
-            else:
+        color = yellow
+        thickness = 10
+        if is_rot_sensitive:
+            if angle_degs <= 20 or angle_degs >= 160:
+                is_rotation_aligned = True
                 color = green
                 thickness = 2
+            else:
+                if angle_degs >= 45 and angle_degs <= 135:
+                    color = red
+                cv2.ellipse(final, guide_ellipse, green, 10)
+                cv2.line(final, center_xy, top_xy, green, 10)
+                cv2.line(final, center_xy, ellipse_top_xy, color, 10)
+        else:
+            color = green
+            thickness = 2
 
-            cv2.ellipse(final, ellipse, color, thickness)
+        cv2.ellipse(final, ellipse, color, thickness)
 
-            bounds_half_width = original_width // 10
-            bounds_half_height = original_height // 10
-            bounds_center_x = original_width // 2
-            bounds_center_y = original_height // 2
-            bounds_left = bounds_center_x - bounds_half_width
-            bounds_right = bounds_center_x + bounds_half_width
-            bounds_top = bounds_center_y - bounds_half_height
-            bounds_bottom = bounds_center_y + bounds_half_height
+        bounds_half_width = original_width // 10
+        bounds_half_height = original_height // 10
+        bounds_center_x = original_width // 2
+        bounds_center_y = original_height // 2
+        bounds_left = bounds_center_x - bounds_half_width
+        bounds_right = bounds_center_x + bounds_half_width
+        bounds_top = bounds_center_y - bounds_half_height
+        bounds_bottom = bounds_center_y + bounds_half_height
 
-            is_position_aligned = True
+        is_position_aligned = True
 
-            if center_xy[0] < bounds_left or center_xy[0] > bounds_right:
-                is_position_aligned = False
-                # show x guide
-                draw_vertical_lines(
-                    final,
-                    bounds_left,
-                    bounds_top,
-                    bounds_right,
-                    bounds_bottom,
-                    blue,
-                    10,
-                )
-                cv2.rectangle(final, center_xy, center_xy, blue, 10)
+        if center_xy[0] < bounds_left or center_xy[0] > bounds_right:
+            is_position_aligned = False
+            # show x guide
+            draw_vertical_lines(
+                final,
+                bounds_left,
+                bounds_top,
+                bounds_right,
+                bounds_bottom,
+                blue,
+                10,
+            )
+            cv2.rectangle(final, center_xy, center_xy, blue, 10)
 
-            if center_xy[1] < bounds_top or center_xy[1] > bounds_bottom:
-                is_position_aligned = False
-                # show y guide
-                draw_horizontal_lines(
-                    final,
-                    bounds_left,
-                    bounds_top,
-                    bounds_right,
-                    bounds_bottom,
-                    blue,
-                    10,
-                )
-                cv2.rectangle(final, center_xy, center_xy, blue, 10)
+        if center_xy[1] < bounds_top or center_xy[1] > bounds_bottom:
+            is_position_aligned = False
+            # show y guide
+            draw_horizontal_lines(
+                final,
+                bounds_left,
+                bounds_top,
+                bounds_right,
+                bounds_bottom,
+                blue,
+                10,
+            )
+            cv2.rectangle(final, center_xy, center_xy, blue, 10)
 
-            if is_rotation_aligned and is_position_aligned:
-                is_aligned = True
+        if is_rotation_aligned and is_position_aligned:
+            is_aligned = True
 
     original[:, :] = final[:, :]
     return is_aligned, center_xy, angle_degs
