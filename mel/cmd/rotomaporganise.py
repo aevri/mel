@@ -26,36 +26,38 @@ def process_args(args):
     # startup-text where it is not actually used.
     import pygame
 
-    with mel.lib.common.timelogger_context("rotomap-organise") as logger:
-        with mel.lib.fullscreenui.fullscreen_context() as screen:
-            display = OrganiserDisplay(
-                logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
-            )
+    with (
+        mel.lib.common.timelogger_context("rotomap-organise") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
+        display = OrganiserDisplay(
+            logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
+        )
 
-            display.reset_logger()
-            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT:
-                        display.next_image()
-                        display.reset_logger()
-                    elif event.key == pygame.K_LEFT:
-                        display.prev_image()
-                        display.reset_logger()
-                    elif event.key == pygame.K_BACKSPACE:
-                        display.delete_image()
-                    elif event.key == pygame.K_g:
-                        logger.reset(mode="group")
-                        destination = input("group destination: ")
-                        display.group_images(destination)
-                    elif event.key == pygame.K_SPACE:
-                        display.set_fitted()
-                        display.show()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    key_mods = pygame.key.get_mods()
-                    if key_mods & pygame.KMOD_CTRL:
-                        mouse_x, mouse_y = pygame.mouse.get_pos()
-                        display.show_zoomed(mouse_x, mouse_y)
-                        display.show()
+        display.reset_logger()
+        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    display.next_image()
+                    display.reset_logger()
+                elif event.key == pygame.K_LEFT:
+                    display.prev_image()
+                    display.reset_logger()
+                elif event.key == pygame.K_BACKSPACE:
+                    display.delete_image()
+                elif event.key == pygame.K_g:
+                    logger.reset(mode="group")
+                    destination = input("group destination: ")
+                    display.group_images(destination)
+                elif event.key == pygame.K_SPACE:
+                    display.set_fitted()
+                    display.show()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                key_mods = pygame.key.get_mods()
+                if key_mods & pygame.KMOD_CTRL:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    display.show_zoomed(mouse_x, mouse_y)
+                    display.show()
 
 
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):

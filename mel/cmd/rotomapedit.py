@@ -49,6 +49,7 @@ In 'mole marking' mode:
 """
 
 import argparse
+import contextlib
 import os.path
 
 import numpy
@@ -210,11 +211,10 @@ class MoleEditController:
         elif key_mods & pygame.KMOD_SHIFT:
             editor.remove_mole(mouse_x, mouse_y)
         else:
-            if self.sub_controller:
-                if self.sub_controller.on_lbutton_down_noflags(
-                    editor, mouse_x, mouse_y
-                ):
-                    return
+            if self.sub_controller and self.sub_controller.on_lbutton_down_noflags(
+                editor, mouse_x, mouse_y
+            ):
+                return
             editor.add_mole(mouse_x, mouse_y)
 
     def on_rbutton_down(self, editor, mouse_x, mouse_y):
@@ -236,10 +236,8 @@ class MoleEditController:
 
     def pre_key(self, editor, key):
         if self.sub_controller:
-            try:
+            with contextlib.suppress(AttributeError):
                 self.sub_controller.pre_key(editor, key)
-            except AttributeError:
-                pass
 
     def on_key(self, editor, key):
         # Import pygame as late as possible, to avoid displaying its
@@ -256,7 +254,7 @@ class MoleEditController:
                 editor.set_status("")
             editor.show_current()
         elif key == pygame.K_m:
-            if not self.sub_controller == self.move_controller:
+            if self.sub_controller != self.move_controller:
                 self.sub_controller = self.move_controller
                 editor.set_status(self.sub_controller.status)
             else:
@@ -577,25 +575,27 @@ def process_args(args):
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    with mel.lib.common.timelogger_context("rotomap-edit") as logger:
-        with mel.lib.fullscreenui.fullscreen_context() as screen:
-            editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
+    with (
+        mel.lib.common.timelogger_context("rotomap-edit") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
+        editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
-            if args.advance_n_frames:
-                editor.show_next_n(args.advance_n_frames)
+        if args.advance_n_frames:
+            editor.show_next_n(args.advance_n_frames)
 
-            controller = Controller(
-                editor, args.follow, args.copy_to_clipboard, visit_list, logger
-            )
+        controller = Controller(
+            editor, args.follow, args.copy_to_clipboard, visit_list, logger
+        )
 
-            for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
-                if event.type == pygame.KEYDOWN:
-                    controller.on_key(editor, event.key)
-                elif event.type in (
-                    pygame.MOUSEBUTTONDOWN,
-                    pygame.MOUSEMOTION,
-                ):
-                    controller.on_mouse_event(editor, event)
+        for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
+            if event.type == pygame.KEYDOWN:
+                controller.on_key(editor, event.key)
+            elif event.type in (
+                pygame.MOUSEBUTTONDOWN,
+                pygame.MOUSEMOTION,
+            ):
+                controller.on_mouse_event(editor, event)
 
 
 def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):

@@ -18,13 +18,13 @@ def test_mel_help():
     expect_returncode(2, mel_cmd)
     expect_ok(mel_cmd, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS["root"].keys():
+    for subcommand in mel.cmd.mel.COMMANDS["root"]:
         expect_ok(mel_cmd, subcommand, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS["micro"].keys():
+    for subcommand in mel.cmd.mel.COMMANDS["micro"]:
         expect_ok(mel_cmd, "micro", subcommand, "-h")
 
-    for subcommand in mel.cmd.mel.COMMANDS["rotomap"].keys():
+    for subcommand in mel.cmd.mel.COMMANDS["rotomap"]:
         expect_ok(mel_cmd, "rotomap", subcommand, "-h")
 
 

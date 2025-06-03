@@ -322,9 +322,8 @@ def process_args(args):
     abspath = os.path.abspath(args.PATH) if args.PATH is not None else None
 
     for notice in notice_list:
-        if abspath is not None:
-            if not str(notice.path).startswith(abspath):
-                continue
+        if abspath is not None and not str(notice.path).startswith(abspath):
+            continue
 
         klass = notice.__class__
         if issubclass(klass, AlertNotification):
@@ -551,9 +550,8 @@ def check_newest_rotomap(notices, rotomap):
 
     for u in uuids:
         if u not in uuid_to_unchanged_status:
-            if u in ignore_new:
-                continue
-            missing_unchanged_status.uuid_list.append(u)
+            if u not in ignore_new:
+                missing_unchanged_status.uuid_list.append(u)
             continue
         unchanged_status = uuid_to_unchanged_status[u]
         if unchanged_status is None:

@@ -54,7 +54,7 @@ def _merge(from_moles, to_moles, error_distance):
     results = []
     for to_m in to_moles:
         old_uuid = to_m["uuid"]
-        new_uuid = old_to_new_uuids.get(old_uuid, None)
+        new_uuid = old_to_new_uuids.get(old_uuid)
         mole = copy.deepcopy(to_m)
         if new_uuid is None:
             mole["uuid"] = mel.rotomap.moles.make_new_uuid()

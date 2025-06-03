@@ -37,11 +37,10 @@ def proportion_arg(x):
     except ValueError:
         raise argparse.ArgumentTypeError(f"'{x}' is not a float")
 
-    if not (x > 0.0 and x <= 1.0):
-        if not x == -1:
-            raise argparse.ArgumentTypeError(
-                f"'{x}' is not in range 0.0 > x <= 1.0, or -1."
-            )
+    if not (x > 0.0 and x <= 1.0) and not x == -1:
+        raise argparse.ArgumentTypeError(
+            f"'{x}' is not in range 0.0 > x <= 1.0, or -1."
+        )
 
     return x
 
