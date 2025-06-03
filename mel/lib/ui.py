@@ -17,7 +17,7 @@ def set_clipboard_contents(text):
 
     if not os.path.isfile(pbcopy):
         raise NotImplementedError(
-            "{} was not found, cannot write clipboard".format(pbcopy)
+            f"{pbcopy} was not found, cannot write clipboard"
         )
 
     p = subprocess.Popen([pbcopy], stdin=subprocess.PIPE, universal_newlines=True)

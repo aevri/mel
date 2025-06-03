@@ -30,7 +30,7 @@ class RotomapDirectory:
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
             raise ValueError(
-                '"{}" is not a directory, so not a rotomap.'.format(self.path)
+                f'"{self.path}" is not a directory, so not a rotomap.'
             )
 
         self.image_paths = [
@@ -41,7 +41,7 @@ class RotomapDirectory:
         self.lesions = load_rotomap_dir_lesions_file(self.path)
 
         if not self.image_paths:
-            raise ValueError('"{}" has no images, so not a rotomap.'.format(self.path))
+            raise ValueError(f'"{self.path}" has no images, so not a rotomap.')
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""

@@ -114,11 +114,11 @@ def _list_micro_dir_if_exists(path):
 
         if sub.is_dir():
             raise Exception(
-                "Sub-directory found in micro dir: {}".format(sub.resolve())
+                f"Sub-directory found in micro dir: {sub.resolve()}"
             )
 
         if sub.suffix.lower() not in IMAGE_SUFFIXES:
-            raise Exception("Non-image found in micro dir: {}".format(sub.resolve()))
+            raise Exception(f"Non-image found in micro dir: {sub.resolve()}")
 
         image_names.append(sub.name)
 
