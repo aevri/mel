@@ -72,7 +72,7 @@ target-version = "py38"
 # - ISC: flake8-implicit-str-concat (implicit string concatenation issues)
 # - RET: flake8-return (return statement improvements)
 # - SIM: flake8-simplify (code simplification opportunities)
-# - UP: pyupgrade (modernize Python syntax)
+# - UP: pyupgrade (Python syntax modernization)
 extend-select = ["A", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP"]
 
 [tool.vulture]
