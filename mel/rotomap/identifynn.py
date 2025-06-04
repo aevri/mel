@@ -127,7 +127,7 @@ class RotomapsClassMapping:
                     for m in moles:
                         all_uuids.add(m["uuid"])
 
-        self.classes = sorted(list(all_uuids))
+        self.classes = sorted(all_uuids)
         self.class_to_index = {cls: i for i, cls in enumerate(self.classes)}
 
 
