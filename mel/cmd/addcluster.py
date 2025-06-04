@@ -38,8 +38,8 @@ def process_args(args):
     mole_size = 512
 
     # print out the dimensions of the images
-    print("{}: {}".format(args.context, context_image.shape))
-    print("{}: {}".format(args.detail, detail_image.shape))
+    print(f"{args.context}: {context_image.shape}")
+    print(f"{args.detail}: {detail_image.shape}")
 
     # display the context image in a reasonably sized window
     window_name = "display"

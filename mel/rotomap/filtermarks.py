@@ -280,12 +280,10 @@ def load_pretrained(pretrained_paths):
         pretrained_weights_version = loaded_data["weights_version"]
         if pretrained_weights_version != current_weights_version:
             raise Exception(
-                (
-                    "Pretrained weights version mismatch."
-                    "Please pretrain again.\n"
-                    f"Pretrained: {pretrained_weights_version}\n"
-                    f"Current: {current_weights_version}"
-                )
+                "Pretrained weights version mismatch."
+                "Please pretrain again.\n"
+                f"Pretrained: {pretrained_weights_version}\n"
+                f"Current: {current_weights_version}"
             )
         pretrained_data[session].append(loaded_data)
     return pretrained_data
@@ -354,9 +352,9 @@ def make_model_and_fit(
 
 def open_image_for_classifier(image_path):
     if not os.path.exists(image_path):
-        raise OSError("No such file or directory: {}".format(image_path))
+        raise OSError(f"No such file or directory: {image_path}")
     if os.path.isdir(image_path):
-        raise OSError("Is a directory: {}".format(image_path))
+        raise OSError(f"Is a directory: {image_path}")
 
     flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     try:
@@ -467,12 +465,10 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
     if trained_version != current_version:
         raise Exception(
-            (
-                "Pretrained weights version mismatch."
-                "Please pretrain again.\n"
-                f"Pretrained: {trained_version}\n"
-                f"Current: {current_version}"
-            )
+            "Pretrained weights version mismatch."
+            "Please pretrain again.\n"
+            f"Pretrained: {trained_version}\n"
+            f"Current: {current_version}"
         )
 
     model, num_features, transform = make_model_and_transform()

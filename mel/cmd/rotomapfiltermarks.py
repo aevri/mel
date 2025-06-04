@@ -104,7 +104,7 @@ def process_args(args):
                 is_mole, image, moles, args.include_canonical
             )
         except Exception as e:
-            raise Exception("Error while processing {}".format(image_path)) from e
+            raise Exception(f"Error while processing {image_path}") from e
 
         num_filtered = len(moles) - len(filtered_moles)
         if args.verbose:

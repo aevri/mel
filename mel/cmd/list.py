@@ -37,8 +37,8 @@ def setup_parser(parser):
         metavar="DAYS",
         nargs="?",
         help="Do not list moles with micro images less than this number of "
-        "days. Off by default, will assume {days} days if none "
-        "specified.".format(days=_DEFAULT_NO_RECENT_DAYS),
+        f"days. Off by default, will assume {_DEFAULT_NO_RECENT_DAYS} days if none "
+        "specified.",
     )
 
     parser.add_argument(
@@ -97,7 +97,7 @@ def _yield_mole_dirs(rootpath, args):
 
         def keyfunc(x):
             if not x.micro_image_details:
-                return str()
+                return ""
             return x.micro_image_details[-1].name
 
         mole_iter = sorted(mole_iter, key=keyfunc)

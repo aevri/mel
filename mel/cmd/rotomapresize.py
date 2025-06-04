@@ -75,7 +75,7 @@ def _resize_mole_files(image_path, scale_x, scale_y):
     """Resize mole coordinates in .json files."""
     mole_file_path = image_path + ".json"
     if os.path.exists(mole_file_path):
-        with open(mole_file_path, "r") as f:
+        with open(mole_file_path) as f:
             moles = json.load(f)
 
         for mole in moles:
@@ -103,7 +103,7 @@ def _resize_ellipse_metadata(image_path, scale_x, scale_y):
     """Resize ellipse coordinates in .meta.json file."""
     meta_path = image_path + ".meta.json"
     if os.path.exists(meta_path):
-        with open(meta_path, "r") as f:
+        with open(meta_path) as f:
             metadata = json.load(f)
 
         if "ellipse" in metadata:

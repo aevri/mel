@@ -276,7 +276,7 @@ class BoundingAreaOverlay:
             space = mel.lib.ellipsespace.Transform(self.bounding_box)
 
             def toimage(point):
-                point = space.from_space((point))
+                point = space.from_space(point)
                 return transform.imagexy_to_transformedxy(*point)
 
             border = [
@@ -618,7 +618,7 @@ class MoleData:
         # mel will need to be re-run in order to pick up changes to mole
         # images. This seems to be fine for use-cases to date, only the mole
         # data seems to change from underneath really.
-        @functools.lru_cache()
+        @functools.lru_cache
         def load_image(image_path):
             return mel.lib.image.load_image(image_path)
 
