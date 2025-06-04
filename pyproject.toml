@@ -60,6 +60,7 @@ target-version = "py38"
 [tool.ruff.lint]
 # Rule codes enabled for static analysis:
 # - A: flake8-builtins (prevent shadowing built-ins)
+# - C4: flake8-comprehensions (better list/set/dict comprehensions)
 # - FURB: refurb (modernize Python code)
 # - N: pep8-naming (naming conventions)
 # - PLE: pylint errors (subset of pylint)
@@ -73,7 +74,7 @@ target-version = "py38"
 # - RET: flake8-return (return statement improvements)
 # - SIM: flake8-simplify (code simplification opportunities)
 # - UP: pyupgrade (upgrade Python syntax for newer versions)
-extend-select = ["A", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP"]
+extend-select = ["A", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]

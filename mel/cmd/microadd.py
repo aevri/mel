@@ -54,7 +54,7 @@ def setup_parser(parser):
 
 def get_context_image_name(path):
     # Paths should alpha-sort to recent last, pick the first jpg
-    children = reversed(sorted(os.listdir(path)))
+    children = sorted(os.listdir(path), reverse=True)
     for name in children:
         # TODO: support more than just '.jpg'
         if name.lower().endswith(".jpg"):
