@@ -132,9 +132,9 @@ def find_mole_contour(contours, width_height):
     return mole_contour, mole_area
 
 
-class MoleAcquirer(object):
+class MoleAcquirer:
     def __init__(self):
-        super(MoleAcquirer, self).__init__()
+        super().__init__()
         self._is_locked = False
         self._last_stats = None
         self._last_stats_diff = None

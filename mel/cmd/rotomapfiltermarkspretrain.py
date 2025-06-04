@@ -50,7 +50,7 @@ def process_args(args):
                     image_path, moles, args.batch_size
                 )
             except Exception:
-                raise Exception("Error while processing {}".format(image_path))
+                raise Exception(f"Error while processing {image_path}")
 
 
 # -----------------------------------------------------------------------------

@@ -27,7 +27,7 @@ def get_comparison_images(path):
 
     for i, (path, img) in enumerate(zip(paths, images)):
         if img is None:
-            raise ValueError("Failed to load file: {}".format(path))
+            raise ValueError(f"Failed to load file: {path}")
         images[i] = mel.lib.image.montage_vertical(
             10, img, mel.lib.image.render_text_as_image(names[i])
         )[:]
@@ -38,7 +38,7 @@ def get_comparison_images(path):
 def process_args(args):
     images = get_comparison_images(args.PATH)
     if not images:
-        raise Exception("No microscope images at {}".format(args.PATH))
+        raise Exception(f"No microscope images at {args.PATH}")
 
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")
