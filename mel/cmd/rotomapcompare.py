@@ -350,11 +350,11 @@ class ImageCompareDisplay:
             self._show()
             return
 
-        left_target_pos = [
+        left_target_pos = next(
             pos
             for uuid_, pos in left_posinfo.uuid_points.items()
             if uuid_ == target_uuid
-        ][0]
+        )
 
         nearest_common_uuid = min(
             common_uuids,
@@ -369,11 +369,11 @@ class ImageCompareDisplay:
             )
         )
 
-        right_target_pos = [
+        right_target_pos = next(
             pos
             for uuid_, pos in right_posinfo.uuid_points.items()
             if uuid_ == target_uuid
-        ][0]
+        )
 
         right_dist = math.sqrt(
             mel.lib.math.distance_sq_2d(
