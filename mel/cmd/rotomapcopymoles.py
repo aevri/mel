@@ -82,7 +82,9 @@ def resize_image_if_needed(image, max_size=910):
     return resized_image, scale_factor
 
 
-def scale_coordinates_from_resized(x_resized, y_resized, scale_factor, original_width, original_height):
+def scale_coordinates_from_resized(
+    x_resized, y_resized, scale_factor, original_width, original_height
+):
     """Scale coordinates from resized image back to original image size.
 
     Args:
@@ -119,6 +121,20 @@ def scale_mole_coordinates_to_resized(mole, scale_factor):
     y_resized = int(mole["y"] * scale_factor)
 
     return x_resized, y_resized
+
+
+def calculate_dinov2_context_size(width, height):
+    """Calculate context size for DINOv2 that's a multiple of 14.
+
+    Args:
+        width, height: Image dimensions
+
+    Returns:
+        int: Context size that's a multiple of 14 and covers the image
+    """
+    max_dimension = max(width, height)
+    # Round up to nearest multiple of 14
+    return ((max_dimension + 13) // 14) * 14
 
 
 def copy_moles_from_sources(
@@ -159,9 +175,16 @@ def copy_moles_from_sources(
     tgt_resized_height, tgt_resized_width = tgt_resized.shape[:2]
 
     if tgt_scale_factor < 1.0:
-        print(f"Target scaled by factor {tgt_scale_factor:.3f} to {tgt_resized_width}x{tgt_resized_height}")
+        print(
+            f"Target scaled by factor {tgt_scale_factor:.3f} to {tgt_resized_width}x{tgt_resized_height}"
+        )
     else:
         print(f"Target kept at original size {tgt_resized_width}x{tgt_resized_height}")
+
+    # Calculate DINOv2 context size (must be multiple of 14)
+    tgt_context_size = calculate_dinov2_context_size(
+        tgt_resized_width, tgt_resized_height
+    )
 
     # Extract features for all patches in target
     print("Extracting target features...")
@@ -169,7 +192,7 @@ def copy_moles_from_sources(
         tgt_resized,
         tgt_resized_width // 2,
         tgt_resized_height // 2,
-        max(tgt_resized_width, tgt_resized_height),
+        tgt_context_size,
         model,
         transform,
         feature_dim,
@@ -209,9 +232,13 @@ def copy_moles_from_sources(
         src_resized_height, src_resized_width = src_resized.shape[:2]
 
         if src_scale_factor < 1.0:
-            print(f"  Source scaled by factor {src_scale_factor:.3f} to {src_resized_width}x{src_resized_height}")
+            print(
+                f"  Source scaled by factor {src_scale_factor:.3f} to {src_resized_width}x{src_resized_height}"
+            )
         else:
-            print(f"  Source kept at original size {src_resized_width}x{src_resized_height}")
+            print(
+                f"  Source kept at original size {src_resized_width}x{src_resized_height}"
+            )
 
         # Process each canonical mole in source
         for src_mole in src_canonical_moles:
@@ -241,11 +268,14 @@ def copy_moles_from_sources(
 
             # Extract features for source mole
             try:
+                src_context_size = calculate_dinov2_context_size(
+                    src_resized_width, src_resized_height
+                )
                 src_features = mel.lib.dinov2.extract_contextual_patch_feature(
                     src_resized,
                     src_x_resized,
                     src_y_resized,
-                    max(src_resized_width, src_resized_height),
+                    src_context_size,
                     model,
                     transform,
                     feature_dim,
@@ -285,20 +315,25 @@ def copy_moles_from_sources(
                 continue
 
             # Convert patch index to resized image coordinates
-            # Note: extract_all_contextual_features uses the larger dimension as context_size
-            context_size_used = max(tgt_resized_width, tgt_resized_height)
-            patches_per_side = context_size_used // 14  # DINOv2 patch size is 14x14
+            patches_per_side = tgt_context_size // 14  # DINOv2 patch size is 14x14
             patch_row = best_patch_idx // patches_per_side
             patch_col = best_patch_idx % patches_per_side
 
-            # Get center of patch in resized target coordinates
+            # Get center of patch in context coordinates
             patch_center_x = patch_col * 14 + 7
             patch_center_y = patch_row * 14 + 7
 
+            # Convert from context coordinates to resized image coordinates
+            # Context is centered on the resized image
+            context_offset_x = (tgt_context_size - tgt_resized_width) // 2
+            context_offset_y = (tgt_context_size - tgt_resized_height) // 2
+            resized_x = patch_center_x - context_offset_x
+            resized_y = patch_center_y - context_offset_y
+
             # Scale back to original target coordinates
             tgt_x_original, tgt_y_original = scale_coordinates_from_resized(
-                patch_center_x,
-                patch_center_y,
+                resized_x,
+                resized_y,
                 tgt_scale_factor,
                 tgt_original_width,
                 tgt_original_height,
