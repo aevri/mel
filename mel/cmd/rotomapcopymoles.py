@@ -5,7 +5,6 @@ import argparse
 import pathlib
 
 import cv2
-import numpy as np
 
 import mel.lib.dinov2
 import mel.lib.image
@@ -47,31 +46,29 @@ def setup_parser(parser):
         default="base",
         help="DINOv2 model size variant (default: base). Smaller models are faster.",
     )
-    parser.add_argument(
-        "--debug-images",
-        action="store_true",
-        help="Save debug images showing matches and similarities.",
-    )
 
 
-def resize_image_preserve_aspect(image, target_size=910):
-    """Resize image to fit in target_size x target_size while preserving aspect
-    ratio.
+def resize_image_if_needed(image, max_size=910):
+    """Resize image only if it exceeds max_size, preserving aspect ratio.
 
     Args:
         image: Input image array
-        target_size: Maximum dimension size (default: 910)
+        max_size: Maximum dimension size (default: 910)
 
     Returns:
-        tuple: (resized_image, scale_factor, padded_image)
-            - resized_image: Image resized to fit within target_size
-            - scale_factor: Factor to scale coordinates back to original
-            - padded_image: Image padded to exact target_size x target_size
+        tuple: (resized_image, scale_factor)
+            - resized_image: Image resized to fit within max_size (or original if no resize needed)
+            - scale_factor: Factor to scale coordinates back to original (1.0 if no resize)
     """
     height, width = image.shape[:2]
+    max_dimension = max(height, width)
+
+    # Only resize if the image exceeds max_size
+    if max_dimension <= max_size:
+        return image, 1.0
 
     # Calculate scale factor to fit the largest dimension
-    scale_factor = target_size / max(height, width)
+    scale_factor = max_size / max_dimension
 
     # Calculate new dimensions
     new_width = int(width * scale_factor)
@@ -82,45 +79,20 @@ def resize_image_preserve_aspect(image, target_size=910):
         image, (new_width, new_height), interpolation=cv2.INTER_LINEAR
     )
 
-    # Create padded image to exact target_size x target_size
-    padded_image = np.zeros((target_size, target_size, 3), dtype=image.dtype)
-
-    # Calculate padding offsets to center the image
-    y_offset = (target_size - new_height) // 2
-    x_offset = (target_size - new_width) // 2
-
-    # Place resized image in center of padded image
-    padded_image[y_offset : y_offset + new_height, x_offset : x_offset + new_width] = (
-        resized_image
-    )
-
-    return resized_image, scale_factor, padded_image
+    return resized_image, scale_factor
 
 
-def scale_coordinates_from_context(
-    x_context, y_context, context_size, scale_factor, original_width, original_height
-):
-    """Scale coordinates from context window back to original image size.
+def scale_coordinates_from_resized(x_resized, y_resized, scale_factor, original_width, original_height):
+    """Scale coordinates from resized image back to original image size.
 
     Args:
-        x_context, y_context: Coordinates in context window
-        context_size: Size of context window (910)
+        x_resized, y_resized: Coordinates in resized image
         scale_factor: Scale factor used to resize original image
         original_width, original_height: Original image dimensions
 
     Returns:
         tuple: (x_original, y_original) in original image coordinates
     """
-    # Remove padding offset to get coordinates in resized image
-    resized_width = int(original_width * scale_factor)
-    resized_height = int(original_height * scale_factor)
-
-    x_offset = (context_size - resized_width) // 2
-    y_offset = (context_size - resized_height) // 2
-
-    x_resized = x_context - x_offset
-    y_resized = y_context - y_offset
-
     # Scale back to original image size
     x_original = int(x_resized / scale_factor)
     y_original = int(y_resized / scale_factor)
@@ -132,35 +104,21 @@ def scale_coordinates_from_context(
     return x_original, y_original
 
 
-def scale_mole_coordinates_to_context(
-    mole, scale_factor, context_size, original_width, original_height
-):
-    """Scale mole coordinates from original image to context window.
+def scale_mole_coordinates_to_resized(mole, scale_factor):
+    """Scale mole coordinates from original image to resized image.
 
     Args:
         mole: Mole dictionary with x, y coordinates
         scale_factor: Scale factor used to resize original image
-        context_size: Size of context window (910)
-        original_width, original_height: Original image dimensions
 
     Returns:
-        tuple: (x_context, y_context) in context window coordinates
+        tuple: (x_resized, y_resized) in resized image coordinates
     """
     # Scale coordinates to resized image
     x_resized = int(mole["x"] * scale_factor)
     y_resized = int(mole["y"] * scale_factor)
 
-    # Add padding offset to get coordinates in context window
-    resized_width = int(original_width * scale_factor)
-    resized_height = int(original_height * scale_factor)
-
-    x_offset = (context_size - resized_width) // 2
-    y_offset = (context_size - resized_height) // 2
-
-    x_context = x_resized + x_offset
-    y_context = y_resized + y_offset
-
-    return x_context, y_context
+    return x_resized, y_resized
 
 
 def copy_moles_from_sources(
@@ -170,8 +128,7 @@ def copy_moles_from_sources(
     model,
     transform,
     feature_dim,
-    context_size=910,
-    debug_images=False,
+    max_size=910,
 ):
     """Copy canonical moles from source images to target image using DINOv2
     matching.
@@ -183,8 +140,7 @@ def copy_moles_from_sources(
         model: DINOv2 model wrapper
         transform: Image transform pipeline
         feature_dim: DINOv2 feature dimension
-        context_size: Context window size (default: 910)
-        debug_images: Whether to save debug images
+        max_size: Maximum image dimension (default: 910)
 
     Returns:
         int: Number of moles copied
@@ -197,23 +153,23 @@ def copy_moles_from_sources(
     print(f"Target image: {tgt_path} ({tgt_image.shape[1]}x{tgt_image.shape[0]})")
     print(f"Target has {len(tgt_moles)} existing moles")
 
-    # Resize target image preserving aspect ratio
-    _, tgt_scale_factor, tgt_padded = resize_image_preserve_aspect(
-        tgt_image_rgb, context_size
-    )
+    # Resize target image if needed
+    tgt_resized, tgt_scale_factor = resize_image_if_needed(tgt_image_rgb, max_size)
     tgt_original_height, tgt_original_width = tgt_image.shape[:2]
+    tgt_resized_height, tgt_resized_width = tgt_resized.shape[:2]
 
-    print(
-        f"Target scaled by factor {tgt_scale_factor:.3f} to fit {context_size}x{context_size}"
-    )
+    if tgt_scale_factor < 1.0:
+        print(f"Target scaled by factor {tgt_scale_factor:.3f} to {tgt_resized_width}x{tgt_resized_height}")
+    else:
+        print(f"Target kept at original size {tgt_resized_width}x{tgt_resized_height}")
 
     # Extract features for all patches in target
     print("Extracting target features...")
     tgt_all_features = mel.lib.dinov2.extract_all_contextual_features(
-        tgt_padded,
-        context_size // 2,
-        context_size // 2,
-        context_size,
+        tgt_resized,
+        tgt_resized_width // 2,
+        tgt_resized_height // 2,
+        max(tgt_resized_width, tgt_resized_height),
         model,
         transform,
         feature_dim,
@@ -247,13 +203,15 @@ def copy_moles_from_sources(
 
         print(f"  Found {len(src_canonical_moles)} canonical moles")
 
-        # Resize source image preserving aspect ratio
-        _, src_scale_factor, src_padded = resize_image_preserve_aspect(
-            src_image_rgb, context_size
-        )
-        src_original_height, src_original_width = src_image.shape[:2]
+        # Resize source image if needed
+        src_resized, src_scale_factor = resize_image_if_needed(src_image_rgb, max_size)
+        _, _ = src_image.shape[:2]
+        src_resized_height, src_resized_width = src_resized.shape[:2]
 
-        print(f"  Source scaled by factor {src_scale_factor:.3f}")
+        if src_scale_factor < 1.0:
+            print(f"  Source scaled by factor {src_scale_factor:.3f} to {src_resized_width}x{src_resized_height}")
+        else:
+            print(f"  Source kept at original size {src_resized_width}x{src_resized_height}")
 
         # Process each canonical mole in source
         for src_mole in src_canonical_moles:
@@ -266,32 +224,28 @@ def copy_moles_from_sources(
                 )
                 continue
 
-            # Scale source mole coordinates to context window
-            src_x_context, src_y_context = scale_mole_coordinates_to_context(
-                src_mole,
-                src_scale_factor,
-                context_size,
-                src_original_width,
-                src_original_height,
+            # Scale source mole coordinates to resized image
+            src_x_resized, src_y_resized = scale_mole_coordinates_to_resized(
+                src_mole, src_scale_factor
             )
 
-            # Check if source mole is within padded area
+            # Check if source mole is within resized image
             if (
-                src_x_context < 0
-                or src_x_context >= context_size
-                or src_y_context < 0
-                or src_y_context >= context_size
+                src_x_resized < 0
+                or src_x_resized >= src_resized_width
+                or src_y_resized < 0
+                or src_y_resized >= src_resized_height
             ):
-                print(f"    Skipping mole {uuid}: outside context window")
+                print(f"    Skipping mole {uuid}: outside resized image")
                 continue
 
             # Extract features for source mole
             try:
                 src_features = mel.lib.dinov2.extract_contextual_patch_feature(
-                    src_padded,
-                    src_x_context,
-                    src_y_context,
-                    context_size,
+                    src_resized,
+                    src_x_resized,
+                    src_y_resized,
+                    max(src_resized_width, src_resized_height),
                     model,
                     transform,
                     feature_dim,
@@ -330,20 +284,21 @@ def copy_moles_from_sources(
                 )
                 continue
 
-            # Convert patch index to context coordinates
-            patches_per_side = context_size // 14  # DINOv2 patch size is 14x14
+            # Convert patch index to resized image coordinates
+            # Note: extract_all_contextual_features uses the larger dimension as context_size
+            context_size_used = max(tgt_resized_width, tgt_resized_height)
+            patches_per_side = context_size_used // 14  # DINOv2 patch size is 14x14
             patch_row = best_patch_idx // patches_per_side
             patch_col = best_patch_idx % patches_per_side
 
-            # Get center of patch in context coordinates
+            # Get center of patch in resized target coordinates
             patch_center_x = patch_col * 14 + 7
             patch_center_y = patch_row * 14 + 7
 
             # Scale back to original target coordinates
-            tgt_x_original, tgt_y_original = scale_coordinates_from_context(
+            tgt_x_original, tgt_y_original = scale_coordinates_from_resized(
                 patch_center_x,
                 patch_center_y,
-                context_size,
                 tgt_scale_factor,
                 tgt_original_width,
                 tgt_original_height,
@@ -413,7 +368,6 @@ def process_args(args):
     tgt_path = args.TGT_JPG
     similarity_threshold = args.similarity_threshold
     dino_size = args.dino_size
-    debug_images = args.debug_images
 
     # Validate arguments
     if tgt_path in src_paths:
@@ -456,7 +410,6 @@ def process_args(args):
             model,
             transform,
             feature_dim,
-            debug_images=debug_images,
         )
 
         if moles_copied > 0:
