@@ -10,6 +10,11 @@ import mel.lib.dinov2
 import mel.lib.image
 import mel.rotomap.moles
 
+# Constants
+DEFAULT_MAX_SIZE = 910
+DINOV2_PATCH_SIZE = 14
+DINOV2_PATCH_CENTER_OFFSET = 7  # DINOV2_PATCH_SIZE // 2
+
 
 def _existing_file_path(string):
     """Argparse type for validating that a file exists."""
@@ -48,7 +53,7 @@ def setup_parser(parser):
     )
 
 
-def resize_image_if_needed(image, max_size=910):
+def resize_image_if_needed(image, max_size=DEFAULT_MAX_SIZE):
     """Resize image only if it exceeds max_size, preserving aspect ratio.
 
     Args:
@@ -124,17 +129,104 @@ def scale_mole_coordinates_to_resized(mole, scale_factor):
 
 
 def calculate_dinov2_context_size(width, height):
-    """Calculate context size for DINOv2 that's a multiple of 14.
+    """Calculate context size for DINOv2 that's a multiple of patch size.
 
     Args:
         width, height: Image dimensions
 
     Returns:
-        int: Context size that's a multiple of 14 and covers the image
+        int: Context size that's a multiple of DINOV2_PATCH_SIZE and covers the image
     """
     max_dimension = max(width, height)
-    # Round up to nearest multiple of 14
-    return ((max_dimension + 13) // 14) * 14
+    # Round up to nearest multiple of DINOV2_PATCH_SIZE
+    return (
+        (max_dimension + DINOV2_PATCH_SIZE - 1) // DINOV2_PATCH_SIZE
+    ) * DINOV2_PATCH_SIZE
+
+
+def _is_mole_within_bounds(x, y, width, height):
+    """Check if mole coordinates are within image bounds.
+
+    Args:
+        x, y: Mole coordinates
+        width, height: Image dimensions
+
+    Returns:
+        bool: True if mole is within bounds
+    """
+    return 0 <= x < width and 0 <= y < height
+
+
+def _convert_mole_to_patch_index(
+    x_resized, y_resized, context_size, resized_width, resized_height
+):
+    """Convert mole coordinates to DINOv2 patch index.
+
+    Args:
+        x_resized, y_resized: Mole coordinates in resized image
+        context_size: DINOv2 context size
+        resized_width, resized_height: Resized image dimensions
+
+    Returns:
+        tuple: (patch_index, patches_per_side) or (None, None) if out of bounds
+    """
+    # Convert mole coordinates to context coordinates
+    context_offset_x = (context_size - resized_width) // 2
+    context_offset_y = (context_size - resized_height) // 2
+    x_context = x_resized + context_offset_x
+    y_context = y_resized + context_offset_y
+
+    # Validate context coordinates are within bounds
+    if (
+        x_context < 0
+        or y_context < 0
+        or x_context >= context_size
+        or y_context >= context_size
+    ):
+        return None, None
+
+    # Convert to patch index
+    patch_col = x_context // DINOV2_PATCH_SIZE
+    patch_row = y_context // DINOV2_PATCH_SIZE
+    patches_per_side = context_size // DINOV2_PATCH_SIZE
+
+    # Validate patch indices are within bounds
+    if patch_col >= patches_per_side or patch_row >= patches_per_side:
+        return None, None
+
+    patch_idx = patch_row * patches_per_side + patch_col
+
+    return patch_idx, patches_per_side
+
+
+def _convert_patch_index_to_coordinates(
+    patch_idx, patches_per_side, context_size, resized_width, resized_height
+):
+    """Convert DINOv2 patch index to image coordinates.
+
+    Args:
+        patch_idx: Patch index
+        patches_per_side: Number of patches per side
+        context_size: DINOv2 context size
+        resized_width, resized_height: Resized image dimensions
+
+    Returns:
+        tuple: (x_resized, y_resized) coordinates in resized image
+    """
+    patch_row = patch_idx // patches_per_side
+    patch_col = patch_idx % patches_per_side
+
+    # Get center of patch in context coordinates
+    patch_center_x = patch_col * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
+    patch_center_y = patch_row * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
+
+    # Convert from context coordinates to resized image coordinates
+    context_offset_x = (context_size - resized_width) // 2
+    context_offset_y = (context_size - resized_height) // 2
+    resized_x = patch_center_x - context_offset_x
+    resized_y = patch_center_y - context_offset_y
+
+    return resized_x, resized_y
 
 
 def copy_moles_from_sources(
@@ -144,7 +236,7 @@ def copy_moles_from_sources(
     model,
     transform,
     feature_dim,
-    max_size=910,
+    max_size=DEFAULT_MAX_SIZE,
 ):
     """Copy canonical moles from source images to target image using DINOv2
     matching.
@@ -228,7 +320,6 @@ def copy_moles_from_sources(
 
         # Resize source image if needed
         src_resized, src_scale_factor = resize_image_if_needed(src_image_rgb, max_size)
-        _, _ = src_image.shape[:2]
         src_resized_height, src_resized_width = src_resized.shape[:2]
 
         if src_scale_factor < 1.0:
@@ -272,30 +363,27 @@ def copy_moles_from_sources(
             )
 
             # Check if source mole is within resized image
-            if (
-                src_x_resized < 0
-                or src_x_resized >= src_resized_width
-                or src_y_resized < 0
-                or src_y_resized >= src_resized_height
+            if not _is_mole_within_bounds(
+                src_x_resized, src_y_resized, src_resized_width, src_resized_height
             ):
                 print(f"    Skipping mole {uuid}: outside resized image")
                 continue
 
             # Get features for source mole from pre-extracted features
             try:
-                # Convert mole coordinates to context coordinates
-                context_offset_x = (src_context_size - src_resized_width) // 2
-                context_offset_y = (src_context_size - src_resized_height) // 2
-                src_x_context = src_x_resized + context_offset_x
-                src_y_context = src_y_resized + context_offset_y
-
-                # Convert to patch index
-                patch_col = src_x_context // 14
-                patch_row = src_y_context // 14
-                patches_per_side = src_context_size // 14
-                patch_idx = patch_row * patches_per_side + patch_col
+                patch_idx, _ = _convert_mole_to_patch_index(
+                    src_x_resized,
+                    src_y_resized,
+                    src_context_size,
+                    src_resized_width,
+                    src_resized_height,
+                )
 
                 # Check if patch index is valid
+                if patch_idx is None:
+                    print(f"    Skipping mole {uuid}: out of context bounds")
+                    continue
+
                 if patch_idx >= src_all_features.shape[0]:
                     print(
                         f"    Skipping mole {uuid}: patch index {patch_idx} out of bounds"
@@ -304,12 +392,11 @@ def copy_moles_from_sources(
 
                 # Extract features for this specific patch
                 src_features = src_all_features[patch_idx]
-            except Exception as e:
+            except (IndexError, ValueError) as e:
                 print(f"    Error getting features for mole {uuid}: {e}")
                 continue
 
             # Find best match in target using cosine similarity
-            # Import torch lazily
             import torch
 
             # Normalize features for cosine similarity
@@ -339,20 +426,14 @@ def copy_moles_from_sources(
                 continue
 
             # Convert patch index to resized image coordinates
-            patches_per_side = tgt_context_size // 14  # DINOv2 patch size is 14x14
-            patch_row = best_patch_idx // patches_per_side
-            patch_col = best_patch_idx % patches_per_side
-
-            # Get center of patch in context coordinates
-            patch_center_x = patch_col * 14 + 7
-            patch_center_y = patch_row * 14 + 7
-
-            # Convert from context coordinates to resized image coordinates
-            # Context is centered on the resized image
-            context_offset_x = (tgt_context_size - tgt_resized_width) // 2
-            context_offset_y = (tgt_context_size - tgt_resized_height) // 2
-            resized_x = patch_center_x - context_offset_x
-            resized_y = patch_center_y - context_offset_y
+            tgt_patches_per_side = tgt_context_size // DINOV2_PATCH_SIZE
+            resized_x, resized_y = _convert_patch_index_to_coordinates(
+                best_patch_idx,
+                tgt_patches_per_side,
+                tgt_context_size,
+                tgt_resized_width,
+                tgt_resized_height,
+            )
 
             # Scale back to original target coordinates
             tgt_x_original, tgt_y_original = scale_coordinates_from_resized(
@@ -421,7 +502,7 @@ def copy_moles_from_sources(
 
 
 def process_args(args):
-    # Import torchvision lazily
+    # Import dependencies lazily
     import torchvision.transforms as transforms
 
     src_paths = args.SRC_JPGS
@@ -479,8 +560,14 @@ def process_args(args):
         print("Operation completed: no moles copied")
         return 0
 
+    except OSError as e:
+        print(f"Error accessing files: {e}")
+        return 1
+    except (ValueError, RuntimeError) as e:
+        print(f"Error processing moles: {e}")
+        return 1
     except Exception as e:
-        print(f"Error copying moles: {e}")
+        print(f"Unexpected error copying moles: {e}")
         return 1
 
 
