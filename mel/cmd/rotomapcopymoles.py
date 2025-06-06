@@ -208,7 +208,7 @@ def copy_moles_from_sources(
 
     # Process each source image
     for src_path in src_paths:
-        print(f"\nProcessing source: {src_path}")
+        print(f"Processing source: {src_path}")
 
         # Load source image and moles
         src_image = mel.lib.image.load_image(src_path)
@@ -240,6 +240,21 @@ def copy_moles_from_sources(
                 f"  Source kept at original size {src_resized_width}x{src_resized_height}"
             )
 
+        # Extract features for entire source image once
+        src_context_size = calculate_dinov2_context_size(
+            src_resized_width, src_resized_height
+        )
+        print(f"  Extracting source features (context size: {src_context_size})...")
+        src_all_features = mel.lib.dinov2.extract_all_contextual_features(
+            src_resized,
+            src_resized_width // 2,
+            src_resized_height // 2,
+            src_context_size,
+            model,
+            transform,
+            feature_dim,
+        )
+
         # Process each canonical mole in source
         for src_mole in src_canonical_moles:
             uuid = src_mole["uuid"]
@@ -266,22 +281,31 @@ def copy_moles_from_sources(
                 print(f"    Skipping mole {uuid}: outside resized image")
                 continue
 
-            # Extract features for source mole
+            # Get features for source mole from pre-extracted features
             try:
-                src_context_size = calculate_dinov2_context_size(
-                    src_resized_width, src_resized_height
-                )
-                src_features = mel.lib.dinov2.extract_contextual_patch_feature(
-                    src_resized,
-                    src_x_resized,
-                    src_y_resized,
-                    src_context_size,
-                    model,
-                    transform,
-                    feature_dim,
-                )
+                # Convert mole coordinates to context coordinates
+                context_offset_x = (src_context_size - src_resized_width) // 2
+                context_offset_y = (src_context_size - src_resized_height) // 2
+                src_x_context = src_x_resized + context_offset_x
+                src_y_context = src_y_resized + context_offset_y
+
+                # Convert to patch index
+                patch_col = src_x_context // 14
+                patch_row = src_y_context // 14
+                patches_per_side = src_context_size // 14
+                patch_idx = patch_row * patches_per_side + patch_col
+
+                # Check if patch index is valid
+                if patch_idx >= src_all_features.shape[0]:
+                    print(
+                        f"    Skipping mole {uuid}: patch index {patch_idx} out of bounds"
+                    )
+                    continue
+
+                # Extract features for this specific patch
+                src_features = src_all_features[patch_idx]
             except Exception as e:
-                print(f"    Error extracting features for mole {uuid}: {e}")
+                print(f"    Error getting features for mole {uuid}: {e}")
                 continue
 
             # Find best match in target using cosine similarity
@@ -388,9 +412,10 @@ def copy_moles_from_sources(
     # Save updated target moles
     if moles_copied > 0:
         mel.rotomap.moles.save_image_moles(tgt_moles, tgt_path)
-        print(f"\nSuccessfully copied {moles_copied} moles to {tgt_path}")
+        print(f"Successfully copied {moles_copied} moles to {tgt_path}")
+
     else:
-        print(f"\nNo moles were copied to {tgt_path}")
+        print(f"No moles were copied to {tgt_path}")
 
     return moles_copied
 
@@ -448,9 +473,10 @@ def process_args(args):
         )
 
         if moles_copied > 0:
-            print(f"\nOperation completed: {moles_copied} moles copied")
+            print(f"Operation completed: {moles_copied} moles copied")
+
             return 0
-        print("\nOperation completed: no moles copied")
+        print("Operation completed: no moles copied")
         return 0
 
     except Exception as e:
