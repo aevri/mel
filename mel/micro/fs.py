@@ -96,7 +96,7 @@ def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple)
 
     if image_names:
         image_names.sort()
-        return context_image_name_tuple_tuple + (tuple(image_names),)
+        return (*context_image_name_tuple_tuple, tuple(image_names))
     return context_image_name_tuple_tuple
 
 
