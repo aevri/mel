@@ -310,7 +310,7 @@ def annotate_image(original, is_rot_sensitive):
 
 def find_mole_ellipse(original, centre, radius):
     lefttop = centre - (radius, radius)
-    rightbottom = (*centre, radius + 1, radius + 1)
+    rightbottom = centre + (radius + 1, radius + 1)
 
     original = mel.lib.image.slice_square_or_none(original, lefttop, rightbottom)
 
