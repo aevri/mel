@@ -12,7 +12,7 @@ def test_find_mole_ellipse_vector_operations():
     This test specifically checks for the bug where rightbottom calculation
     creates a 4-element tuple instead of a 2-element numpy array.
     """
-    # Create a simple test image (black square with white circle in center)
+    # Create a simple test image (black square)
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     
     # Create centre as numpy array (as it would come from guess_mole_pos)
