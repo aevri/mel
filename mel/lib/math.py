@@ -82,7 +82,7 @@ def rads_to_degs(theta):
 
 def raise_if_not_int_vector2(v):
     if not isinstance(v, numpy.ndarray):
-        raise ValueError(f"{v}:{repr(v)}:{type(v)} is not a numpy array")
+        raise ValueError(f"{v}:{v!r}:{type(v)} is not a numpy array")
     if not numpy.issubdtype(v.dtype.type, numpy.integer):
         raise ValueError(f"{v}:{v.dtype} is not an int vector2")
 
