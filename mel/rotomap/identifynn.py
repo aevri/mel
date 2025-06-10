@@ -4,6 +4,7 @@ import collections
 import json
 
 import numpy
+import pytest
 import pytorch_lightning as pl
 import torch.utils.data
 import tqdm
@@ -348,7 +349,7 @@ def make_data(repo_path, data_config, channel_cache=None):
     )
 
     if data_config["do_augmentation"]:
-        assert False
+        pytest.fail("Augmentation not implemented")
 
     image_size = data_config["image_size"]
     do_channels = data_config["do_channels"]
@@ -690,7 +691,7 @@ def extend_dataset_by_frame_data(
     extend_dataset("part_index", [(uuid_, part_index) for uuid_ in uuid_list])
 
     if do_channels:
-        assert False, "Implement augmentations"
+        pytest.fail("Implement augmentations")
     else:
         extend_dataset(
             "molemap",

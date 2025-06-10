@@ -75,7 +75,8 @@ target-version = "py38"
 # - SIM: flake8-simplify (code simplification opportunities)
 # - UP: pyupgrade (upgrade Python syntax for newer versions)
 # - RUF: ruff-specific (ruff-specific linting rules)
-extend-select = ["A", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF"]
+# - PT: flake8-pytest-style (pytest style improvements)
+extend-select = ["A", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
