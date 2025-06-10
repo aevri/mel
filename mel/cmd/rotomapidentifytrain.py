@@ -34,8 +34,8 @@ import warnings
 def proportion_arg(x):
     try:
         x = float(x)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"'{x}' is not a float")
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(f"'{x}' is not a float") from e
 
     if not (x > 0.0 and x <= 1.0) and not x == -1:
         raise argparse.ArgumentTypeError(

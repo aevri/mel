@@ -110,8 +110,8 @@ def main():
     # vulture will report these as unused unless we do this
     #
     # pylint: disable=pointless-statement
-    subparsers.required
-    subparsers.dest
+    _ = subparsers.required
+    _ = subparsers.dest
     # pylint: enable=pointless-statement
 
     parser_map = {

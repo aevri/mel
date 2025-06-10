@@ -317,7 +317,7 @@ def make_model_and_fit(
         training_data, batch_size=batch_size, shuffle=True
     )
 
-    for batch in training_batcher:
+    for _batch in training_batcher:
         pass
 
     validation_batcher = torch.utils.data.DataLoader(

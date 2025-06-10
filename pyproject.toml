@@ -60,6 +60,7 @@ target-version = "py38"
 [tool.ruff.lint]
 # Rule codes enabled for static analysis:
 # - A: flake8-builtins (prevent shadowing built-ins)
+# - B: flake8-bugbear (likely bugs and design problems)
 # - C4: flake8-comprehensions (better list/set/dict comprehensions)
 # - FURB: refurb (modernize Python code)
 # - N: pep8-naming (naming conventions)
@@ -76,7 +77,7 @@ target-version = "py38"
 # - UP: pyupgrade (upgrade Python syntax for newer versions)
 # - RUF: ruff-specific (ruff-specific linting rules)
 # - PT: flake8-pytest-style (pytest style improvements)
-extend-select = ["A", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT"]
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
