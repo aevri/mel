@@ -73,7 +73,7 @@ def process_args(args):
 
     # Point to moles on individual detail images
     mole_images = []
-    for index, mole in enumerate(detail_mole_pos):
+    for _index, mole in enumerate(detail_mole_pos):
         indicated_image = numpy.copy(detail_image)
         mel.lib.common.indicate_mole(indicated_image, mole)
         indicated_image = mel.lib.common.shrink_to_max_dimension(

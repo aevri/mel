@@ -26,8 +26,8 @@ def main():
     # vulture will report these as unused unless we do this
     #
     # pylint: disable=pointless-statement
-    subparsers.required
-    subparsers.dest
+    _ = subparsers.required
+    _ = subparsers.dest
     # pylint: enable=pointless-statement
 
     _setup_parser_for_module(subparsers, mel.cmddebug.benchautomark, "bench-automark")

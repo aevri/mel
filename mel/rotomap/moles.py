@@ -106,7 +106,7 @@ class MoleData:
         # vulture will report this as unused unless we do this
         #
         # pylint: disable=pointless-statement
-        self.uuid_points_list
+        _ = self.uuid_points_list
         # pylint: enable=pointless-statement
 
         # self.canonical_uuids = frozenset(
@@ -120,7 +120,7 @@ def make_argparse_rotomap_directory(path):
     try:
         return RotomapDirectory(path)
     except ValueError as e:
-        raise argparse.ArgumentTypeError(str(e))
+        raise argparse.ArgumentTypeError(str(e)) from e
 
 
 def make_argparse_image_moles(path):
@@ -134,7 +134,7 @@ def make_argparse_image_moles(path):
         else:
             yield from RotomapDirectory(path).yield_mole_lists()
     except ValueError as e:
-        raise argparse.ArgumentTypeError(str(e))
+        raise argparse.ArgumentTypeError(str(e)) from e
 
 
 def make_argparse_image_moles_tree(path):
