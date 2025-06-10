@@ -524,7 +524,7 @@ class Editor:
             transition_func()
 
     def show_next_n(self, number_to_advance):
-        for i in range(number_to_advance):
+        for _i in range(number_to_advance):
             self.moledata.increment()
             self.moledata.get_image()
         self.show_current()

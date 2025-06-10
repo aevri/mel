@@ -267,7 +267,7 @@ class ImageCompareDisplay:
         self._rotations = [0 for _ in path_images_tuple]
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
-        for i, rotomap in enumerate(self._rotomaps):
+        for i, _rotomap in enumerate(self._rotomaps):
             centre_index, _ = min(
                 enumerate(self._rotomaps[i]),
                 key=lambda x: x[1].ellipse_xpos * x[1].ellipse_xpos,

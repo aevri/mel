@@ -83,7 +83,7 @@ def _zip_samelen(*args):
     while True:
         values = []
         num_stopped = 0
-        for i, it in enumerate(iterators):
+        for _i, it in enumerate(iterators):
             try:
                 values.append(next(it))
             except StopIteration:
