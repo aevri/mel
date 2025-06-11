@@ -47,7 +47,7 @@ def mask_biggest_region(mask):
     mask = numpy.zeros(mask.shape, numpy.uint8)
     if max_index is not None:
         c = contours[max_index]
-        cv2.drawContours(mask, [c], -1, 255, -1)
+        cv2.drawContours(mask, [c], -1, [255], -1)
 
     return mask
 

@@ -345,7 +345,7 @@ def best_baseless_offset_theory(from_moles, to_moles):
                 and best_theory is not None
                 and len(theory) == len(best_theory)
             ):
-                if dist_sq < best_theory_dist_sq:
+                if best_theory_dist_sq is None or dist_sq < best_theory_dist_sq:
                     new_best = True
                 if (
                     not new_best
