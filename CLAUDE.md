@@ -7,6 +7,12 @@
 - Run unit tests: `./meta/unit_tests.sh`
 - Fix formatting: `./meta/autofix.sh`
 
+## Optional Type Checking
+- Run type checking: `pyright` (checks entire codebase)
+- Run type checking on specific files: `pyright path/to/file.py`
+- Run type checking on directory: `pyright path/to/directory/`
+- Note: Install dev dependencies first with `uv pip install -e '.[dev]'`
+
 ## Pre-commit Checklist
 - Fix formatting
 - Fix all tests
