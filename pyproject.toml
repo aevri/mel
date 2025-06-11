@@ -27,6 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "docformatter",
+    "pyright",
     "pytest",
     "ruff",
     "vulture",
@@ -82,3 +83,10 @@ extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
 exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
+
+[tool.pyright]
+# Minimal strictness configuration
+pythonVersion = "3.8"
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingTypeStubs = "none"

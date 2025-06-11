@@ -133,6 +133,8 @@ def box_moles(image, mole_positions, thickness):
 
 def connect_moles(image, mole_positions):
     for mole_a, mole_b in yield_neighbors(mole_positions):
+        if mole_a is None or mole_b is None:
+            continue
         thickness = max(mole_a[2], mole_b[2])
 
         # draw connection
