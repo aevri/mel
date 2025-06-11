@@ -771,7 +771,12 @@ class Model(torch.nn.Module):
 
     def forward(self, data):
         part, *rest = data
-        part_embedding = self.embedding(part)
+
+        if self.embedding is not None:
+            part_embedding = self.embedding(part)
+        else:
+            # Create zero tensor if no embedding
+            part_embedding = torch.zeros((part.size(0), 0))
 
         convs_out = []
         for i, image in enumerate(rest):
@@ -781,7 +786,9 @@ class Model(torch.nn.Module):
 
         combined = torch.cat((*convs_out, part_embedding), 1)
 
-        return [self.fc(combined)]
+        if self.fc is not None:
+            return [self.fc(combined)]
+        return [combined]
 
     def reset_num_parts_classes(self, new_num_parts, new_num_classes):
         self.end_width -= self.embedding_len
