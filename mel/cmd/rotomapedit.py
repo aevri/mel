@@ -116,6 +116,9 @@ class MoveController:
         editor.move_nearest_mole(mouse_x, mouse_y)
         return True
 
+    def pre_key(self, editor, key):
+        pass
+
     def on_key(self, editor, key):
         pass
 
