@@ -64,6 +64,7 @@ import mel.rotomap.display
 import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
+from mel.lib.ui import set_clipboard_contents
 
 # Radius within which we should look for moles, in later work perhaps we'll
 # make this configurable by the user.
@@ -205,7 +206,7 @@ class MoleEditController:
                 self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                 print(self.mole_uuid_list[0])
                 if self.copy_to_clipboard:
-                    mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
+                    set_clipboard_contents(self.mole_uuid_list[0])
             else:
                 editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
         elif key_mods & pygame.KMOD_SHIFT:
@@ -269,9 +270,7 @@ class MoleEditController:
             self.mole_uuid_list[0] = editor.get_mole_uuid(self.mouse_x, self.mouse_y)
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(  # noqa: F823
-                    self.mole_uuid_list[0]
-                )
+                set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
             # Auto-identify
             #
@@ -575,10 +574,9 @@ def process_args(args):
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    with (
-        mel.lib.common.timelogger_context("rotomap-edit") as logger,
-        mel.lib.fullscreenui.fullscreen_context() as screen,
-    ):
+    with mel.lib.common.timelogger_context(
+        "rotomap-edit"
+    ) as logger, mel.lib.fullscreenui.fullscreen_context() as screen:
         editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
         if args.advance_n_frames:

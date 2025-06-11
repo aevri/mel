@@ -26,10 +26,9 @@ def process_args(args):
     # startup-text where it is not actually used.
     import pygame
 
-    with (
-        mel.lib.common.timelogger_context("rotomap-organise") as logger,
-        mel.lib.fullscreenui.fullscreen_context() as screen,
-    ):
+    with mel.lib.common.timelogger_context(
+        "rotomap-organise"
+    ) as logger, mel.lib.fullscreenui.fullscreen_context() as screen:
         display = OrganiserDisplay(
             logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
         )
@@ -69,13 +68,14 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
         self._logger = logger
 
     def reset_logger(self):
-        self._logger.reset(
-            mode="view",
-            path=os.path.relpath(
-                os.path.abspath(self.image_path),
-                start=self._melroot,
-            ),
-        )
+        if self.image_path is not None:
+            self._logger.reset(
+                mode="view",
+                path=os.path.relpath(
+                    os.path.abspath(self.image_path),
+                    start=self._melroot,
+                ),
+            )
 
     def delete_image(self):
         if self._image_list:
