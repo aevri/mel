@@ -113,6 +113,7 @@ def process_args(args):
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
+    from pytorch_lightning import loggers
     import torch
 
     import mel.lib.ellipsespace
@@ -187,7 +188,7 @@ def process_args(args):
 
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
-        trainer_kwargs["logger"] = pl.loggers.WandbLogger(
+        trainer_kwargs["logger"] = loggers.WandbLogger(
             project=wandb_project, name=wandb_run_name
         )
 
