@@ -229,6 +229,174 @@ def _convert_patch_index_to_coordinates(
     return resized_x, resized_y
 
 
+def _get_top_k_candidates(similarities, k=5):
+    """Get top-k most similar patches with their scores.
+
+    Args:
+        similarities: Tensor of similarity scores for all patches
+        k: Number of top candidates to return
+
+    Returns:
+        list: List of candidate dictionaries with patch_idx and similarity
+    """
+    import torch
+
+    top_k_values, top_k_indices = torch.topk(similarities, k=min(k, len(similarities)))
+
+    candidates = []
+    for i in range(len(top_k_values)):
+        candidates.append(
+            {
+                "patch_idx": top_k_indices[i].item(),
+                "similarity": top_k_values[i].item(),
+            }
+        )
+
+    return candidates
+
+
+def _calculate_distance(x1, y1, x2, y2):
+    """Calculate Euclidean distance between two points."""
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+
+def _score_spatial_consistency(
+    candidate_coords, src_mole, other_src_moles, other_matched_moles
+):
+    """Score how well this candidate preserves spatial relationships.
+
+    Args:
+        candidate_coords: (x, y) coordinates of the candidate in target image
+        src_mole: Source mole being matched
+        other_src_moles: All other source moles for spatial reference
+        other_matched_moles: Already matched moles in target
+
+    Returns:
+        float: Spatial consistency score (0.0 to 1.0)
+    """
+    if len(other_matched_moles) < 1:
+        return 0.0  # Need at least 1 other mole for spatial consistency
+
+    consistency_scores = []
+    candidate_x, candidate_y = candidate_coords
+
+    for matched_mole in other_matched_moles:
+        # Find corresponding source mole
+        src_reference = None
+        for src_ref in other_src_moles:
+            if src_ref["uuid"] == matched_mole["uuid"]:
+                src_reference = src_ref
+                break
+
+        if src_reference is None:
+            continue
+
+        # Calculate source distance between moles
+        src_dist = _calculate_distance(
+            src_mole["x"], src_mole["y"], src_reference["x"], src_reference["y"]
+        )
+
+        # Calculate target distance between candidate and matched mole
+        tgt_dist = _calculate_distance(
+            candidate_x, candidate_y, matched_mole["tgt_x"], matched_mole["tgt_y"]
+        )
+
+        # Score how well distances are preserved
+        if src_dist > 0:
+            distance_ratio = tgt_dist / src_dist
+            # Penalize deviations from 1.0 (perfect preservation)
+            # Use exponential decay for smooth scoring
+            consistency_score = max(0.0, 1.0 - abs(distance_ratio - 1.0))
+            consistency_scores.append(consistency_score)
+
+    return (
+        sum(consistency_scores) / len(consistency_scores) if consistency_scores else 0.0
+    )
+
+
+def _evaluate_candidates(
+    candidates,
+    src_mole,
+    other_src_moles,
+    other_matched_moles,
+    tgt_context_size,
+    tgt_resized_width,
+    tgt_resized_height,
+    tgt_scale_factor,
+    tgt_original_width,
+    tgt_original_height,
+    similarity_weight=0.7,
+    spatial_weight=0.3,
+):
+    """Evaluate candidates using both similarity and spatial consistency.
+
+    Args:
+        candidates: List of candidate dictionaries
+        src_mole: Source mole being matched
+        other_src_moles: All other source moles for spatial reference
+        other_matched_moles: Already matched moles in target
+        tgt_context_size: Target context size for coordinate conversion
+        tgt_resized_width, tgt_resized_height: Target resized dimensions
+        tgt_scale_factor: Target scale factor for coordinate conversion
+        tgt_original_width, tgt_original_height: Target original dimensions
+        similarity_weight: Weight for similarity score (default: 0.7)
+        spatial_weight: Weight for spatial consistency score (default: 0.3)
+
+    Returns:
+        tuple: (best_candidate_dict, combined_score) or (None, 0.0) if no valid candidates
+    """
+    if not candidates:
+        return None, 0.0
+
+    best_candidate = None
+    best_score = -1.0
+
+    for candidate in candidates:
+        # Convert patch index to original target coordinates
+        tgt_patches_per_side = tgt_context_size // DINOV2_PATCH_SIZE
+        resized_x, resized_y = _convert_patch_index_to_coordinates(
+            candidate["patch_idx"],
+            tgt_patches_per_side,
+            tgt_context_size,
+            tgt_resized_width,
+            tgt_resized_height,
+        )
+
+        tgt_x_original, tgt_y_original = scale_coordinates_from_resized(
+            resized_x,
+            resized_y,
+            tgt_scale_factor,
+            tgt_original_width,
+            tgt_original_height,
+        )
+
+        # Store coordinates in candidate
+        candidate["tgt_x"] = tgt_x_original
+        candidate["tgt_y"] = tgt_y_original
+
+        # Calculate spatial consistency score
+        spatial_score = _score_spatial_consistency(
+            (tgt_x_original, tgt_y_original),
+            src_mole,
+            other_src_moles,
+            other_matched_moles,
+        )
+
+        # Combined score
+        combined_score = (
+            similarity_weight * candidate["similarity"] + spatial_weight * spatial_score
+        )
+
+        candidate["spatial_score"] = spatial_score
+        candidate["combined_score"] = combined_score
+
+        if combined_score > best_score:
+            best_score = combined_score
+            best_candidate = candidate
+
+    return best_candidate, best_score
+
+
 def copy_moles_from_sources(
     src_paths,
     tgt_path,
@@ -297,6 +465,9 @@ def copy_moles_from_sources(
     }
 
     moles_copied = 0
+
+    # Track already matched moles for spatial consistency
+    already_matched_moles = []
 
     # Process each source image
     for src_path in src_paths:
@@ -412,36 +583,46 @@ def copy_moles_from_sources(
                 1
             )  # [num_patches]
 
-            # Find best match
-            best_patch_idx = torch.argmax(similarities).item()
-            best_similarity = similarities[best_patch_idx].item()
+            # Get top-5 candidates for evaluation
+            candidates = _get_top_k_candidates(similarities, k=5)
 
-            print(f"    Mole {uuid}: best similarity = {best_similarity:.3f}")
+            # Filter candidates by minimum similarity threshold
+            valid_candidates = [
+                c for c in candidates if c["similarity"] >= similarity_threshold
+            ]
 
-            # Check similarity threshold
-            if best_similarity < similarity_threshold:
+            if not valid_candidates:
                 print(
-                    f"    Skipping mole {uuid}: similarity {best_similarity:.3f} below threshold {similarity_threshold}"
+                    f"    Skipping mole {uuid}: no candidates above threshold {similarity_threshold}"
                 )
                 continue
 
-            # Convert patch index to resized image coordinates
-            tgt_patches_per_side = tgt_context_size // DINOV2_PATCH_SIZE
-            resized_x, resized_y = _convert_patch_index_to_coordinates(
-                best_patch_idx,
-                tgt_patches_per_side,
+            # Evaluate candidates with spatial consistency
+            best_candidate, combined_score = _evaluate_candidates(
+                valid_candidates,
+                src_mole,
+                src_canonical_moles,
+                already_matched_moles,
                 tgt_context_size,
                 tgt_resized_width,
                 tgt_resized_height,
-            )
-
-            # Scale back to original target coordinates
-            tgt_x_original, tgt_y_original = scale_coordinates_from_resized(
-                resized_x,
-                resized_y,
                 tgt_scale_factor,
                 tgt_original_width,
                 tgt_original_height,
+            )
+
+            if best_candidate is None:
+                print(f"    Skipping mole {uuid}: no valid candidates after evaluation")
+                continue
+
+            # Extract results from best candidate
+            best_similarity = best_candidate["similarity"]
+            spatial_score = best_candidate["spatial_score"]
+            tgt_x_original = best_candidate["tgt_x"]
+            tgt_y_original = best_candidate["tgt_y"]
+
+            print(
+                f"    Mole {uuid}: similarity={best_similarity:.3f}, spatial={spatial_score:.3f}, combined={combined_score:.3f}"
             )
 
             # Check if we should add/update this mole
@@ -489,6 +670,15 @@ def copy_moles_from_sources(
                     tgt_moles_by_uuid[uuid] = new_mole
 
                 moles_copied += 1
+
+                # Add to matched moles for spatial consistency
+                already_matched_moles.append(
+                    {
+                        "uuid": uuid,
+                        "tgt_x": tgt_x_original,
+                        "tgt_y": tgt_y_original,
+                    }
+                )
 
     # Save updated target moles
     if moles_copied > 0:

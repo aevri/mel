@@ -8,8 +8,8 @@
 - Fix formatting: `./meta/autofix.sh`
 
 ## Pre-commit Checklist
-- Fix formatting
-- Fix all tests
+- autofix
+- ./meta/run_tests.sh
 
 ## Code Style
 - Formatting: ruff format
