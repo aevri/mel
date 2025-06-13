@@ -51,6 +51,11 @@ def setup_parser(parser):
         default="base",
         help="DINOv2 model size variant (default: base). Smaller models are faster.",
     )
+    parser.add_argument(
+        "--multi-scale",
+        action="store_true",
+        help="Enable multi-scale feature extraction (slower but potentially more accurate).",
+    )
 
 
 def resize_image_if_needed(image, max_size=DEFAULT_MAX_SIZE):
@@ -383,10 +388,10 @@ def _concatenate_multiscale_features(scale_features):
     return torch.cat(feature_list, dim=0)
 
 
-def _extract_all_multiscale_features(
+def _extract_all_multiscale_features_efficient(
     image, context_size, model, transform, feature_dim
 ):
-    """Extract multi-scale features for all patches in target image.
+    """Extract multi-scale features efficiently using bulk extraction.
 
     Args:
         image: Target image
@@ -400,71 +405,145 @@ def _extract_all_multiscale_features(
     """
     import torch
 
-    print("  Extracting multi-scale features for all target patches...")
+    print("  Extracting multi-scale features efficiently...")
     original_height, original_width = image.shape[:2]
-    patches_per_side = context_size // DINOV2_PATCH_SIZE
-    total_patches = patches_per_side * patches_per_side
 
     # Calculate zoom levels for target image
     wide_scale, medium_scale, _ = _calculate_multiscale_zoom_levels(
         original_width, original_height, context_size
     )
 
-    # Pre-scale images for efficiency
+    # Extract features at each scale using the efficient bulk method
+    print(f"    Extracting wide scale features... ({wide_scale:.3f})")
+    wide_image = cv2.resize(
+        image, (int(original_width * wide_scale), int(original_height * wide_scale))
+    )
+    wide_context_size = calculate_dinov2_context_size(
+        wide_image.shape[1], wide_image.shape[0]
+    )
+    wide_features = mel.lib.dinov2.extract_all_contextual_features(
+        wide_image,
+        wide_image.shape[1] // 2,
+        wide_image.shape[0] // 2,
+        wide_context_size,
+        model,
+        transform,
+        feature_dim,
+    )
+
+    print(f"    Extracting medium scale features... ({medium_scale:.3f})")
+    raise Exception("Not implemented")
+    medium_image = cv2.resize(
+        image, (int(original_width * medium_scale), int(original_height * medium_scale))
+    )
+    medium_context_size = calculate_dinov2_context_size(
+        medium_image.shape[1], medium_image.shape[0]
+    )
+    medium_features = mel.lib.dinov2.extract_all_contextual_features(
+        medium_image,
+        medium_image.shape[1] // 2,
+        medium_image.shape[0] // 2,
+        medium_context_size,
+        model,
+        transform,
+        feature_dim,
+    )
+
+    print(f"    Extracting close scale features... (1.0)")
+    close_context_size = calculate_dinov2_context_size(original_width, original_height)
+    close_features = mel.lib.dinov2.extract_all_contextual_features(
+        image,
+        original_width // 2,
+        original_height // 2,
+        close_context_size,
+        model,
+        transform,
+        feature_dim,
+    )
+
+    # Now we need to align and concatenate the features from different scales
+    # This is complex because each scale has different patch grids
+    print("    Aligning and concatenating multi-scale features...")
+
+    # Use the original context_size for the final patch grid
+    patches_per_side = context_size // DINOV2_PATCH_SIZE
+
+    # For simplicity, let's interpolate all scales to match the target grid size
+    def interpolate_features_to_grid(features, target_patches_per_side):
+        """Interpolate feature grid to target size."""
+        current_patches = features.shape[0]
+        current_side = int(current_patches**0.5)
+
+        if current_side == target_patches_per_side:
+            return features
+
+        # Reshape to spatial grid, interpolate, then flatten
+        features_2d = features.view(current_side, current_side, -1)
+        features_2d = features_2d.permute(2, 0, 1).unsqueeze(
+            0
+        )  # [1, feature_dim, H, W]
+
+        interpolated = torch.nn.functional.interpolate(
+            features_2d,
+            size=(target_patches_per_side, target_patches_per_side),
+            mode="bilinear",
+            align_corners=False,
+        )
+
+        interpolated = interpolated.squeeze(0).permute(1, 2, 0)  # [H, W, feature_dim]
+        return interpolated.view(-1, interpolated.shape[-1])  # [H*W, feature_dim]
+
+    # Interpolate all scales to match target grid
+    wide_aligned = interpolate_features_to_grid(wide_features, patches_per_side)
+    medium_aligned = interpolate_features_to_grid(medium_features, patches_per_side)
+    close_aligned = interpolate_features_to_grid(close_features, patches_per_side)
+
+    # Concatenate features for each patch
+    return torch.cat([wide_aligned, medium_aligned, close_aligned], dim=1)
+
+
+def _extract_multiscale_target_features_lazy(
+    image, context_size, model, transform, feature_dim
+):
+    """Lazy extraction that only computes features for the target when needed.
+
+    Returns:
+        A callable that extracts features at specific coordinates
+    """
+
+    # Pre-scale images once
+    original_height, original_width = image.shape[:2]
+    wide_scale, medium_scale, _ = _calculate_multiscale_zoom_levels(
+        original_width, original_height, context_size
+    )
+
     wide_image = cv2.resize(
         image, (int(original_width * wide_scale), int(original_height * wide_scale))
     )
     medium_image = cv2.resize(
         image, (int(original_width * medium_scale), int(original_height * medium_scale))
     )
-    close_image = image  # Full resolution
+    close_image = image
 
-    all_multiscale_features = []
-
-    for patch_idx in range(total_patches):
-        # Convert patch index to coordinates
-        patch_row = patch_idx // patches_per_side
-        patch_col = patch_idx % patches_per_side
-
-        # Get center coordinates in original image
-        patch_center_x = patch_col * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
-        patch_center_y = patch_row * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
-
-        # Convert from context coordinates to original image coordinates
-        context_offset_x = (context_size - original_width) // 2
-        context_offset_y = (context_size - original_height) // 2
-        orig_x = patch_center_x - context_offset_x
-        orig_y = patch_center_y - context_offset_y
-
-        # Skip if coordinates are outside original image
-        if (
-            orig_x < 0
-            or orig_y < 0
-            or orig_x >= original_width
-            or orig_y >= original_height
-        ):
-            # Create zero features for out-of-bounds patches
-            zero_features = torch.zeros(feature_dim * 3)  # 3 scales
-            all_multiscale_features.append(zero_features)
-            continue
-
+    def extract_at_coordinate(x, y):
+        """Extract multi-scale features at specific coordinate."""
         try:
             # Extract contexts at each scale
             contexts = {}
 
             # Close scale (1x)
-            contexts["close"] = _crop_around_point(close_image, orig_x, orig_y, 910)
+            contexts["close"] = _crop_around_point(close_image, x, y, 910)
 
             # Medium scale
-            medium_x = int(orig_x * medium_scale)
-            medium_y = int(orig_y * medium_scale)
+            medium_x = int(x * medium_scale)
+            medium_y = int(y * medium_scale)
             contexts["medium"] = _crop_around_point(
                 medium_image, medium_x, medium_y, 910
             )
 
             # Wide scale
-            wide_x = int(orig_x * wide_scale)
-            wide_y = int(orig_y * wide_scale)
+            wide_x = int(x * wide_scale)
+            wide_y = int(y * wide_scale)
             contexts["wide"] = _crop_around_point(wide_image, wide_x, wide_y, 910)
 
             # Extract features for each scale
@@ -473,21 +552,15 @@ def _extract_all_multiscale_features(
             )
 
             # Concatenate features
-            patch_features = _concatenate_multiscale_features(scale_features)
-
-            if patch_features is None:
-                # Use zero features if extraction failed
-                patch_features = torch.zeros(feature_dim * 3)
-
-            all_multiscale_features.append(patch_features)
+            return _concatenate_multiscale_features(scale_features)
 
         except Exception as e:
-            print(f"    Warning: Failed to extract features for patch {patch_idx}: {e}")
-            zero_features = torch.zeros(feature_dim * 3)
-            all_multiscale_features.append(zero_features)
+            print(f"    Warning: Failed to extract features at ({x}, {y}): {e}")
+            import torch
 
-    # Stack all features
-    return torch.stack(all_multiscale_features)
+            return torch.zeros(feature_dim * 3)
+
+    return extract_at_coordinate
 
 
 def copy_moles_from_sources(
@@ -498,6 +571,7 @@ def copy_moles_from_sources(
     transform,
     feature_dim,
     max_size=DEFAULT_MAX_SIZE,
+    enable_multiscale=False,
 ):
     """Copy canonical moles from source images to target image using DINOv2
     matching.
@@ -539,15 +613,27 @@ def copy_moles_from_sources(
         tgt_resized_width, tgt_resized_height
     )
 
-    # Extract multi-scale features for all patches in target
-    print("Extracting multi-scale target features...")
-    tgt_all_features = _extract_all_multiscale_features(
-        tgt_image_rgb,  # Use original image, not resized
-        tgt_context_size,
-        model,
-        transform,
-        feature_dim,
-    )
+    # Extract target features (single-scale or multi-scale based on flag)
+    if enable_multiscale:
+        print("Extracting multi-scale target features...")
+        tgt_all_features = _extract_all_multiscale_features_efficient(
+            tgt_image_rgb,  # Use original image, not resized
+            tgt_context_size,
+            model,
+            transform,
+            feature_dim,
+        )
+    else:
+        print("Extracting single-scale target features...")
+        tgt_all_features = mel.lib.dinov2.extract_all_contextual_features(
+            tgt_resized,
+            tgt_resized_width // 2,
+            tgt_resized_height // 2,
+            tgt_context_size,
+            model,
+            transform,
+            feature_dim,
+        )
 
     # Create lookup for existing target moles by UUID
     tgt_moles_by_uuid = {mole["uuid"]: mole for mole in tgt_moles}
@@ -601,32 +687,94 @@ def copy_moles_from_sources(
                 )
                 continue
 
-            # Extract multi-scale features for source mole
-            try:
-                # Extract contexts at multiple zoom levels from original source image
-                src_contexts = _extract_multiscale_contexts(
-                    src_image_rgb,  # Use original, not resized
-                    src_mole["x"],  # Original coordinates
-                    src_mole["y"],
-                )
+            # Extract source mole features (single-scale or multi-scale based on flag)
+            if enable_multiscale:
+                try:
+                    # Extract contexts at multiple zoom levels from original source image
+                    src_contexts = _extract_multiscale_contexts(
+                        src_image_rgb,  # Use original, not resized
+                        src_mole["x"],  # Original coordinates
+                        src_mole["y"],
+                    )
 
-                # Extract features for each scale
-                src_scale_features = _extract_features_per_scale(
-                    src_contexts, model, transform, feature_dim
-                )
+                    # Extract features for each scale
+                    src_scale_features = _extract_features_per_scale(
+                        src_contexts, model, transform, feature_dim
+                    )
 
-                # Use concatenated multi-scale features
-                src_features = _concatenate_multiscale_features(src_scale_features)
+                    # Use concatenated multi-scale features
+                    src_features = _concatenate_multiscale_features(src_scale_features)
 
-                if src_features is None:
+                    if src_features is None:
+                        print(
+                            f"    Skipping mole {uuid}: failed to extract multi-scale features"
+                        )
+                        continue
+
+                except Exception as e:
                     print(
-                        f"    Skipping mole {uuid}: failed to extract multi-scale features"
+                        f"    Error extracting multi-scale features for mole {uuid}: {e}"
                     )
                     continue
+            else:
+                # Use single-scale extraction (faster)
+                try:
+                    # Scale source mole coordinates to resized image
+                    src_x_resized, src_y_resized = scale_mole_coordinates_to_resized(
+                        src_mole, src_scale_factor
+                    )
 
-            except Exception as e:
-                print(f"    Error extracting multi-scale features for mole {uuid}: {e}")
-                continue
+                    # Check if source mole is within resized image
+                    if not _is_mole_within_bounds(
+                        src_x_resized,
+                        src_y_resized,
+                        src_resized_width,
+                        src_resized_height,
+                    ):
+                        print(f"    Skipping mole {uuid}: outside resized image")
+                        continue
+
+                    # Calculate source context size
+                    src_context_size = calculate_dinov2_context_size(
+                        src_resized_width, src_resized_height
+                    )
+
+                    # Get features for source mole from pre-extracted features
+                    src_all_features = mel.lib.dinov2.extract_all_contextual_features(
+                        src_resized,
+                        src_resized_width // 2,
+                        src_resized_height // 2,
+                        src_context_size,
+                        model,
+                        transform,
+                        feature_dim,
+                    )
+
+                    patch_idx, _ = _convert_mole_to_patch_index(
+                        src_x_resized,
+                        src_y_resized,
+                        src_context_size,
+                        src_resized_width,
+                        src_resized_height,
+                    )
+
+                    # Check if patch index is valid
+                    if patch_idx is None:
+                        print(f"    Skipping mole {uuid}: out of context bounds")
+                        continue
+
+                    if patch_idx >= src_all_features.shape[0]:
+                        print(
+                            f"    Skipping mole {uuid}: patch index {patch_idx} out of bounds"
+                        )
+                        continue
+
+                    # Extract features for this specific patch
+                    src_features = src_all_features[patch_idx]
+
+                except (IndexError, ValueError) as e:
+                    print(f"    Error getting features for mole {uuid}: {e}")
+                    continue
 
             # Find best match in target using cosine similarity
             import torch
@@ -741,6 +889,7 @@ def process_args(args):
     tgt_path = args.TGT_JPG
     similarity_threshold = args.similarity_threshold
     dino_size = args.dino_size
+    enable_multiscale = args.multi_scale
 
     # Validate arguments
     if tgt_path in src_paths:
@@ -754,6 +903,7 @@ def process_args(args):
     print(f"Copying moles from {len(src_paths)} source images to {tgt_path}")
     print(f"Similarity threshold: {similarity_threshold}")
     print(f"DINOv2 model size: {dino_size}")
+    print(f"Multi-scale mode: {'enabled' if enable_multiscale else 'disabled'}")
 
     # Load DINOv2 model
     try:
@@ -783,6 +933,7 @@ def process_args(args):
             model,
             transform,
             feature_dim,
+            enable_multiscale=enable_multiscale,
         )
 
         if moles_copied > 0:
