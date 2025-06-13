@@ -229,6 +229,267 @@ def _convert_patch_index_to_coordinates(
     return resized_x, resized_y
 
 
+def _calculate_multiscale_zoom_levels(image_width, image_height, target_size=910):
+    """Calculate zoom levels for multi-scale feature extraction.
+
+    Args:
+        image_width, image_height: Original image dimensions
+        target_size: Target context size (default: 910)
+
+    Returns:
+        tuple: (wide_scale, medium_scale, close_scale)
+    """
+    # Wide zoom: scale to fit whole image in target_size
+    max_dimension = max(image_width, image_height)
+    wide_scale = target_size / max_dimension
+
+    # Close zoom: full resolution
+    close_scale = 1.0
+
+    # Medium zoom: midpoint between wide and close
+    medium_scale = (wide_scale + close_scale) / 2.0
+
+    return wide_scale, medium_scale, close_scale
+
+
+def _crop_around_point(image, center_x, center_y, size):
+    """Crop a square region around a point, with padding if needed.
+
+    Args:
+        image: Input image array
+        center_x, center_y: Center coordinates
+        size: Target crop size
+
+    Returns:
+        Cropped image of exact target size
+    """
+    h, w = image.shape[:2]
+    half_size = size // 2
+
+    # Calculate crop bounds
+    x1 = max(0, center_x - half_size)
+    y1 = max(0, center_y - half_size)
+    x2 = min(w, center_x + half_size)
+    y2 = min(h, center_y + half_size)
+
+    # Crop the region
+    cropped = image[y1:y2, x1:x2]
+
+    # Pad to exact size if needed (resize to target size)
+    if cropped.shape[0] != size or cropped.shape[1] != size:
+        cropped = cv2.resize(cropped, (size, size))
+
+    return cropped
+
+
+def _extract_multiscale_contexts(image, mole_x, mole_y, target_size=910):
+    """Extract contexts at multiple zoom levels around a mole.
+
+    Args:
+        image: Full resolution image
+        mole_x, mole_y: Mole coordinates in full resolution
+        target_size: Target context size (default: 910)
+
+    Returns:
+        dict: Contexts at different scales {'wide': array, 'medium': array, 'close': array}
+    """
+    original_height, original_width = image.shape[:2]
+
+    # Calculate zoom levels
+    wide_scale, medium_scale, _ = _calculate_multiscale_zoom_levels(
+        original_width, original_height, target_size
+    )
+
+    contexts = {}
+
+    # Close zoom (1x): Direct crop from full resolution
+    contexts["close"] = _crop_around_point(image, mole_x, mole_y, target_size)
+
+    # Medium zoom: Scale down and crop
+    medium_width = int(original_width * medium_scale)
+    medium_height = int(original_height * medium_scale)
+    medium_image = cv2.resize(image, (medium_width, medium_height))
+    medium_mole_x = int(mole_x * medium_scale)
+    medium_mole_y = int(mole_y * medium_scale)
+    contexts["medium"] = _crop_around_point(
+        medium_image, medium_mole_x, medium_mole_y, target_size
+    )
+
+    # Wide zoom: Scale down to fit whole image, then crop
+    wide_width = int(original_width * wide_scale)
+    wide_height = int(original_height * wide_scale)
+    wide_image = cv2.resize(image, (wide_width, wide_height))
+    wide_mole_x = int(mole_x * wide_scale)
+    wide_mole_y = int(mole_y * wide_scale)
+    contexts["wide"] = _crop_around_point(
+        wide_image, wide_mole_x, wide_mole_y, target_size
+    )
+
+    return contexts
+
+
+def _extract_features_per_scale(contexts, model, transform, feature_dim):
+    """Extract DINOv2 features for each zoom level context.
+
+    Args:
+        contexts: Dict of contexts at different scales
+        model: DINOv2 model
+        transform: Image transform pipeline
+        feature_dim: Feature dimension
+
+    Returns:
+        dict: Features for each scale
+    """
+    scale_features = {}
+    target_size = 910
+    center_x = target_size // 2
+    center_y = target_size // 2
+
+    for scale_name, context in contexts.items():
+        try:
+            # Extract features from center patch of this context
+            features = mel.lib.dinov2.extract_contextual_patch_feature(
+                context, center_x, center_y, target_size, model, transform, feature_dim
+            )
+            scale_features[scale_name] = features
+        except Exception as e:
+            print(f"    Warning: Failed to extract {scale_name} scale features: {e}")
+            continue
+
+    return scale_features
+
+
+def _concatenate_multiscale_features(scale_features):
+    """Concatenate features from different zoom levels.
+
+    Args:
+        scale_features: Dict of features for each scale
+
+    Returns:
+        Concatenated feature vector or None if no valid features
+    """
+    import torch
+
+    # Concatenate in order: wide, medium, close
+    feature_list = []
+    for scale_name in ["wide", "medium", "close"]:
+        if scale_name in scale_features:
+            feature_list.append(scale_features[scale_name])
+
+    if not feature_list:
+        return None
+
+    # Concatenate all available features
+    return torch.cat(feature_list, dim=0)
+
+
+def _extract_all_multiscale_features(
+    image, context_size, model, transform, feature_dim
+):
+    """Extract multi-scale features for all patches in target image.
+
+    Args:
+        image: Target image
+        context_size: DINOv2 context size for patch grid
+        model: DINOv2 model
+        transform: Image transform pipeline
+        feature_dim: Feature dimension
+
+    Returns:
+        Tensor of concatenated multi-scale features for all patches
+    """
+    import torch
+
+    print("  Extracting multi-scale features for all target patches...")
+    original_height, original_width = image.shape[:2]
+    patches_per_side = context_size // DINOV2_PATCH_SIZE
+    total_patches = patches_per_side * patches_per_side
+
+    # Calculate zoom levels for target image
+    wide_scale, medium_scale, _ = _calculate_multiscale_zoom_levels(
+        original_width, original_height, context_size
+    )
+
+    # Pre-scale images for efficiency
+    wide_image = cv2.resize(
+        image, (int(original_width * wide_scale), int(original_height * wide_scale))
+    )
+    medium_image = cv2.resize(
+        image, (int(original_width * medium_scale), int(original_height * medium_scale))
+    )
+    close_image = image  # Full resolution
+
+    all_multiscale_features = []
+
+    for patch_idx in range(total_patches):
+        # Convert patch index to coordinates
+        patch_row = patch_idx // patches_per_side
+        patch_col = patch_idx % patches_per_side
+
+        # Get center coordinates in original image
+        patch_center_x = patch_col * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
+        patch_center_y = patch_row * DINOV2_PATCH_SIZE + DINOV2_PATCH_CENTER_OFFSET
+
+        # Convert from context coordinates to original image coordinates
+        context_offset_x = (context_size - original_width) // 2
+        context_offset_y = (context_size - original_height) // 2
+        orig_x = patch_center_x - context_offset_x
+        orig_y = patch_center_y - context_offset_y
+
+        # Skip if coordinates are outside original image
+        if (
+            orig_x < 0
+            or orig_y < 0
+            or orig_x >= original_width
+            or orig_y >= original_height
+        ):
+            # Create zero features for out-of-bounds patches
+            zero_features = torch.zeros(feature_dim * 3)  # 3 scales
+            all_multiscale_features.append(zero_features)
+            continue
+
+        try:
+            # Extract contexts at each scale
+            contexts = {}
+
+            # Close scale (1x)
+            contexts["close"] = _crop_around_point(close_image, orig_x, orig_y, 910)
+
+            # Medium scale
+            medium_x = int(orig_x * medium_scale)
+            medium_y = int(orig_y * medium_scale)
+            contexts["medium"] = _crop_around_point(
+                medium_image, medium_x, medium_y, 910
+            )
+
+            # Wide scale
+            wide_x = int(orig_x * wide_scale)
+            wide_y = int(orig_y * wide_scale)
+            contexts["wide"] = _crop_around_point(wide_image, wide_x, wide_y, 910)
+
+            # Extract features for each scale
+            scale_features = _extract_features_per_scale(
+                contexts, model, transform, feature_dim
+            )
+
+            # Concatenate features
+            patch_features = _concatenate_multiscale_features(scale_features)
+
+            if patch_features is None:
+                # Use zero features if extraction failed
+                patch_features = torch.zeros(feature_dim * 3)
+
+            all_multiscale_features.append(patch_features)
+
+        except Exception as e:
+            print(f"    Warning: Failed to extract features for patch {patch_idx}: {e}")
+            zero_features = torch.zeros(feature_dim * 3)
+            all_multiscale_features.append(zero_features)
+
+    # Stack all features
+    return torch.stack(all_multiscale_features)
+
+
 def copy_moles_from_sources(
     src_paths,
     tgt_path,
@@ -278,12 +539,10 @@ def copy_moles_from_sources(
         tgt_resized_width, tgt_resized_height
     )
 
-    # Extract features for all patches in target
-    print("Extracting target features...")
-    tgt_all_features = mel.lib.dinov2.extract_all_contextual_features(
-        tgt_resized,
-        tgt_resized_width // 2,
-        tgt_resized_height // 2,
+    # Extract multi-scale features for all patches in target
+    print("Extracting multi-scale target features...")
+    tgt_all_features = _extract_all_multiscale_features(
+        tgt_image_rgb,  # Use original image, not resized
         tgt_context_size,
         model,
         transform,
@@ -331,21 +590,6 @@ def copy_moles_from_sources(
                 f"  Source kept at original size {src_resized_width}x{src_resized_height}"
             )
 
-        # Extract features for entire source image once
-        src_context_size = calculate_dinov2_context_size(
-            src_resized_width, src_resized_height
-        )
-        print(f"  Extracting source features (context size: {src_context_size})...")
-        src_all_features = mel.lib.dinov2.extract_all_contextual_features(
-            src_resized,
-            src_resized_width // 2,
-            src_resized_height // 2,
-            src_context_size,
-            model,
-            transform,
-            feature_dim,
-        )
-
         # Process each canonical mole in source
         for src_mole in src_canonical_moles:
             uuid = src_mole["uuid"]
@@ -357,43 +601,31 @@ def copy_moles_from_sources(
                 )
                 continue
 
-            # Scale source mole coordinates to resized image
-            src_x_resized, src_y_resized = scale_mole_coordinates_to_resized(
-                src_mole, src_scale_factor
-            )
-
-            # Check if source mole is within resized image
-            if not _is_mole_within_bounds(
-                src_x_resized, src_y_resized, src_resized_width, src_resized_height
-            ):
-                print(f"    Skipping mole {uuid}: outside resized image")
-                continue
-
-            # Get features for source mole from pre-extracted features
+            # Extract multi-scale features for source mole
             try:
-                patch_idx, _ = _convert_mole_to_patch_index(
-                    src_x_resized,
-                    src_y_resized,
-                    src_context_size,
-                    src_resized_width,
-                    src_resized_height,
+                # Extract contexts at multiple zoom levels from original source image
+                src_contexts = _extract_multiscale_contexts(
+                    src_image_rgb,  # Use original, not resized
+                    src_mole["x"],  # Original coordinates
+                    src_mole["y"],
                 )
 
-                # Check if patch index is valid
-                if patch_idx is None:
-                    print(f"    Skipping mole {uuid}: out of context bounds")
-                    continue
+                # Extract features for each scale
+                src_scale_features = _extract_features_per_scale(
+                    src_contexts, model, transform, feature_dim
+                )
 
-                if patch_idx >= src_all_features.shape[0]:
+                # Use concatenated multi-scale features
+                src_features = _concatenate_multiscale_features(src_scale_features)
+
+                if src_features is None:
                     print(
-                        f"    Skipping mole {uuid}: patch index {patch_idx} out of bounds"
+                        f"    Skipping mole {uuid}: failed to extract multi-scale features"
                     )
                     continue
 
-                # Extract features for this specific patch
-                src_features = src_all_features[patch_idx]
-            except (IndexError, ValueError) as e:
-                print(f"    Error getting features for mole {uuid}: {e}")
+            except Exception as e:
+                print(f"    Error extracting multi-scale features for mole {uuid}: {e}")
                 continue
 
             # Find best match in target using cosine similarity
