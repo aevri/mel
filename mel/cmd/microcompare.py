@@ -25,7 +25,7 @@ def get_comparison_images(path):
     paths = [os.path.join(micro_path, x) for x in names]
     images = [mel.lib.image.load_image(x) for x in paths]
 
-    for i, (path, img) in enumerate(zip(paths, images)):
+    for i, (path, img) in enumerate(zip(paths, images, strict=False)):
         if img is None:
             raise ValueError(f"Failed to load file: {path}")
         images[i] = mel.lib.image.montage_vertical(

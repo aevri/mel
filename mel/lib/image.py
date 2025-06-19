@@ -176,7 +176,9 @@ def montage_horizontal(border_size, *image_list):
     size_xy = geometry[0]
     geometry = geometry[1:]
 
-    return arrange_images(size_xy[0], size_xy[1], *list(zip(image_list, geometry)))
+    return arrange_images(
+        size_xy[0], size_xy[1], *list(zip(image_list, geometry, strict=False))
+    )
 
 
 def montage_vertical(border_size, *image_list):
@@ -187,7 +189,9 @@ def montage_vertical(border_size, *image_list):
     size_xy = geometry[0]
     geometry = geometry[1:]
 
-    return arrange_images(size_xy[0], size_xy[1], *list(zip(image_list, geometry)))
+    return arrange_images(
+        size_xy[0], size_xy[1], *list(zip(image_list, geometry, strict=False))
+    )
 
 
 def measure_text_height_width(text, font_face=None, font_scale=None, thickness=None):
@@ -229,7 +233,7 @@ def render_text_as_image(
 
 def calc_centering_offset(centre_xy, dst_size_xy):
     dst_centre = [i // 2 for i in dst_size_xy]
-    return [i[1] - i[0] for i in zip(centre_xy, dst_centre)]
+    return [i[1] - i[0] for i in zip(centre_xy, dst_centre, strict=False)]
 
 
 def centered_at(image, src_pos, dst_rect):

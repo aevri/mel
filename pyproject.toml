@@ -11,7 +11,7 @@ authors = [
 ]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "colorama",
     "opencv-python",
@@ -56,7 +56,7 @@ zip-safe = false
 version = {attr = "mel.__version__"}
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py312"
 
 [tool.ruff.lint]
 # Rule codes enabled for static analysis:
@@ -86,7 +86,7 @@ exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
 
 [tool.pyright]
 # Minimal strictness configuration
-pythonVersion = "3.8"
+pythonVersion = "3.12"
 typeCheckingMode = "basic"
 useLibraryCodeForTypes = true
 reportMissingTypeStubs = "none"
