@@ -274,7 +274,7 @@ def frame_to_part_name(frame):
 def unzip_dataset_part(uuid_list, dataset_generator):
     dataset_part = list(dataset_generator)
     data_list = []
-    for uuid_, item in zip(uuid_list, dataset_part):
+    for uuid_, item in zip(uuid_list, dataset_part, strict=False):
         item_uuid, data = item
         if item_uuid != uuid_:
             raise ValueError("uuids don't match")

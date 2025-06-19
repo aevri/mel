@@ -249,7 +249,9 @@ def prepare_data(pretrained_data, sessions):
             "is_mole": int(is_mole),
         }
         for image_data in image_dicts
-        for features, is_mole in zip(image_data["features"], image_data["is_mole"])
+        for features, is_mole in zip(
+            image_data["features"], image_data["is_mole"], strict=False
+        )
     ]
 
 
