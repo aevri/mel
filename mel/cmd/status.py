@@ -325,15 +325,15 @@ def process_args(args):
         if abspath is not None and not str(notice.path).startswith(abspath):
             continue
 
-        klass = notice.__class__
-        if issubclass(klass, AlertNotification):
-            alerts_to_notices[klass].append(notice)
-        elif issubclass(klass, ErrorNotification):
-            errors_to_notices[klass].append(notice)
-        elif issubclass(klass, InfoNotification):
-            info_to_notices[klass].append(notice)
-        else:
-            raise RuntimeError(f"Unexpected notice type: {klass}")
+        match notice:
+            case AlertNotification():
+                alerts_to_notices[notice.__class__].append(notice)
+            case ErrorNotification():
+                errors_to_notices[notice.__class__].append(notice)
+            case InfoNotification():
+                info_to_notices[notice.__class__].append(notice)
+            case _:
+                raise RuntimeError(f"Unexpected notice type: {notice.__class__}")
 
     any_notices = bool(alerts_to_notices or errors_to_notices)
 

@@ -160,9 +160,9 @@ def process_args(args):
 
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
-        trainer_kwargs["logger"] = pl.loggers.WandbLogger(
-            project=wandb_project, name=wandb_run_name
-        )
+        trainer_kwargs |= {
+            "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
+        }
 
     if not args.just_validate:
         trainer = pl.Trainer(**trainer_kwargs)
