@@ -189,9 +189,7 @@ def process_args(args):
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
         wandb_kwargs = {
-            "logger": pl.loggers.WandbLogger(
-                project=wandb_project, name=wandb_run_name
-            )
+            "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
         }
 
     trainer_kwargs = base_trainer_kwargs | wandb_kwargs
