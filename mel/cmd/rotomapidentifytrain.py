@@ -179,20 +179,17 @@ def process_args(args):
         "extra_stem": args.extra_stem,
     }
 
-    base_trainer_kwargs = {
+    trainer_kwargs = {
         "max_epochs": args.epochs,
         "accelerator": "auto",
         "log_every_n_steps": 5,
     }
 
-    wandb_kwargs = {}
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
-        wandb_kwargs = {
+        trainer_kwargs |= {
             "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
         }
-
-    trainer_kwargs = base_trainer_kwargs | wandb_kwargs
 
     print("Making data ..")
     (

@@ -145,7 +145,7 @@ def process_args(args):
         num_workers=args.num_workers,
     )
 
-    base_trainer_kwargs = {
+    trainer_kwargs = {
         "log_every_n_steps": 5,
         "enable_checkpointing": False,
         "accelerator": "auto",
@@ -158,14 +158,11 @@ def process_args(args):
         # "auto_lr_find": True,
     }
 
-    wandb_kwargs = {}
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
-        wandb_kwargs = {
+        trainer_kwargs |= {
             "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
         }
-
-    trainer_kwargs = base_trainer_kwargs | wandb_kwargs
 
     if not args.just_validate:
         trainer = pl.Trainer(**trainer_kwargs)
