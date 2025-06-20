@@ -18,19 +18,19 @@ def load_dinov2_model(dino_size="base"):
     import torch
 
     # Map size names to actual model names and their feature dimensions
-    match dino_size:
-        case "small":
-            model_name, feature_dim = "dinov2_vits14", 384
-        case "base":
-            model_name, feature_dim = "dinov2_vitb14", 768
-        case "large":
-            model_name, feature_dim = "dinov2_vitl14", 1024
-        case "giant":
-            model_name, feature_dim = "dinov2_vitg14", 1536
-        case _:
-            raise ValueError(
-                f"Invalid dino_size: {dino_size}. Must be one of ['small', 'base', 'large', 'giant']"
-            )
+    model_configs = {
+        "small": ("dinov2_vits14", 384),
+        "base": ("dinov2_vitb14", 768),
+        "large": ("dinov2_vitl14", 1024),
+        "giant": ("dinov2_vitg14", 1536),
+    }
+
+    if dino_size not in model_configs:
+        raise ValueError(
+            f"Invalid dino_size: {dino_size}. Must be one of {list(model_configs.keys())}"
+        )
+
+    model_name, feature_dim = model_configs[dino_size]
 
     try:
         # Load DINOv2 model for semantic patch features with rich context
