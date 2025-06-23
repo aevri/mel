@@ -3,7 +3,7 @@ docformatter==1.7.7
 opencv-python==4.11.0.86
 pandas==2.3.0
 pycodestyle==2.13.0
-pyflakes==3.3.2
+pyflakes==3.4.0
 pygame==2.6.1
 pytest==8.4.1
 ruff==0.12.0
