@@ -113,8 +113,8 @@ def process_args(args):
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
-    from pytorch_lightning import loggers
     import torch
+    from pytorch_lightning import loggers
 
     import mel.lib.ellipsespace
     import mel.lib.fs

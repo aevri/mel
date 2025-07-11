@@ -289,7 +289,9 @@ class ZoomableMixin:
 
     def zoomable_transform_render(self):
         if self._transform is None:
-            raise ValueError("Transform not initialized. Call zoomable_transform_update() first.")
+            raise ValueError(
+                "Transform not initialized. Call zoomable_transform_update() first."
+            )
         return self._transform.render()
 
     def set_fitted(self):
@@ -316,7 +318,9 @@ class ZoomableMixin:
 
     def windowxy_to_imagexy(self, window_x, window_y):
         if self._transform is None:
-            raise ValueError("Transform not initialized. Call zoomable_transform_update() first.")
+            raise ValueError(
+                "Transform not initialized. Call zoomable_transform_update() first."
+            )
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
 
