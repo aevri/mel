@@ -129,14 +129,14 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
         if dt is None:
             raise Exception("Could not determine date", path)
 
-    path_dt_list.sort(key=lambda x: x[1], reverse=True)
+    path_dt_list.sort(key=lambda x: x[1] or datetime.datetime.min, reverse=True)
 
     if min_compare_age_days is not None:
         delta = datetime.timedelta(min_compare_age_days)
         appropriate_date = datetime.datetime.now() - delta
 
         for path, dt in path_dt_list:
-            if dt <= appropriate_date:
+            if dt and dt <= appropriate_date:
                 return path
 
     return path_dt_list[-1][0] if path_dt_list else None
