@@ -320,7 +320,7 @@ class TimeLogger:
         self._start = self._now()
 
     def _now(self):
-        return datetime.datetime.now(datetime.timezone.utc)
+        return datetime.datetime.now(datetime.UTC)
 
     def reset(self, *, command=None, mode=None, path=None):
         now = self._now()

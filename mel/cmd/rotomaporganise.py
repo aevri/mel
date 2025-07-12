@@ -26,9 +26,10 @@ def process_args(args):
     # startup-text where it is not actually used.
     import pygame
 
-    with mel.lib.common.timelogger_context(
-        "rotomap-organise"
-    ) as logger, mel.lib.fullscreenui.fullscreen_context() as screen:
+    with (
+        mel.lib.common.timelogger_context("rotomap-organise") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
         display = OrganiserDisplay(
             logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
         )

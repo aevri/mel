@@ -112,9 +112,10 @@ def process_args(args):
     import pygame
 
     path_images_tuple = tuple(uuid_to_rotomaps_imagepos_list[uuid_].values())
-    with mel.lib.common.timelogger_context(
-        "rotomap-compare"
-    ) as logger, mel.lib.fullscreenui.fullscreen_context() as screen:
+    with (
+        mel.lib.common.timelogger_context("rotomap-compare") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
         display = ImageCompareDisplay(logger, screen, path_images_tuple, uuid_)
 
         on_keydown = _make_on_keydown(

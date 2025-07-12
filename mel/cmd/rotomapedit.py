@@ -577,9 +577,10 @@ def process_args(args):
     if args.visit_list_file:
         visit_list = args.visit_list_file.read().splitlines()
 
-    with mel.lib.common.timelogger_context(
-        "rotomap-edit"
-    ) as logger, mel.lib.fullscreenui.fullscreen_context() as screen:
+    with (
+        mel.lib.common.timelogger_context("rotomap-edit") as logger,
+        mel.lib.fullscreenui.fullscreen_context() as screen,
+    ):
         editor = mel.rotomap.display.Editor(args.ROTOMAP, screen)
 
         if args.advance_n_frames:

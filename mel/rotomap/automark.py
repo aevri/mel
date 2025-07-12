@@ -1,7 +1,6 @@
 """Automatically mark moles on rotomap images."""
 
 import copy
-from typing import Dict, List, Union
 
 import numpy
 
@@ -18,7 +17,7 @@ import mel.rotomap.moles
 # Note that in Python 3.11 we can use TypedDict to enforce this,
 # and make radius NotRequired.
 #
-Moles = List[Dict[str, Union[str, int]]]
+Moles = list[dict[str, str | int]]
 
 
 def merge_in_radiuses(

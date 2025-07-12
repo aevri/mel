@@ -69,7 +69,9 @@ def _pair_off_inputs(from_, to):
 
 def _common_path(from_path, to_path):
     common = []
-    for char_from, char_to in zip(reversed(str(from_path)), reversed(str(to_path))):
+    for char_from, char_to in zip(
+        reversed(str(from_path)), reversed(str(to_path)), strict=False
+    ):
         if char_from != char_to:
             break
         common.insert(0, char_from)
