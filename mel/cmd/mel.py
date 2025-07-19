@@ -37,6 +37,7 @@ import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
 import mel.cmd.status
 import mel.cmd.timelog
+import mel.lib.ui
 
 COMMANDS = {
     "root": {

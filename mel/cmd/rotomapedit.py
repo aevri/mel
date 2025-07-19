@@ -64,6 +64,7 @@ import mel.rotomap.display
 import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.relate
+from mel.lib.ui import set_clipboard_contents
 
 # Radius within which we should look for moles, in later work perhaps we'll
 # make this configurable by the user.
@@ -114,6 +115,9 @@ class MoveController:
     def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
         editor.move_nearest_mole(mouse_x, mouse_y)
         return True
+
+    def pre_key(self, editor, key):
+        pass
 
     def on_key(self, editor, key):
         pass
@@ -205,7 +209,7 @@ class MoleEditController:
                 self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                 print(self.mole_uuid_list[0])
                 if self.copy_to_clipboard:
-                    mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
+                    set_clipboard_contents(self.mole_uuid_list[0])
             else:
                 editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
         elif key_mods & pygame.KMOD_SHIFT:
@@ -269,9 +273,7 @@ class MoleEditController:
             self.mole_uuid_list[0] = editor.get_mole_uuid(self.mouse_x, self.mouse_y)
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(  # noqa: F823
-                    self.mole_uuid_list[0]
-                )
+                set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
             # Auto-identify
             #

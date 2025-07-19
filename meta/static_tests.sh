@@ -16,6 +16,9 @@ printf '.'
 uv run ruff check --quiet --extend-select A,FURB,N,PLE mel/
 
 printf '.'
+uv run pyright
+
+printf '.'
 uv run python -m vulture \
     --ignore-names training_step,validation_step,configure_optimizers \
     --exclude '*__t.py,mel/rotomap/detectmoles.py,mel/rotomap/identifynn.py' \
