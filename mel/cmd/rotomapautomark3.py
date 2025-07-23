@@ -3,9 +3,12 @@
 import argparse
 import pathlib
 from collections import defaultdict
+from typing import Any
 
 import cv2
 import numpy as np
+import torch
+import torchvision.transforms as transforms
 
 import mel.lib.dinov2
 import mel.lib.image
@@ -62,12 +65,17 @@ def setup_parser(parser):
 
 
 def aggregate_reference_features(
-    reference_features_by_uuid, aggregation_method="average"
-):
+    reference_features_by_uuid: dict[str, list[torch.Tensor]],
+    aggregation_method: str = "average",
+) -> tuple[dict[str, torch.Tensor], dict[str, dict[str, Any]]]:
     """Aggregate multiple feature representations for each mole UUID.
 
-    This function makes it easy to change aggregation methods later.
-    Currently supports 'average' aggregation method.
+    Args:
+        reference_features_by_uuid: Dictionary mapping UUIDs to lists of feature tensors
+        aggregation_method: Method for aggregating features (currently only 'average')
+
+    Returns:
+        Tuple of (aggregated_features, aggregation_metadata)
     """
     aggregated_features = {}
     aggregation_metadata = {}
@@ -79,8 +87,6 @@ def aggregate_reference_features(
             aggregated = np.mean(stacked_features, axis=0)
 
             # Convert back to tensor format
-            import torch
-
             aggregated_features[uuid] = torch.from_numpy(aggregated)
 
             aggregation_metadata[uuid] = {
@@ -93,38 +99,29 @@ def aggregate_reference_features(
     return aggregated_features, aggregation_metadata
 
 
-def process_args(args):
-    import torchvision.transforms as transforms
+def load_and_aggregate_reference_features(
+    reference_paths: list[pathlib.Path],
+    model: torch.nn.Module,
+    transform: transforms.Compose,
+    feature_dim: int,
+    context_size: int,
+) -> tuple[
+    dict[str, torch.Tensor], dict[str, dict[str, Any]], dict[str, dict[str, Any]]
+]:
+    """Load canonical moles from reference images and aggregate their features.
 
-    reference_paths = args.reference
-    target_paths = args.target
-    debug_images = args.debug_images
-    dino_size = args.dino_size
-    similarity_threshold = args.similarity_threshold
-    extra_stem = args.extra_stem
+    Args:
+        reference_paths: List of paths to reference images
+        model: DINOv2 model
+        transform: Image transformation pipeline
+        feature_dim: Feature dimension of the model
+        context_size: Context window size for feature extraction
 
-    context_size = 910  # Large context window for rich semantic features
+    Returns:
+        Tuple of (aggregated_features, aggregation_metadata, reference_moles_by_uuid)
+    """
+    print(f"Gathering canonical moles from {len(reference_paths)} reference images...")
 
-    print(f"Loading DINOv2 model ({dino_size})...")
-    try:
-        model, feature_dim = mel.lib.dinov2.load_dinov2_model(dino_size)
-        print(f"DINOv2 model loaded successfully with {feature_dim} feature dimensions")
-    except RuntimeError as e:
-        print(f"Error loading DINOv2 model: {e}")
-        return 1
-
-    transform = transforms.Compose(
-        [
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
-
-    # Step 1: Gather all canonical moles from reference images
-    print(
-        f"\nGathering canonical moles from {len(reference_paths)} reference images..."
-    )
     reference_features_by_uuid = defaultdict(list)
     reference_moles_by_uuid = {}
 
@@ -170,13 +167,10 @@ def process_args(args):
             continue
 
     if not reference_features_by_uuid:
-        print("Error: No canonical moles found in reference images")
-        return 1
+        raise RuntimeError("No canonical moles found in reference images")
 
-    # Step 2: Aggregate features for moles that appear in multiple reference images
-    print(
-        f"\nAggregating features for {len(reference_features_by_uuid)} unique moles..."
-    )
+    # Aggregate features for moles that appear in multiple reference images
+    print(f"Aggregating features for {len(reference_features_by_uuid)} unique moles...")
     aggregated_features, aggregation_metadata = aggregate_reference_features(
         reference_features_by_uuid, aggregation_method="average"
     )
@@ -187,125 +181,214 @@ def process_args(args):
                 f"  Mole {uuid[:8]}: averaged features from {metadata['num_references']} reference images"
             )
 
+    return aggregated_features, aggregation_metadata, reference_moles_by_uuid
+
+
+def process_single_target_image(
+    target_path: pathlib.Path,
+    aggregated_features: dict[str, torch.Tensor],
+    model: torch.nn.Module,
+    transform: transforms.Compose,
+    feature_dim: int,
+    context_size: int,
+    similarity_threshold: float,
+    extra_stem: str,
+    debug_images: bool,
+) -> int:
+    """Process a single target image to find and mark moles.
+
+    Args:
+        target_path: Path to the target image
+        aggregated_features: Dictionary of aggregated features by UUID
+        model: DINOv2 model
+        transform: Image transformation pipeline
+        feature_dim: Feature dimension of the model
+        context_size: Context window size for feature extraction
+        similarity_threshold: Minimum similarity threshold for matches
+        extra_stem: Extra stem for filename
+        debug_images: Whether to save debug images
+
+    Returns:
+        Number of matches found in this image
+    """
+    print(f"Processing target image: {target_path.name}")
+
+    try:
+        # Load target image and existing moles
+        target_image = mel.lib.image.load_image(target_path)
+        target_image = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB)
+        target_moles = mel.rotomap.moles.load_image_moles(
+            target_path, extra_stem=extra_stem
+        )
+
+        # Create lookup for existing moles by UUID
+        existing_moles_by_uuid = {m["uuid"]: m for m in target_moles}
+        canonical_uuids = {
+            m["uuid"] for m in target_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
+        }
+
+        matches_in_this_image = 0
+
+        # Try to match each reference mole
+        for ref_uuid, ref_features in aggregated_features.items():
+            # Skip if this mole is already marked canonical in target
+            if ref_uuid in canonical_uuids:
+                print(f"  Skipping mole {ref_uuid[:8]}: already canonical in target")
+                continue
+
+            # Use existing location as starting point, or center of image if not present
+            if ref_uuid in existing_moles_by_uuid:
+                start_x = existing_moles_by_uuid[ref_uuid]["x"]
+                start_y = existing_moles_by_uuid[ref_uuid]["y"]
+                print(
+                    f"  Searching for mole {ref_uuid[:8]} starting from existing location ({start_x}, {start_y})"
+                )
+            else:
+                # Start search from center of image if mole doesn't exist yet
+                start_x = target_image.shape[1] // 2
+                start_y = target_image.shape[0] // 2
+                print(
+                    f"  Searching for new mole {ref_uuid[:8]} starting from image center ({start_x}, {start_y})"
+                )
+
+            try:
+                # Find best match location
+                best_x, best_y, similarity = mel.lib.dinov2.find_best_contextual_match(
+                    ref_features,
+                    target_image,
+                    start_x,
+                    start_y,
+                    context_size,
+                    model,
+                    transform,
+                    feature_dim,
+                    debug_images,
+                    ref_uuid[:8] if debug_images else None,
+                )
+
+                # Check if similarity meets threshold
+                if similarity >= similarity_threshold:
+                    matches_in_this_image += 1
+
+                    if ref_uuid in existing_moles_by_uuid:
+                        # Update existing mole location
+                        old_x = existing_moles_by_uuid[ref_uuid]["x"]
+                        old_y = existing_moles_by_uuid[ref_uuid]["y"]
+                        distance_moved = (
+                            (best_x - old_x) ** 2 + (best_y - old_y) ** 2
+                        ) ** 0.5
+
+                        existing_moles_by_uuid[ref_uuid]["x"] = best_x
+                        existing_moles_by_uuid[ref_uuid]["y"] = best_y
+
+                        print(
+                            f"    Updated mole {ref_uuid[:8]}: ({old_x}, {old_y}) -> ({best_x}, {best_y}) "
+                            f"(moved {distance_moved:.1f}px, similarity: {similarity:.3f})"
+                        )
+                    else:
+                        # Add new mole
+                        new_mole = {
+                            "uuid": ref_uuid,
+                            "x": best_x,
+                            "y": best_y,
+                            mel.rotomap.moles.KEY_IS_CONFIRMED: False,  # Non-canonical
+                        }
+                        target_moles.append(new_mole)
+                        existing_moles_by_uuid[ref_uuid] = new_mole
+
+                        print(
+                            f"    Added new mole {ref_uuid[:8]} at ({best_x}, {best_y}) "
+                            f"(similarity: {similarity:.3f})"
+                        )
+                else:
+                    print(
+                        f"    Mole {ref_uuid[:8]}: similarity {similarity:.3f} below threshold {similarity_threshold}"
+                    )
+
+            except Exception as e:
+                print(f"    Error matching mole {ref_uuid[:8]}: {e}")
+                continue
+
+        # Save updated moles
+        if matches_in_this_image > 0:
+            mel.rotomap.moles.save_image_moles(
+                target_moles, target_path, extra_stem=extra_stem
+            )
+            print(f"  Saved {matches_in_this_image} matches to {target_path.name}")
+        else:
+            print(f"  No matches found above threshold in {target_path.name}")
+
+        return matches_in_this_image
+
+    except Exception as e:
+        print(f"Error processing target image {target_path}: {e}")
+        return 0
+
+
+def process_args(args) -> int:
+    """Main processing function that orchestrates the automark3 workflow.
+
+    Args:
+        args: Parsed command line arguments
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    # Extract arguments
+    reference_paths = args.reference
+    target_paths = args.target
+    debug_images = args.debug_images
+    dino_size = args.dino_size
+    similarity_threshold = args.similarity_threshold
+    extra_stem = args.extra_stem
+
+    context_size = 910  # Large context window for rich semantic features
+
+    # Step 1: Load DINOv2 model
+    print(f"Loading DINOv2 model ({dino_size})...")
+    try:
+        model, feature_dim = mel.lib.dinov2.load_dinov2_model(dino_size)
+        print(f"DINOv2 model loaded successfully with {feature_dim} feature dimensions")
+    except RuntimeError as e:
+        print(f"Error loading DINOv2 model: {e}")
+        return 1
+
+    transform = transforms.Compose(
+        [
+            transforms.ToPILImage(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    # Step 2: Load and aggregate reference features
+    try:
+        aggregated_features, aggregation_metadata, reference_moles_by_uuid = (
+            load_and_aggregate_reference_features(
+                reference_paths, model, transform, feature_dim, context_size
+            )
+        )
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        return 1
+
     # Step 3: Process each target image
+    print(f"\nProcessing {len(target_paths)} target images...")
     total_matches_found = 0
 
     for target_path in target_paths:
-        print(f"\nProcessing target image: {target_path.name}")
-
-        try:
-            # Load target image and existing moles
-            target_image = mel.lib.image.load_image(target_path)
-            target_image = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB)
-            target_moles = mel.rotomap.moles.load_image_moles(
-                target_path, extra_stem=extra_stem
-            )
-
-            # Create lookup for existing moles by UUID
-            existing_moles_by_uuid = {m["uuid"]: m for m in target_moles}
-            canonical_uuids = {
-                m["uuid"] for m in target_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
-            }
-
-            matches_in_this_image = 0
-
-            # Try to match each reference mole
-            for ref_uuid, ref_features in aggregated_features.items():
-                # Skip if this mole is already marked canonical in target
-                if ref_uuid in canonical_uuids:
-                    print(
-                        f"  Skipping mole {ref_uuid[:8]}: already canonical in target"
-                    )
-                    continue
-
-                # Use existing location as starting point, or center of image if not present
-                if ref_uuid in existing_moles_by_uuid:
-                    start_x = existing_moles_by_uuid[ref_uuid]["x"]
-                    start_y = existing_moles_by_uuid[ref_uuid]["y"]
-                    print(
-                        f"  Searching for mole {ref_uuid[:8]} starting from existing location ({start_x}, {start_y})"
-                    )
-                else:
-                    # Start search from center of image if mole doesn't exist yet
-                    start_x = target_image.shape[1] // 2
-                    start_y = target_image.shape[0] // 2
-                    print(
-                        f"  Searching for new mole {ref_uuid[:8]} starting from image center ({start_x}, {start_y})"
-                    )
-
-                try:
-                    # Find best match location
-                    best_x, best_y, similarity = (
-                        mel.lib.dinov2.find_best_contextual_match(
-                            ref_features,
-                            target_image,
-                            start_x,
-                            start_y,
-                            context_size,
-                            model,
-                            transform,
-                            feature_dim,
-                            debug_images,
-                            ref_uuid[:8] if debug_images else None,
-                        )
-                    )
-
-                    # Check if similarity meets threshold
-                    if similarity >= similarity_threshold:
-                        matches_in_this_image += 1
-
-                        if ref_uuid in existing_moles_by_uuid:
-                            # Update existing mole location
-                            old_x = existing_moles_by_uuid[ref_uuid]["x"]
-                            old_y = existing_moles_by_uuid[ref_uuid]["y"]
-                            distance_moved = (
-                                (best_x - old_x) ** 2 + (best_y - old_y) ** 2
-                            ) ** 0.5
-
-                            existing_moles_by_uuid[ref_uuid]["x"] = best_x
-                            existing_moles_by_uuid[ref_uuid]["y"] = best_y
-
-                            print(
-                                f"    Updated mole {ref_uuid[:8]}: ({old_x}, {old_y}) -> ({best_x}, {best_y}) "
-                                f"(moved {distance_moved:.1f}px, similarity: {similarity:.3f})"
-                            )
-                        else:
-                            # Add new mole
-                            new_mole = {
-                                "uuid": ref_uuid,
-                                "x": best_x,
-                                "y": best_y,
-                                mel.rotomap.moles.KEY_IS_CONFIRMED: False,  # Non-canonical
-                            }
-                            target_moles.append(new_mole)
-                            existing_moles_by_uuid[ref_uuid] = new_mole
-
-                            print(
-                                f"    Added new mole {ref_uuid[:8]} at ({best_x}, {best_y}) "
-                                f"(similarity: {similarity:.3f})"
-                            )
-                    else:
-                        print(
-                            f"    Mole {ref_uuid[:8]}: similarity {similarity:.3f} below threshold {similarity_threshold}"
-                        )
-
-                except Exception as e:
-                    print(f"    Error matching mole {ref_uuid[:8]}: {e}")
-                    continue
-
-            # Save updated moles
-            if matches_in_this_image > 0:
-                mel.rotomap.moles.save_image_moles(
-                    target_moles, target_path, extra_stem=extra_stem
-                )
-                print(f"  Saved {matches_in_this_image} matches to {target_path.name}")
-                total_matches_found += matches_in_this_image
-            else:
-                print(f"  No matches found above threshold in {target_path.name}")
-
-        except Exception as e:
-            print(f"Error processing target image {target_path}: {e}")
-            continue
+        matches_found = process_single_target_image(
+            target_path,
+            aggregated_features,
+            model,
+            transform,
+            feature_dim,
+            context_size,
+            similarity_threshold,
+            extra_stem,
+            debug_images,
+        )
+        total_matches_found += matches_found
 
     print(
         f"\nAutomark3 completed: {total_matches_found} total matches found across all target images"
