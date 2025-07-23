@@ -145,6 +145,142 @@ def test_benchmark_guess_moles():
             save_moles(target_json, original_moles)
 
 
+def test_benchmark_automark2():
+    """Test automark2 performance using benchmark dataset."""
+    with chtempdir_context():
+        # Download and extract benchmark dataset
+        dataset_url = (
+            "https://github.com/aevri/mel-datasets/archive/refs/tags/v0.1.0.tar.gz"
+        )
+        dataset_path = download_and_extract_dataset(dataset_url)
+
+        # Set up paths to test images
+        m1_path = dataset_path / "mel-datasets-0.1.0" / "m1"
+        reference_image = (
+            m1_path / "rotomaps" / "parts" / "Trunk" / "Back" / "2025_06_12" / "0.jpg"
+        )
+        target_image = (
+            m1_path / "rotomaps" / "parts" / "Trunk" / "Back" / "2025_06_13" / "0.jpg"
+        )
+        target_json = target_image.with_suffix(".jpg.json")
+
+        # Verify files exist
+        assert reference_image.exists(), f"Reference image not found: {reference_image}"
+        assert target_image.exists(), f"Target image not found: {target_image}"
+        assert target_json.exists(), f"Target JSON not found: {target_json}"
+
+        # Read original moles and remove first 3 for benchmarking
+        original_moles = read_moles(target_json)
+        assert len(original_moles) >= 3, (
+            f"Need at least 3 moles for benchmarking, found {len(original_moles)}"
+        )
+
+        removed_moles = original_moles[:3]
+        remaining_moles = original_moles[3:]
+
+        # Save modified JSON with removed moles
+        save_moles(target_json, remaining_moles)
+
+        try:
+            # Run mel rotomap automark2
+            expect_ok(
+                "mel", "rotomap", "automark2",
+                "--reference", str(reference_image),
+                "--target", str(target_image),
+                "--dino-size", "small",
+                "--similarity-threshold", "0.5"
+            )
+
+            # Read results and measure performance
+            result_moles = read_moles(target_json)
+            performance_metrics = calculate_performance_metrics(
+                removed_moles, result_moles
+            )
+
+            # Print detailed per-mole results
+            print(f"Per-mole results (automark2):")
+            for mole_result in performance_metrics["mole_results"]:
+                status = mole_result["status"]
+                uuid_short = mole_result["uuid"][:8]
+                if status == "matched":
+                    print(
+                        f"  ✓ Mole {uuid_short}: MATCHED at distance {mole_result['distance']:.1f} pixels"
+                    )
+                elif status == "found_far":
+                    print(
+                        f"  ✗ Mole {uuid_short}: FOUND but distance {mole_result['distance']:.1f} pixels > 50 pixel threshold"
+                    )
+                else:  # not_found
+                    print(f"  ✗ Mole {uuid_short}: NOT FOUND")
+
+            # Print performance summary
+            print(f"\nAutomark2 Benchmark Results:")
+            print(f"  Original moles removed: {len(removed_moles)}")
+            print(
+                f"  Moles found by automark2: {performance_metrics['moles_found']}"
+            )
+            print(f"  Match rate: {performance_metrics['match_rate']:.2%}")
+            if performance_metrics["avg_distance"] != float("inf"):
+                print(
+                    f"  Average distance to canonical: {performance_metrics['avg_distance']:.2f} pixels"
+                )
+                print(
+                    f"  Max distance to canonical: {performance_metrics['max_distance']:.2f} pixels"
+                )
+
+            # Print actual results for easy copy-paste updating
+            actual_results = {
+                "moles_found": performance_metrics["moles_found"],
+                "matched_count": performance_metrics["matched_count"],
+                "avg_distance": round(performance_metrics["avg_distance"], 2)
+                if performance_metrics["avg_distance"] != float("inf")
+                else None,
+                "max_distance": round(performance_metrics["max_distance"], 2)
+                if performance_metrics["max_distance"] != float("inf")
+                else None,
+            }
+            print(f"\nAutomark2 actual results (copy to update expected_performance_baseline):")
+            print(f"    'moles_found': {actual_results['moles_found']},")
+            print(f"    'matched_count': {actual_results['matched_count']},")
+            if actual_results["avg_distance"] is not None:
+                print(f"    'avg_distance': {actual_results['avg_distance']},")
+            else:
+                print(f"    'avg_distance': None,")
+            if actual_results["max_distance"] is not None:
+                print(f"    'max_distance': {actual_results['max_distance']},")
+            else:
+                print(f"    'max_distance': None,")
+
+            # Performance baseline - initially set to permissive values
+            # This should be updated after initial runs to establish proper baseline
+            expected_performance_baseline = {
+                "moles_found": 1,  # Expect at least 1 mole found
+                "matched_count": 1,  # Expect at least 1 good match
+                "avg_distance": None,  # Will be set after initial benchmarking
+                "max_distance": None,  # Will be set after initial benchmarking
+            }
+
+            # Basic performance checks
+            assert (
+                performance_metrics["moles_found"]
+                >= expected_performance_baseline["moles_found"]
+            ), (
+                f"Performance regression: found {performance_metrics['moles_found']} moles, expected >= {expected_performance_baseline['moles_found']}"
+            )
+            assert (
+                performance_metrics["matched_count"]
+                >= expected_performance_baseline["matched_count"]
+            ), (
+                f"Performance regression: matched {performance_metrics['matched_count']} moles, expected >= {expected_performance_baseline['matched_count']}"
+            )
+
+            print(f"\nAutomark2 benchmark test passed!")
+
+        finally:
+            # Restore original moles
+            save_moles(target_json, original_moles)
+
+
 def download_and_extract_dataset(url: str) -> pathlib.Path:
     """Download and extract the benchmark dataset."""
     dataset_archive = pathlib.Path("benchmark_dataset.tar.gz")
