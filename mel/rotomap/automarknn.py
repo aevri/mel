@@ -22,7 +22,7 @@ class MoleDetector:
     def __init__(self, model_path):
         # Import torch lazily to avoid affecting startup time of unrelated code
         import torchvision
-        
+
         self.model = make_model(model_path)
         self.image_transform = torchvision.transforms.Compose(
             [
@@ -48,7 +48,7 @@ def make_model(model_path=None):
     # Import torch lazily to avoid affecting startup time of unrelated code
     import torch
     import torchvision
-    
+
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -170,7 +170,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
     def __init__(self, image_paths):
         # Import torchvision lazily to avoid affecting startup time of unrelated code
         import torchvision
-        
+
         self.image_paths = image_paths
         self.image_transform = torchvision.transforms.Compose(
             [
