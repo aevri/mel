@@ -2,11 +2,8 @@
 
 import argparse
 import pathlib
-from collections import defaultdict
-from typing import Any
 
 import cv2
-import numpy as np
 import torch
 import torchvision.transforms as transforms
 
@@ -64,131 +61,11 @@ def setup_parser(parser):
     )
 
 
-def aggregate_reference_features(
-    reference_features_by_uuid: dict[str, list[torch.Tensor]],
-    aggregation_method: str = "average",
-) -> tuple[dict[str, torch.Tensor], dict[str, dict[str, Any]]]:
-    """Aggregate multiple feature representations for each mole UUID.
-
-    Args:
-        reference_features_by_uuid: Dictionary mapping UUIDs to lists of feature tensors
-        aggregation_method: Method for aggregating features (currently only 'average')
-
-    Returns:
-        Tuple of (aggregated_features, aggregation_metadata)
-    """
-    aggregated_features = {}
-    aggregation_metadata = {}
-
-    for uuid, feature_list in reference_features_by_uuid.items():
-        if aggregation_method == "average":
-            # Stack all features and compute mean
-            stacked_features = np.stack([f.cpu().numpy() for f in feature_list])
-            aggregated = np.mean(stacked_features, axis=0)
-
-            # Convert back to tensor format
-            aggregated_features[uuid] = torch.from_numpy(aggregated)
-
-            aggregation_metadata[uuid] = {
-                "method": "average",
-                "num_references": len(feature_list),
-            }
-        else:
-            raise ValueError(f"Unsupported aggregation method: {aggregation_method}")
-
-    return aggregated_features, aggregation_metadata
-
-
-def load_and_aggregate_reference_features(
-    reference_paths: list[pathlib.Path],
-    model: torch.nn.Module,
-    transform: transforms.Compose,
-    feature_dim: int,
-    context_size: int,
-) -> tuple[
-    dict[str, torch.Tensor], dict[str, dict[str, Any]], dict[str, dict[str, Any]]
-]:
-    """Load canonical moles from reference images and aggregate their features.
-
-    Args:
-        reference_paths: List of paths to reference images
-        model: DINOv2 model
-        transform: Image transformation pipeline
-        feature_dim: Feature dimension of the model
-        context_size: Context window size for feature extraction
-
-    Returns:
-        Tuple of (aggregated_features, aggregation_metadata, reference_moles_by_uuid)
-    """
-    print(f"Gathering canonical moles from {len(reference_paths)} reference images...")
-
-    reference_features_by_uuid = defaultdict(list)
-    reference_moles_by_uuid = {}
-
-    for ref_path in reference_paths:
-        try:
-            # Load reference image and moles
-            ref_image = mel.lib.image.load_image(ref_path)
-            ref_image = cv2.cvtColor(ref_image, cv2.COLOR_BGR2RGB)
-            ref_moles = mel.rotomap.moles.load_image_moles(ref_path)
-
-            # Find canonical moles
-            canonical_moles = [
-                m for m in ref_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
-            ]
-
-            print(f"  {ref_path.name}: {len(canonical_moles)} canonical moles")
-
-            # Extract features for each canonical mole
-            for mole in canonical_moles:
-                uuid = mole["uuid"]
-
-                try:
-                    features = mel.lib.dinov2.extract_contextual_patch_feature(
-                        ref_image,
-                        mole["x"],
-                        mole["y"],
-                        context_size,
-                        model,
-                        transform,
-                        feature_dim,
-                    )
-                    reference_features_by_uuid[uuid].append(features)
-                    reference_moles_by_uuid[uuid] = mole  # Keep one copy for metadata
-
-                except Exception as e:
-                    print(
-                        f"    Warning: Failed to extract features for mole {uuid}: {e}"
-                    )
-                    continue
-
-        except Exception as e:
-            print(f"  Error processing reference image {ref_path}: {e}")
-            continue
-
-    if not reference_features_by_uuid:
-        raise RuntimeError("No canonical moles found in reference images")
-
-    # Aggregate features for moles that appear in multiple reference images
-    print(f"Aggregating features for {len(reference_features_by_uuid)} unique moles...")
-    aggregated_features, aggregation_metadata = aggregate_reference_features(
-        reference_features_by_uuid, aggregation_method="average"
-    )
-
-    for uuid, metadata in aggregation_metadata.items():
-        if metadata["num_references"] > 1:
-            print(
-                f"  Mole {uuid[:8]}: averaged features from {metadata['num_references']} reference images"
-            )
-
-    return aggregated_features, aggregation_metadata, reference_moles_by_uuid
-
-
 def process_single_target_image(
     target_path: pathlib.Path,
-    aggregated_features: dict[str, torch.Tensor],
-    model: torch.nn.Module,
-    transform: transforms.Compose,
+    aggregated_features: dict,
+    model,
+    transform,
     feature_dim: int,
     context_size: int,
     similarity_threshold: float,
@@ -364,7 +241,7 @@ def process_args(args) -> int:
     # Step 2: Load and aggregate reference features
     try:
         aggregated_features, aggregation_metadata, reference_moles_by_uuid = (
-            load_and_aggregate_reference_features(
+            mel.lib.dinov2.load_and_aggregate_reference_features(
                 reference_paths, model, transform, feature_dim, context_size
             )
         )
