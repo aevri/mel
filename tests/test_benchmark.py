@@ -145,8 +145,8 @@ def test_benchmark_guess_moles():
             save_moles(target_json, original_moles)
 
 
-def test_benchmark_automark2():
-    """Test automark2 performance using benchmark dataset."""
+def test_benchmark_automark3():
+    """Test automark3 performance using benchmark dataset."""
     with chtempdir_context():
         # Download and extract benchmark dataset
         dataset_url = (
@@ -182,9 +182,9 @@ def test_benchmark_automark2():
         save_moles(target_json, remaining_moles)
 
         try:
-            # Run mel rotomap automark2
+            # Run mel rotomap automark3
             expect_ok(
-                "mel", "rotomap", "automark2",
+                "mel", "rotomap", "automark3",
                 "--reference", str(reference_image),
                 "--target", str(target_image),
                 "--dino-size", "small",
@@ -198,7 +198,7 @@ def test_benchmark_automark2():
             )
 
             # Print detailed per-mole results
-            print(f"Per-mole results (automark2):")
+            print(f"Per-mole results (automark3):")
             for mole_result in performance_metrics["mole_results"]:
                 status = mole_result["status"]
                 uuid_short = mole_result["uuid"][:8]
@@ -214,10 +214,10 @@ def test_benchmark_automark2():
                     print(f"  ✗ Mole {uuid_short}: NOT FOUND")
 
             # Print performance summary
-            print(f"\nAutomark2 Benchmark Results:")
+            print(f"\nAutomark3 Benchmark Results:")
             print(f"  Original moles removed: {len(removed_moles)}")
             print(
-                f"  Moles found by automark2: {performance_metrics['moles_found']}"
+                f"  Moles found by automark3: {performance_metrics['moles_found']}"
             )
             print(f"  Match rate: {performance_metrics['match_rate']:.2%}")
             if performance_metrics["avg_distance"] != float("inf"):
@@ -239,7 +239,7 @@ def test_benchmark_automark2():
                 if performance_metrics["max_distance"] != float("inf")
                 else None,
             }
-            print(f"\nAutomark2 actual results (copy to update expected_performance_baseline):")
+            print(f"\nAutomark3 actual results (copy to update expected_performance_baseline):")
             print(f"    'moles_found': {actual_results['moles_found']},")
             print(f"    'matched_count': {actual_results['matched_count']},")
             if actual_results["avg_distance"] is not None:
@@ -274,7 +274,7 @@ def test_benchmark_automark2():
                 f"Performance regression: matched {performance_metrics['matched_count']} moles, expected >= {expected_performance_baseline['matched_count']}"
             )
 
-            print(f"\nAutomark2 benchmark test passed!")
+            print(f"\nAutomark3 benchmark test passed!")
 
         finally:
             # Restore original moles
