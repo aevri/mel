@@ -4,8 +4,6 @@ import argparse
 import pathlib
 
 import cv2
-import torch
-import torchvision.transforms as transforms
 
 import mel.lib.dinov2
 import mel.lib.image
@@ -229,6 +227,9 @@ def process_args(args) -> int:
     except RuntimeError as e:
         print(f"Error loading DINOv2 model: {e}")
         return 1
+
+    # Import torchvision lazily to avoid affecting startup time of unrelated code
+    import torchvision.transforms as transforms
 
     transform = transforms.Compose(
         [

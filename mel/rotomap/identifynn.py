@@ -6,7 +6,7 @@ import json
 import numpy
 import pytest
 import pytorch_lightning as pl
-import torch.utils.data
+import torch
 import tqdm
 
 import mel.lib.ellipsespace
@@ -75,6 +75,9 @@ class MoleIdentifier:
             out_fields=self.out_fields,
         )
 
+        # Import torch lazily to avoid affecting startup time of unrelated code
+        import torch.utils.data
+        
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
         assert len(dataloader) == len(frame.moles)
 
