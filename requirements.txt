@@ -8,7 +8,7 @@ pygame==2.6.1
 pytest==8.4.1
 ruff==0.12.7
 pytorch-lightning==2.5.2
-torchvision==0.22.1
+torchvision==0.23.0
 tqdm==4.67.1
 vulture==2.14
 wandb==0.21.0
