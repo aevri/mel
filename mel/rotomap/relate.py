@@ -334,10 +334,18 @@ def best_baseless_offset_theory(from_moles, to_moles):
             )
 
             new_best = best_theory is None
-            if not new_best and len(theory) < len(best_theory):
+            if (
+                not new_best
+                and best_theory is not None
+                and len(theory) < len(best_theory)
+            ):
                 new_best = True
-            if not new_best and len(theory) == len(best_theory):
-                if dist_sq < best_theory_dist_sq:
+            if (
+                not new_best
+                and best_theory is not None
+                and len(theory) == len(best_theory)
+            ):
+                if best_theory_dist_sq is None or dist_sq < best_theory_dist_sq:
                     new_best = True
                 if (
                     not new_best
@@ -378,7 +386,11 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
         point = mel.rotomap.moles.mole_to_point(a)
         point += offset
         best_index, best_dist_sq = _nearest_mole_index_to_point(point, to_moles)
-        if best_index is not None and best_dist_sq <= cutoff_sq:
+        if (
+            best_index is not None
+            and best_dist_sq is not None
+            and best_dist_sq <= cutoff_sq
+        ):
             r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
             r_point -= offset
             r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)

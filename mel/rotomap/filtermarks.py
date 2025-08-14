@@ -87,10 +87,7 @@ def images_to_features(images, batch_size):
         [transform(i) for i in images], batch_size=batch_size
     )
 
-    with (
-        record_input_context(model.classifier[1]) as fc_in,
-        torch.no_grad(),
-    ):
+    with record_input_context(model.classifier[1]) as fc_in, torch.no_grad():
         for batch in batcher:
             model(batch)
 

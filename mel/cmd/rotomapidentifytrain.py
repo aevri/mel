@@ -114,6 +114,7 @@ def process_args(args):
     # import them only when necessary.
     import pytorch_lightning as pl
     import torch
+    from pytorch_lightning import loggers
 
     import mel.lib.ellipsespace
     import mel.lib.fs
@@ -187,9 +188,9 @@ def process_args(args):
 
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
-        trainer_kwargs |= {
-            "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
-        }
+        trainer_kwargs["logger"] = loggers.WandbLogger(
+            project=wandb_project, name=wandb_run_name
+        )
 
     print("Making data ..")
     (
