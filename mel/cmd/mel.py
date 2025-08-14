@@ -25,6 +25,8 @@ import mel.cmd.rotomapfiltermarkstrain
 import mel.cmd.rotomapguessmissing
 import mel.cmd.rotomapguessrefine
 import mel.cmd.rotomapidentify
+import mel.cmd.rotomapidentify2
+import mel.cmd.rotomapidentify2train
 import mel.cmd.rotomapidentifytrain
 import mel.cmd.rotomaplist
 import mel.cmd.rotomaploadsave
@@ -68,6 +70,8 @@ COMMANDS = {
         "guess-refine": mel.cmd.rotomapguessrefine,
         "identify": mel.cmd.rotomapidentify,
         "identify-train": mel.cmd.rotomapidentifytrain,
+        "identify2": mel.cmd.rotomapidentify2,
+        "identify2-train": mel.cmd.rotomapidentify2train,
         "list": mel.cmd.rotomaplist,
         "loadsave": mel.cmd.rotomaploadsave,
         "mark-unchanged": mel.cmd.rotomapmarkunchanged,
