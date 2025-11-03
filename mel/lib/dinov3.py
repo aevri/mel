@@ -98,11 +98,7 @@ def extract_patch_feature(image, center_x, center_y, patch_size, model, transfor
         # DINOv3 returns a dictionary with 'x_norm_clstoken' and 'x_norm_patchtokens'
         output = model(patch_tensor)
         # Use the CLS token as the patch representation
-        if isinstance(output, dict):
-            feature = output["x_norm_clstoken"]
-        else:
-            # Fallback for simple output
-            feature = output
+        feature = output["x_norm_clstoken"] if isinstance(output, dict) else output
 
     return feature.squeeze(0)  # Remove batch dimension
 
@@ -126,9 +122,7 @@ def compute_similarity(feature1, feature2):
     feature2_norm = torch.nn.functional.normalize(feature2, p=2, dim=0)
 
     # Compute cosine similarity
-    similarity = torch.dot(feature1_norm, feature2_norm).item()
-
-    return similarity
+    return torch.dot(feature1_norm, feature2_norm).item()
 
 
 # -----------------------------------------------------------------------------

@@ -5,7 +5,6 @@ import collections
 import pathlib
 
 import cv2
-import numpy as np
 
 import mel.lib.dinov3
 import mel.lib.image
@@ -78,7 +77,7 @@ def process_args(args):
 
     # Load DINOv3 model
     try:
-        model, feature_dim = mel.lib.dinov3.load_dinov3_model(dino_size)
+        model, _feature_dim = mel.lib.dinov3.load_dinov3_model(dino_size)
     except RuntimeError as e:
         print(f"Error loading DINOv3 model: {e}")
         return 1
@@ -145,7 +144,7 @@ def process_args(args):
 
             for i, (feature_i, x_i, y_i, path_i, _) in enumerate(mole_instances):
                 similarities = []
-                for j, (feature_j, x_j, y_j, path_j, _) in enumerate(mole_instances):
+                for j, (feature_j, _x_j, _y_j, _path_j, _) in enumerate(mole_instances):
                     if i != j:
                         sim = mel.lib.dinov3.compute_similarity(feature_i, feature_j)
                         similarities.append(sim)
@@ -192,10 +191,10 @@ def process_args(args):
         # For each reference mole, try to find it in the target image
         for ref_uuid, (
             ref_feature,
-            ref_x,
-            ref_y,
+            _ref_x,
+            _ref_y,
             ref_path,
-            ref_score,
+            _ref_score,
         ) in aggregated_references.items():
             # Skip if this UUID is already canonical in the target
             if ref_uuid in canonical_uuids:
@@ -246,7 +245,6 @@ def process_args(args):
             if ref_uuid in existing_moles_by_uuid:
                 # Update existing non-canonical mole
                 mole = existing_moles_by_uuid[ref_uuid]
-                old_x, old_y = mole["x"], mole["y"]
                 mole["x"] = best_match_x
                 mole["y"] = best_match_y
                 total_updates += 1
@@ -303,10 +301,6 @@ def search_for_mole(
     Returns:
         tuple: (best_x, best_y, best_similarity)
     """
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-    import torch
-
     height, width = target_image.shape[:2]
 
     # If there's an existing mole, start search around it
