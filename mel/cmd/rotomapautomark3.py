@@ -10,6 +10,7 @@ import numpy as np
 import mel.lib.dinov3
 import mel.lib.image
 import mel.rotomap.moles
+import mel.rotomap.relate
 
 
 def _existing_file_path(string):
@@ -174,6 +175,11 @@ def process_args(args):
             m["uuid"] for m in target_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
         }
 
+        # Get canonical moles from target for geometric guessing
+        target_canonical_moles = [
+            m for m in target_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
+        ]
+
         # Build a dict of existing non-canonical moles by UUID for quick lookup
         existing_moles_by_uuid = {
             m["uuid"]: m
@@ -195,6 +201,32 @@ def process_args(args):
             if ref_uuid in canonical_uuids:
                 continue
 
+            # Get initial position guess
+            existing_mole = existing_moles_by_uuid.get(ref_uuid)
+            if existing_mole is None and target_canonical_moles:
+                # Try to guess position using geometric relationships
+                try:
+                    ref_moles_for_uuid = mel.rotomap.moles.load_image_moles(ref_path)
+                    ref_canonical_for_uuid = [
+                        m
+                        for m in ref_moles_for_uuid
+                        if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
+                    ]
+
+                    guessed_pos = mel.rotomap.relate.guess_mole_pos(
+                        ref_uuid, ref_canonical_for_uuid, target_canonical_moles
+                    )
+
+                    if guessed_pos is not None:
+                        # Create a temporary "existing mole" with the guessed position
+                        existing_mole = {
+                            "x": int(guessed_pos[0]),
+                            "y": int(guessed_pos[1]),
+                        }
+                except Exception:
+                    # If geometric guessing fails, existing_mole remains None
+                    pass
+
             # Search for the best match in the target image
             # Use a grid search or scan the image for the best matching location
             best_match_x, best_match_y, best_similarity = search_for_mole(
@@ -203,7 +235,7 @@ def process_args(args):
                 model,
                 transform,
                 patch_size,
-                existing_moles_by_uuid.get(ref_uuid),
+                existing_mole,
             )
 
             # Check if similarity exceeds threshold
