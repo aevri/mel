@@ -158,7 +158,7 @@ class LightningModel(pl.LightningModule):
         )
 
     def training_step(self, batch, batch_idx):
-        i, xb, yb = batch
+        _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
         self.log("train_loss", loss.detach(), prog_bar=True)
@@ -166,7 +166,7 @@ class LightningModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        i, xb, yb = batch
+        _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
         self.log("val_loss", loss.detach(), prog_bar=True)
