@@ -62,6 +62,14 @@ microscope.
 
 - **Microscope imaging**: Detect changes in moles with the `mel micro *` commands. These help you quickly capture and manually compare images of known moles with a USB microscope.
 
+Other projects to watch
+-----------------------
+
+- **[Intelligent Total Body Scanner for Early Detection of Melanoma (iToBoS)](https://www.itobos.eu)**:
+  - iToBoS was an EU-funded project (€11M) that developed an AI-powered full-body scanner capable of imaging a patient's entire skin surface in six minutes and providing automated risk assessments for each mole to enable earlier melanoma detection.
+  - The initial four year pilot is now concluded and ran until March 2025.
+  - Next steps include a large-scale roll-out trial that will involve a much larger number of melanoma cases. “While this pilot study demonstrated the technical functionality and clinical potential of the platform, a broader trial is now needed,” [notes project coordinator Rafael Garcia from the University of Girona](https://cordis.europa.eu/article/id/460600-ai-driven-diagnostic-platform-to-tackle-melanoma).
+
 License
 -------
 
