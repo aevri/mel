@@ -69,6 +69,8 @@ Other projects to watch
   - iToBoS was an EU-funded project (€11M) that developed an AI-powered full-body scanner capable of imaging a patient's entire skin surface in six minutes and providing automated risk assessments for each mole to enable earlier melanoma detection.
   - The initial four year pilot is now concluded and ran until March 2025.
   - Next steps include a large-scale roll-out trial that will involve a much larger number of melanoma cases. “While this pilot study demonstrated the technical functionality and clinical potential of the platform, a broader trial is now needed,” [notes project coordinator Rafael Garcia from the University of Girona](https://cordis.europa.eu/article/id/460600-ai-driven-diagnostic-platform-to-tackle-melanoma).
+ 
+- **[VECTRA WB360 whole body 3D imaging system](https://www.canfieldsci.com/imaging-systems/vectra-wb360-imaging-system/)**: captures the entire skin surface in macro quality resolution with a single capture. Apparently this is the commercial predecessor technology that iToBoS builds upon.
 
 License
 -------
