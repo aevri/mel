@@ -57,21 +57,17 @@ def load_dinov3_model(dino_size="base"):
                 # DINOv2 patch size is 14
                 self.patch_size = 14
 
-            def extract_contextual_patch_features(
-                self, image_array, center_patch_idx=None
-            ):
-                """Extract patch features with full context for semantic matching.
+            def extract_contextual_patch_features(self, image_array, center_patch_idx=None):
+                """Extract patch features with full context for semantic
+                matching.
 
                 Args:
                     image_array: Input numpy array [height, width, channels] in RGB
-                    center_patch_idx: Index of center patch to extract (if None,
-                        extract all)
+                    center_patch_idx: Index of center patch to extract (if None, extract all)
 
                 Returns:
-                    If center_patch_idx is None: All patch features
-                        [num_patches, feature_dim]
-                    If center_patch_idx is provided: Center patch features
-                        [feature_dim]
+                    If center_patch_idx is None: All patch features [num_patches, feature_dim]
+                    If center_patch_idx is provided: Center patch features [feature_dim]
                 """
                 # Convert numpy array to tensor with proper preprocessing
                 from torchvision import transforms
