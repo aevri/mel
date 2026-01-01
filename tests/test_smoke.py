@@ -164,22 +164,11 @@ def test_smoke():
                   str(target_image_files[0]), str(target_image_files[1]))
         expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1", "--dino-size", "small",
                   str(target_image_files[0]), str(target_image_files[1]))
-        # automark3 requires DINOv3 models from HuggingFace which may be gated
-        # (require authentication). Skip gracefully if the model can't be loaded.
-        result = subprocess.run(
-            ["mel", "rotomap", "automark3",
-             "--reference", str(target_image_files[0]),
-             "--target", str(target_image_files[1]),
-             "--dino-size", "small"],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            if "gated repo" in result.stdout or "401 Client Error" in result.stdout:
-                print("Skipping automark3 test - DINOv3 model requires authentication")
-            else:
-                # Re-raise for other errors
-                result.check_returncode()
+        # automark3 uses DINOv2 via torch.hub (publicly accessible)
+        expect_ok("mel", "rotomap", "automark3",
+                  "--reference", str(target_image_files[0]),
+                  "--target", str(target_image_files[1]),
+                  "--dino-size", "small")
         # For montage-single, we need a UUID, so let's get one from the first JSON file
         # and use the corresponding image file
         json_file = target_json_files[0]

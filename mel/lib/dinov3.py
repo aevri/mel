@@ -1,14 +1,26 @@
-"""DINOv3 model loading and feature extraction utils for semantic matching."""
+"""DINOv2 model loading and feature extraction utils for semantic matching.
+
+This module provides automark3-specific DINOv2 functionality via torch.hub.
+It uses DINOv2 models from the facebookresearch/dinov2 repository which are
+publicly accessible without authentication.
+
+Note: The module is named dinov3.py for historical reasons (originally planned
+to use DINOv3), but uses DINOv2 via torch.hub for compatibility.
+"""
 
 import cv2
 import numpy as np
 
 
 def load_dinov3_model(dino_size="base"):
-    """Load the DINOv3 model for semantic feature extraction with context.
+    """Load the DINOv2 model for semantic feature extraction with context.
+
+    Uses DINOv2 via torch.hub which is publicly accessible without
+    authentication. Originally planned to use DINOv3 from HuggingFace,
+    but that requires authentication for gated models.
 
     Args:
-        dino_size: Model size variant ("small", "base", "large", "huge", "giant")
+        dino_size: Model size variant ("small", "base", "large", "giant")
 
     Returns:
         tuple: (model_wrapper, feature_dimension)
@@ -16,16 +28,14 @@ def load_dinov3_model(dino_size="base"):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
-    from transformers import AutoImageProcessor, AutoModel
 
     # Map size names to actual model names and their feature dimensions
-    # DINOv3 models from HuggingFace
+    # DINOv2 models from torch.hub (facebookresearch/dinov2)
     model_configs = {
-        "small": ("facebook/dinov3-vits16-pretrain-lvd1689m", 384),
-        "base": ("facebook/dinov3-vitb16-pretrain-lvd1689m", 768),
-        "large": ("facebook/dinov3-vitl16-pretrain-lvd1689m", 1024),
-        "huge": ("facebook/dinov3-vith16-pretrain-lvd1689m", 1280),
-        "giant": ("facebook/dinov3-vit7b16-pretrain-lvd1689m", 4096),
+        "small": ("dinov2_vits14", 384),
+        "base": ("dinov2_vitb14", 768),
+        "large": ("dinov2_vitl14", 1024),
+        "giant": ("dinov2_vitg14", 1536),
     }
 
     if dino_size not in model_configs:
@@ -36,16 +46,16 @@ def load_dinov3_model(dino_size="base"):
     model_name, feature_dim = model_configs[dino_size]
 
     try:
-        # Load DINOv3 model and processor
-        processor = AutoImageProcessor.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
+        # Load DINOv2 model via torch.hub (publicly accessible)
+        model = torch.hub.load("facebookresearch/dinov2", model_name)
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
-            def __init__(self, model, processor):
+            def __init__(self, model):
                 self.model = model
-                self.processor = processor
                 self.model.eval()
+                # DINOv2 patch size is 14
+                self.patch_size = 14
 
             def extract_contextual_patch_features(
                 self, image_array, center_patch_idx=None
@@ -61,33 +71,66 @@ def load_dinov3_model(dino_size="base"):
                     If center_patch_idx is None: All patch features [num_patches, feature_dim]
                     If center_patch_idx is provided: Center patch features [feature_dim]
                 """
-                # Process the image array using the processor
-                inputs = self.processor(images=image_array, return_tensors="pt")
+                # Convert numpy array to tensor with proper preprocessing
+                from torchvision import transforms
 
-                with torch.no_grad():
-                    # Get model outputs
-                    outputs = self.model(**inputs)
-                    # last_hidden_state shape: [batch, seq_len, feature_dim]
-                    # seq_len = 1 (CLS) + 4 (registers) + num_patches
-                    all_tokens = outputs.last_hidden_state
+                # Standard DINOv2 preprocessing
+                transform = transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]
+                    ),
+                ])
 
-                    # Remove CLS token (index 0) and register tokens (indices 1-4)
-                    # to get just patch tokens
-                    patch_tokens = all_tokens[
-                        :, 5:, :
-                    ]  # [batch, num_patches, feature_dim]
+                # Apply transform and add batch dimension
+                input_tensor = transform(image_array).unsqueeze(0)
 
-                    if center_patch_idx is not None:
-                        # Extract specific center patch
-                        return patch_tokens[0, center_patch_idx, :]  # [feature_dim]
-                    # Return all patch features
-                    return patch_tokens[0]  # [num_patches, feature_dim]
+                # Use forward hook to capture patch tokens with full context
+                patch_features = []
 
-        return ContextualFeatureExtractor(model, processor), feature_dim
+                def hook_fn(module, _input_tensor, output):
+                    if hasattr(output, "shape") and len(output.shape) == 3:
+                        patch_features.append(output)
+
+                # Register hook on the normalization layer to get contextualized features
+                hook = self.model.norm.register_forward_hook(hook_fn)
+
+                try:
+                    with torch.no_grad():
+                        # Run forward pass to get contextualized features
+                        _ = self.model(input_tensor)
+                        if patch_features:
+                            # patch_features[0] shape: [batch, seq_len, feature_dim]
+                            # where seq_len = 1 (CLS) + num_patches
+                            all_tokens = patch_features[0]
+                            # Remove CLS token to get just patch tokens
+                            patch_tokens = all_tokens[
+                                :, 1:, :
+                            ]  # [batch, num_patches, feature_dim]
+
+                            if center_patch_idx is not None:
+                                # Extract specific center patch, remove batch dim
+                                return patch_tokens[
+                                    0, center_patch_idx, :
+                                ]  # [feature_dim]
+                            # Return all patch features, remove batch dim
+                            return patch_tokens[0]  # [num_patches, feature_dim]
+                        # Fallback: use CLS token
+                        cls_features = self.model(input_tensor)
+                        return (
+                            cls_features[0].unsqueeze(0)
+                            if center_patch_idx is None
+                            else cls_features[0]
+                        )
+                finally:
+                    hook.remove()
+
+        return ContextualFeatureExtractor(model), feature_dim
     except Exception as e:
         raise RuntimeError(
-            "Failed to load DINOv3 model. Please ensure you have internet access "
-            "and the required dependencies (transformers>=4.56.0). Error: " + str(e)
+            "Failed to load DINOv2 model. Please ensure you have internet access "
+            "and the required dependencies. Error: " + str(e)
         ) from e
 
 
@@ -99,16 +142,13 @@ def extract_contextual_patch_feature(
     Args:
         image: Input image array (RGB)
         center_x, center_y: Center coordinates of the mole
-        context_size: Size of context window (e.g., 1024 for 1024x1024)
-        model: DINOv3 model wrapper
+        context_size: Size of context window (e.g., 910 for 910x910)
+        model: DINOv2 model wrapper
         feature_dim: Feature dimension of the model
 
     Returns:
         Tensor: Context-aware feature for center patch [feature_dim]
     """
-    # Import this as lazily as possible as it takes a while to import, so that
-    # we only pay the import cost when we use it.
-
     # Extract large context patch centered on the mole
     half_context = context_size // 2
     y_start = max(0, center_y - half_context)
@@ -143,8 +183,9 @@ def extract_contextual_patch_feature(
         ]
 
     # Calculate which patch corresponds to the center
-    # For context_size=1024 and patch_size=16: 1024/16 = 64 patches per side
-    patches_per_side = context_size // 16
+    # For DINOv2 with patch_size=14: context_size/14 patches per side
+    patch_size = model.patch_size
+    patches_per_side = context_size // patch_size
     center_patch_row = patches_per_side // 2
     center_patch_col = patches_per_side // 2
     center_patch_idx = center_patch_row * patches_per_side + center_patch_col
@@ -170,12 +211,12 @@ def extract_all_contextual_features(
     Args:
         image: Input image array (RGB)
         center_x, center_y: Center coordinates
-        context_size: Size of context window (e.g., 1024 for 1024x1024)
-        model: DINOv3 model wrapper
+        context_size: Size of context window (e.g., 910 for 910x910)
+        model: DINOv2 model wrapper
         feature_dim: Feature dimension of the model
 
     Returns:
-        Tensor: All patch features [num_patches, feature_dim] where num_patches = (context_size//16)^2
+        Tensor: All patch features [num_patches, feature_dim]
     """
     # Extract large context patch centered on the location
     half_context = context_size // 2
@@ -215,8 +256,9 @@ def extract_all_contextual_features(
         context_patch, center_patch_idx=None
     )
 
-    # Assert expected shape for 64x64 patches
-    patches_per_side = context_size // 16
+    # Assert expected shape
+    patch_size = model.patch_size
+    patches_per_side = context_size // patch_size
     expected_patches = patches_per_side * patches_per_side
     assert all_patch_features.shape == (
         expected_patches,
@@ -235,6 +277,7 @@ def save_contextual_similarity_heatmap(
     context_size,
     similarities,
     patches_per_side,
+    patch_size,
     filename,
 ):
     """Save a heatmap showing cosine similarities for each patch in the context
@@ -243,14 +286,17 @@ def save_contextual_similarity_heatmap(
     Args:
         image: Target image (RGB)
         center_x, center_y: Center of context window
-        context_size: Size of context window (e.g., 1024)
+        context_size: Size of context window (e.g., 910)
         similarities: Tensor of similarities [num_patches] for each patch
-        patches_per_side: Number of patches per side (e.g., 64)
+        patches_per_side: Number of patches per side (e.g., 65)
+        patch_size: Size of each patch in pixels (e.g., 14)
         filename: Output filename
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
+
+    import mel.lib.image
 
     try:
         # Extract context area for visualization
@@ -292,14 +338,13 @@ def save_contextual_similarity_heatmap(
         normalized_grid = (similarity_grid - sim_min) / sim_range
 
         # Map each patch similarity to pixel regions
-        patch_size_pixels = 16
         for patch_row in range(patches_per_side):
             for patch_col in range(patches_per_side):
                 # Calculate pixel coordinates for this patch
-                y_start = patch_row * patch_size_pixels
-                y_end = min(context_size, (patch_row + 1) * patch_size_pixels)
-                x_start = patch_col * patch_size_pixels
-                x_end = min(context_size, (patch_col + 1) * patch_size_pixels)
+                y_start = patch_row * patch_size
+                y_end = min(context_size, (patch_row + 1) * patch_size)
+                x_start = patch_col * patch_size
+                x_end = min(context_size, (patch_col + 1) * patch_size)
 
                 # Set heatmap values for this patch region
                 heatmap[y_start:y_end, x_start:x_end] = normalized_grid[
@@ -321,8 +366,8 @@ def save_contextual_similarity_heatmap(
         best_patch_col = best_patch_idx % patches_per_side
 
         # Convert to pixel coordinates within context
-        best_y_pixel = best_patch_row * patch_size_pixels + patch_size_pixels // 2
-        best_x_pixel = best_patch_col * patch_size_pixels + patch_size_pixels // 2
+        best_y_pixel = best_patch_row * patch_size + patch_size // 2
+        best_x_pixel = best_patch_col * patch_size + patch_size // 2
 
         # Draw best match marker (bright green cross)
         cv2.line(
@@ -358,9 +403,9 @@ def save_contextual_similarity_heatmap(
             2,
         )
 
-        # Convert RGB to BGR for cv2.imwrite
+        # Convert RGB to BGR for saving
         blended_bgr = cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(filename, blended_bgr)
+        mel.lib.image.save_image(filename, blended_bgr)
         print(f"  Debug: Saved contextual similarity heatmap to {filename}")
         print(f"  Debug: Similarity range: {sim_min:.3f} to {sim_max:.3f}")
 
@@ -388,7 +433,7 @@ def find_best_contextual_match(
         tgt_image: Target image (RGB)
         center_x, center_y: Initial target location
         context_size: Size of context window for feature extraction
-        model: DINOv3 model wrapper
+        model: DINOv2 model wrapper
         feature_dim: Feature dimension of the model
         debug_images: Whether to save debug images
         uuid: Mole UUID for debug filenames
@@ -399,6 +444,8 @@ def find_best_contextual_match(
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
+
+    patch_size = model.patch_size
 
     # Check if we can extract a full context window at the initial location
     half_context = context_size // 2
@@ -438,14 +485,13 @@ def find_best_contextual_match(
         best_similarity = similarities[best_patch_idx].item()
 
         # Convert patch index to spatial coordinates
-        patches_per_side = context_size // 16  # 64 for 1024x1024 context
+        patches_per_side = context_size // patch_size
         patch_row = best_patch_idx // patches_per_side
         patch_col = best_patch_idx % patches_per_side
 
         # Convert patch coordinates to pixel coordinates (relative to context center)
-        # Each patch is 16x16 pixels, so offset from center of context
-        offset_x = (patch_col - patches_per_side // 2) * 16
-        offset_y = (patch_row - patches_per_side // 2) * 16
+        offset_x = (patch_col - patches_per_side // 2) * patch_size
+        offset_y = (patch_row - patches_per_side // 2) * patch_size
 
         best_x = center_x + offset_x
         best_y = center_y + offset_y
@@ -464,6 +510,7 @@ def find_best_contextual_match(
                 context_size,
                 similarities,
                 patches_per_side,
+                patch_size,
                 f"{uuid}_tgt_heatmap.jpg",
             )
 
@@ -475,7 +522,7 @@ def find_best_contextual_match(
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

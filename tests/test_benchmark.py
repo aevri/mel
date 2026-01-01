@@ -279,33 +279,18 @@ def test_benchmark_automark3():
 
         try:
             # Run mel rotomap automark3
-            # Note: DINOv3 models are gated on HuggingFace and require authentication.
-            # If we can't load the model, skip this test gracefully.
-            result = subprocess.run(
-                [
-                    "mel",
-                    "rotomap",
-                    "automark3",
-                    "--reference",
-                    str(source_image),
-                    "--target",
-                    str(target_image),
-                    "--dino-size",
-                    "small",
-                ],
-                capture_output=True,
-                text=True,
+            # Uses DINOv2 via torch.hub (publicly accessible)
+            expect_ok(
+                "mel",
+                "rotomap",
+                "automark3",
+                "--reference",
+                str(source_image),
+                "--target",
+                str(target_image),
+                "--dino-size",
+                "small",
             )
-            if result.returncode != 0:
-                if "gated repo" in result.stdout or "401 Client Error" in result.stdout:
-                    import pytest
-
-                    pytest.skip(
-                        "DINOv3 model requires HuggingFace authentication - skipping benchmark"
-                    )
-                else:
-                    # Re-raise for other errors
-                    result.check_returncode()
 
             # Read results and measure performance
             result_moles = read_moles(target_json)

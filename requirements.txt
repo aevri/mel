@@ -9,7 +9,6 @@ pytest==8.4.2
 ruff==0.14.3
 pytorch-lightning==2.5.5
 torchvision==0.24.0
-transformers==4.56.0
 tqdm==4.67.1
 vulture==2.14
 wandb==0.22.3

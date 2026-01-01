@@ -2,33 +2,14 @@
 
 ## Summary
 
-This document provides testing instructions for the new `mel rotomap automark3` command that uses DINOv3 for improved mole matching performance.
+This document provides testing instructions for the `mel rotomap automark3` command that uses DINOv2 for improved mole matching performance.
 
-## Environment Limitations
+## Implementation Details
 
-The automated CI environment has network restrictions preventing model downloads:
-- **DINOv2**: 403 Forbidden when accessing `dl.fbaipublicfiles.com`
-- **DINOv3**: 403 Forbidden when accessing `huggingface.co`
+The automark3 command uses DINOv2 via torch.hub from the `facebookresearch/dinov2` repository. This is publicly accessible without authentication, unlike DINOv3 models on HuggingFace which are gated repositories.
 
-Therefore, **manual testing with unrestricted internet access is required** to validate performance improvements.
+## Prerequisites
 
-## Partial Test Results (Without Model Downloads)
-
-### Test Setup
-Using mel-datasets v0.1.0, removed 3 canonical moles:
-- `f0732022`: (2925, 4705)
-- `b38e00c7`: (2403, 4768)
-- `d631043a`: (2277, 4055)
-
-### Old Approach Results (guess-missing only, DINOv2 couldn't download)
-- ✅ Moles found: 3/3 (100%)
-- ❌ Moles matched (<50px): 0/3 (0%)
-- Average distance: 168.82 pixels
-- Individual: [111.5px, 236.9px, 158.0px]
-
-## Manual Testing Instructions
-
-### Prerequisites
 ```bash
 git clone https://github.com/aevri/mel.git
 cd mel
@@ -38,7 +19,7 @@ wget https://github.com/aevri/mel-datasets/archive/refs/tags/v0.1.0.tar.gz
 tar -xzf v0.1.0.tar.gz
 ```
 
-### Quick Comparison Test
+## Quick Comparison Test
 
 ```bash
 #!/bin/bash
@@ -66,16 +47,15 @@ mel rotomap automark3 --reference "$SRC" --target "$TGT" --dino-size small
 cp "$JSON.bak" "$JSON"
 ```
 
-### Expected Improvements
+## Model Sizes
 
-DINOv3 advantages over DINOv2:
-- 6.7B parameter teacher (vs 1.1B)
-- 1.7B training images (vs 142M)
-- Built-in register tokens
-- RoPE position embeddings
-- Should yield **higher match rate** and **lower average distance**
+Available DINOv2 model sizes via torch.hub:
+- `small`: 384 feature dimensions (fastest)
+- `base`: 768 feature dimensions (default, good balance)
+- `large`: 1024 feature dimensions (more accurate)
+- `giant`: 1536 feature dimensions (most accurate, slowest)
 
-### Key Metrics
+## Key Metrics
 
 1. **Moles found**: N/3 discovered
 2. **Moles matched**: N/3 within 50px
@@ -86,7 +66,7 @@ DINOv3 advantages over DINOv2:
 
 ```bash
 # Different model sizes (better accuracy, slower)
---dino-size base    # 768 features
+--dino-size base    # 768 features (default)
 --dino-size large   # 1024 features
 
 # Multiple reference images
@@ -101,14 +81,12 @@ DINOv3 advantages over DINOv2:
 --debug-images  # Save similarity heatmaps
 ```
 
-## Code Validation ✅
+## Code Validation
 
-- ✅ Static analysis passed
-- ✅ Import fixes applied (AutoModel)
-- ✅ Dependencies updated (transformers 4.56.0)
-- ✅ Tests added (smoke + benchmark)
-- ✅ Committed to `claude/update-dino-latest-GJu3z`
+- Static analysis: `./meta/static_tests.sh`
+- Unit tests: `./meta/unit_tests.sh`
+- Full tests: `pytest --doctest-modules`
 
 ## Ready for Testing
 
-The implementation is complete. Manual testing will validate the expected DINOv3 performance improvements over the existing DINOv2-based approach.
+The implementation is complete and uses DINOv2 via torch.hub which is publicly accessible. Tests should pass without authentication requirements.

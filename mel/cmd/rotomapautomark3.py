@@ -1,5 +1,8 @@
-"""Automatically mark moles in target images using DINOv3 feature matching from
-reference images."""
+"""Automatically mark moles in target images using DINOv2 feature matching from
+reference images.
+
+Uses DINOv2 via torch.hub which is publicly accessible without authentication.
+"""
 
 import argparse
 import pathlib
@@ -40,9 +43,9 @@ def setup_parser(parser):
     parser.add_argument(
         "--dino-size",
         type=str,
-        choices=["small", "base", "large", "huge", "giant"],
+        choices=["small", "base", "large", "giant"],
         default="base",
-        help="DINOv3 model size variant (default: base). Larger models are more accurate but slower.",
+        help="DINOv2 model size variant (default: base). Larger models are more accurate but slower.",
     )
     parser.add_argument(
         "--similarity-threshold",
@@ -104,12 +107,12 @@ def process_args(args):
     debug_images = args.debug_images
     aggregation = args.aggregation
 
-    print(f"Loading DINOv3 model ({dino_size})...")
+    print(f"Loading DINOv2 model ({dino_size})...")
     try:
         model, feature_dim = mel.lib.dinov3.load_dinov3_model(dino_size)
-        print(f"DINOv3 model loaded successfully with {feature_dim} feature dimensions")
+        print(f"DINOv2 model loaded successfully with {feature_dim} feature dimensions")
     except RuntimeError as e:
-        print(f"Error loading DINOv3 model: {e}")
+        print(f"Error loading DINOv2 model: {e}")
         return 1
 
     # Step 1: Gather all canonical moles from reference images
@@ -294,7 +297,7 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
