@@ -20,6 +20,7 @@ dependencies = [
     "pytorch-lightning",
     "torch",
     "torchvision",
+    "transformers>=4.56.0",
     "tqdm",
     "wandb",
 ]
