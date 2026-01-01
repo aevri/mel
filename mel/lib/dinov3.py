@@ -16,7 +16,7 @@ def load_dinov3_model(dino_size="base"):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
-    from transformers import AutoImageProcessor, Dinov3Model
+    from transformers import AutoImageProcessor, AutoModel
 
     # Map size names to actual model names and their feature dimensions
     # DINOv3 models from HuggingFace
@@ -38,7 +38,7 @@ def load_dinov3_model(dino_size="base"):
     try:
         # Load DINOv3 model and processor
         processor = AutoImageProcessor.from_pretrained(model_name)
-        model = Dinov3Model.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
