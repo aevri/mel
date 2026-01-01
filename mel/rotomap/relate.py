@@ -184,7 +184,7 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
     Returns:
         numpy.array or None: A numpy.array of the guessed position, or None if no guess.
     """
-    from_points, to_points, point_offsets, _ = offset_theory_points(
+    from_points, _to_points, point_offsets, _ = offset_theory_points(
         from_moles, to_moles
     )
 
@@ -195,7 +195,7 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
         return None
 
     point = from_points[from_uuid]
-    offset, error = pick_value_from_field(point, point_offsets)
+    offset, _error = pick_value_from_field(point, point_offsets)
     return (point + offset).astype(int)
 
 
