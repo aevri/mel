@@ -1,5 +1,4 @@
-"""Automatically mark moles in target images using DINOv2 feature matching from
-reference images.
+"""Automatically mark moles in target images using DINOv2 feature matching.
 
 Uses DINOv2 via torch.hub which is publicly accessible without authentication.
 """
