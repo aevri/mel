@@ -1,12 +1,4 @@
-"""DINOv2 model loading and feature extraction utils for semantic matching.
-
-This module provides automark3-specific DINOv2 functionality via torch.hub.
-It uses DINOv2 models from the facebookresearch/dinov2 repository which are
-publicly accessible without authentication.
-
-Note: The module is named dinov3.py for historical reasons (originally planned
-to use DINOv3), but uses DINOv2 via torch.hub for compatibility.
-"""
+"""DINOv2 model loading and feature extraction utils for semantic matching."""
 
 import cv2
 import numpy as np
@@ -14,10 +6,6 @@ import numpy as np
 
 def load_dinov3_model(dino_size="base"):
     """Load the DINOv2 model for semantic feature extraction with context.
-
-    Uses DINOv2 via torch.hub which is publicly accessible without
-    authentication. Originally planned to use DINOv3 from HuggingFace,
-    but that requires authentication for gated models.
 
     Args:
         dino_size: Model size variant ("small", "base", "large", "giant")
