@@ -46,7 +46,7 @@ def _merge(from_moles, to_moles, error_distance):
     (
         match_uuids,
         _missing_uuids,
-        added_uuids,
+        _added_uuids,
     ) = mel.rotomap.automark.match_moles_by_pos(from_moles, to_moles, error_distance)
 
     old_to_new_uuids = {to_uuid: from_uuid for from_uuid, to_uuid in match_uuids}

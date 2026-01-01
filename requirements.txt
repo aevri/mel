@@ -6,10 +6,10 @@ pycodestyle==2.14.0
 pyflakes==3.4.0
 pygame==2.6.1
 pytest==8.4.2
-ruff==0.12.8
+ruff==0.14.3
 pytorch-lightning==2.5.5
-torchvision==0.23.0
+torchvision==0.24.0
 transformers==4.56.0
 tqdm==4.67.1
 vulture==2.14
-wandb==0.22.0
+wandb==0.22.3
