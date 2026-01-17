@@ -67,6 +67,14 @@ def setup_parser(parser):
         help="Scale images to fit this size in pixels (default: 896). "
         "Must be divisible by 16.",
     )
+    parser.add_argument(
+        "--similarity",
+        type=str,
+        choices=["cosine", "euclidean", "dot", "multi3x3"],
+        default="cosine",
+        help="Similarity metric: cosine (default), euclidean, dot, or "
+        "multi3x3 (3x3 patch averaging with cosine).",
+    )
 
 
 def process_args(args):
@@ -76,6 +84,7 @@ def process_args(args):
     src_path = args.SRC_JPG
     dino_size = args.dino_size
     image_size = args.image_size
+    similarity = args.similarity
 
     # Validate image_size is divisible by patch size
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
@@ -126,9 +135,13 @@ def process_args(args):
     print(f"Scaled mole coords: ({scaled_mole_x}, {scaled_mole_y})")
 
     # Step 4: Extract mole patch feature from source
-    print("Extracting mole patch feature from source...")
+    use_multi_patch = similarity == "multi3x3"
+    if use_multi_patch:
+        print("Extracting mole 3x3 patch features from source...")
+    else:
+        print("Extracting mole patch feature from source...")
     mole_feature = mel.lib.dinov3.extract_mole_patch_feature(
-        scaled_src, scaled_mole_x, scaled_mole_y, model
+        scaled_src, scaled_mole_x, scaled_mole_y, model, multi_patch=use_multi_patch
     )
     print(f"Mole feature shape: {mole_feature.shape}")
 
@@ -147,10 +160,12 @@ def process_args(args):
     target_features = mel.lib.dinov3.extract_all_patch_features(scaled_target, model)
     print(f"Target features shape: {target_features.shape}")
 
-    # Step 7: Compute cosine similarities
-    print("Computing cosine similarities...")
-    similarities = mel.lib.dinov3.compute_cosine_similarities(
-        mole_feature, target_features
+    # Step 7: Compute similarities
+    # For multi3x3, use cosine similarity (the multi-patch averaging was done above)
+    sim_type = "cosine" if similarity == "multi3x3" else similarity
+    print(f"Computing {similarity} similarities...")
+    similarities = mel.lib.dinov3.compute_similarities(
+        mole_feature, target_features, similarity_type=sim_type
     )
     sim_min = similarities.min().item()
     sim_max = similarities.max().item()

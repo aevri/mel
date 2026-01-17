@@ -137,13 +137,14 @@ def scale_image_to_fit(image_rgb, image_size):
     return scaled, (scale_x, scale_y)
 
 
-def extract_mole_patch_feature(scaled_image, mole_x, mole_y, model):
+def extract_mole_patch_feature(scaled_image, mole_x, mole_y, model, multi_patch=False):
     """Extract feature for the patch containing the mole.
 
     Args:
         scaled_image: Scaled image in RGB format
         mole_x, mole_y: Mole coordinates (already scaled)
         model: Dinov3Model instance
+        multi_patch: If True, average 3x3 patch region around mole
 
     Returns:
         Tensor: Feature vector [feature_dim]
@@ -154,8 +155,30 @@ def extract_mole_patch_feature(scaled_image, mole_x, mole_y, model):
     # Calculate which patch the mole is in
     h, w = scaled_image.shape[:2]
     patches_per_row = w // PATCH_SIZE
+    patches_per_col = h // PATCH_SIZE
     patch_col = mole_x // PATCH_SIZE
     patch_row = mole_y // PATCH_SIZE
+
+    if multi_patch:
+        # Average 3x3 patch region around mole center
+        features_to_avg = []
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                r = patch_row + dr
+                c = patch_col + dc
+                # Check bounds
+                if 0 <= r < patches_per_col and 0 <= c < patches_per_row:
+                    idx = r * patches_per_row + c
+                    if idx < all_features.shape[0]:
+                        features_to_avg.append(all_features[idx])
+
+        if features_to_avg:
+            import torch
+
+            stacked = torch.stack(features_to_avg)
+            return stacked.mean(dim=0)
+
+    # Single patch (default)
     patch_idx = patch_row * patches_per_row + patch_col
 
     # Clamp to valid range
@@ -178,24 +201,39 @@ def extract_all_patch_features(scaled_image, model):
     return model.extract_patch_features(scaled_image)
 
 
-def compute_cosine_similarities(mole_feature, all_patch_features):
-    """Compute cosine similarity between mole feature and all patches.
+def compute_similarities(mole_feature, all_patch_features, similarity_type="cosine"):
+    """Compute similarity between mole feature and all patches.
 
     Args:
         mole_feature: Mole feature vector [feature_dim]
         all_patch_features: All patch features [num_patches, feature_dim]
+        similarity_type: One of "cosine", "euclidean", "dot"
 
     Returns:
-        Tensor: Cosine similarities [num_patches]
+        Tensor: Similarities [num_patches] (higher = better match)
     """
     import torch
 
-    # Normalize for cosine similarity
-    mole_norm = torch.nn.functional.normalize(mole_feature.unsqueeze(0), p=2, dim=1)
-    patches_norm = torch.nn.functional.normalize(all_patch_features, p=2, dim=1)
+    if similarity_type == "cosine":
+        # Normalize for cosine similarity
+        mole_norm = torch.nn.functional.normalize(
+            mole_feature.unsqueeze(0), p=2, dim=1
+        )
+        patches_norm = torch.nn.functional.normalize(all_patch_features, p=2, dim=1)
+        # Cosine similarity: dot product of normalized vectors
+        return torch.matmul(patches_norm, mole_norm.squeeze(0))
 
-    # Cosine similarity: dot product of normalized vectors
-    return torch.matmul(patches_norm, mole_norm.squeeze(0))
+    if similarity_type == "euclidean":
+        # Negative L2 distance (higher = closer = better match)
+        diff = all_patch_features - mole_feature.unsqueeze(0)
+        distances = torch.norm(diff, p=2, dim=1)
+        return -distances
+
+    if similarity_type == "dot":
+        # Raw dot product without normalization
+        return torch.matmul(all_patch_features, mole_feature)
+
+    raise ValueError(f"Unknown similarity_type: {similarity_type}")
 
 
 def render_heatmap(image_rgb, similarities, image_height, image_width):
