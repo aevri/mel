@@ -6,6 +6,7 @@ import sys
 import mel.cmd.error
 import mel.cmddebug.benchautomark
 import mel.cmddebug.dino3map
+import mel.cmddebug.dino3mapprogressive
 import mel.cmddebug.genrepo
 import mel.cmddebug.rendervaluefield
 import mel.lib.ui
@@ -33,6 +34,9 @@ def main():
 
     _setup_parser_for_module(subparsers, mel.cmddebug.benchautomark, "bench-automark")
     _setup_parser_for_module(subparsers, mel.cmddebug.dino3map, "dino3-map")
+    _setup_parser_for_module(
+        subparsers, mel.cmddebug.dino3mapprogressive, "dino3-map-progressive"
+    )
     _setup_parser_for_module(subparsers, mel.cmddebug.genrepo, "gen-repo")
     _setup_parser_for_module(
         subparsers, mel.cmddebug.rendervaluefield, "render-valuefield"

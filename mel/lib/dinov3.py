@@ -274,6 +274,108 @@ def apply_mask(image_rgb, mask):
     return result
 
 
+def find_best_match_location(similarities, image_height, image_width, similarity_type):
+    """Find best match coordinates from similarity tensor.
+
+    Args:
+        similarities: Tensor of similarities [num_patches]
+        image_height: Height of scaled image
+        image_width: Width of scaled image
+        similarity_type: Type of similarity metric used
+
+    Returns:
+        tuple: (x, y) in scaled image coordinates
+    """
+    import torch
+
+    patches_per_row = image_width // PATCH_SIZE
+    patches_per_col = image_height // PATCH_SIZE
+    num_patches = patches_per_row * patches_per_col
+
+    sim_values = similarities.cpu().numpy()
+
+    # Handle case where model returns different number of patches
+    if len(sim_values) > num_patches:
+        sim_values = sim_values[:num_patches]
+
+    if similarity_type == "softmax":
+        # Weighted centroid using softmax probabilities
+        best_x = 0.0
+        best_y = 0.0
+        for idx in range(min(len(sim_values), num_patches)):
+            row = idx // patches_per_row
+            col = idx % patches_per_row
+            center_x = col * PATCH_SIZE + PATCH_SIZE // 2
+            center_y = row * PATCH_SIZE + PATCH_SIZE // 2
+            best_x += sim_values[idx] * center_x
+            best_y += sim_values[idx] * center_y
+        return int(best_x), int(best_y)
+
+    # Argmax for other similarity types
+    best_patch_idx = torch.argmax(similarities).item()
+    if best_patch_idx >= num_patches:
+        best_patch_idx = num_patches - 1
+    best_patch_row = best_patch_idx // patches_per_row
+    best_patch_col = best_patch_idx % patches_per_row
+    best_y = best_patch_row * PATCH_SIZE + PATCH_SIZE // 2
+    best_x = best_patch_col * PATCH_SIZE + PATCH_SIZE // 2
+    return best_x, best_y
+
+
+def crop_to_region(image_rgb, center_x, center_y, crop_size):
+    """Crop image to region centered on point.
+
+    Args:
+        image_rgb: Image to crop (H, W, 3)
+        center_x, center_y: Center point in image coordinates
+        crop_size: Desired size of crop region (will be clamped to image bounds)
+
+    Returns:
+        tuple: (cropped_image, (offset_x, offset_y))
+    """
+    h, w = image_rgb.shape[:2]
+
+    # Calculate crop bounds centered on point
+    half_size = crop_size // 2
+    x1 = max(0, center_x - half_size)
+    y1 = max(0, center_y - half_size)
+    x2 = min(w, center_x + half_size)
+    y2 = min(h, center_y + half_size)
+
+    # Adjust if crop would be smaller than requested on one side
+    if x2 - x1 < crop_size and x1 > 0:
+        x1 = max(0, x2 - crop_size)
+    if x2 - x1 < crop_size and x2 < w:
+        x2 = min(w, x1 + crop_size)
+    if y2 - y1 < crop_size and y1 > 0:
+        y1 = max(0, y2 - crop_size)
+    if y2 - y1 < crop_size and y2 < h:
+        y2 = min(h, y1 + crop_size)
+
+    cropped = image_rgb[y1:y2, x1:x2].copy()
+    return cropped, (x1, y1)
+
+
+def render_crosshair(image_rgb, x, y):
+    """Render green crosshair on image at specified location.
+
+    Args:
+        image_rgb: Image in RGB format (H, W, 3)
+        x, y: Crosshair center coordinates
+
+    Returns:
+        BGR image with green crosshair drawn
+    """
+    # Convert to BGR for OpenCV
+    image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+
+    # Draw green crosshair
+    cv2.line(image_bgr, (x - 15, y), (x + 15, y), (0, 255, 0), 3)
+    cv2.line(image_bgr, (x, y - 15), (x, y + 15), (0, 255, 0), 3)
+
+    return image_bgr
+
+
 def render_heatmap(
     image_rgb, similarities, image_height, image_width, similarity_type="cosine"
 ):
