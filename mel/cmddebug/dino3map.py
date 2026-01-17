@@ -57,7 +57,7 @@ def setup_parser(parser):
     parser.add_argument(
         "--dino-size",
         type=str,
-        choices=["small", "base", "large"],
+        choices=["small", "base", "large", "huge", "7b"],
         default="base",
         help="DINOv3 model size variant (default: base).",
     )

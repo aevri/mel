@@ -24,6 +24,8 @@ def load_dinov3_model(dino_size="base"):
         "small": ("vit_small_patch16_dinov3.lvd1689m", 384),
         "base": ("vit_base_patch16_dinov3.lvd1689m", 768),
         "large": ("vit_large_patch16_dinov3.lvd1689m", 1024),
+        "huge": ("vit_huge_plus_patch16_dinov3.lvd1689m", 1280),
+        "7b": ("vit_7b_patch16_dinov3.lvd1689m", 4096),
     }
 
     if dino_size not in model_configs:
