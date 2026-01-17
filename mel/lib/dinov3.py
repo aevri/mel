@@ -60,9 +60,7 @@ def load_dinov3_model(dino_size="base", local_files_only=False):
         return Dinov3Model(model, feature_dim, device), feature_dim
 
     except Exception as e:
-        raise RuntimeError(
-            "Failed to load DINOv3 model. Error: " + str(e)
-        ) from e
+        raise RuntimeError("Failed to load DINOv3 model. Error: " + str(e)) from e
 
     finally:
         # Restore original HF_HUB_OFFLINE setting
@@ -100,10 +98,12 @@ class Dinov3Model:
 
         # Use simple normalize transform - no resizing
         # DINOv3 uses RoPE so it supports variable input sizes
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=self.MEAN, std=self.STD),
-        ])
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.MEAN, std=self.STD),
+            ]
+        )
 
         # Apply transform and add batch dimension
         image_tensor = transform(image_rgb).unsqueeze(0).to(self.device)
@@ -238,9 +238,7 @@ def compute_similarities(mole_feature, all_patch_features, similarity_type="cosi
 
     if similarity_type == "cosine":
         # Normalize for cosine similarity
-        mole_norm = torch.nn.functional.normalize(
-            mole_feature.unsqueeze(0), p=2, dim=1
-        )
+        mole_norm = torch.nn.functional.normalize(mole_feature.unsqueeze(0), p=2, dim=1)
         patches_norm = torch.nn.functional.normalize(all_patch_features, p=2, dim=1)
         # Cosine similarity: dot product of normalized vectors
         return torch.matmul(patches_norm, mole_norm.squeeze(0))
@@ -257,9 +255,7 @@ def compute_similarities(mole_feature, all_patch_features, similarity_type="cosi
 
     if similarity_type == "softmax":
         # Cosine similarity with temperature-scaled softmax
-        mole_norm = torch.nn.functional.normalize(
-            mole_feature.unsqueeze(0), p=2, dim=1
-        )
+        mole_norm = torch.nn.functional.normalize(mole_feature.unsqueeze(0), p=2, dim=1)
         patches_norm = torch.nn.functional.normalize(all_patch_features, p=2, dim=1)
         cosine_sims = torch.matmul(patches_norm, mole_norm.squeeze(0))
         temperature = 0.0125  # Lower = sharper peaks
@@ -487,12 +483,8 @@ def render_heatmap(
         best_y = best_patch_row * PATCH_SIZE + PATCH_SIZE // 2
         best_x = best_patch_col * PATCH_SIZE + PATCH_SIZE // 2
 
-    cv2.line(
-        blended, (best_x - 15, best_y), (best_x + 15, best_y), (0, 255, 0), 3
-    )
-    cv2.line(
-        blended, (best_x, best_y - 15), (best_x, best_y + 15), (0, 255, 0), 3
-    )
+    cv2.line(blended, (best_x - 15, best_y), (best_x + 15, best_y), (0, 255, 0), 3)
+    cv2.line(blended, (best_x, best_y - 15), (best_x, best_y + 15), (0, 255, 0), 3)
 
     return blended
 

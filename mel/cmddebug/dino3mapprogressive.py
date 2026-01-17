@@ -38,61 +38,28 @@ def _existing_file_path(string):
 
 
 def _load_image_with_mask(image_path, label):
-    """Load an image and apply its mask if available.
-
-    Args:
-        image_path: Path to the image file.
-        label: Label for logging (e.g., "source", "target").
-
-    Returns:
-        RGB image with mask applied if available.
-    """
+    """Load an image and apply its mask if available."""
     print(f"Loading {label} image: {image_path}")
-    image = mel.lib.image.load_image(image_path)
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+    image_rgb = cv2.cvtColor(mel.lib.image.load_image(image_path), cv2.COLOR_BGR2RGB)
     mask = mel.rotomap.mask.load_or_none(image_path)
     if mask is not None:
         print(f"Applying mask to {label} image")
         image_rgb = mel.lib.dinov3.apply_mask(image_rgb, mask)
-
     return image_rgb
 
 
 def _run_matching_pass(
-    src_image,
-    src_mole_x,
-    src_mole_y,
-    target_image,
-    model,
-    similarity,
-    image_size,
+    src_image, src_mole_x, src_mole_y, target_image, model, similarity, image_size
 ):
-    """Run a single matching pass: extract features, compute similarities, find match.
-
-    Args:
-        src_image: Source image (RGB).
-        src_mole_x: Mole X coordinate in src_image.
-        src_mole_y: Mole Y coordinate in src_image.
-        target_image: Target image (RGB).
-        model: DINOv3 model.
-        similarity: Similarity metric name.
-        image_size: Size to scale images to.
-
-    Returns:
-        Tuple of (best_x, best_y, scaled_src, scaled_src_mole_x, scaled_src_mole_y,
-                  scaled_target, target_scale_x, target_scale_y, similarities).
-    """
+    """Run a single matching pass and return native coords of best match."""
     scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
         src_image, image_size
     )
     scaled_target, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
         target_image, image_size
     )
-    scaled_src_h, scaled_src_w = scaled_src.shape[:2]
-    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
-    print(f"Scaled source: {scaled_src_w}x{scaled_src_h}")
-    print(f"Scaled target: {scaled_tgt_w}x{scaled_tgt_h}")
+    print(f"Scaled source: {scaled_src.shape[1]}x{scaled_src.shape[0]}")
+    print(f"Scaled target: {scaled_target.shape[1]}x{scaled_target.shape[0]}")
 
     scaled_mole_x = int(src_mole_x * src_scale_x)
     scaled_mole_y = int(src_mole_y * src_scale_y)
@@ -108,24 +75,28 @@ def _run_matching_pass(
     similarities = mel.lib.dinov3.compute_similarities(
         mole_feature, target_features, similarity_type=sim_type
     )
-    sim_min = similarities.min().item()
-    sim_max = similarities.max().item()
-    print(f"Similarity range: {sim_min:.4f} to {sim_max:.4f}")
+    print(
+        f"Similarity range: {similarities.min().item():.4f} to "
+        f"{similarities.max().item():.4f}"
+    )
 
+    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
     best_x, best_y = mel.lib.dinov3.find_best_match_location(
         similarities, scaled_tgt_h, scaled_tgt_w, similarity
     )
     print(f"Best match at scaled coords: ({best_x}, {best_y})")
 
+    # Convert to native coords
+    native_x = int(best_x / tgt_scale_x)
+    native_y = int(best_y / tgt_scale_y)
+
     return (
-        best_x,
-        best_y,
+        native_x,
+        native_y,
         scaled_src,
         scaled_mole_x,
         scaled_mole_y,
         scaled_target,
-        tgt_scale_x,
-        tgt_scale_y,
         similarities,
     )
 
@@ -140,22 +111,10 @@ def _save_pass_outputs(
     scaled_mole_x,
     scaled_mole_y,
 ):
-    """Render and save heatmap and source crosshair for a pass.
-
-    Args:
-        output_base: Base path for output files.
-        level: Pass level (1 or 2).
-        scaled_target: Scaled target image.
-        similarities: Similarity tensor.
-        similarity: Similarity metric name.
-        scaled_src: Scaled source image.
-        scaled_mole_x: Mole X in scaled source.
-        scaled_mole_y: Mole Y in scaled source.
-    """
-    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
-
+    """Render and save heatmap and source crosshair for a pass."""
+    h, w = scaled_target.shape[:2]
     heatmap = mel.lib.dinov3.render_heatmap(
-        scaled_target, similarities, scaled_tgt_h, scaled_tgt_w, similarity
+        scaled_target, similarities, h, w, similarity
     )
     output_path, src_output_path = _get_output_paths(output_base, level)
     mel.lib.image.save_image(heatmap, output_path)
@@ -221,11 +180,9 @@ def setup_parser(parser):
 
 def _get_output_paths(output_base, level):
     """Generate output file paths for a given level."""
-    # Remove .jpg extension if present to get base
     base = str(output_base)
     if base.lower().endswith(".jpg"):
         base = base[:-4]
-
     return f"{base}_{level}.jpg", f"{base}_{level}_source.jpg"
 
 
@@ -247,7 +204,6 @@ def process_args(args):
         )
         return 1
 
-    # Step 1: Load source moles and find TARGET_UUID
     print(f"Loading moles from: {src_path}")
     src_moles = mel.rotomap.moles.load_image_moles(src_path)
     mole_index = mel.rotomap.moles.uuid_mole_index(src_moles, target_uuid)
@@ -261,7 +217,6 @@ def process_args(args):
     src_mole_x, src_mole_y = src_mole["x"], src_mole["y"]
     print(f"Found mole '{target_uuid}' at ({src_mole_x}, {src_mole_y}) in source")
 
-    # Step 2: Load DINOv3 model
     print(f"Loading DINOv3 model (size: {dino_size})...")
     try:
         model, feature_dim = mel.lib.dinov3.load_dinov3_model(
@@ -272,35 +227,28 @@ def process_args(args):
         print(f"Error loading DINOv3 model: {e}")
         return 1
 
-    # Step 3: Load source and target images at native resolution
     src_image_rgb = _load_image_with_mask(src_path, "source")
     target_image_rgb = _load_image_with_mask(target_path, "target")
 
-    # Compute dimensions
-    src_full_h, src_full_w = src_image_rgb.shape[:2]
-    tgt_full_h, tgt_full_w = target_image_rgb.shape[:2]
-    src_max_dim = max(src_full_h, src_full_w)
-    tgt_max_dim = max(tgt_full_h, tgt_full_w)
+    src_max_dim = max(src_image_rgb.shape[:2])
+    tgt_max_dim = max(target_image_rgb.shape[:2])
     smallest_max_dim = min(src_max_dim, tgt_max_dim)
-    print(f"Source: {src_full_w}x{src_full_h}, Target: {tgt_full_w}x{tgt_full_h}")
+    print(
+        f"Source: {src_image_rgb.shape[1]}x{src_image_rgb.shape[0]}, "
+        f"Target: {target_image_rgb.shape[1]}x{target_image_rgb.shape[0]}"
+    )
     print(f"Smallest max dimension: {smallest_max_dim}")
 
     print("\n=== Two-pass approach ===\n")
-
-    # =========================================================================
-    # PASS 1: Global view - scale full images to fit image_size
-    # =========================================================================
     print("--- Pass 1: Global view ---")
 
     (
-        best_x,
-        best_y,
+        pass1_native_x,
+        pass1_native_y,
         scaled_src,
         scaled_mole_x,
         scaled_mole_y,
         scaled_target,
-        tgt_scale_x,
-        tgt_scale_y,
         similarities,
     ) = _run_matching_pass(
         src_image_rgb,
@@ -311,10 +259,6 @@ def process_args(args):
         similarity,
         image_size,
     )
-
-    # Convert to native target coords
-    pass1_native_x = int(best_x / tgt_scale_x)
-    pass1_native_y = int(best_y / tgt_scale_y)
     print(f"Best match at native coords: ({pass1_native_x}, {pass1_native_y})")
 
     _save_pass_outputs(
@@ -328,44 +272,34 @@ def process_args(args):
         scaled_mole_y,
     )
 
-    # =========================================================================
-    # PASS 2: Local view - native resolution for smallest image
-    # =========================================================================
     print("\n--- Pass 2: Local view (native resolution for smallest) ---")
 
-    # Calculate coverage ratio - what fraction of smallest image fits at native res
     native_coverage = image_size / smallest_max_dim
     print(f"Native coverage ratio: {native_coverage:.3f}")
 
-    # Apply same coverage to both images (preserves zoom ratio)
     src_crop_size = max(int(src_max_dim * native_coverage), mel.lib.dinov3.PATCH_SIZE)
     tgt_crop_size = max(int(tgt_max_dim * native_coverage), mel.lib.dinov3.PATCH_SIZE)
     print(f"Source crop size: {src_crop_size}")
     print(f"Target crop size: {tgt_crop_size}")
 
-    # Crop source around mole
     src_crop, (src_crop_off_x, src_crop_off_y) = mel.lib.dinov3.crop_to_region(
         src_image_rgb, src_mole_x, src_mole_y, src_crop_size
     )
-    # Crop target around pass 1 best match
     tgt_crop, (tgt_off_x, tgt_off_y) = mel.lib.dinov3.crop_to_region(
         target_image_rgb, pass1_native_x, pass1_native_y, tgt_crop_size
     )
     print(f"Target crop offset: ({tgt_off_x}, {tgt_off_y})")
 
-    # Compute mole position in cropped source
     mole_in_crop_x = src_mole_x - src_crop_off_x
     mole_in_crop_y = src_mole_y - src_crop_off_y
 
     (
-        best_x_2,
-        best_y_2,
+        pass2_crop_x,
+        pass2_crop_y,
         scaled_src_crop,
         scaled_mole_crop_x,
         scaled_mole_crop_y,
         scaled_tgt_crop,
-        tgt_crop_scale_x,
-        tgt_crop_scale_y,
         similarities_2,
     ) = _run_matching_pass(
         src_crop,
@@ -376,10 +310,6 @@ def process_args(args):
         similarity,
         image_size,
     )
-
-    # Convert to native target coords within crop
-    pass2_crop_x = int(best_x_2 / tgt_crop_scale_x)
-    pass2_crop_y = int(best_y_2 / tgt_crop_scale_y)
     print(f"Best match in crop native coords: ({pass2_crop_x}, {pass2_crop_y})")
 
     _save_pass_outputs(
@@ -393,10 +323,10 @@ def process_args(args):
         scaled_mole_crop_y,
     )
 
-    # Report final position in original image coords
-    final_x = tgt_off_x + pass2_crop_x
-    final_y = tgt_off_y + pass2_crop_y
-    print(f"\nFinal position in original image: ({final_x}, {final_y})")
+    print(
+        f"\nFinal position in original image: "
+        f"({tgt_off_x + pass2_crop_x}, {tgt_off_y + pass2_crop_y})"
+    )
     print("Done!")
 
     return 0
