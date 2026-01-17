@@ -233,10 +233,22 @@ def compute_similarities(mole_feature, all_patch_features, similarity_type="cosi
         # Raw dot product without normalization
         return torch.matmul(all_patch_features, mole_feature)
 
+    if similarity_type == "softmax":
+        # Cosine similarity with temperature-scaled softmax
+        mole_norm = torch.nn.functional.normalize(
+            mole_feature.unsqueeze(0), p=2, dim=1
+        )
+        patches_norm = torch.nn.functional.normalize(all_patch_features, p=2, dim=1)
+        cosine_sims = torch.matmul(patches_norm, mole_norm.squeeze(0))
+        temperature = 0.0125  # Lower = sharper peaks
+        return torch.softmax(cosine_sims / temperature, dim=0)
+
     raise ValueError(f"Unknown similarity_type: {similarity_type}")
 
 
-def render_heatmap(image_rgb, similarities, image_height, image_width):
+def render_heatmap(
+    image_rgb, similarities, image_height, image_width, similarity_type="cosine"
+):
     """Render similarity heatmap overlay on the image.
 
     Args:
@@ -244,6 +256,7 @@ def render_heatmap(image_rgb, similarities, image_height, image_width):
         similarities: Tensor of similarities [num_patches]
         image_height: Height of image (for calculating patches per row)
         image_width: Width of image (for calculating patches per row)
+        similarity_type: Type of similarity metric used (affects crosshair placement)
 
     Returns:
         numpy array: Rendered heatmap image (BGR format for OpenCV)
@@ -300,18 +313,36 @@ def render_heatmap(image_rgb, similarities, image_height, image_width):
     blended = cv2.addWeighted(image_bgr, 0.7, heatmap_colored, 0.3, 0)
 
     # Mark best match location (green cross)
-    best_patch_idx = torch.argmax(similarities).item()
-    if best_patch_idx < num_patches:
+    if similarity_type == "softmax":
+        # Weighted centroid using softmax probabilities
+        probs = sim_values  # Already a probability distribution
+        best_x = 0.0
+        best_y = 0.0
+        for idx in range(num_patches):
+            row = idx // patches_per_row
+            col = idx % patches_per_row
+            center_x = col * PATCH_SIZE + PATCH_SIZE // 2
+            center_y = row * PATCH_SIZE + PATCH_SIZE // 2
+            best_x += probs[idx] * center_x
+            best_y += probs[idx] * center_y
+        best_x = int(best_x)
+        best_y = int(best_y)
+    else:
+        # Argmax for other similarity types
+        best_patch_idx = torch.argmax(similarities).item()
+        if best_patch_idx >= num_patches:
+            best_patch_idx = num_patches - 1
         best_patch_row = best_patch_idx // patches_per_row
         best_patch_col = best_patch_idx % patches_per_row
         best_y = best_patch_row * PATCH_SIZE + PATCH_SIZE // 2
         best_x = best_patch_col * PATCH_SIZE + PATCH_SIZE // 2
-        cv2.line(
-            blended, (best_x - 15, best_y), (best_x + 15, best_y), (0, 255, 0), 3
-        )
-        cv2.line(
-            blended, (best_x, best_y - 15), (best_x, best_y + 15), (0, 255, 0), 3
-        )
+
+    cv2.line(
+        blended, (best_x - 15, best_y), (best_x + 15, best_y), (0, 255, 0), 3
+    )
+    cv2.line(
+        blended, (best_x, best_y - 15), (best_x, best_y + 15), (0, 255, 0), 3
+    )
 
     return blended
 

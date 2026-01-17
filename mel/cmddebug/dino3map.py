@@ -70,10 +70,10 @@ def setup_parser(parser):
     parser.add_argument(
         "--similarity",
         type=str,
-        choices=["cosine", "euclidean", "dot", "multi3x3"],
+        choices=["cosine", "euclidean", "dot", "multi3x3", "softmax"],
         default="cosine",
-        help="Similarity metric: cosine (default), euclidean, dot, or "
-        "multi3x3 (3x3 patch averaging with cosine).",
+        help="Similarity metric: cosine (default), euclidean, dot, "
+        "multi3x3 (3x3 patch averaging), or softmax (temperature-scaled).",
     )
 
 
@@ -174,7 +174,7 @@ def process_args(args):
     # Step 8: Render heatmap and save
     print("Rendering heatmap...")
     heatmap = mel.lib.dinov3.render_heatmap(
-        scaled_target, similarities, scaled_target_h, scaled_target_w
+        scaled_target, similarities, scaled_target_h, scaled_target_w, similarity
     )
 
     print(f"Saving output to: {output_path}")
