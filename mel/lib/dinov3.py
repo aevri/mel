@@ -6,16 +6,19 @@ import numpy as np
 PATCH_SIZE = 16
 
 
-def load_dinov3_model(dino_size="base"):
+def load_dinov3_model(dino_size="base", local_files_only=False):
     """Load the DINOv3 model for semantic feature extraction.
 
     Args:
-        dino_size: Model size variant ("small", "base", "large")
+        dino_size: Model size variant ("small", "base", "large", "huge", "7b")
+        local_files_only: If True, only use cached model weights (no network).
 
     Returns:
         tuple: (model, feature_dimension)
     """
     # Import lazily to avoid slow import times when not using this module.
+    import os
+
     import timm
     import torch
 
@@ -36,9 +39,18 @@ def load_dinov3_model(dino_size="base"):
 
     model_name, feature_dim = model_configs[dino_size]
 
+    # Set offline mode via environment variable if requested
+    old_hf_hub_offline = os.environ.get("HF_HUB_OFFLINE")
+    if local_files_only:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+
     try:
         # DINOv3 uses RoPE so it supports variable input sizes
-        model = timm.create_model(model_name, pretrained=True, num_classes=0)
+        model = timm.create_model(
+            model_name,
+            pretrained=True,
+            num_classes=0,
+        )
         model.eval()
 
         # Move to GPU if available
@@ -51,6 +63,14 @@ def load_dinov3_model(dino_size="base"):
         raise RuntimeError(
             "Failed to load DINOv3 model. Error: " + str(e)
         ) from e
+
+    finally:
+        # Restore original HF_HUB_OFFLINE setting
+        if local_files_only:
+            if old_hf_hub_offline is None:
+                os.environ.pop("HF_HUB_OFFLINE", None)
+            else:
+                os.environ["HF_HUB_OFFLINE"] = old_hf_hub_offline
 
 
 class Dinov3Model:

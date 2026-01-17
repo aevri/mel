@@ -76,6 +76,12 @@ def setup_parser(parser):
         help="Similarity metric: cosine (default), euclidean, dot, "
         "multi3x3 (3x3 patch averaging), or softmax (temperature-scaled).",
     )
+    parser.add_argument(
+        "--allow-download",
+        action="store_true",
+        help="Allow downloading model weights from Hugging Face Hub. "
+        "By default, only cached models are used.",
+    )
 
 
 def process_args(args):
@@ -86,6 +92,7 @@ def process_args(args):
     dino_size = args.dino_size
     image_size = args.image_size
     similarity = args.similarity
+    allow_download = args.allow_download
 
     # Validate image_size is divisible by patch size
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
@@ -112,7 +119,9 @@ def process_args(args):
     # Step 2: Load DINOv3 model
     print(f"Loading DINOv3 model (size: {dino_size})...")
     try:
-        model, feature_dim = mel.lib.dinov3.load_dinov3_model(dino_size)
+        model, feature_dim = mel.lib.dinov3.load_dinov3_model(
+            dino_size, local_files_only=not allow_download
+        )
         print(f"Model loaded with {feature_dim} feature dimensions")
     except RuntimeError as e:
         print(f"Error loading DINOv3 model: {e}")
