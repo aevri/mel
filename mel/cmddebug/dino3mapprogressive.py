@@ -37,6 +37,137 @@ def _existing_file_path(string):
     return path
 
 
+def _load_image_with_mask(image_path, label):
+    """Load an image and apply its mask if available.
+
+    Args:
+        image_path: Path to the image file.
+        label: Label for logging (e.g., "source", "target").
+
+    Returns:
+        RGB image with mask applied if available.
+    """
+    print(f"Loading {label} image: {image_path}")
+    image = mel.lib.image.load_image(image_path)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    mask = mel.rotomap.mask.load_or_none(image_path)
+    if mask is not None:
+        print(f"Applying mask to {label} image")
+        image_rgb = mel.lib.dinov3.apply_mask(image_rgb, mask)
+
+    return image_rgb
+
+
+def _run_matching_pass(
+    src_image,
+    src_mole_x,
+    src_mole_y,
+    target_image,
+    model,
+    similarity,
+    image_size,
+):
+    """Run a single matching pass: extract features, compute similarities, find match.
+
+    Args:
+        src_image: Source image (RGB).
+        src_mole_x: Mole X coordinate in src_image.
+        src_mole_y: Mole Y coordinate in src_image.
+        target_image: Target image (RGB).
+        model: DINOv3 model.
+        similarity: Similarity metric name.
+        image_size: Size to scale images to.
+
+    Returns:
+        Tuple of (best_x, best_y, scaled_src, scaled_src_mole_x, scaled_src_mole_y,
+                  scaled_target, target_scale_x, target_scale_y, similarities).
+    """
+    scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+        src_image, image_size
+    )
+    scaled_target, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+        target_image, image_size
+    )
+    scaled_src_h, scaled_src_w = scaled_src.shape[:2]
+    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
+    print(f"Scaled source: {scaled_src_w}x{scaled_src_h}")
+    print(f"Scaled target: {scaled_tgt_w}x{scaled_tgt_h}")
+
+    scaled_mole_x = int(src_mole_x * src_scale_x)
+    scaled_mole_y = int(src_mole_y * src_scale_y)
+    print(f"Scaled mole coords: ({scaled_mole_x}, {scaled_mole_y})")
+
+    use_multi_patch = similarity == "multi3x3"
+    mole_feature = mel.lib.dinov3.extract_mole_patch_feature(
+        scaled_src, scaled_mole_x, scaled_mole_y, model, multi_patch=use_multi_patch
+    )
+
+    target_features = mel.lib.dinov3.extract_all_patch_features(scaled_target, model)
+    sim_type = "cosine" if similarity == "multi3x3" else similarity
+    similarities = mel.lib.dinov3.compute_similarities(
+        mole_feature, target_features, similarity_type=sim_type
+    )
+    sim_min = similarities.min().item()
+    sim_max = similarities.max().item()
+    print(f"Similarity range: {sim_min:.4f} to {sim_max:.4f}")
+
+    best_x, best_y = mel.lib.dinov3.find_best_match_location(
+        similarities, scaled_tgt_h, scaled_tgt_w, similarity
+    )
+    print(f"Best match at scaled coords: ({best_x}, {best_y})")
+
+    return (
+        best_x,
+        best_y,
+        scaled_src,
+        scaled_mole_x,
+        scaled_mole_y,
+        scaled_target,
+        tgt_scale_x,
+        tgt_scale_y,
+        similarities,
+    )
+
+
+def _save_pass_outputs(
+    output_base,
+    level,
+    scaled_target,
+    similarities,
+    similarity,
+    scaled_src,
+    scaled_mole_x,
+    scaled_mole_y,
+):
+    """Render and save heatmap and source crosshair for a pass.
+
+    Args:
+        output_base: Base path for output files.
+        level: Pass level (1 or 2).
+        scaled_target: Scaled target image.
+        similarities: Similarity tensor.
+        similarity: Similarity metric name.
+        scaled_src: Scaled source image.
+        scaled_mole_x: Mole X in scaled source.
+        scaled_mole_y: Mole Y in scaled source.
+    """
+    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
+
+    heatmap = mel.lib.dinov3.render_heatmap(
+        scaled_target, similarities, scaled_tgt_h, scaled_tgt_w, similarity
+    )
+    output_path, src_output_path = _get_output_paths(output_base, level)
+    mel.lib.image.save_image(heatmap, output_path)
+    print(f"Saved target heatmap: {output_path}")
+
+    src_with_cross = mel.lib.dinov3.render_crosshair(
+        scaled_src, scaled_mole_x, scaled_mole_y
+    )
+    mel.lib.image.save_image(src_with_cross, src_output_path)
+    print(f"Saved source with crosshair: {src_output_path}")
+
+
 def setup_parser(parser):
     parser.add_argument(
         "OUTPUT_JPG",
@@ -142,25 +273,8 @@ def process_args(args):
         return 1
 
     # Step 3: Load source and target images at native resolution
-    print(f"Loading source image: {src_path}")
-    src_image = mel.lib.image.load_image(src_path)
-    src_image_rgb = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
-
-    # Apply source mask if available
-    src_mask = mel.rotomap.mask.load_or_none(src_path)
-    if src_mask is not None:
-        print("Applying mask to source image")
-        src_image_rgb = mel.lib.dinov3.apply_mask(src_image_rgb, src_mask)
-
-    print(f"Loading target image: {target_path}")
-    target_image = mel.lib.image.load_image(target_path)
-    target_image_rgb = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB)
-
-    # Apply target mask if available
-    target_mask = mel.rotomap.mask.load_or_none(target_path)
-    if target_mask is not None:
-        print("Applying mask to target image")
-        target_image_rgb = mel.lib.dinov3.apply_mask(target_image_rgb, target_mask)
+    src_image_rgb = _load_image_with_mask(src_path, "source")
+    target_image_rgb = _load_image_with_mask(target_path, "target")
 
     # Compute dimensions
     src_full_h, src_full_w = src_image_rgb.shape[:2]
@@ -178,61 +292,41 @@ def process_args(args):
     # =========================================================================
     print("--- Pass 1: Global view ---")
 
-    scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-        src_image_rgb, image_size
+    (
+        best_x,
+        best_y,
+        scaled_src,
+        scaled_mole_x,
+        scaled_mole_y,
+        scaled_target,
+        tgt_scale_x,
+        tgt_scale_y,
+        similarities,
+    ) = _run_matching_pass(
+        src_image_rgb,
+        src_mole_x,
+        src_mole_y,
+        target_image_rgb,
+        model,
+        similarity,
+        image_size,
     )
-    scaled_target, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-        target_image_rgb, image_size
-    )
-    scaled_src_h, scaled_src_w = scaled_src.shape[:2]
-    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
-    print(f"Scaled source: {scaled_src_w}x{scaled_src_h}")
-    print(f"Scaled target: {scaled_tgt_w}x{scaled_tgt_h}")
-
-    # Scale mole coords and extract source feature
-    scaled_mole_x = int(src_mole_x * src_scale_x)
-    scaled_mole_y = int(src_mole_y * src_scale_y)
-    print(f"Scaled mole coords: ({scaled_mole_x}, {scaled_mole_y})")
-
-    use_multi_patch = similarity == "multi3x3"
-    mole_feature = mel.lib.dinov3.extract_mole_patch_feature(
-        scaled_src, scaled_mole_x, scaled_mole_y, model, multi_patch=use_multi_patch
-    )
-
-    # Extract target features and compute similarities
-    target_features = mel.lib.dinov3.extract_all_patch_features(scaled_target, model)
-    sim_type = "cosine" if similarity == "multi3x3" else similarity
-    similarities = mel.lib.dinov3.compute_similarities(
-        mole_feature, target_features, similarity_type=sim_type
-    )
-    sim_min = similarities.min().item()
-    sim_max = similarities.max().item()
-    print(f"Similarity range: {sim_min:.4f} to {sim_max:.4f}")
-
-    # Find best match location
-    best_x, best_y = mel.lib.dinov3.find_best_match_location(
-        similarities, scaled_tgt_h, scaled_tgt_w, similarity
-    )
-    print(f"Best match at scaled coords: ({best_x}, {best_y})")
 
     # Convert to native target coords
     pass1_native_x = int(best_x / tgt_scale_x)
     pass1_native_y = int(best_y / tgt_scale_y)
     print(f"Best match at native coords: ({pass1_native_x}, {pass1_native_y})")
 
-    # Render and save pass 1 outputs
-    heatmap = mel.lib.dinov3.render_heatmap(
-        scaled_target, similarities, scaled_tgt_h, scaled_tgt_w, similarity
+    _save_pass_outputs(
+        output_base,
+        1,
+        scaled_target,
+        similarities,
+        similarity,
+        scaled_src,
+        scaled_mole_x,
+        scaled_mole_y,
     )
-    output_path, src_output_path = _get_output_paths(output_base, 1)
-    mel.lib.image.save_image(heatmap, output_path)
-    print(f"Saved target heatmap: {output_path}")
-
-    src_with_cross = mel.lib.dinov3.render_crosshair(
-        scaled_src, scaled_mole_x, scaled_mole_y
-    )
-    mel.lib.image.save_image(src_with_cross, src_output_path)
-    print(f"Saved source with crosshair: {src_output_path}")
 
     # =========================================================================
     # PASS 2: Local view - native resolution for smallest image
@@ -259,69 +353,45 @@ def process_args(args):
     )
     print(f"Target crop offset: ({tgt_off_x}, {tgt_off_y})")
 
-    # Scale crops to image_size
-    scaled_src_crop, (src_crop_scale_x, src_crop_scale_y) = (
-        mel.lib.dinov3.scale_image_to_fit(src_crop, image_size)
-    )
-    scaled_tgt_crop, (tgt_crop_scale_x, tgt_crop_scale_y) = (
-        mel.lib.dinov3.scale_image_to_fit(tgt_crop, image_size)
-    )
-    scaled_src_crop_h, scaled_src_crop_w = scaled_src_crop.shape[:2]
-    scaled_tgt_crop_h, scaled_tgt_crop_w = scaled_tgt_crop.shape[:2]
-    print(f"Scaled source crop: {scaled_src_crop_w}x{scaled_src_crop_h}")
-    print(f"Scaled target crop: {scaled_tgt_crop_w}x{scaled_tgt_crop_h}")
-
-    # Compute mole position in cropped/scaled source
-    # mole_in_crop = mole_original - crop_offset
+    # Compute mole position in cropped source
     mole_in_crop_x = src_mole_x - src_crop_off_x
     mole_in_crop_y = src_mole_y - src_crop_off_y
-    scaled_mole_crop_x = int(mole_in_crop_x * src_crop_scale_x)
-    scaled_mole_crop_y = int(mole_in_crop_y * src_crop_scale_y)
-    print(f"Mole in scaled crop: ({scaled_mole_crop_x}, {scaled_mole_crop_y})")
 
-    # Extract features from cropped regions
-    mole_feature_2 = mel.lib.dinov3.extract_mole_patch_feature(
+    (
+        best_x_2,
+        best_y_2,
         scaled_src_crop,
         scaled_mole_crop_x,
         scaled_mole_crop_y,
+        scaled_tgt_crop,
+        tgt_crop_scale_x,
+        tgt_crop_scale_y,
+        similarities_2,
+    ) = _run_matching_pass(
+        src_crop,
+        mole_in_crop_x,
+        mole_in_crop_y,
+        tgt_crop,
         model,
-        multi_patch=use_multi_patch,
+        similarity,
+        image_size,
     )
-
-    target_features_2 = mel.lib.dinov3.extract_all_patch_features(
-        scaled_tgt_crop, model
-    )
-    similarities_2 = mel.lib.dinov3.compute_similarities(
-        mole_feature_2, target_features_2, similarity_type=sim_type
-    )
-    sim_min_2 = similarities_2.min().item()
-    sim_max_2 = similarities_2.max().item()
-    print(f"Similarity range: {sim_min_2:.4f} to {sim_max_2:.4f}")
-
-    # Find best match in pass 2
-    best_x_2, best_y_2 = mel.lib.dinov3.find_best_match_location(
-        similarities_2, scaled_tgt_crop_h, scaled_tgt_crop_w, similarity
-    )
-    print(f"Best match at scaled crop coords: ({best_x_2}, {best_y_2})")
 
     # Convert to native target coords within crop
     pass2_crop_x = int(best_x_2 / tgt_crop_scale_x)
     pass2_crop_y = int(best_y_2 / tgt_crop_scale_y)
     print(f"Best match in crop native coords: ({pass2_crop_x}, {pass2_crop_y})")
 
-    # Render and save pass 2 outputs
-    heatmap_2 = mel.lib.dinov3.render_heatmap(
-        scaled_tgt_crop, similarities_2, scaled_tgt_crop_h, scaled_tgt_crop_w, similarity
+    _save_pass_outputs(
+        output_base,
+        2,
+        scaled_tgt_crop,
+        similarities_2,
+        similarity,
+        scaled_src_crop,
+        scaled_mole_crop_x,
+        scaled_mole_crop_y,
     )
-    output_path_2, src_output_path_2 = _get_output_paths(output_base, 2)
-    mel.lib.image.save_image(heatmap_2, output_path_2)
-    print(f"Saved target heatmap: {output_path_2}")
-
-    src_with_cross_2 = mel.lib.dinov3.render_crosshair(
-        scaled_src_crop, scaled_mole_crop_x, scaled_mole_crop_y
-    )
-    mel.lib.image.save_image(src_with_cross_2, src_output_path_2)
-    print(f"Saved source with crosshair: {src_output_path_2}")
 
     # Report final position in original image coords
     final_x = tgt_off_x + pass2_crop_x
