@@ -246,6 +246,32 @@ def compute_similarities(mole_feature, all_patch_features, similarity_type="cosi
     raise ValueError(f"Unknown similarity_type: {similarity_type}")
 
 
+def apply_mask(image_rgb, mask):
+    """Apply mask to image, setting masked-out pixels to ImageNet mean.
+
+    Args:
+        image_rgb: Image in RGB format (H, W, 3), uint8
+        mask: Grayscale mask (H, W), 255=include, 0=exclude
+
+    Returns:
+        Masked image with excluded regions set to ImageNet mean color
+    """
+    # ImageNet mean in RGB, 0-255 scale
+    mean_rgb = (int(0.485 * 255), int(0.456 * 255), int(0.406 * 255))
+
+    # Create output image
+    result = image_rgb.copy()
+
+    # Create boolean mask (True = keep)
+    keep_mask = mask > 127
+
+    # Set masked-out pixels to ImageNet mean
+    for c, mean_val in enumerate(mean_rgb):
+        result[:, :, c] = np.where(keep_mask, result[:, :, c], mean_val)
+
+    return result
+
+
 def render_heatmap(
     image_rgb, similarities, image_height, image_width, similarity_type="cosine"
 ):

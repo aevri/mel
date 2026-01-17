@@ -19,6 +19,7 @@ import cv2
 
 import mel.lib.dinov3
 import mel.lib.image
+import mel.rotomap.mask
 import mel.rotomap.moles
 
 
@@ -122,6 +123,12 @@ def process_args(args):
     src_image = mel.lib.image.load_image(src_path)
     src_image_rgb = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
 
+    # Apply mask if available
+    src_mask = mel.rotomap.mask.load_or_none(src_path)
+    if src_mask is not None:
+        print("Applying mask to source image")
+        src_image_rgb = mel.lib.dinov3.apply_mask(src_image_rgb, src_mask)
+
     print(f"Scaling source image to fit {image_size}px...")
     scaled_src, (scale_x, scale_y) = mel.lib.dinov3.scale_image_to_fit(
         src_image_rgb, image_size
@@ -149,6 +156,12 @@ def process_args(args):
     print(f"Loading target image: {target_path}")
     target_image = mel.lib.image.load_image(target_path)
     target_image_rgb = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB)
+
+    # Apply mask if available
+    target_mask = mel.rotomap.mask.load_or_none(target_path)
+    if target_mask is not None:
+        print("Applying mask to target image")
+        target_image_rgb = mel.lib.dinov3.apply_mask(target_image_rgb, target_mask)
 
     print(f"Scaling target image to fit {image_size}px...")
     scaled_target, _ = mel.lib.dinov3.scale_image_to_fit(target_image_rgb, image_size)
