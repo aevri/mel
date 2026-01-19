@@ -85,7 +85,9 @@ def _run_two_pass_matching(
 
     pass1_max_sim = similarities.max().item()
     if verbose:
-        print(f"    Similarity range: {similarities.min().item():.4f} to {pass1_max_sim:.4f}")
+        print(
+            f"    Similarity range: {similarities.min().item():.4f} to {pass1_max_sim:.4f}"
+        )
 
     scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
     pass1_x, pass1_y = mel.lib.dinov3.find_best_match_location(
@@ -148,7 +150,9 @@ def _run_two_pass_matching(
 
     pass2_max_sim = similarities_2.max().item()
     if verbose:
-        print(f"    Similarity range: {similarities_2.min().item():.4f} to {pass2_max_sim:.4f}")
+        print(
+            f"    Similarity range: {similarities_2.min().item():.4f} to {pass2_max_sim:.4f}"
+        )
 
     scaled_tgt_crop_h, scaled_tgt_crop_w = scaled_tgt_crop.shape[:2]
     pass2_x, pass2_y = mel.lib.dinov3.find_best_match_location(
