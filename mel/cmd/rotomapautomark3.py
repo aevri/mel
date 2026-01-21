@@ -44,39 +44,23 @@ def _tensor_size_mb(tensor):
     return tensor.numel() * tensor.element_size() / (1024 * 1024)
 
 
-def _get_mole_feature(all_features, img_h, img_w, mole_x, mole_y, multi_patch=False):
+def _get_mole_feature(all_features, img_w, mole_x, mole_y):
     """Extract mole feature from pre-computed all_features.
 
     Args:
         all_features: All patch features [num_patches, feature_dim]
-        img_h, img_w: Scaled image dimensions
+        img_w: Scaled image width
         mole_x, mole_y: Mole coordinates (already scaled)
-        multi_patch: If True, average 3x3 patch region around mole
 
     Returns:
         Tensor: Feature vector [feature_dim]
     """
-    import torch
-
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
     patch_col = mole_x // patch_size
     patch_row = mole_y // patch_size
-
-    if not multi_patch:
-        patch_idx = patch_row * patches_per_row + patch_col
-        return all_features[patch_idx]
-
-    # Multi-patch: average 3x3 region
-    patches_per_col = img_h // patch_size
-    features_to_avg = []
-    for dr in [-1, 0, 1]:
-        for dc in [-1, 0, 1]:
-            r, c = patch_row + dr, patch_col + dc
-            if 0 <= r < patches_per_col and 0 <= c < patches_per_row:
-                idx = r * patches_per_row + c
-                features_to_avg.append(all_features[idx])
-    return torch.stack(features_to_avg).mean(dim=0)
+    patch_idx = patch_row * patches_per_row + patch_col
+    return all_features[patch_idx]
 
 
 def _find_mole_match(
@@ -86,7 +70,6 @@ def _find_mole_match(
     tgt_scale_y,
     scaled_tgt_h,
     scaled_tgt_w,
-    similarity,
     verbose=False,
 ):
     """Find best match for a mole using pre-computed features.
@@ -95,10 +78,8 @@ def _find_mole_match(
         Tuple of (final_x, final_y, max_similarity) where
         final_x, final_y are native coordinates in the target image.
     """
-    sim_type = "cosine" if similarity == "multi3x3" else similarity
-
     similarities = mel.lib.dinov3.compute_similarities(
-        mole_feature, target_features, similarity_type=sim_type
+        mole_feature, target_features, similarity_type="cosine"
     )
 
     max_sim = similarities.max().item()
@@ -108,7 +89,7 @@ def _find_mole_match(
         )
 
     best_x, best_y = mel.lib.dinov3.find_best_match_location(
-        similarities, scaled_tgt_h, scaled_tgt_w, similarity
+        similarities, scaled_tgt_h, scaled_tgt_w, "cosine"
     )
 
     # Convert to native coords
@@ -148,14 +129,6 @@ def setup_parser(parser):
         "Must be divisible by 16.",
     )
     parser.add_argument(
-        "--similarity",
-        type=str,
-        choices=["cosine", "euclidean", "dot", "multi3x3", "softmax"],
-        default="cosine",
-        help="Similarity metric: cosine (default), euclidean, dot, "
-        "multi3x3 (3x3 patch averaging), or softmax (temperature-scaled).",
-    )
-    parser.add_argument(
         "--allow-download",
         action="store_true",
         help="Allow downloading model weights from Hugging Face Hub. "
@@ -189,7 +162,6 @@ def process_args(args):
     tgt_paths = args.TGT_JPG
     dino_size = args.dino_size
     image_size = args.image_size
-    similarity = args.similarity
     allow_download = args.allow_download
     extra_stem = args.extra_stem
     verbose = args.verbose
@@ -243,7 +215,7 @@ def process_args(args):
     scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
         src_image_rgb, image_size
     )
-    scaled_src_h, scaled_src_w = scaled_src.shape[:2]
+    scaled_src_w = scaled_src.shape[1]
     src_all_features = mel.lib.dinov3.extract_all_patch_features(scaled_src, model)
     if verbose:
         print(
@@ -252,7 +224,6 @@ def process_args(args):
         )
 
     # Get individual mole features from the pre-computed features
-    use_multi_patch = similarity == "multi3x3"
     src_mole_features = {}
     for mole in src_canonical_moles:
         mole_uuid = mole["uuid"]
@@ -260,11 +231,9 @@ def process_args(args):
         scaled_mole_y = int(mole["y"] * src_scale_y)
         src_mole_features[mole_uuid] = _get_mole_feature(
             src_all_features,
-            scaled_src_h,
             scaled_src_w,
             scaled_mole_x,
             scaled_mole_y,
-            use_multi_patch,
         )
 
     src_canonical_uuids = set(src_mole_features.keys())
@@ -325,7 +294,6 @@ def process_args(args):
                 tgt_scale_y,
                 scaled_tgt_h,
                 scaled_tgt_w,
-                similarity,
                 verbose,
             )
 
