@@ -44,6 +44,39 @@ def _tensor_size_mb(tensor):
     return tensor.numel() * tensor.element_size() / (1024 * 1024)
 
 
+def _get_patch_index(img_w, mole_x, mole_y):
+    """Convert scaled coordinates to patch index.
+
+    Args:
+        img_w: Scaled image width
+        mole_x, mole_y: Mole coordinates (already scaled)
+
+    Returns:
+        int: Patch index
+    """
+    patch_size = mel.lib.dinov3.PATCH_SIZE
+    patches_per_row = img_w // patch_size
+    patch_col = mole_x // patch_size
+    patch_row = mole_y // patch_size
+    return patch_row * patches_per_row + patch_col
+
+
+def _find_best_patch_index(mole_feature, all_features):
+    """Find index of best matching patch using cosine similarity.
+
+    Args:
+        mole_feature: Feature vector for the mole patch
+        all_features: All patch features [num_patches, feature_dim]
+
+    Returns:
+        int: Index of best matching patch
+    """
+    similarities = mel.lib.dinov3.compute_similarities(
+        mole_feature, all_features, similarity_type="cosine"
+    )
+    return similarities.argmax().item()
+
+
 def _get_mole_feature(all_features, img_w, mole_x, mole_y):
     """Extract mole feature from pre-computed all_features.
 
@@ -55,11 +88,7 @@ def _get_mole_feature(all_features, img_w, mole_x, mole_y):
     Returns:
         Tensor: Feature vector [feature_dim]
     """
-    patch_size = mel.lib.dinov3.PATCH_SIZE
-    patches_per_row = img_w // patch_size
-    patch_col = mole_x // patch_size
-    patch_row = mole_y // patch_size
-    patch_idx = patch_row * patches_per_row + patch_col
+    patch_idx = _get_patch_index(img_w, mole_x, mole_y)
     return all_features[patch_idx]
 
 
@@ -75,8 +104,9 @@ def _find_mole_match(
     """Find best match for a mole using pre-computed features.
 
     Returns:
-        Tuple of (final_x, final_y, max_similarity) where
-        final_x, final_y are native coordinates in the target image.
+        Tuple of (native_x, native_y, scaled_x, scaled_y, max_similarity) where
+        native_x, native_y are coordinates in the target image at original size,
+        scaled_x, scaled_y are coordinates in the scaled target image.
     """
     similarities = mel.lib.dinov3.compute_similarities(
         mole_feature, target_features, similarity_type="cosine"
@@ -99,7 +129,7 @@ def _find_mole_match(
     if verbose:
         print(f"    Best match at native coords: ({final_x}, {final_y})")
 
-    return final_x, final_y, max_sim
+    return final_x, final_y, best_x, best_y, max_sim
 
 
 def setup_parser(parser):
@@ -223,8 +253,9 @@ def process_args(args):
             f"{_tensor_size_mb(src_all_features):.1f} MB"
         )
 
-    # Get individual mole features from the pre-computed features
+    # Get individual mole features and patch indices from the pre-computed features
     src_mole_features = {}
+    src_mole_patch_indices = {}
     for mole in src_canonical_moles:
         mole_uuid = mole["uuid"]
         scaled_mole_x = int(mole["x"] * src_scale_x)
@@ -234,6 +265,9 @@ def process_args(args):
             scaled_src_w,
             scaled_mole_x,
             scaled_mole_y,
+        )
+        src_mole_patch_indices[mole_uuid] = _get_patch_index(
+            scaled_src_w, scaled_mole_x, scaled_mole_y
         )
 
     src_canonical_uuids = set(src_mole_features.keys())
@@ -287,7 +321,7 @@ def process_args(args):
             if verbose:
                 print(f"  Locating mole {missing_uuid}")
 
-            final_x, final_y, final_sim = _find_mole_match(
+            final_x, final_y, scaled_tgt_x, scaled_tgt_y, final_sim = _find_mole_match(
                 src_mole_features[missing_uuid],
                 target_features,
                 tgt_scale_x,
@@ -302,6 +336,21 @@ def process_args(args):
                     print(
                         f"    Skipping: similarity {final_sim:.4f} "
                         f"below threshold {min_similarity}"
+                    )
+                continue
+
+            # Bidirectional check: verify target patch matches back to source
+            tgt_patch_idx = _get_patch_index(scaled_tgt_w, scaled_tgt_x, scaled_tgt_y)
+            tgt_patch_feature = target_features[tgt_patch_idx]
+            reverse_best_idx = _find_best_patch_index(tgt_patch_feature, src_all_features)
+            src_mole_patch_idx = src_mole_patch_indices[missing_uuid]
+
+            if reverse_best_idx != src_mole_patch_idx:
+                if verbose:
+                    print(
+                        f"    Skipping: bidirectional check failed "
+                        f"(reverse matched patch {reverse_best_idx}, "
+                        f"expected {src_mole_patch_idx})"
                     )
                 continue
 
