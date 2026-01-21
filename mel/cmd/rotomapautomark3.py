@@ -39,40 +39,64 @@ def _load_image_with_mask(image_path, verbose=False):
     return image_rgb
 
 
-def _run_matching(
-    src_image,
-    src_mole_x,
-    src_mole_y,
-    target_image,
-    model,
+def _tensor_size_mb(tensor):
+    """Return size of a tensor in megabytes."""
+    return tensor.numel() * tensor.element_size() / (1024 * 1024)
+
+
+def _get_mole_feature(all_features, img_h, img_w, mole_x, mole_y, multi_patch=False):
+    """Extract mole feature from pre-computed all_features.
+
+    Args:
+        all_features: All patch features [num_patches, feature_dim]
+        img_h, img_w: Scaled image dimensions
+        mole_x, mole_y: Mole coordinates (already scaled)
+        multi_patch: If True, average 3x3 patch region around mole
+
+    Returns:
+        Tensor: Feature vector [feature_dim]
+    """
+    import torch
+
+    patch_size = mel.lib.dinov3.PATCH_SIZE
+    patches_per_row = img_w // patch_size
+    patch_col = mole_x // patch_size
+    patch_row = mole_y // patch_size
+
+    if not multi_patch:
+        patch_idx = patch_row * patches_per_row + patch_col
+        return all_features[patch_idx]
+
+    # Multi-patch: average 3x3 region
+    patches_per_col = img_h // patch_size
+    features_to_avg = []
+    for dr in [-1, 0, 1]:
+        for dc in [-1, 0, 1]:
+            r, c = patch_row + dr, patch_col + dc
+            if 0 <= r < patches_per_col and 0 <= c < patches_per_row:
+                idx = r * patches_per_row + c
+                features_to_avg.append(all_features[idx])
+    return torch.stack(features_to_avg).mean(dim=0)
+
+
+def _find_mole_match(
+    mole_feature,
+    target_features,
+    tgt_scale_x,
+    tgt_scale_y,
+    scaled_tgt_h,
+    scaled_tgt_w,
     similarity,
-    image_size,
     verbose=False,
 ):
-    """Run DINOv3 matching to locate a mole using global view.
+    """Find best match for a mole using pre-computed features.
 
     Returns:
         Tuple of (final_x, final_y, max_similarity) where
         final_x, final_y are native coordinates in the target image.
     """
-    use_multi_patch = similarity == "multi3x3"
     sim_type = "cosine" if similarity == "multi3x3" else similarity
 
-    scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-        src_image, image_size
-    )
-    scaled_target, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-        target_image, image_size
-    )
-
-    scaled_mole_x = int(src_mole_x * src_scale_x)
-    scaled_mole_y = int(src_mole_y * src_scale_y)
-
-    mole_feature = mel.lib.dinov3.extract_mole_patch_feature(
-        scaled_src, scaled_mole_x, scaled_mole_y, model, multi_patch=use_multi_patch
-    )
-
-    target_features = mel.lib.dinov3.extract_all_patch_features(scaled_target, model)
     similarities = mel.lib.dinov3.compute_similarities(
         mole_feature, target_features, similarity_type=sim_type
     )
@@ -83,7 +107,6 @@ def _run_matching(
             f"    Similarity range: {similarities.min().item():.4f} to {max_sim:.4f}"
         )
 
-    scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
     best_x, best_y = mel.lib.dinov3.find_best_match_location(
         similarities, scaled_tgt_h, scaled_tgt_w, similarity
     )
@@ -213,8 +236,38 @@ def process_args(args):
         print(f"Error loading DINOv3 model: {e}")
         return 1
 
-    # Load source image once
+    # Load and scale source image once, extract all features
     src_image_rgb = _load_image_with_mask(src_path, verbose)
+    if verbose:
+        print("Scaling source image and extracting features...")
+    scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+        src_image_rgb, image_size
+    )
+    scaled_src_h, scaled_src_w = scaled_src.shape[:2]
+    src_all_features = mel.lib.dinov3.extract_all_patch_features(scaled_src, model)
+    if verbose:
+        print(
+            f"  Source features: {src_all_features.shape[0]} patches, "
+            f"{_tensor_size_mb(src_all_features):.1f} MB"
+        )
+
+    # Get individual mole features from the pre-computed features
+    use_multi_patch = similarity == "multi3x3"
+    src_mole_features = {}
+    for mole in src_canonical_moles:
+        mole_uuid = mole["uuid"]
+        scaled_mole_x = int(mole["x"] * src_scale_x)
+        scaled_mole_y = int(mole["y"] * src_scale_y)
+        src_mole_features[mole_uuid] = _get_mole_feature(
+            src_all_features,
+            scaled_src_h,
+            scaled_src_w,
+            scaled_mole_x,
+            scaled_mole_y,
+            use_multi_patch,
+        )
+
+    src_canonical_uuids = set(src_mole_features.keys())
 
     # Process each target image
     for tgt_path in tgt_paths:
@@ -231,7 +284,6 @@ def process_args(args):
             continue
 
         # Find UUIDs missing from target
-        src_canonical_uuids = {m["uuid"] for m in src_canonical_moles}
         tgt_all_uuids = {m["uuid"] for m in tgt_moles}
         missing_uuids = src_canonical_uuids - tgt_all_uuids
 
@@ -246,28 +298,34 @@ def process_args(args):
         if verbose:
             print(f"  Found {len(missing_uuids)} missing canonical moles to locate")
 
-        # Load target image
+        # Load target image, scale it, and extract features once
         tgt_image_rgb = _load_image_with_mask(tgt_path, verbose)
-
-        # Build UUID to mole lookup for source
-        src_uuid_to_mole = {m["uuid"]: m for m in src_canonical_moles}
+        if verbose:
+            print("  Scaling target image and extracting features...")
+        scaled_tgt, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+            tgt_image_rgb, image_size
+        )
+        scaled_tgt_h, scaled_tgt_w = scaled_tgt.shape[:2]
+        target_features = mel.lib.dinov3.extract_all_patch_features(scaled_tgt, model)
+        if verbose:
+            print(
+                f"  Target features: {target_features.shape[0]} patches, "
+                f"{_tensor_size_mb(target_features):.1f} MB"
+            )
 
         matched_count = 0
         for missing_uuid in missing_uuids:
-            src_mole = src_uuid_to_mole[missing_uuid]
-            src_mole_x, src_mole_y = src_mole["x"], src_mole["y"]
-
             if verbose:
                 print(f"  Locating mole {missing_uuid}")
 
-            final_x, final_y, final_sim = _run_matching(
-                src_image_rgb,
-                src_mole_x,
-                src_mole_y,
-                tgt_image_rgb,
-                model,
+            final_x, final_y, final_sim = _find_mole_match(
+                src_mole_features[missing_uuid],
+                target_features,
+                tgt_scale_x,
+                tgt_scale_y,
+                scaled_tgt_h,
+                scaled_tgt_w,
                 similarity,
-                image_size,
                 verbose,
             )
 
