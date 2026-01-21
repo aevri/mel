@@ -1,8 +1,6 @@
 """Locate canonical moles from a source image in target images using DINOv3.
 
-Uses a two-pass approach:
-  - Pass 1: Global view with images scaled to fit --image-size
-  - Pass 2: Local view at native resolution around the Pass 1 match
+Uses a global view with images scaled to fit --image-size.
 
 Moles found in target images are added as non-canonical (is_uuid_canonical=False).
 """
@@ -41,7 +39,7 @@ def _load_image_with_mask(image_path, verbose=False):
     return image_rgb
 
 
-def _run_two_pass_matching(
+def _run_matching(
     src_image,
     src_mole_x,
     src_mole_y,
@@ -51,18 +49,14 @@ def _run_two_pass_matching(
     image_size,
     verbose=False,
 ):
-    """Run two-pass DINOv3 matching to locate a mole.
+    """Run DINOv3 matching to locate a mole using global view.
 
     Returns:
-        Tuple of (final_x, final_y, pass1_similarity, pass2_similarity) where
+        Tuple of (final_x, final_y, max_similarity) where
         final_x, final_y are native coordinates in the target image.
     """
     use_multi_patch = similarity == "multi3x3"
     sim_type = "cosine" if similarity == "multi3x3" else similarity
-
-    # Pass 1: Global view
-    if verbose:
-        print("  Pass 1: Global view")
 
     scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
         src_image, image_size
@@ -83,93 +77,25 @@ def _run_two_pass_matching(
         mole_feature, target_features, similarity_type=sim_type
     )
 
-    pass1_max_sim = similarities.max().item()
+    max_sim = similarities.max().item()
     if verbose:
         print(
-            f"    Similarity range: {similarities.min().item():.4f} to {pass1_max_sim:.4f}"
+            f"    Similarity range: {similarities.min().item():.4f} to {max_sim:.4f}"
         )
 
     scaled_tgt_h, scaled_tgt_w = scaled_target.shape[:2]
-    pass1_x, pass1_y = mel.lib.dinov3.find_best_match_location(
+    best_x, best_y = mel.lib.dinov3.find_best_match_location(
         similarities, scaled_tgt_h, scaled_tgt_w, similarity
     )
 
     # Convert to native coords
-    pass1_native_x = int(pass1_x / tgt_scale_x)
-    pass1_native_y = int(pass1_y / tgt_scale_y)
+    final_x = int(best_x / tgt_scale_x)
+    final_y = int(best_y / tgt_scale_y)
 
     if verbose:
-        print(f"    Best match at native coords: ({pass1_native_x}, {pass1_native_y})")
+        print(f"    Best match at native coords: ({final_x}, {final_y})")
 
-    # Pass 2: Local view at native resolution for smallest image
-    if verbose:
-        print("  Pass 2: Local view")
-
-    src_max_dim = max(src_image.shape[:2])
-    tgt_max_dim = max(target_image.shape[:2])
-    smallest_max_dim = min(src_max_dim, tgt_max_dim)
-
-    native_coverage = image_size / smallest_max_dim
-    src_crop_size = max(int(src_max_dim * native_coverage), mel.lib.dinov3.PATCH_SIZE)
-    tgt_crop_size = max(int(tgt_max_dim * native_coverage), mel.lib.dinov3.PATCH_SIZE)
-
-    src_crop, (src_crop_off_x, src_crop_off_y) = mel.lib.dinov3.crop_to_region(
-        src_image, src_mole_x, src_mole_y, src_crop_size
-    )
-    tgt_crop, (tgt_off_x, tgt_off_y) = mel.lib.dinov3.crop_to_region(
-        target_image, pass1_native_x, pass1_native_y, tgt_crop_size
-    )
-
-    mole_in_crop_x = src_mole_x - src_crop_off_x
-    mole_in_crop_y = src_mole_y - src_crop_off_y
-
-    scaled_src_crop, (src_crop_scale_x, src_crop_scale_y) = (
-        mel.lib.dinov3.scale_image_to_fit(src_crop, image_size)
-    )
-    scaled_tgt_crop, (tgt_crop_scale_x, tgt_crop_scale_y) = (
-        mel.lib.dinov3.scale_image_to_fit(tgt_crop, image_size)
-    )
-
-    scaled_mole_crop_x = int(mole_in_crop_x * src_crop_scale_x)
-    scaled_mole_crop_y = int(mole_in_crop_y * src_crop_scale_y)
-
-    mole_feature_2 = mel.lib.dinov3.extract_mole_patch_feature(
-        scaled_src_crop,
-        scaled_mole_crop_x,
-        scaled_mole_crop_y,
-        model,
-        multi_patch=use_multi_patch,
-    )
-
-    target_features_2 = mel.lib.dinov3.extract_all_patch_features(
-        scaled_tgt_crop, model
-    )
-    similarities_2 = mel.lib.dinov3.compute_similarities(
-        mole_feature_2, target_features_2, similarity_type=sim_type
-    )
-
-    pass2_max_sim = similarities_2.max().item()
-    if verbose:
-        print(
-            f"    Similarity range: {similarities_2.min().item():.4f} to {pass2_max_sim:.4f}"
-        )
-
-    scaled_tgt_crop_h, scaled_tgt_crop_w = scaled_tgt_crop.shape[:2]
-    pass2_x, pass2_y = mel.lib.dinov3.find_best_match_location(
-        similarities_2, scaled_tgt_crop_h, scaled_tgt_crop_w, similarity
-    )
-
-    # Convert crop coords back to native target coords
-    pass2_crop_native_x = int(pass2_x / tgt_crop_scale_x)
-    pass2_crop_native_y = int(pass2_y / tgt_crop_scale_y)
-
-    final_x = tgt_off_x + pass2_crop_native_x
-    final_y = tgt_off_y + pass2_crop_native_y
-
-    if verbose:
-        print(f"    Final position: ({final_x}, {final_y})")
-
-    return final_x, final_y, pass1_max_sim, pass2_max_sim
+    return final_x, final_y, max_sim
 
 
 def setup_parser(parser):
@@ -334,7 +260,7 @@ def process_args(args):
             if verbose:
                 print(f"  Locating mole {missing_uuid}")
 
-            final_x, final_y, _, pass2_sim = _run_two_pass_matching(
+            final_x, final_y, final_sim = _run_matching(
                 src_image_rgb,
                 src_mole_x,
                 src_mole_y,
@@ -344,9 +270,6 @@ def process_args(args):
                 image_size,
                 verbose,
             )
-
-            # Use pass2 similarity as the final similarity score
-            final_sim = pass2_sim
 
             if final_sim < min_similarity:
                 if verbose:
