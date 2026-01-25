@@ -154,8 +154,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--image-size",
         type=int,
-        default=896,
-        help="Scale images to fit this size in pixels (default: 896). "
+        default=1024,
+        help="Scale images to fit this size in pixels (default: 1024). "
         "Must be divisible by 16.",
     )
     parser.add_argument(
