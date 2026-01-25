@@ -2,13 +2,15 @@
 
 Uses a global view with images scaled to fit --image-size.
 
-Moles found in target images are added as non-canonical (is_uuid_canonical=False).
+Moles found in target images are added as non-canonical
+(is_uuid_canonical=False).
 """
 
 import argparse
 import pathlib
 
 import cv2
+import torch
 
 import mel.lib.dinov3
 import mel.lib.image
@@ -37,6 +39,22 @@ def _load_image_with_mask(image_path, verbose=False):
             print("Applying mask to image")
         image_rgb = mel.lib.dinov3.apply_mask(image_rgb, mask)
     return image_rgb
+
+
+def _get_features_path(image_path, dino_size, image_size):
+    """Generate path for cached features file."""
+    return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
+
+
+def _load_cached_features(image_path, dino_size, image_size, verbose=False):
+    """Load cached features if available, returns None if not found."""
+    features_path = _get_features_path(image_path, dino_size, image_size)
+    if not features_path.exists():
+        return None
+    if verbose:
+        print(f"Loading cached features: {features_path}")
+    # Returns dict with features, scaled_h, scaled_w, scale_x, scale_y
+    return torch.load(features_path)
 
 
 def _tensor_size_mb(tensor):
@@ -114,9 +132,7 @@ def _find_mole_match(
 
     max_sim = similarities.max().item()
     if verbose:
-        print(
-            f"    Similarity range: {similarities.min().item():.4f} to {max_sim:.4f}"
-        )
+        print(f"    Similarity range: {similarities.min().item():.4f} to {max_sim:.4f}")
 
     best_x, best_y = mel.lib.dinov3.find_best_match_location(
         similarities, scaled_tgt_h, scaled_tgt_w, "cosine"
@@ -225,33 +241,64 @@ def process_args(args):
     if verbose:
         print(f"Source has {len(src_canonical_moles)} canonical moles")
 
-    # Load DINOv3 model
-    if verbose:
-        print(f"Loading DINOv3 model (size: {dino_size})...")
-    try:
-        model, feature_dim = mel.lib.dinov3.load_dinov3_model(
-            dino_size, local_files_only=not allow_download
-        )
-        if verbose:
-            print(f"Model loaded with {feature_dim} feature dimensions")
-    except RuntimeError as e:
-        print(f"Error loading DINOv3 model: {e}")
-        return 1
+    # Try to load cached source features
+    src_cached = _load_cached_features(src_path, dino_size, image_size, verbose)
 
-    # Load and scale source image once, extract all features
-    src_image_rgb = _load_image_with_mask(src_path, verbose)
-    if verbose:
-        print("Scaling source image and extracting features...")
-    scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-        src_image_rgb, image_size
-    )
-    scaled_src_w = scaled_src.shape[1]
-    src_all_features = mel.lib.dinov3.extract_all_patch_features(scaled_src, model)
-    if verbose:
-        print(
-            f"  Source features: {src_all_features.shape[0]} patches, "
-            f"{_tensor_size_mb(src_all_features):.1f} MB"
+    # Check which targets have cached features
+    tgt_cached = {}
+    targets_needing_computation = []
+    for tgt_path in tgt_paths:
+        cached = _load_cached_features(tgt_path, dino_size, image_size, verbose)
+        if cached:
+            tgt_cached[tgt_path] = cached
+        else:
+            targets_needing_computation.append(tgt_path)
+
+    # Only load model if needed
+    need_model = src_cached is None or len(targets_needing_computation) > 0
+    if need_model:
+        if verbose:
+            print(f"Loading DINOv3 model (size: {dino_size})...")
+        try:
+            model, feature_dim = mel.lib.dinov3.load_dinov3_model(
+                dino_size, local_files_only=not allow_download
+            )
+            if verbose:
+                print(f"Model loaded with {feature_dim} feature dimensions")
+        except RuntimeError as e:
+            print(f"Error loading DINOv3 model: {e}")
+            return 1
+    else:
+        model = None
+        if verbose:
+            print("All features cached, skipping model load")
+
+    # Get source features (from cache or compute)
+    if src_cached is not None:
+        src_all_features = src_cached["features"]
+        src_scale_x = src_cached["scale_x"]
+        src_scale_y = src_cached["scale_y"]
+        scaled_src_w = src_cached["scaled_w"]
+        if verbose:
+            print(
+                f"Using cached source features: {src_all_features.shape[0]} patches, "
+                f"{_tensor_size_mb(src_all_features):.1f} MB"
+            )
+    else:
+        # Load and scale source image once, extract all features
+        src_image_rgb = _load_image_with_mask(src_path, verbose)
+        if verbose:
+            print("Scaling source image and extracting features...")
+        scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+            src_image_rgb, image_size
         )
+        scaled_src_w = scaled_src.shape[1]
+        src_all_features = mel.lib.dinov3.extract_all_patch_features(scaled_src, model)
+        if verbose:
+            print(
+                f"  Source features: {src_all_features.shape[0]} patches, "
+                f"{_tensor_size_mb(src_all_features):.1f} MB"
+            )
 
     # Get individual mole features and patch indices from the pre-computed features
     src_mole_features = {}
@@ -301,20 +348,36 @@ def process_args(args):
         if verbose:
             print(f"  Found {len(missing_uuids)} missing canonical moles to locate")
 
-        # Load target image, scale it, and extract features once
-        tgt_image_rgb = _load_image_with_mask(tgt_path, verbose)
-        if verbose:
-            print("  Scaling target image and extracting features...")
-        scaled_tgt, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-            tgt_image_rgb, image_size
-        )
-        scaled_tgt_h, scaled_tgt_w = scaled_tgt.shape[:2]
-        target_features = mel.lib.dinov3.extract_all_patch_features(scaled_tgt, model)
-        if verbose:
-            print(
-                f"  Target features: {target_features.shape[0]} patches, "
-                f"{_tensor_size_mb(target_features):.1f} MB"
+        # Get target features (from cache or compute)
+        if tgt_path in tgt_cached:
+            cached = tgt_cached[tgt_path]
+            target_features = cached["features"]
+            tgt_scale_x = cached["scale_x"]
+            tgt_scale_y = cached["scale_y"]
+            scaled_tgt_h = cached["scaled_h"]
+            scaled_tgt_w = cached["scaled_w"]
+            if verbose:
+                print(
+                    f"  Using cached target features: {target_features.shape[0]} "
+                    f"patches, {_tensor_size_mb(target_features):.1f} MB"
+                )
+        else:
+            # Load target image, scale it, and extract features once
+            tgt_image_rgb = _load_image_with_mask(tgt_path, verbose)
+            if verbose:
+                print("  Scaling target image and extracting features...")
+            scaled_tgt, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
+                tgt_image_rgb, image_size
             )
+            scaled_tgt_h, scaled_tgt_w = scaled_tgt.shape[:2]
+            target_features = mel.lib.dinov3.extract_all_patch_features(
+                scaled_tgt, model
+            )
+            if verbose:
+                print(
+                    f"  Target features: {target_features.shape[0]} patches, "
+                    f"{_tensor_size_mb(target_features):.1f} MB"
+                )
 
         matched_count = 0
         for missing_uuid in missing_uuids:
@@ -342,7 +405,9 @@ def process_args(args):
             # Bidirectional check: verify target patch matches back to source
             tgt_patch_idx = _get_patch_index(scaled_tgt_w, scaled_tgt_x, scaled_tgt_y)
             tgt_patch_feature = target_features[tgt_patch_idx]
-            reverse_best_idx = _find_best_patch_index(tgt_patch_feature, src_all_features)
+            reverse_best_idx = _find_best_patch_index(
+                tgt_patch_feature, src_all_features
+            )
             src_mole_patch_idx = src_mole_patch_indices[missing_uuid]
 
             if reverse_best_idx != src_mole_patch_idx:
