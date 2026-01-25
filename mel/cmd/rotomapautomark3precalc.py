@@ -54,8 +54,8 @@ def setup_parser(parser):
         "--dino-size",
         type=str,
         choices=["small", "base", "large", "huge", "7b"],
-        default="base",
-        help="DINOv3 model size variant (default: base).",
+        default="7b",
+        help="DINOv3 model size variant (default: 7b).",
     )
     parser.add_argument(
         "--image-size",
