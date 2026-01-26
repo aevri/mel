@@ -95,6 +95,11 @@ def _find_best_patch_index(mole_feature, all_features):
     return similarities.argmax().item()
 
 
+def _point_distance(x1, y1, x2, y2):
+    """Compute Euclidean distance between two points."""
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+
 def _get_mole_feature(all_features, img_w, mole_x, mole_y):
     """Extract mole feature from pre-computed all_features.
 
@@ -206,6 +211,13 @@ def setup_parser(parser):
         action="store_true",
         help="Show what would be done without saving.",
     )
+    parser.add_argument(
+        "--consistency-distance",
+        type=float,
+        default=100.0,
+        help="Max distance (pixels) between matches from different references "
+        "to be considered consistent (default: 100.0).",
+    )
 
 
 def process_args(args):
@@ -217,6 +229,7 @@ def process_args(args):
     extra_stem = args.extra_stem
     verbose = args.verbose
     min_similarity = args.min_similarity
+    consistency_distance = args.consistency_distance
     dry_run = args.dry_run
 
     # Validate image_size is divisible by patch size
@@ -411,12 +424,9 @@ def process_args(args):
             if verbose:
                 print(f"  Locating mole {missing_uuid}")
 
-            # Try matching against EACH reference's feature for this mole
-            # Keep the best match (highest similarity across all references)
-            best_match = None
-            best_sim = -1.0
-            best_ref_path = None
-            best_ref_patch_idx = None
+            # Collect ALL matches that pass bidirectional check
+            # valid_matches: [(ref_path, x, y, similarity), ...]
+            valid_matches = []
 
             for ref_path, mole_feature, ref_patch_idx in mole_features[missing_uuid]:
                 final_x, final_y, scaled_tgt_x, scaled_tgt_y, sim = _find_mole_match(
@@ -428,14 +438,82 @@ def process_args(args):
                     scaled_tgt_w,
                     verbose=False,  # Don't spam per-reference
                 )
-                if sim > best_sim:
-                    best_sim = sim
-                    best_match = (final_x, final_y, scaled_tgt_x, scaled_tgt_y)
-                    best_ref_path = ref_path
-                    best_ref_patch_idx = ref_patch_idx
 
-            if verbose:
-                print(f"    Best match from {best_ref_path} [similarity: {best_sim:.4f}]")
+                # Bidirectional check: verify target patch matches back to this
+                # reference's mole patch
+                tgt_patch_idx = _get_patch_index(
+                    scaled_tgt_w, scaled_tgt_x, scaled_tgt_y
+                )
+                tgt_patch_feature = target_features[tgt_patch_idx]
+                ref_features = ref_data[ref_path]["features"]
+                reverse_best_idx = _find_best_patch_index(
+                    tgt_patch_feature, ref_features
+                )
+
+                if reverse_best_idx != ref_patch_idx:
+                    if verbose:
+                        print(
+                            f"    {ref_path}: bidirectional check failed "
+                            f"(reverse matched patch {reverse_best_idx}, "
+                            f"expected {ref_patch_idx})"
+                        )
+                    continue
+
+                # This match passes bidirectional check - collect it
+                valid_matches.append((ref_path, final_x, final_y, sim))
+                if verbose:
+                    print(
+                        f"    {ref_path}: bidirectional OK at "
+                        f"({final_x}, {final_y}) [sim: {sim:.4f}]"
+                    )
+
+            if not valid_matches:
+                if verbose:
+                    print("    Skipping: no match passed bidirectional check")
+                continue
+
+            # Check consistency: if multiple matches, they should agree on location
+            num_refs = len(mole_features[missing_uuid])
+            if len(valid_matches) == 1 and num_refs > 1:
+                # Only one reference passed bidirectional but multiple were available
+                # This is weak evidence - skip unless it's the only reference
+                if verbose:
+                    print(
+                        f"    Skipping: only 1/{num_refs} references passed "
+                        "bidirectional check"
+                    )
+                continue
+
+            # Find the best match (highest similarity)
+            best_match = max(valid_matches, key=lambda m: m[3])
+            best_ref_path, best_x, best_y, best_sim = best_match
+
+            # If multiple matches, check they're consistent with the best one
+            if len(valid_matches) > 1:
+                consistent_count = 0
+                for ref_path, x, y, _sim in valid_matches:
+                    dist = _point_distance(x, y, best_x, best_y)
+                    if dist <= consistency_distance:
+                        consistent_count += 1
+                    elif verbose:
+                        print(
+                            f"    {ref_path}: inconsistent location "
+                            f"({x}, {y}) is {dist:.1f}px from best"
+                        )
+
+                # Require at least 2 matches to be consistent
+                if consistent_count < 2:
+                    if verbose:
+                        print(
+                            f"    Skipping: only {consistent_count} consistent matches"
+                        )
+                    continue
+
+                if verbose:
+                    print(
+                        f"    {consistent_count}/{len(valid_matches)} matches "
+                        f"consistent within {consistency_distance}px"
+                    )
 
             if best_sim < min_similarity:
                 if verbose:
@@ -445,31 +523,17 @@ def process_args(args):
                     )
                 continue
 
-            final_x, final_y, scaled_tgt_x, scaled_tgt_y = best_match
-
-            # Bidirectional check: verify target patch matches back to the
-            # winning reference's mole patch
-            tgt_patch_idx = _get_patch_index(scaled_tgt_w, scaled_tgt_x, scaled_tgt_y)
-            tgt_patch_feature = target_features[tgt_patch_idx]
-            best_ref_features = ref_data[best_ref_path]["features"]
-            reverse_best_idx = _find_best_patch_index(
-                tgt_patch_feature, best_ref_features
-            )
-
-            if reverse_best_idx != best_ref_patch_idx:
-                if verbose:
-                    print(
-                        f"    Skipping: bidirectional check failed "
-                        f"(reverse matched patch {reverse_best_idx}, "
-                        f"expected {best_ref_patch_idx})"
-                    )
-                continue
+            if verbose:
+                print(
+                    f"    Best match from {best_ref_path} "
+                    f"[similarity: {best_sim:.4f}]"
+                )
 
             # Add the mole as non-canonical
             new_mole = {
                 "uuid": missing_uuid,
-                "x": final_x,
-                "y": final_y,
+                "x": best_x,
+                "y": best_y,
                 mel.rotomap.moles.KEY_IS_CONFIRMED: False,
             }
             tgt_moles.append(new_mole)
@@ -477,7 +541,7 @@ def process_args(args):
 
             action = "Would add" if dry_run else "Added"
             print(
-                f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
+                f"  {action} mole {missing_uuid} at ({best_x}, {best_y}) "
                 f"[similarity: {best_sim:.4f}]"
             )
 
