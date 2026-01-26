@@ -150,14 +150,19 @@ def _find_mole_match(
 
 def setup_parser(parser):
     parser.add_argument(
-        "SRC_JPG",
-        type=_existing_file_path,
-        help="Source image with canonical moles to match from.",
-    )
-    parser.add_argument(
-        "TGT_JPG",
+        "--reference",
+        "-r",
         type=_existing_file_path,
         nargs="+",
+        required=True,
+        help="Reference image(s) with canonical moles to match from.",
+    )
+    parser.add_argument(
+        "--target",
+        "-t",
+        type=_existing_file_path,
+        nargs="+",
+        required=True,
         help="Target image(s) where moles will be located.",
     )
     parser.add_argument(
@@ -204,8 +209,8 @@ def setup_parser(parser):
 
 
 def process_args(args):
-    src_path = args.SRC_JPG
-    tgt_paths = args.TGT_JPG
+    ref_paths = args.reference
+    tgt_paths = args.target
     dino_size = args.dino_size
     image_size = args.image_size
     allow_download = args.allow_download
@@ -222,27 +227,39 @@ def process_args(args):
         )
         return 1
 
-    # Load source moles
-    try:
-        src_moles = mel.rotomap.moles.load_image_moles(src_path)
-    except Exception as e:
-        print(f"Error loading source moles: {e}")
-        return 1
+    # Collect canonical moles from all reference images
+    ref_moles_by_path = {}  # {ref_path: [canonical_moles]}
+    all_canonical_uuids = set()
+    for ref_path in ref_paths:
+        try:
+            moles = mel.rotomap.moles.load_image_moles(ref_path)
+        except Exception as e:
+            print(f"Error loading moles from {ref_path}: {e}")
+            return 1
+        canonical = [m for m in moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]]
+        if canonical:
+            ref_moles_by_path[ref_path] = canonical
+            all_canonical_uuids.update(m["uuid"] for m in canonical)
 
-    # Get canonical moles from source
-    src_canonical_moles = [
-        m for m in src_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
-    ]
-
-    if not src_canonical_moles:
-        print("Error: No canonical moles found in source image")
+    if not all_canonical_uuids:
+        print("Error: No canonical moles found in any reference image")
         return 1
 
     if verbose:
-        print(f"Source has {len(src_canonical_moles)} canonical moles")
+        print(
+            f"Found {len(all_canonical_uuids)} unique canonical moles "
+            f"across {len(ref_moles_by_path)} reference images"
+        )
 
-    # Try to load cached source features
-    src_cached = _load_cached_features(src_path, dino_size, image_size, verbose)
+    # Try to load cached features for references
+    ref_cached = {}
+    refs_needing_computation = []
+    for ref_path in ref_moles_by_path:
+        cached = _load_cached_features(ref_path, dino_size, image_size, verbose)
+        if cached:
+            ref_cached[ref_path] = cached
+        else:
+            refs_needing_computation.append(ref_path)
 
     # Check which targets have cached features
     tgt_cached = {}
@@ -255,7 +272,7 @@ def process_args(args):
             targets_needing_computation.append(tgt_path)
 
     # Only load model if needed
-    need_model = src_cached is None or len(targets_needing_computation) > 0
+    need_model = len(refs_needing_computation) > 0 or len(targets_needing_computation) > 0
     if need_model:
         if verbose:
             print(f"Loading DINOv3 model (size: {dino_size})...")
@@ -273,51 +290,61 @@ def process_args(args):
         if verbose:
             print("All features cached, skipping model load")
 
-    # Get source features (from cache or compute)
-    if src_cached is not None:
-        src_all_features = src_cached["features"]
-        src_scale_x = src_cached["scale_x"]
-        src_scale_y = src_cached["scale_y"]
-        scaled_src_w = src_cached["scaled_w"]
-        if verbose:
-            print(
-                f"Using cached source features: {src_all_features.shape[0]} patches, "
-                f"{_tensor_size_mb(src_all_features):.1f} MB"
+    # Load/compute features for all references
+    # ref_data[ref_path] = {features, scale_x, scale_y, scaled_w}
+    ref_data = {}
+    for ref_path in ref_moles_by_path:
+        if ref_path in ref_cached:
+            cached = ref_cached[ref_path]
+            ref_data[ref_path] = {
+                "features": cached["features"],
+                "scale_x": cached["scale_x"],
+                "scale_y": cached["scale_y"],
+                "scaled_w": cached["scaled_w"],
+            }
+            if verbose:
+                print(
+                    f"Using cached reference features for {ref_path}: "
+                    f"{cached['features'].shape[0]} patches, "
+                    f"{_tensor_size_mb(cached['features']):.1f} MB"
+                )
+        else:
+            ref_image_rgb = _load_image_with_mask(ref_path, verbose)
+            if verbose:
+                print(f"Scaling reference image {ref_path} and extracting features...")
+            scaled_ref, (scale_x, scale_y) = mel.lib.dinov3.scale_image_to_fit(
+                ref_image_rgb, image_size
             )
-    else:
-        # Load and scale source image once, extract all features
-        src_image_rgb = _load_image_with_mask(src_path, verbose)
-        if verbose:
-            print("Scaling source image and extracting features...")
-        scaled_src, (src_scale_x, src_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-            src_image_rgb, image_size
-        )
-        scaled_src_w = scaled_src.shape[1]
-        src_all_features = mel.lib.dinov3.extract_all_patch_features(scaled_src, model)
-        if verbose:
-            print(
-                f"  Source features: {src_all_features.shape[0]} patches, "
-                f"{_tensor_size_mb(src_all_features):.1f} MB"
+            scaled_w = scaled_ref.shape[1]
+            features = mel.lib.dinov3.extract_all_patch_features(scaled_ref, model)
+            ref_data[ref_path] = {
+                "features": features,
+                "scale_x": scale_x,
+                "scale_y": scale_y,
+                "scaled_w": scaled_w,
+            }
+            if verbose:
+                print(
+                    f"  Reference features: {features.shape[0]} patches, "
+                    f"{_tensor_size_mb(features):.1f} MB"
+                )
+
+    # For each mole UUID, collect features from all references that have it
+    # mole_features[uuid] = [(ref_path, feature, patch_idx), ...]
+    mole_features = {}
+    for ref_path, moles in ref_moles_by_path.items():
+        data = ref_data[ref_path]
+        for mole in moles:
+            mole_uuid = mole["uuid"]
+            scaled_x = int(mole["x"] * data["scale_x"])
+            scaled_y = int(mole["y"] * data["scale_y"])
+            feature = _get_mole_feature(
+                data["features"], data["scaled_w"], scaled_x, scaled_y
             )
-
-    # Get individual mole features and patch indices from the pre-computed features
-    src_mole_features = {}
-    src_mole_patch_indices = {}
-    for mole in src_canonical_moles:
-        mole_uuid = mole["uuid"]
-        scaled_mole_x = int(mole["x"] * src_scale_x)
-        scaled_mole_y = int(mole["y"] * src_scale_y)
-        src_mole_features[mole_uuid] = _get_mole_feature(
-            src_all_features,
-            scaled_src_w,
-            scaled_mole_x,
-            scaled_mole_y,
-        )
-        src_mole_patch_indices[mole_uuid] = _get_patch_index(
-            scaled_src_w, scaled_mole_x, scaled_mole_y
-        )
-
-    src_canonical_uuids = set(src_mole_features.keys())
+            patch_idx = _get_patch_index(data["scaled_w"], scaled_x, scaled_y)
+            mole_features.setdefault(mole_uuid, []).append(
+                (ref_path, feature, patch_idx)
+            )
 
     # Process each target image
     for tgt_path in tgt_paths:
@@ -335,12 +362,12 @@ def process_args(args):
 
         # Find UUIDs missing from target
         tgt_all_uuids = {m["uuid"] for m in tgt_moles}
-        missing_uuids = src_canonical_uuids - tgt_all_uuids
+        missing_uuids = all_canonical_uuids - tgt_all_uuids
 
         if not missing_uuids:
             if verbose:
                 print(
-                    "  No missing moles - all source canonical moles "
+                    "  No missing moles - all reference canonical moles "
                     "already present in target"
                 )
             continue
@@ -384,38 +411,57 @@ def process_args(args):
             if verbose:
                 print(f"  Locating mole {missing_uuid}")
 
-            final_x, final_y, scaled_tgt_x, scaled_tgt_y, final_sim = _find_mole_match(
-                src_mole_features[missing_uuid],
-                target_features,
-                tgt_scale_x,
-                tgt_scale_y,
-                scaled_tgt_h,
-                scaled_tgt_w,
-                verbose,
-            )
+            # Try matching against EACH reference's feature for this mole
+            # Keep the best match (highest similarity across all references)
+            best_match = None
+            best_sim = -1.0
+            best_ref_path = None
+            best_ref_patch_idx = None
 
-            if final_sim < min_similarity:
+            for ref_path, mole_feature, ref_patch_idx in mole_features[missing_uuid]:
+                final_x, final_y, scaled_tgt_x, scaled_tgt_y, sim = _find_mole_match(
+                    mole_feature,
+                    target_features,
+                    tgt_scale_x,
+                    tgt_scale_y,
+                    scaled_tgt_h,
+                    scaled_tgt_w,
+                    verbose=False,  # Don't spam per-reference
+                )
+                if sim > best_sim:
+                    best_sim = sim
+                    best_match = (final_x, final_y, scaled_tgt_x, scaled_tgt_y)
+                    best_ref_path = ref_path
+                    best_ref_patch_idx = ref_patch_idx
+
+            if verbose:
+                print(f"    Best match from {best_ref_path} [similarity: {best_sim:.4f}]")
+
+            if best_sim < min_similarity:
                 if verbose:
                     print(
-                        f"    Skipping: similarity {final_sim:.4f} "
+                        f"    Skipping: similarity {best_sim:.4f} "
                         f"below threshold {min_similarity}"
                     )
                 continue
 
-            # Bidirectional check: verify target patch matches back to source
+            final_x, final_y, scaled_tgt_x, scaled_tgt_y = best_match
+
+            # Bidirectional check: verify target patch matches back to the
+            # winning reference's mole patch
             tgt_patch_idx = _get_patch_index(scaled_tgt_w, scaled_tgt_x, scaled_tgt_y)
             tgt_patch_feature = target_features[tgt_patch_idx]
+            best_ref_features = ref_data[best_ref_path]["features"]
             reverse_best_idx = _find_best_patch_index(
-                tgt_patch_feature, src_all_features
+                tgt_patch_feature, best_ref_features
             )
-            src_mole_patch_idx = src_mole_patch_indices[missing_uuid]
 
-            if reverse_best_idx != src_mole_patch_idx:
+            if reverse_best_idx != best_ref_patch_idx:
                 if verbose:
                     print(
                         f"    Skipping: bidirectional check failed "
                         f"(reverse matched patch {reverse_best_idx}, "
-                        f"expected {src_mole_patch_idx})"
+                        f"expected {best_ref_patch_idx})"
                     )
                 continue
 
@@ -432,7 +478,7 @@ def process_args(args):
             action = "Would add" if dry_run else "Added"
             print(
                 f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
-                f"[similarity: {final_sim:.4f}]"
+                f"[similarity: {best_sim:.4f}]"
             )
 
         if matched_count > 0 and not dry_run:
