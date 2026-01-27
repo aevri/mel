@@ -1,9 +1,7 @@
-"""Locate canonical moles from a source image in target images using DINOv3.
+"""Locate canonical moles using a neural network classifier on DINOv3 features.
 
-Uses a global view with images scaled to fit --image-size.
-
-Moles found in target images are added as non-canonical
-(is_uuid_canonical=False).
+Trains a temporary in-memory classifier to recognize moles from reference images,
+then applies it to find moles in target images.
 """
 
 import argparse
@@ -53,7 +51,6 @@ def _load_cached_features(image_path, dino_size, image_size, verbose=False):
         return None
     if verbose:
         print(f"Loading cached features: {features_path}")
-    # Returns dict with features, scaled_h, scaled_w, scale_x, scale_y
     return torch.load(features_path)
 
 
@@ -63,15 +60,7 @@ def _tensor_size_mb(tensor):
 
 
 def _get_patch_index(img_w, mole_x, mole_y):
-    """Convert scaled coordinates to patch index.
-
-    Args:
-        img_w: Scaled image width
-        mole_x, mole_y: Mole coordinates (already scaled)
-
-    Returns:
-        int: Patch index
-    """
+    """Convert scaled coordinates to patch index."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
     patch_col = mole_x // patch_size
@@ -79,78 +68,181 @@ def _get_patch_index(img_w, mole_x, mole_y):
     return patch_row * patches_per_row + patch_col
 
 
-def _find_best_patch_index(mole_feature, all_features):
-    """Find index of best matching patch using cosine similarity.
-
-    Args:
-        mole_feature: Feature vector for the mole patch
-        all_features: All patch features [num_patches, feature_dim]
-
-    Returns:
-        int: Index of best matching patch
-    """
-    similarities = mel.lib.dinov3.compute_similarities(
-        mole_feature, all_features, similarity_type="cosine"
-    )
-    return similarities.argmax().item()
+def _patch_index_to_coords(patch_idx, img_w):
+    """Convert patch index to patch center coordinates."""
+    patch_size = mel.lib.dinov3.PATCH_SIZE
+    patches_per_row = img_w // patch_size
+    patch_row = patch_idx // patches_per_row
+    patch_col = patch_idx % patches_per_row
+    x = patch_col * patch_size + patch_size // 2
+    y = patch_row * patch_size + patch_size // 2
+    return x, y
 
 
-def _point_distance(x1, y1, x2, y2):
-    """Compute Euclidean distance between two points."""
-    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+def _get_patch_distance(idx1, idx2, img_w):
+    """Compute distance between two patches in patch units."""
+    patch_size = mel.lib.dinov3.PATCH_SIZE
+    patches_per_row = img_w // patch_size
+    row1, col1 = idx1 // patches_per_row, idx1 % patches_per_row
+    row2, col2 = idx2 // patches_per_row, idx2 % patches_per_row
+    return ((row1 - row2) ** 2 + (col1 - col2) ** 2) ** 0.5
 
 
-def _get_mole_feature(all_features, img_w, mole_x, mole_y):
-    """Extract mole feature from pre-computed all_features.
+class MoleClassifier(torch.nn.Module):
+    """Simple MLP classifier for mole identification."""
 
-    Args:
-        all_features: All patch features [num_patches, feature_dim]
-        img_w: Scaled image width
-        mole_x, mole_y: Mole coordinates (already scaled)
+    def __init__(self, feature_dim, num_classes):
+        super().__init__()
+        self.layers = torch.nn.Sequential(
+            torch.nn.Linear(feature_dim, 256),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(256, num_classes),
+        )
 
-    Returns:
-        Tensor: Feature vector [feature_dim]
-    """
-    patch_idx = _get_patch_index(img_w, mole_x, mole_y)
-    return all_features[patch_idx]
+    def forward(self, x):
+        return self.layers(x)
 
 
-def _find_mole_match(
-    mole_feature,
-    target_features,
-    tgt_scale_x,
-    tgt_scale_y,
-    scaled_tgt_h,
-    scaled_tgt_w,
-    verbose=False,
+def _collect_training_data(
+    ref_moles_by_path,
+    ref_data,
+    uuid_to_class,
+    negative_ratio,
+    min_patch_distance,
+    verbose,
 ):
-    """Find best match for a mole using pre-computed features.
+    """Collect training features and labels from reference images.
+
+    Args:
+        ref_moles_by_path: {ref_path: [canonical_moles]}
+        ref_data: {ref_path: {features, scale_x, scale_y, scaled_w}}
+        uuid_to_class: {uuid: class_index} mapping (1-indexed, 0 is no-mole)
+        negative_ratio: Ratio of negative samples to positive samples
+        min_patch_distance: Min distance (in patches) from moles for negative samples
+        verbose: Print detailed info
 
     Returns:
-        Tuple of (native_x, native_y, scaled_x, scaled_y, max_similarity) where
-        native_x, native_y are coordinates in the target image at original size,
-        scaled_x, scaled_y are coordinates in the scaled target image.
+        Tuple of (features_tensor, labels_tensor)
     """
-    similarities = mel.lib.dinov3.compute_similarities(
-        mole_feature, target_features, similarity_type="cosine"
-    )
+    positive_features = []
+    positive_labels = []
+    all_mole_patches = {}  # {ref_path: set of patch indices containing moles}
 
-    max_sim = similarities.max().item()
+    # Collect positive samples (mole patches)
+    for ref_path, moles in ref_moles_by_path.items():
+        data = ref_data[ref_path]
+        features = data["features"]
+        scale_x = data["scale_x"]
+        scale_y = data["scale_y"]
+        scaled_w = data["scaled_w"]
+
+        mole_patch_indices = set()
+        for mole in moles:
+            scaled_x = int(mole["x"] * scale_x)
+            scaled_y = int(mole["y"] * scale_y)
+            patch_idx = _get_patch_index(scaled_w, scaled_x, scaled_y)
+            mole_patch_indices.add(patch_idx)
+
+            mole_feature = features[patch_idx]
+            class_idx = uuid_to_class[mole["uuid"]]
+
+            positive_features.append(mole_feature)
+            positive_labels.append(class_idx)
+
+        all_mole_patches[ref_path] = mole_patch_indices
+
     if verbose:
-        print(f"    Similarity range: {similarities.min().item():.4f} to {max_sim:.4f}")
+        print(f"  Collected {len(positive_features)} positive samples")
 
-    best_x, best_y = mel.lib.dinov3.find_best_match_location(
-        similarities, scaled_tgt_h, scaled_tgt_w, "cosine"
-    )
+    # Collect negative samples (non-mole patches)
+    negative_features = []
+    num_negatives_needed = int(len(positive_features) * negative_ratio)
 
-    # Convert to native coords
-    final_x = int(best_x / tgt_scale_x)
-    final_y = int(best_y / tgt_scale_y)
+    for ref_path, _moles in ref_moles_by_path.items():
+        data = ref_data[ref_path]
+        features = data["features"]
+        scaled_w = data["scaled_w"]
+        mole_patch_indices = all_mole_patches[ref_path]
+
+        # Find patches far enough from any mole
+        num_patches = features.shape[0]
+        valid_negative_indices = []
+        for patch_idx in range(num_patches):
+            is_far_enough = True
+            for mole_idx in mole_patch_indices:
+                dist = _get_patch_distance(patch_idx, mole_idx, scaled_w)
+                if dist < min_patch_distance:
+                    is_far_enough = False
+                    break
+            if is_far_enough:
+                valid_negative_indices.append(patch_idx)
+
+        # Sample from valid negative patches
+        samples_from_this_ref = min(
+            len(valid_negative_indices),
+            num_negatives_needed // len(ref_moles_by_path),
+        )
+        if samples_from_this_ref > 0:
+            # Deterministic sampling: pick evenly spaced indices
+            step = max(1, len(valid_negative_indices) // samples_from_this_ref)
+            selected = valid_negative_indices[::step][:samples_from_this_ref]
+            for patch_idx in selected:
+                negative_features.append(features[patch_idx])
 
     if verbose:
-        print(f"    Best match at native coords: ({final_x}, {final_y})")
+        print(f"  Collected {len(negative_features)} negative samples")
 
-    return final_x, final_y, best_x, best_y, max_sim
+    # Combine into tensors
+    all_features = positive_features + negative_features
+    all_labels = positive_labels + [0] * len(negative_features)  # 0 = no mole
+
+    features_tensor = torch.stack(all_features)
+    labels_tensor = torch.tensor(all_labels, dtype=torch.long)
+
+    return features_tensor, labels_tensor
+
+
+def _train_classifier(features, labels, num_classes, epochs, verbose):
+    """Train the mole classifier.
+
+    Args:
+        features: Training features [N, feature_dim]
+        labels: Training labels [N]
+        num_classes: Number of classes (num_moles + 1)
+        epochs: Number of training epochs
+        verbose: Print training progress
+
+    Returns:
+        Trained MoleClassifier model
+    """
+    feature_dim = features.shape[1]
+    model = MoleClassifier(feature_dim, num_classes)
+
+    # Move to same device as features
+    device = features.device
+    model = model.to(device)
+
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
+
+    model.train()
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        outputs = model(features)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        if verbose and (epoch + 1) % 20 == 0:
+            with torch.no_grad():
+                predictions = outputs.argmax(dim=1)
+                accuracy = (predictions == labels).float().mean().item()
+                print(f"    Epoch {epoch + 1}/{epochs}: loss={loss.item():.4f}, "
+                      f"accuracy={accuracy:.4f}")
+
+    model.eval()
+    return model
 
 
 def setup_parser(parser):
@@ -201,10 +293,10 @@ def setup_parser(parser):
         help="Print detailed processing information.",
     )
     parser.add_argument(
-        "--min-similarity",
+        "--min-confidence",
         type=float,
-        default=0.0,
-        help="Minimum similarity threshold for matches (default: 0.0).",
+        default=0.5,
+        help="Minimum confidence threshold for matches (default: 0.5).",
     )
     parser.add_argument(
         "--dry-run",
@@ -212,18 +304,16 @@ def setup_parser(parser):
         help="Show what would be done without saving.",
     )
     parser.add_argument(
-        "--consistency-distance",
-        type=float,
-        default=100.0,
-        help="Max distance (pixels) between matches from different references "
-        "to be considered consistent (default: 100.0).",
+        "--epochs",
+        type=int,
+        default=100,
+        help="Number of training epochs (default: 100).",
     )
     parser.add_argument(
-        "--min-consistent",
-        type=int,
-        default=2,
-        help="Minimum number of consistent matches required when multiple "
-        "references are available (default: 2).",
+        "--negative-ratio",
+        type=float,
+        default=3.0,
+        help="Ratio of negative samples to positive samples (default: 3.0).",
     )
 
 
@@ -235,10 +325,10 @@ def process_args(args):
     allow_download = args.allow_download
     extra_stem = args.extra_stem
     verbose = args.verbose
-    min_similarity = args.min_similarity
-    consistency_distance = args.consistency_distance
-    min_consistent = args.min_consistent
+    min_confidence = args.min_confidence
     dry_run = args.dry_run
+    epochs = args.epochs
+    negative_ratio = args.negative_ratio
 
     # Validate image_size is divisible by patch size
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
@@ -249,7 +339,7 @@ def process_args(args):
         return 1
 
     # Collect canonical moles from all reference images
-    ref_moles_by_path = {}  # {ref_path: [canonical_moles]}
+    ref_moles_by_path = {}
     all_canonical_uuids = set()
     for ref_path in ref_paths:
         try:
@@ -272,6 +362,15 @@ def process_args(args):
             f"across {len(ref_moles_by_path)} reference images"
         )
 
+    # Create UUID to class mapping (class 0 = no mole, 1..N = mole UUIDs)
+    uuid_list = sorted(all_canonical_uuids)
+    uuid_to_class = {uuid: i + 1 for i, uuid in enumerate(uuid_list)}
+    num_classes = len(uuid_list) + 1  # +1 for "no mole" class
+
+    if verbose:
+        print(f"Training classifier with {num_classes} classes "
+              f"({len(uuid_list)} moles + 1 no-mole)")
+
     # Try to load cached features for references
     ref_cached = {}
     refs_needing_computation = []
@@ -292,13 +391,15 @@ def process_args(args):
         else:
             targets_needing_computation.append(tgt_path)
 
-    # Only load model if needed
-    need_model = len(refs_needing_computation) > 0 or len(targets_needing_computation) > 0
-    if need_model:
+    # Only load DINOv3 model if needed for feature extraction
+    need_dino = (
+        len(refs_needing_computation) > 0 or len(targets_needing_computation) > 0
+    )
+    if need_dino:
         if verbose:
             print(f"Loading DINOv3 model (size: {dino_size})...")
         try:
-            model, feature_dim = mel.lib.dinov3.load_dinov3_model(
+            dino_model, feature_dim = mel.lib.dinov3.load_dinov3_model(
                 dino_size, local_files_only=not allow_download
             )
             if verbose:
@@ -307,12 +408,11 @@ def process_args(args):
             print(f"Error loading DINOv3 model: {e}")
             return 1
     else:
-        model = None
+        dino_model = None
         if verbose:
-            print("All features cached, skipping model load")
+            print("All features cached, skipping DINOv3 model load")
 
     # Load/compute features for all references
-    # ref_data[ref_path] = {features, scale_x, scale_y, scaled_w}
     ref_data = {}
     for ref_path in ref_moles_by_path:
         if ref_path in ref_cached:
@@ -337,7 +437,7 @@ def process_args(args):
                 ref_image_rgb, image_size
             )
             scaled_w = scaled_ref.shape[1]
-            features = mel.lib.dinov3.extract_all_patch_features(scaled_ref, model)
+            features = mel.lib.dinov3.extract_all_patch_features(scaled_ref, dino_model)
             ref_data[ref_path] = {
                 "features": features,
                 "scale_x": scale_x,
@@ -350,22 +450,25 @@ def process_args(args):
                     f"{_tensor_size_mb(features):.1f} MB"
                 )
 
-    # For each mole UUID, collect features from all references that have it
-    # mole_features[uuid] = [(ref_path, feature, patch_idx), ...]
-    mole_features = {}
-    for ref_path, moles in ref_moles_by_path.items():
-        data = ref_data[ref_path]
-        for mole in moles:
-            mole_uuid = mole["uuid"]
-            scaled_x = int(mole["x"] * data["scale_x"])
-            scaled_y = int(mole["y"] * data["scale_y"])
-            feature = _get_mole_feature(
-                data["features"], data["scaled_w"], scaled_x, scaled_y
-            )
-            patch_idx = _get_patch_index(data["scaled_w"], scaled_x, scaled_y)
-            mole_features.setdefault(mole_uuid, []).append(
-                (ref_path, feature, patch_idx)
-            )
+    # Collect training data
+    if verbose:
+        print("Collecting training data...")
+    min_patch_distance = 2  # Minimum distance in patches for negative samples
+    train_features, train_labels = _collect_training_data(
+        ref_moles_by_path,
+        ref_data,
+        uuid_to_class,
+        negative_ratio,
+        min_patch_distance,
+        verbose,
+    )
+
+    # Train classifier
+    if verbose:
+        print("Training classifier...")
+    classifier = _train_classifier(
+        train_features, train_labels, num_classes, epochs, verbose
+    )
 
     # Process each target image
     for tgt_path in tgt_paths:
@@ -402,7 +505,6 @@ def process_args(args):
             target_features = cached["features"]
             tgt_scale_x = cached["scale_x"]
             tgt_scale_y = cached["scale_y"]
-            scaled_tgt_h = cached["scaled_h"]
             scaled_tgt_w = cached["scaled_w"]
             if verbose:
                 print(
@@ -410,16 +512,15 @@ def process_args(args):
                     f"patches, {_tensor_size_mb(target_features):.1f} MB"
                 )
         else:
-            # Load target image, scale it, and extract features once
             tgt_image_rgb = _load_image_with_mask(tgt_path, verbose)
             if verbose:
                 print("  Scaling target image and extracting features...")
             scaled_tgt, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
                 tgt_image_rgb, image_size
             )
-            scaled_tgt_h, scaled_tgt_w = scaled_tgt.shape[:2]
+            scaled_tgt_w = scaled_tgt.shape[1]
             target_features = mel.lib.dinov3.extract_all_patch_features(
-                scaled_tgt, model
+                scaled_tgt, dino_model
             )
             if verbose:
                 print(
@@ -427,115 +528,44 @@ def process_args(args):
                     f"{_tensor_size_mb(target_features):.1f} MB"
                 )
 
+        # Run classifier on all target patches
+        with torch.no_grad():
+            logits = classifier(target_features)
+            probs = torch.nn.functional.softmax(logits, dim=1)
+
         matched_count = 0
         for missing_uuid in missing_uuids:
-            if verbose:
-                print(f"  Locating mole {missing_uuid}")
+            class_idx = uuid_to_class[missing_uuid]
 
-            # Collect ALL matches that pass bidirectional check
-            # valid_matches: [(ref_path, x, y, similarity), ...]
-            valid_matches = []
-
-            for ref_path, mole_feature, ref_patch_idx in mole_features[missing_uuid]:
-                final_x, final_y, scaled_tgt_x, scaled_tgt_y, sim = _find_mole_match(
-                    mole_feature,
-                    target_features,
-                    tgt_scale_x,
-                    tgt_scale_y,
-                    scaled_tgt_h,
-                    scaled_tgt_w,
-                    verbose=False,  # Don't spam per-reference
-                )
-
-                # Bidirectional check: verify target patch matches back to this
-                # reference's mole patch
-                tgt_patch_idx = _get_patch_index(
-                    scaled_tgt_w, scaled_tgt_x, scaled_tgt_y
-                )
-                tgt_patch_feature = target_features[tgt_patch_idx]
-                ref_features = ref_data[ref_path]["features"]
-                reverse_best_idx = _find_best_patch_index(
-                    tgt_patch_feature, ref_features
-                )
-
-                if reverse_best_idx != ref_patch_idx:
-                    if verbose:
-                        print(
-                            f"    {ref_path}: bidirectional check failed "
-                            f"(reverse matched patch {reverse_best_idx}, "
-                            f"expected {ref_patch_idx})"
-                        )
-                    continue
-
-                # This match passes bidirectional check - collect it
-                valid_matches.append((ref_path, final_x, final_y, sim))
-                if verbose:
-                    print(
-                        f"    {ref_path}: bidirectional OK at "
-                        f"({final_x}, {final_y}) [sim: {sim:.4f}]"
-                    )
-
-            if not valid_matches:
-                if verbose:
-                    print("    Skipping: no match passed bidirectional check")
-                continue
-
-            # Check consistency: if multiple references, they should agree on location
-            num_refs = len(mole_features[missing_uuid])
-
-            # Find the best match (highest similarity)
-            best_match = max(valid_matches, key=lambda m: m[3])
-            best_ref_path, best_x, best_y, best_sim = best_match
-
-            # If multiple references available, require consistency
-            if num_refs > 1:
-                # Count matches consistent with the best one
-                consistent_count = 0
-                for ref_path, x, y, _sim in valid_matches:
-                    dist = _point_distance(x, y, best_x, best_y)
-                    if dist <= consistency_distance:
-                        consistent_count += 1
-                    elif verbose:
-                        print(
-                            f"    {ref_path}: inconsistent location "
-                            f"({x}, {y}) is {dist:.1f}px from best"
-                        )
-
-                # Require min_consistent matches, or all refs if fewer available
-                required = min(min_consistent, num_refs)
-                if consistent_count < required:
-                    if verbose:
-                        print(
-                            f"    Skipping: only {consistent_count}/{required} "
-                            "consistent matches"
-                        )
-                    continue
-
-                if verbose:
-                    print(
-                        f"    {consistent_count}/{len(valid_matches)} matches "
-                        f"consistent within {consistency_distance}px"
-                    )
-
-            if best_sim < min_similarity:
-                if verbose:
-                    print(
-                        f"    Skipping: similarity {best_sim:.4f} "
-                        f"below threshold {min_similarity}"
-                    )
-                continue
+            # Find patch with highest probability for this mole class
+            class_probs = probs[:, class_idx]
+            best_patch_idx = class_probs.argmax().item()
+            confidence = class_probs[best_patch_idx].item()
 
             if verbose:
                 print(
-                    f"    Best match from {best_ref_path} "
-                    f"[similarity: {best_sim:.4f}]"
+                    f"  Mole {missing_uuid}: best patch {best_patch_idx} "
+                    f"with confidence {confidence:.4f}"
                 )
+
+            if confidence < min_confidence:
+                if verbose:
+                    print(
+                        f"    Skipping: confidence {confidence:.4f} "
+                        f"below threshold {min_confidence}"
+                    )
+                continue
+
+            # Convert patch index to coordinates
+            scaled_x, scaled_y = _patch_index_to_coords(best_patch_idx, scaled_tgt_w)
+            final_x = int(scaled_x / tgt_scale_x)
+            final_y = int(scaled_y / tgt_scale_y)
 
             # Add the mole as non-canonical
             new_mole = {
                 "uuid": missing_uuid,
-                "x": best_x,
-                "y": best_y,
+                "x": final_x,
+                "y": final_y,
                 mel.rotomap.moles.KEY_IS_CONFIRMED: False,
             }
             tgt_moles.append(new_mole)
@@ -543,8 +573,8 @@ def process_args(args):
 
             action = "Would add" if dry_run else "Added"
             print(
-                f"  {action} mole {missing_uuid} at ({best_x}, {best_y}) "
-                f"[similarity: {best_sim:.4f}]"
+                f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
+                f"[confidence: {confidence:.4f}]"
             )
 
         if matched_count > 0 and not dry_run:
@@ -564,7 +594,7 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025-2026 Angelos Evripiotis.
+# Copyright (C) 2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
