@@ -614,6 +614,7 @@ def process_args(args):
                 "x": final_x,
                 "y": final_y,
                 mel.rotomap.moles.KEY_IS_CONFIRMED: False,
+                "confidence": confidence,
             }
             tgt_moles.append(new_mole)
             matched_count += 1

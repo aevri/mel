@@ -26,6 +26,12 @@ def setup_parser(parser):
         action="store_true",
         help="Also compare UUIDs for matching.",
     )
+    parser.add_argument(
+        "--min-confidence",
+        type=float,
+        default=None,
+        help="Only include extra-stem moles with confidence >= this value.",
+    )
 
 
 def process_args(args):
@@ -35,6 +41,14 @@ def process_args(args):
     for path in args.IMAGES:
         from_moles = mel.rotomap.moles.load_image_moles(path)
         to_moles = mel.rotomap.moles.load_image_moles(path, extra_stem=args.EXTRA_STEM)
+
+        # Filter by confidence if specified
+        if args.min_confidence is not None:
+            to_moles = [
+                m for m in to_moles
+                if m.get("confidence", 1.0) >= args.min_confidence
+            ]
+
         (
             match_uuids,
             _missing_uuids,
@@ -84,7 +98,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2022 Angelos Evripiotis.
+# Copyright (C) 2022, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
