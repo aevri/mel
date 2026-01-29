@@ -89,16 +89,26 @@ def _get_patch_distance(idx1, idx2, img_w):
 
 
 class MoleClassifier(torch.nn.Module):
-    """Simple MLP classifier for mole identification."""
+    """MLP classifier for mole identification."""
 
-    def __init__(self, feature_dim, num_classes):
+    def __init__(self, feature_dim, num_classes, hidden_layers):
+        """Initialize the classifier.
+
+        Args:
+            feature_dim: Input feature dimension
+            num_classes: Number of output classes
+            hidden_layers: List of hidden layer sizes, e.g., [256] or [512, 256]
+        """
         super().__init__()
-        self.layers = torch.nn.Sequential(
-            torch.nn.Linear(feature_dim, 256),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.2),
-            torch.nn.Linear(256, num_classes),
-        )
+        layers = []
+        prev_dim = feature_dim
+        for hidden_dim in hidden_layers:
+            layers.append(torch.nn.Linear(prev_dim, hidden_dim))
+            layers.append(torch.nn.ReLU())
+            layers.append(torch.nn.Dropout(0.2))
+            prev_dim = hidden_dim
+        layers.append(torch.nn.Linear(prev_dim, num_classes))
+        self.layers = torch.nn.Sequential(*layers)
 
     def forward(self, x):
         return self.layers(x)
@@ -203,28 +213,32 @@ def _collect_training_data(
     return features_tensor, labels_tensor
 
 
-def _train_classifier(features, labels, num_classes, epochs, verbose):
+def _train_classifier(
+    features, labels, num_classes, hidden_layers, epochs, weight_decay, verbose
+):
     """Train the mole classifier.
 
     Args:
         features: Training features [N, feature_dim]
         labels: Training labels [N]
         num_classes: Number of classes (num_moles + 1)
+        hidden_layers: List of hidden layer sizes
         epochs: Number of training epochs
+        weight_decay: L2 regularization strength
         verbose: Print training progress
 
     Returns:
         Trained MoleClassifier model
     """
     feature_dim = features.shape[1]
-    model = MoleClassifier(feature_dim, num_classes)
+    model = MoleClassifier(feature_dim, num_classes, hidden_layers)
 
     # Move to same device as features
     device = features.device
     model = model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=weight_decay)
 
     model.train()
     for epoch in range(epochs):
@@ -315,6 +329,25 @@ def setup_parser(parser):
         default=3.0,
         help="Ratio of negative samples to positive samples (default: 3.0).",
     )
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=0.01,
+        help="L2 regularization strength for AdamW optimizer (default: 0.01).",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed for reproducible training.",
+    )
+    parser.add_argument(
+        "--hidden-layers",
+        type=int,
+        nargs="+",
+        default=[256],
+        help="Hidden layer sizes (default: 256). E.g., --hidden-layers 512 256.",
+    )
 
 
 def process_args(args):
@@ -329,6 +362,17 @@ def process_args(args):
     dry_run = args.dry_run
     epochs = args.epochs
     negative_ratio = args.negative_ratio
+    weight_decay = args.weight_decay
+    seed = args.seed
+    hidden_layers = args.hidden_layers
+
+    # Set random seed for reproducibility
+    if seed is not None:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        if verbose:
+            print(f"Random seed set to {seed}")
 
     # Validate image_size is divisible by patch size
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
@@ -398,6 +442,8 @@ def process_args(args):
     if need_dino:
         if verbose:
             print(f"Loading DINOv3 model (size: {dino_size})...")
+            print("References needing computation: ", refs_needing_computation)
+            print("Targets needing computation: ", targets_needing_computation)
         try:
             dino_model, feature_dim = mel.lib.dinov3.load_dinov3_model(
                 dino_size, local_files_only=not allow_download
@@ -467,7 +513,8 @@ def process_args(args):
     if verbose:
         print("Training classifier...")
     classifier = _train_classifier(
-        train_features, train_labels, num_classes, epochs, verbose
+        train_features, train_labels, num_classes, hidden_layers, epochs, weight_decay,
+        verbose
     )
 
     # Process each target image
