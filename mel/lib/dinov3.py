@@ -16,9 +16,16 @@ def load_dinov3_model(dino_size="base", local_files_only=False):
     Returns:
         tuple: (model, feature_dimension)
     """
-    # Import lazily to avoid slow import times when not using this module.
+    # Import os first to set environment variable before other imports
     import os
 
+    # Set offline mode via environment variable BEFORE importing timm,
+    # as timm import may trigger HF hub initialization
+    old_hf_hub_offline = os.environ.get("HF_HUB_OFFLINE")
+    if local_files_only:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+
+    # Import lazily to avoid slow import times when not using this module.
     import timm
     import torch
 
@@ -38,11 +45,6 @@ def load_dinov3_model(dino_size="base", local_files_only=False):
         )
 
     model_name, feature_dim = model_configs[dino_size]
-
-    # Set offline mode via environment variable if requested
-    old_hf_hub_offline = os.environ.get("HF_HUB_OFFLINE")
-    if local_files_only:
-        os.environ["HF_HUB_OFFLINE"] = "1"
 
     try:
         # DINOv3 uses RoPE so it supports variable input sizes
