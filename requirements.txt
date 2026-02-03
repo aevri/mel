@@ -1,7 +1,7 @@
 colorama==0.4.6
 docformatter==1.7.7
 opencv-python==4.13.0.90
-pandas==2.3.3
+pandas==3.0.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
 pygame==2.6.1
