@@ -239,6 +239,11 @@ def _train_classifier(
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=weight_decay)
+    # OneCycleLR with max_lr=0.01: higher values (e.g. 0.03) cause training
+    # instability with large loss spikes around the warmup peak.
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=0.01, total_steps=epochs
+    )
 
     model.train()
     for epoch in range(epochs):
@@ -247,6 +252,7 @@ def _train_classifier(
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+        scheduler.step()
 
         if verbose and (epoch + 1) % 20 == 0:
             with torch.no_grad():
