@@ -18,6 +18,7 @@ import mel.cmd.rotomapcalcspace
 import mel.cmd.rotomapcompare
 import mel.cmd.rotomapcompareextrastem
 import mel.cmd.rotomapconfirm
+import mel.cmd.rotomapcopymoles
 import mel.cmd.rotomapedit
 import mel.cmd.rotomapfiltermarks
 import mel.cmd.rotomapfiltermarkspretrain
@@ -60,6 +61,7 @@ COMMANDS = {
         "compare": mel.cmd.rotomapcompare,
         "compare-extra-stem": mel.cmd.rotomapcompareextrastem,
         "confirm": mel.cmd.rotomapconfirm,
+        "copy-moles": mel.cmd.rotomapcopymoles,
         "edit": mel.cmd.rotomapedit,
         "filter-marks": mel.cmd.rotomapfiltermarks,
         "filter-marks-pretrain": mel.cmd.rotomapfiltermarkspretrain,
