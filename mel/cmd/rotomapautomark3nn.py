@@ -332,8 +332,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--negative-ratio",
         type=float,
-        default=3.0,
-        help="Ratio of negative samples to positive samples (default: 3.0).",
+        default=5.0,
+        help="Ratio of negative samples to positive samples (default: 5.0).",
     )
     parser.add_argument(
         "--weight-decay",
