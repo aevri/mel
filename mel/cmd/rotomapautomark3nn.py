@@ -49,7 +49,7 @@ def _load_cached_features(image_path, dino_size, image_size, verbose=False):
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
         return None
-    if verbose:
+    if verbose >= 2:
         print(f"Loading cached features: {features_path}")
     return torch.load(features_path)
 
@@ -309,8 +309,9 @@ def setup_parser(parser):
     parser.add_argument(
         "--verbose",
         "-v",
-        action="store_true",
-        help="Print detailed processing information.",
+        action="count",
+        default=0,
+        help="Print detailed info (-v), or very detailed (-vv).",
     )
     parser.add_argument(
         "--min-confidence",
@@ -475,7 +476,7 @@ def process_args(args):
                 "scale_y": cached["scale_y"],
                 "scaled_w": cached["scaled_w"],
             }
-            if verbose:
+            if verbose >= 2:
                 print(
                     f"Using cached reference features for {ref_path}: "
                     f"{cached['features'].shape[0]} patches, "
@@ -559,7 +560,7 @@ def process_args(args):
             tgt_scale_x = cached["scale_x"]
             tgt_scale_y = cached["scale_y"]
             scaled_tgt_w = cached["scaled_w"]
-            if verbose:
+            if verbose >= 2:
                 print(
                     f"  Using cached target features: {target_features.shape[0]} "
                     f"patches, {_tensor_size_mb(target_features):.1f} MB"
@@ -595,14 +596,14 @@ def process_args(args):
             best_patch_idx = class_probs.argmax().item()
             confidence = class_probs[best_patch_idx].item()
 
-            if verbose:
+            if verbose >= 2:
                 print(
                     f"  Mole {missing_uuid}: best patch {best_patch_idx} "
                     f"with confidence {confidence:.4f}"
                 )
 
             if confidence < min_confidence:
-                if verbose:
+                if verbose >= 2:
                     print(
                         f"    Skipping: confidence {confidence:.4f} "
                         f"below threshold {min_confidence}"
@@ -625,11 +626,12 @@ def process_args(args):
             tgt_moles.append(new_mole)
             matched_count += 1
 
-            action = "Would add" if dry_run else "Added"
-            print(
-                f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
-                f"[confidence: {confidence:.4f}]"
-            )
+            if verbose >= 2:
+                action = "Would add" if dry_run else "Added"
+                print(
+                    f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
+                    f"[confidence: {confidence:.4f}]"
+                )
 
         if matched_count > 0 and not dry_run:
             try:
