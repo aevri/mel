@@ -327,8 +327,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--epochs",
         type=int,
-        default=100,
-        help="Number of training epochs (default: 100).",
+        default=1000,
+        help="Number of training epochs (default: 1000).",
     )
     parser.add_argument(
         "--negative-ratio",
@@ -339,8 +339,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--weight-decay",
         type=float,
-        default=0.01,
-        help="L2 regularization strength for AdamW optimizer (default: 0.01).",
+        default=0.1,
+        help="L2 regularization strength for AdamW optimizer (default: 0.1).",
     )
     parser.add_argument(
         "--seed",
@@ -352,8 +352,14 @@ def setup_parser(parser):
         "--hidden-layers",
         type=int,
         nargs="+",
-        default=[256],
-        help="Hidden layer sizes (default: 256). E.g., --hidden-layers 512 256.",
+        default=[192, 96],
+        help="Hidden layer sizes (default: 192 96). E.g., --hidden-layers 512 256.",
+    )
+    parser.add_argument(
+        "--min-patch-distance",
+        type=float,
+        default=2.0,
+        help="Min distance (in patches) from moles for negative samples (default: 2.0).",
     )
 
 
@@ -372,6 +378,7 @@ def process_args(args):
     weight_decay = args.weight_decay
     seed = args.seed
     hidden_layers = args.hidden_layers
+    min_patch_distance = args.min_patch_distance
 
     # Set random seed for reproducibility
     if seed is not None:
@@ -506,7 +513,6 @@ def process_args(args):
     # Collect training data
     if verbose:
         print("Collecting training data...")
-    min_patch_distance = 2  # Minimum distance in patches for negative samples
     train_features, train_labels = _collect_training_data(
         ref_moles_by_path,
         ref_data,
