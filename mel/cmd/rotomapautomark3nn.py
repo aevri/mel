@@ -91,16 +91,19 @@ def _get_patch_distance(idx1, idx2, img_w):
 class MoleClassifier(torch.nn.Module):
     """MLP classifier for mole identification."""
 
-    def __init__(self, feature_dim, num_classes, hidden_layers):
+    def __init__(self, feature_dim, num_classes, hidden_layers, input_dropout=0.0):
         """Initialize the classifier.
 
         Args:
             feature_dim: Input feature dimension
             num_classes: Number of output classes
             hidden_layers: List of hidden layer sizes, e.g., [256] or [512, 256]
+            input_dropout: Dropout rate on input features (default: 0.0)
         """
         super().__init__()
         layers = []
+        if input_dropout > 0:
+            layers.append(torch.nn.Dropout(input_dropout))
         prev_dim = feature_dim
         for hidden_dim in hidden_layers:
             layers.append(torch.nn.Linear(prev_dim, hidden_dim))
@@ -214,7 +217,8 @@ def _collect_training_data(
 
 
 def _train_classifier(
-    features, labels, num_classes, hidden_layers, epochs, weight_decay, verbose
+    features, labels, num_classes, hidden_layers, epochs, weight_decay, verbose,
+    input_dropout=0.0,
 ):
     """Train the mole classifier.
 
@@ -226,12 +230,13 @@ def _train_classifier(
         epochs: Number of training epochs
         weight_decay: L2 regularization strength
         verbose: Print training progress
+        input_dropout: Dropout rate on input features
 
     Returns:
         Trained MoleClassifier model
     """
     feature_dim = features.shape[1]
-    model = MoleClassifier(feature_dim, num_classes, hidden_layers)
+    model = MoleClassifier(feature_dim, num_classes, hidden_layers, input_dropout)
 
     # Move to same device as features
     device = features.device
@@ -327,8 +332,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--epochs",
         type=int,
-        default=1000,
-        help="Number of training epochs (default: 1000).",
+        default=500,
+        help="Number of training epochs (default: 500).",
     )
     parser.add_argument(
         "--negative-ratio",
@@ -361,6 +366,12 @@ def setup_parser(parser):
         default=2.0,
         help="Min distance (in patches) from moles for negative samples (default: 2.0).",
     )
+    parser.add_argument(
+        "--input-dropout",
+        type=float,
+        default=0.15,
+        help="Dropout rate on input features (default: 0.15).",
+    )
 
 
 def process_args(args):
@@ -379,6 +390,7 @@ def process_args(args):
     seed = args.seed
     hidden_layers = args.hidden_layers
     min_patch_distance = args.min_patch_distance
+    input_dropout = args.input_dropout
 
     # Set random seed for reproducibility
     if seed is not None:
@@ -527,7 +539,7 @@ def process_args(args):
         print("Training classifier...")
     classifier = _train_classifier(
         train_features, train_labels, num_classes, hidden_layers, epochs, weight_decay,
-        verbose
+        verbose, input_dropout,
     )
 
     # Process each target image
