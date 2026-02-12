@@ -17,6 +17,7 @@ import mel.cmd.rotomapautomark3
 import mel.cmd.rotomapautomark3nn
 import mel.cmd.rotomapautomark3precalc
 import mel.cmd.rotomapautomark3refine
+import mel.cmd.rotomapautomarksplg
 import mel.cmd.rotomapautomask
 import mel.cmd.rotomapcalcspace
 import mel.cmd.rotomapcompare
@@ -36,6 +37,9 @@ import mel.cmd.rotomapmarkunchanged
 import mel.cmd.rotomapmergeextrastem
 import mel.cmd.rotomapmontagesingle
 import mel.cmd.rotomaporganise
+import mel.cmd.rotomaprefine
+import mel.cmd.rotomaprefineblob
+import mel.cmd.rotomaprefinetemplate
 import mel.cmd.rotomapresize
 import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
@@ -63,6 +67,7 @@ COMMANDS = {
         "automark3-nn": mel.cmd.rotomapautomark3nn,
         "automark3-precalc": mel.cmd.rotomapautomark3precalc,
         "automark3-refine": mel.cmd.rotomapautomark3refine,
+        "automark-splg": mel.cmd.rotomapautomarksplg,
         "automask": mel.cmd.rotomapautomask,
         "calc-space": mel.cmd.rotomapcalcspace,
         "compare": mel.cmd.rotomapcompare,
@@ -82,6 +87,9 @@ COMMANDS = {
         "merge-extra-stem": mel.cmd.rotomapmergeextrastem,
         "montage-single": mel.cmd.rotomapmontagesingle,
         "organise": mel.cmd.rotomaporganise,
+        "refine": mel.cmd.rotomaprefine,
+        "refine-blob": mel.cmd.rotomaprefineblob,
+        "refine-template": mel.cmd.rotomaprefinetemplate,
         "resize": mel.cmd.rotomapresize,
         "rm": mel.cmd.rotomaprm,
         "uuid": mel.cmd.rotomapuuid,
