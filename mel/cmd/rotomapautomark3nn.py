@@ -217,7 +217,13 @@ def _collect_training_data(
 
 
 def _train_classifier(
-    features, labels, num_classes, hidden_layers, epochs, weight_decay, verbose,
+    features,
+    labels,
+    num_classes,
+    hidden_layers,
+    epochs,
+    weight_decay,
+    verbose,
     input_dropout=0.0,
 ):
     """Train the mole classifier.
@@ -243,7 +249,9 @@ def _train_classifier(
     model = model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=weight_decay)
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=0.001, weight_decay=weight_decay
+    )
     # OneCycleLR with max_lr=0.01: higher values (e.g. 0.03) cause training
     # instability with large loss spikes around the warmup peak.
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
@@ -263,8 +271,10 @@ def _train_classifier(
             with torch.no_grad():
                 predictions = outputs.argmax(dim=1)
                 accuracy = (predictions == labels).float().mean().item()
-                print(f"    Epoch {epoch + 1}/{epochs}: loss={loss.item():.4f}, "
-                      f"accuracy={accuracy:.4f}")
+                print(
+                    f"    Epoch {epoch + 1}/{epochs}: loss={loss.item():.4f}, "
+                    f"accuracy={accuracy:.4f}"
+                )
 
     model.eval()
     return model
@@ -438,8 +448,10 @@ def process_args(args):
     num_classes = len(uuid_list) + 1  # +1 for "no mole" class
 
     if verbose:
-        print(f"Training classifier with {num_classes} classes "
-              f"({len(uuid_list)} moles + 1 no-mole)")
+        print(
+            f"Training classifier with {num_classes} classes "
+            f"({len(uuid_list)} moles + 1 no-mole)"
+        )
 
     # Try to load cached features for references
     ref_cached = {}
@@ -538,8 +550,14 @@ def process_args(args):
     if verbose:
         print("Training classifier...")
     classifier = _train_classifier(
-        train_features, train_labels, num_classes, hidden_layers, epochs, weight_decay,
-        verbose, input_dropout,
+        train_features,
+        train_labels,
+        num_classes,
+        hidden_layers,
+        epochs,
+        weight_decay,
+        verbose,
+        input_dropout,
     )
 
     # Process each target image
