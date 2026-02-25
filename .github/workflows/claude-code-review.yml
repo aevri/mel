@@ -8,7 +8,10 @@ jobs:
   claude-review:
     if: |
       github.event.issue.pull_request != null &&
-      contains(github.event.comment.body, '/review')
+      contains(github.event.comment.body, '/review') &&
+      (github.event.comment.user.login == 'aevri' ||
+       github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
 
     runs-on: ubuntu-latest
     permissions:
