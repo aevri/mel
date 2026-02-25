@@ -13,10 +13,8 @@ import mel.cmd.microview
 import mel.cmd.rotomapautomark
 import mel.cmd.rotomapautomark2
 import mel.cmd.rotomapautomark2train
-import mel.cmd.rotomapautomark3
 import mel.cmd.rotomapautomark3nn
 import mel.cmd.rotomapautomark3precalc
-import mel.cmd.rotomapautomark3refine
 import mel.cmd.rotomapautomask
 import mel.cmd.rotomapcalcspace
 import mel.cmd.rotomapcompare
@@ -59,10 +57,8 @@ COMMANDS = {
         "automark": mel.cmd.rotomapautomark,
         "automark2": mel.cmd.rotomapautomark2,
         "automark2-train": mel.cmd.rotomapautomark2train,
-        "automark3": mel.cmd.rotomapautomark3,
         "automark3-nn": mel.cmd.rotomapautomark3nn,
         "automark3-precalc": mel.cmd.rotomapautomark3precalc,
-        "automark3-refine": mel.cmd.rotomapautomark3refine,
         "automask": mel.cmd.rotomapautomask,
         "calc-space": mel.cmd.rotomapcalcspace,
         "compare": mel.cmd.rotomapcompare,
