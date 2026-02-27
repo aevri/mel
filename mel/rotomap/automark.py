@@ -60,7 +60,7 @@ def merge_in_radiuses(
         t_copy = copy.deepcopy(t)
         results.append(t_copy)
         if "radius" not in t_copy:
-            radius = target_uuid_radius.get(t_copy["uuid"], None)
+            radius = target_uuid_radius.get(t_copy["uuid"])
             if radius is not None:
                 t_copy["radius"] = radius
 
