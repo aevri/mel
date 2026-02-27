@@ -257,7 +257,7 @@ def expect_returncode(expected_code, *args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Copyright (C) 2015-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
