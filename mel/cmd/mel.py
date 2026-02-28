@@ -32,6 +32,7 @@ import mel.cmd.rotomapmarkunchanged
 import mel.cmd.rotomapmergeextrastem
 import mel.cmd.rotomapmontagesingle
 import mel.cmd.rotomaporganise
+import mel.cmd.rotomaprefine
 import mel.cmd.rotomapresize
 import mel.cmd.rotomaprm
 import mel.cmd.rotomapuuid
@@ -74,6 +75,7 @@ COMMANDS = {
         "merge-extra-stem": mel.cmd.rotomapmergeextrastem,
         "montage-single": mel.cmd.rotomapmontagesingle,
         "organise": mel.cmd.rotomaporganise,
+        "refine": mel.cmd.rotomaprefine,
         "resize": mel.cmd.rotomapresize,
         "rm": mel.cmd.rotomaprm,
         "uuid": mel.cmd.rotomapuuid,
