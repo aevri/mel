@@ -60,7 +60,7 @@ def merge_in_radiuses(
         t_copy = copy.deepcopy(t)
         results.append(t_copy)
         if "radius" not in t_copy:
-            radius = target_uuid_radius.get(t_copy["uuid"], None)
+            radius = target_uuid_radius.get(t_copy["uuid"])
             if radius is not None:
                 t_copy["radius"] = radius
 
@@ -152,7 +152,8 @@ def match_moles_by_pos(from_moles, to_moles, error_distance):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2020-2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
