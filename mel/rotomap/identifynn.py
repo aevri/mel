@@ -418,7 +418,10 @@ def make_data(repo_path, data_config, channel_cache=None):
         )
 
     train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=data_config["batch_size"], shuffle=True
+        train_dataset,
+        batch_size=data_config["batch_size"],
+        shuffle=True,
+        drop_last=True,
     )
 
     valid_dataloader = torch.utils.data.DataLoader(
@@ -803,7 +806,8 @@ class Model(torch.nn.Module):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2019 Angelos Evripiotis.
+# Copyright (C) 2019, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
