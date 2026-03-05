@@ -1,7 +1,7 @@
 """Locate canonical moles using a neural network classifier on DINOv3 features.
 
-Trains a temporary in-memory classifier to recognize moles from reference images,
-then applies it to find moles in target images.
+Trains a temporary in-memory classifier to recognize moles from
+reference images, then applies it to find moles in target images.
 """
 
 import argparse
