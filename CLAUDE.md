@@ -1,10 +1,10 @@
 # MEL Codebase Guidelines
 
 ## Build/Test Commands
-- Run all tests: `pytest --doctest-modules`
-- Run single test: `pytest tests/path/to/test_file.py::test_function_name`
+- **Install dev dependencies first**: `uv pip install -e '.[dev]'` (required for pytest and other dev tools)
+- Run all tests: `./meta/unit_tests.sh` (uses `uv run pytest --doctest-modules`)
+- Run single test: `uv run pytest tests/path/to/test_file.py::test_function_name`
 - Run static analysis: `./meta/static_tests.sh`
-- Run unit tests: `./meta/unit_tests.sh`
 - Fix formatting: `./meta/autofix.sh`
 
 ## Optional Type Checking
@@ -28,9 +28,10 @@
 - Linting: ruff check, vulture
 
 ## Development Environment
-- Python 3.8+
+- Python 3.12+
 - Install uv: `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - Install dev dependencies: `uv venv && uv pip install -e '.[dev]'`
+- Always use `uv run pytest` (not bare `pytest`) to ensure the project venv is used
 
 ## Rotomap File System Structure
 - **Mole files**: `{image}.jpg.json` - JSON arrays with mole coordinates and metadata

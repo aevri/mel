@@ -66,7 +66,7 @@ def test_benchmark_guess_moles():
             )
 
             # Print detailed per-mole results
-            print(f"Per-mole results:")
+            print("Per-mole results:")
             for mole_result in performance_metrics["mole_results"]:
                 status = mole_result["status"]
                 uuid_short = mole_result["uuid"][:8]
@@ -82,7 +82,7 @@ def test_benchmark_guess_moles():
                     print(f"  ✗ Mole {uuid_short}: NOT FOUND")
 
             # Print performance summary
-            print(f"\nBenchmark Results:")
+            print("\nBenchmark Results:")
             print(f"  Original moles removed: {len(removed_moles)}")
             print(
                 f"  Moles found by guess commands: {performance_metrics['moles_found']}"
@@ -107,17 +107,17 @@ def test_benchmark_guess_moles():
                 if performance_metrics["max_distance"] != float("inf")
                 else None,
             }
-            print(f"\nActual results (copy to update expected_performance_baseline):")
+            print("\nActual results (copy to update expected_performance_baseline):")
             print(f"    'moles_found': {actual_results['moles_found']},")
             print(f"    'matched_count': {actual_results['matched_count']},")
             if actual_results["avg_distance"] is not None:
                 print(f"    'avg_distance': {actual_results['avg_distance']},")
             else:
-                print(f"    'avg_distance': None,")
+                print("    'avg_distance': None,")
             if actual_results["max_distance"] is not None:
                 print(f"    'max_distance': {actual_results['max_distance']},")
             else:
-                print(f"    'max_distance': None,")
+                print("    'max_distance': None,")
 
             # Performance regression checks - this should be "this good or better"
             expected_performance_baseline = {
@@ -162,7 +162,7 @@ def download_and_extract_dataset(url: str) -> pathlib.Path:
 
 def read_moles(json_path: pathlib.Path) -> list:
     """Read moles from JSON file."""
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         return json.load(f)
 
 
@@ -247,7 +247,7 @@ def expect_ok(*args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Copyright (C) 2015-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
