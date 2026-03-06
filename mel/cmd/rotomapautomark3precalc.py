@@ -81,6 +81,11 @@ def setup_parser(parser):
         action="store_true",
         help="Overwrite existing feature files.",
     )
+    parser.add_argument(
+        "--no-pretrained",
+        action="store_true",
+        help="Use model architecture without pretrained weights (for testing).",
+    )
 
 
 def process_args(args):
@@ -90,6 +95,7 @@ def process_args(args):
     allow_download = args.allow_download
     verbose = args.verbose
     force = args.force
+    no_pretrained = args.no_pretrained
 
     # Validate image_size is divisible by patch size
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
@@ -119,7 +125,9 @@ def process_args(args):
         print(f"Loading DINOv3 model (size: {dino_size})...")
     try:
         model, feature_dim = mel.lib.dinov3.load_dinov3_model(
-            dino_size, local_files_only=not allow_download
+            dino_size,
+            local_files_only=not allow_download,
+            pretrained=not no_pretrained,
         )
         if verbose:
             print(f"Model loaded with {feature_dim} feature dimensions")
