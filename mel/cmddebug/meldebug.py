@@ -75,8 +75,7 @@ if __name__ == "__main__":
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018, 2025-2026 Angelos Evripiotis.
-# Generated with assistance from Claude Code.
+# Copyright (C) 2016-2018 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
