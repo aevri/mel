@@ -382,6 +382,11 @@ def setup_parser(parser):
         default=0.15,
         help="Dropout rate on input features (default: 0.15).",
     )
+    parser.add_argument(
+        "--no-pretrained",
+        action="store_true",
+        help="Use model architecture without pretrained weights (for testing).",
+    )
 
 
 def process_args(args):
@@ -401,6 +406,7 @@ def process_args(args):
     hidden_layers = args.hidden_layers
     min_patch_distance = args.min_patch_distance
     input_dropout = args.input_dropout
+    no_pretrained = args.no_pretrained
 
     # Set random seed for reproducibility
     if seed is not None:
@@ -484,7 +490,9 @@ def process_args(args):
             print("Targets needing computation: ", targets_needing_computation)
         try:
             dino_model, feature_dim = mel.lib.dinov3.load_dinov3_model(
-                dino_size, local_files_only=not allow_download
+                dino_size,
+                local_files_only=not allow_download,
+                pretrained=not no_pretrained,
             )
             if verbose:
                 print(f"Model loaded with {feature_dim} feature dimensions")

@@ -6,7 +6,7 @@ import numpy as np
 PATCH_SIZE = 16
 
 
-def load_dinov3_model(dino_size="base", local_files_only=False):
+def load_dinov3_model(dino_size="base", local_files_only=False, pretrained=True):
     """Load the DINOv3 model for semantic feature extraction.
 
     Args:
@@ -50,7 +50,7 @@ def load_dinov3_model(dino_size="base", local_files_only=False):
         # DINOv3 uses RoPE so it supports variable input sizes
         model = timm.create_model(
             model_name,
-            pretrained=True,
+            pretrained=pretrained,
             num_classes=0,
         )
         model.eval()
