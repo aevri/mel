@@ -28,7 +28,7 @@
 - Linting: ruff check, vulture
 
 ## Development Environment
-- Python 3.12+
+- Python 3.13+
 - Install uv: `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - Install dev dependencies: `uv venv && uv pip install -e '.[dev]'`
 - Always use `uv run pytest` (not bare `pytest`) to ensure the project venv is used
