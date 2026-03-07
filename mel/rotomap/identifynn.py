@@ -42,7 +42,7 @@ class MoleIdentifier:
         self.out_fields = ["uuid_index", "mole_count"]
 
         self.model = mel.rotomap.identifynn.Model(**model_args)
-        self.model.load_state_dict(torch.load(model_path))
+        self.model.load_state_dict(torch.load(model_path, weights_only=True))
 
     def get_new_moles(self, frame):
         import torch

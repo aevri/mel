@@ -475,7 +475,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
     model, num_features, transform = make_model_and_transform()
     head = make_model(num_features)
-    head.load_state_dict(torch.load(metadata_dir / model_fname))
+    head.load_state_dict(torch.load(metadata_dir / model_fname, weights_only=True))
 
     model.classifier[1] = head
 

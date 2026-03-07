@@ -228,7 +228,7 @@ def process_args(args):
     }
 
     if old_metadata is not None:
-        pl_model.model.load_state_dict(torch.load(model_path))
+        pl_model.model.load_state_dict(torch.load(model_path, weights_only=True))
         _fixup_old_model(old_metadata, metadata, pl_model.model)
 
     warnings.filterwarnings(
