@@ -141,13 +141,16 @@ class MoleAcquirer:
 
     def update(self, stats):
         if stats and self._last_stats:
-            stats_diff = list(map(lambda x, y: x - y, self._last_stats, stats))
+            stats_diff = list(
+                map(lambda x, y: x - y, self._last_stats, stats, strict=False)
+            )
 
             self._last_stats = list(
                 map(
                     lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                     self._last_stats,
                     stats,
+                    strict=False,
                 )
             )
 
@@ -157,6 +160,7 @@ class MoleAcquirer:
                         lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                         self._last_stats_diff,
                         stats_diff,
+                        strict=False,
                     )
                 )
 
@@ -335,7 +339,8 @@ def find_mole_ellipse(original, centre, radius):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

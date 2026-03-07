@@ -14,12 +14,9 @@ printf "."
 uv run ruff format --quiet mel/
 printf "."
 
-uv run docformatter -i $allscripts
-printf "."
-
 echo
 trap - EXIT
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025, 2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
