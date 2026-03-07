@@ -84,6 +84,7 @@ class Dinov3Model:
         self.model = model
         self.feature_dim = feature_dim
         self.device = device
+        self.num_prefix_tokens = model.num_prefix_tokens
 
     def extract_patch_features(self, image_rgb):
         """Extract patch features from a numpy image.
@@ -115,10 +116,9 @@ class Dinov3Model:
             features = self.model.forward_features(image_tensor)
 
             # features shape: [batch, num_tokens, feature_dim]
-            # For DINOv3 ViT: [CLS] + [4 register tokens] + [patch tokens]
-            # Skip first 5 tokens to get patch features
+            # Skip prefix tokens (CLS + register) to get patch features
             if len(features.shape) == 3:
-                patch_tokens = features[:, 5:, :]
+                patch_tokens = features[:, self.num_prefix_tokens :, :]
                 return patch_tokens[0]  # [num_patches, feature_dim]
 
             # Fallback: if features is 2D, it's already pooled
