@@ -15,6 +15,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
@@ -25,5 +26,5 @@ jobs:
       - name: Test
         run: ./meta/run_tests.sh
 
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025, 2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
