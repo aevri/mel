@@ -464,7 +464,7 @@ def process_args(args):
     refs_needing_computation = []
     for ref_path in ref_moles_by_path:
         cached = _load_cached_features(ref_path, dino_size, image_size, verbose)
-        if cached:
+        if cached is not None:
             ref_cached[ref_path] = cached
         else:
             refs_needing_computation.append(ref_path)
@@ -474,7 +474,7 @@ def process_args(args):
     targets_needing_computation = []
     for tgt_path in tgt_paths:
         cached = _load_cached_features(tgt_path, dino_size, image_size, verbose)
-        if cached:
+        if cached is not None:
             tgt_cached[tgt_path] = cached
         else:
             targets_needing_computation.append(tgt_path)
