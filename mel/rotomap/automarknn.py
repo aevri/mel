@@ -51,7 +51,7 @@ def make_model(model_path=None):
         )
     )
     if model_path is not None:
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, weights_only=True))
     model.eval()
     return model
 

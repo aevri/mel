@@ -51,7 +51,7 @@ def _load_cached_features(image_path, dino_size, image_size, verbose=False):
         return None
     if verbose >= 2:
         print(f"Loading cached features: {features_path}")
-    return torch.load(features_path)
+    return torch.load(features_path, weights_only=True)
 
 
 def _tensor_size_mb(tensor):
