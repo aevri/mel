@@ -2,17 +2,16 @@
 
 Trains a temporary in-memory classifier to recognize moles from
 reference images, then applies it to find moles in target images.
+
+Requires pre-computed features from 'mel rotomap automark3-precalc'.
 """
 
 import argparse
 import pathlib
 
-import cv2
 import torch
 
 import mel.lib.dinov3
-import mel.lib.image
-import mel.rotomap.mask
 import mel.rotomap.moles
 
 
@@ -26,31 +25,21 @@ def _existing_file_path(string):
     return path
 
 
-def _load_image_with_mask(image_path, verbose=False):
-    """Load an image and apply its mask if available."""
-    if verbose:
-        print(f"Loading image: {image_path}")
-    image_rgb = cv2.cvtColor(mel.lib.image.load_image(image_path), cv2.COLOR_BGR2RGB)
-    mask = mel.rotomap.mask.load_or_none(image_path)
-    if mask is not None:
-        if verbose:
-            print("Applying mask to image")
-        image_rgb = mel.lib.dinov3.apply_mask(image_rgb, mask)
-    return image_rgb
-
-
 def _get_features_path(image_path, dino_size, image_size):
     """Generate path for cached features file."""
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_cached_features(image_path, dino_size, image_size, verbose=False):
-    """Load cached features if available, returns None if not found."""
+def _load_precalc_features(image_path, dino_size, image_size, verbose=False):
+    """Load pre-computed features, raising an error if not found."""
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
-        return None
+        raise FileNotFoundError(
+            f"Pre-computed features not found: {features_path}\n"
+            f"Run 'mel rotomap automark3-precalc' first."
+        )
     if verbose >= 2:
-        print(f"Loading cached features: {features_path}")
+        print(f"Loading features: {features_path}")
     return torch.load(features_path, weights_only=True)
 
 
@@ -312,12 +301,6 @@ def setup_parser(parser):
         "Must be divisible by 16.",
     )
     parser.add_argument(
-        "--allow-download",
-        action="store_true",
-        help="Allow downloading model weights from Hugging Face Hub. "
-        "By default, only cached models are used.",
-    )
-    parser.add_argument(
         "--extra-stem",
         help="Save to alternate mole file (e.g., '0.jpg.EXTRA.json').",
     )
@@ -382,11 +365,6 @@ def setup_parser(parser):
         default=0.15,
         help="Dropout rate on input features (default: 0.15).",
     )
-    parser.add_argument(
-        "--no-pretrained",
-        action="store_true",
-        help="Use model architecture without pretrained weights (for testing).",
-    )
 
 
 def process_args(args):
@@ -394,7 +372,6 @@ def process_args(args):
     tgt_paths = args.target
     dino_size = args.dino_size
     image_size = args.image_size
-    allow_download = args.allow_download
     extra_stem = args.extra_stem
     verbose = args.verbose
     min_confidence = args.min_confidence
@@ -406,7 +383,6 @@ def process_args(args):
     hidden_layers = args.hidden_layers
     min_patch_distance = args.min_patch_distance
     input_dropout = args.input_dropout
-    no_pretrained = args.no_pretrained
 
     # Set random seed for reproducibility
     if seed is not None:
@@ -459,88 +435,22 @@ def process_args(args):
             f"({len(uuid_list)} moles + 1 no-mole)"
         )
 
-    # Try to load cached features for references
-    ref_cached = {}
-    refs_needing_computation = []
-    for ref_path in ref_moles_by_path:
-        cached = _load_cached_features(ref_path, dino_size, image_size, verbose)
-        if cached is not None:
-            ref_cached[ref_path] = cached
-        else:
-            refs_needing_computation.append(ref_path)
-
-    # Check which targets have cached features
-    tgt_cached = {}
-    targets_needing_computation = []
-    for tgt_path in tgt_paths:
-        cached = _load_cached_features(tgt_path, dino_size, image_size, verbose)
-        if cached is not None:
-            tgt_cached[tgt_path] = cached
-        else:
-            targets_needing_computation.append(tgt_path)
-
-    # Only load DINOv3 model if needed for feature extraction
-    need_dino = (
-        len(refs_needing_computation) > 0 or len(targets_needing_computation) > 0
-    )
-    if need_dino:
-        if verbose:
-            print(f"Loading DINOv3 model (size: {dino_size})...")
-            print("References needing computation: ", refs_needing_computation)
-            print("Targets needing computation: ", targets_needing_computation)
-        try:
-            dino_model, feature_dim = mel.lib.dinov3.load_dinov3_model(
-                dino_size,
-                local_files_only=not allow_download,
-                pretrained=not no_pretrained,
-            )
-            if verbose:
-                print(f"Model loaded with {feature_dim} feature dimensions")
-        except RuntimeError as e:
-            print(f"Error loading DINOv3 model: {e}")
-            return 1
-    else:
-        dino_model = None
-        if verbose:
-            print("All features cached, skipping DINOv3 model load")
-
-    # Load/compute features for all references
+    # Load pre-computed features for all references
     ref_data = {}
     for ref_path in ref_moles_by_path:
-        if ref_path in ref_cached:
-            cached = ref_cached[ref_path]
-            ref_data[ref_path] = {
-                "features": cached["features"],
-                "scale_x": cached["scale_x"],
-                "scale_y": cached["scale_y"],
-                "scaled_w": cached["scaled_w"],
-            }
-            if verbose >= 2:
-                print(
-                    f"Using cached reference features for {ref_path}: "
-                    f"{cached['features'].shape[0]} patches, "
-                    f"{_tensor_size_mb(cached['features']):.1f} MB"
-                )
-        else:
-            ref_image_rgb = _load_image_with_mask(ref_path, verbose)
-            if verbose:
-                print(f"Scaling reference image {ref_path} and extracting features...")
-            scaled_ref, (scale_x, scale_y) = mel.lib.dinov3.scale_image_to_fit(
-                ref_image_rgb, image_size
+        cached = _load_precalc_features(ref_path, dino_size, image_size, verbose)
+        ref_data[ref_path] = {
+            "features": cached["features"],
+            "scale_x": cached["scale_x"],
+            "scale_y": cached["scale_y"],
+            "scaled_w": cached["scaled_w"],
+        }
+        if verbose >= 2:
+            print(
+                f"Loaded reference features for {ref_path}: "
+                f"{cached['features'].shape[0]} patches, "
+                f"{_tensor_size_mb(cached['features']):.1f} MB"
             )
-            scaled_w = scaled_ref.shape[1]
-            features = mel.lib.dinov3.extract_all_patch_features(scaled_ref, dino_model)
-            ref_data[ref_path] = {
-                "features": features,
-                "scale_x": scale_x,
-                "scale_y": scale_y,
-                "scaled_w": scaled_w,
-            }
-            if verbose:
-                print(
-                    f"  Reference features: {features.shape[0]} patches, "
-                    f"{_tensor_size_mb(features):.1f} MB"
-                )
 
     # Collect training data
     if verbose:
@@ -597,34 +507,17 @@ def process_args(args):
         if verbose:
             print(f"  Found {len(missing_uuids)} missing canonical moles to locate")
 
-        # Get target features (from cache or compute)
-        if tgt_path in tgt_cached:
-            cached = tgt_cached[tgt_path]
-            target_features = cached["features"]
-            tgt_scale_x = cached["scale_x"]
-            tgt_scale_y = cached["scale_y"]
-            scaled_tgt_w = cached["scaled_w"]
-            if verbose >= 2:
-                print(
-                    f"  Using cached target features: {target_features.shape[0]} "
-                    f"patches, {_tensor_size_mb(target_features):.1f} MB"
-                )
-        else:
-            tgt_image_rgb = _load_image_with_mask(tgt_path, verbose)
-            if verbose:
-                print("  Scaling target image and extracting features...")
-            scaled_tgt, (tgt_scale_x, tgt_scale_y) = mel.lib.dinov3.scale_image_to_fit(
-                tgt_image_rgb, image_size
+        # Load pre-computed target features
+        cached = _load_precalc_features(tgt_path, dino_size, image_size, verbose)
+        target_features = cached["features"]
+        tgt_scale_x = cached["scale_x"]
+        tgt_scale_y = cached["scale_y"]
+        scaled_tgt_w = cached["scaled_w"]
+        if verbose >= 2:
+            print(
+                f"  Loaded target features: {target_features.shape[0]} "
+                f"patches, {_tensor_size_mb(target_features):.1f} MB"
             )
-            scaled_tgt_w = scaled_tgt.shape[1]
-            target_features = mel.lib.dinov3.extract_all_patch_features(
-                scaled_tgt, dino_model
-            )
-            if verbose:
-                print(
-                    f"  Target features: {target_features.shape[0]} patches, "
-                    f"{_tensor_size_mb(target_features):.1f} MB"
-                )
 
         # Run classifier on all target patches
         with torch.no_grad():

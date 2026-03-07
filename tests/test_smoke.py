@@ -173,20 +173,20 @@ def test_smoke():
 
         # Test automark3-precalc with smallest model and image size for speed
         rotomap_0_images = list(target_rotomap_0.glob("*.jpg"))
+        rotomap_1_images = list(target_rotomap_1.glob("*.jpg"))
+        all_rotomap_images = rotomap_0_images + rotomap_1_images
         expect_ok(
             "mel", "rotomap", "automark3-precalc",
             "--dino-size", "small", "--image-size", "48",
             "--no-pretrained",
-            str(rotomap_0_images[0]),
+            *[str(f) for f in all_rotomap_images],
         )
 
         # Test automark3 with reference from rotomap_0 and target from rotomap_1
-        rotomap_1_images = list(target_rotomap_1.glob("*.jpg"))
         expect_ok(
             "mel", "rotomap", "automark3",
             "--dino-size", "small", "--image-size", "48",
             "--epochs", "1",
-            "--no-pretrained",
             "--dry-run",
             "--reference", *[str(f) for f in rotomap_0_images],
             "--target", *[str(f) for f in rotomap_1_images],
