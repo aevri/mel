@@ -85,5 +85,8 @@ extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", 
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
 exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
 
-[tool.ty]
+[tool.ty.environment]
 python-version = "3.13"
+
+[tool.ty.rules]
+possibly-unresolved-reference = "warn"
