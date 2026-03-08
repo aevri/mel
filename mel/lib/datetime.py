@@ -52,7 +52,7 @@ def guess_datetime_from_string(datetime_str):
 
 
 def make_now_datetime_string():
-    return make_datetime_string(datetime.datetime.utcnow())
+    return make_datetime_string(datetime.datetime.now(datetime.UTC))
 
 
 def make_datetime_string(datetime_):
@@ -60,7 +60,8 @@ def make_datetime_string(datetime_):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
