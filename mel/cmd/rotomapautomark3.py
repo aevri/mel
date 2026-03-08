@@ -161,7 +161,7 @@ def _collect_training_data(
     negative_features = []
     num_negatives_needed = int(len(positive_features) * negative_ratio)
 
-    for ref_path, _moles in ref_moles_by_path.items():
+    for ref_path in ref_moles_by_path:
         data = ref_data[ref_path]
         features = data["features"]
         scaled_w = data["scaled_w"]
@@ -189,8 +189,7 @@ def _collect_training_data(
             # Deterministic sampling: pick evenly spaced indices
             step = max(1, len(valid_negative_indices) // samples_from_this_ref)
             selected = valid_negative_indices[::step][:samples_from_this_ref]
-            for patch_idx in selected:
-                negative_features.append(features[patch_idx])
+            negative_features.extend(features[patch_idx] for patch_idx in selected)
 
     if verbose:
         print(f"  Collected {len(negative_features)} negative samples")
