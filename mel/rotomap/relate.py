@@ -391,8 +391,7 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
         else:
             theory.append((a["uuid"], None))
 
-    for b in to_moles:
-        theory.append((None, b["uuid"]))
+    theory.extend((None, b["uuid"]) for b in to_moles)
 
     return theory, dist_sq_sum
 
@@ -418,7 +417,8 @@ def _mole_distance_sq(from_mole, to_mole):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
