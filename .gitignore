@@ -9,3 +9,4 @@ Pipfile.lock
 uv.lock
 .venv/
 notebooks/
+.coverage
