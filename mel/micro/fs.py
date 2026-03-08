@@ -89,10 +89,9 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
 
 
 def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple):
-    image_names = []
-    for sub in path.iterdir():
-        if sub.suffix.lower() in IMAGE_SUFFIXES:
-            image_names.append(sub.name)
+    image_names = [
+        sub.name for sub in path.iterdir() if sub.suffix.lower() in IMAGE_SUFFIXES
+    ]
 
     if image_names:
         image_names.sort()
@@ -157,7 +156,8 @@ def _read_stripped_text_file_if_exists(path):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

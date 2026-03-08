@@ -17,11 +17,7 @@ def setup_parser(parser):
 def process_args(args):
     mole_map_list = [json.load(x) for x in args.FILE]
     uuid_set = mole_uuid_set_from_map_list(mole_map_list)
-    results = []
-
-    for mole_uuid in uuid_set:
-        if mole_uuid.startswith(args.PREFIX):
-            results.append(mole_uuid)
+    results = [mole_uuid for mole_uuid in uuid_set if mole_uuid.startswith(args.PREFIX)]
 
     if results:
         print("\n".join(results))
@@ -38,7 +34,8 @@ def mole_uuid_set_from_map_list(mole_map_list):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

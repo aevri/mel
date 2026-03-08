@@ -476,7 +476,7 @@ def draw_add(tensor, x, y, value):
 def split_train_valid_last(rotomaps):
     train_rotomaps = []
     valid_rotomaps = []
-    for _part, rotomap_list in rotomaps.items():
+    for rotomap_list in rotomaps.values():
         empty_rotomaps = [
             r
             for r in rotomap_list
@@ -497,7 +497,7 @@ def split_train_valid(rotomaps, train_split=0.8):
         return split_train_valid_last(rotomaps)
     train_rotomaps = []
     valid_rotomaps = []
-    for _part, rotomap_list in rotomaps.items():
+    for rotomap_list in rotomaps.values():
         empty_rotomaps = [
             r
             for r in rotomap_list
