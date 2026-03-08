@@ -40,9 +40,8 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     montage_height = 1024
 
     for imagepath, moles in images_moles:
-        for m in moles:
-            if m["uuid"] == uuid_:
-                path_moles_list.append((imagepath, moles))
+        if any(m["uuid"] == uuid_ for m in moles):
+            path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
         raise mel.cmd.error.UsageError(f'UUID "{uuid_}" not found.')
@@ -103,7 +102,8 @@ def make_detail_image(context_image, x, y, size):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

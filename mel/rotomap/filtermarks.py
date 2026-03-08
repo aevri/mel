@@ -485,9 +485,8 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
         batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)
 
         with torch.no_grad():
-            for i, batch in enumerate(batcher):
-                assert i == 0
-                class_scores = softmax(model(batch))
+            (batch,) = batcher
+            class_scores = softmax(model(batch))
 
         assert class_scores.shape == (1, 2)
 
@@ -497,7 +496,8 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2022 Angelos Evripiotis.
+# Copyright (C) 2022, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

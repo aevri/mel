@@ -65,9 +65,7 @@ def merge_in_radiuses(
                 t_copy["radius"] = radius
 
     if not only_merge:
-        for r in radii_sources:
-            if r["uuid"] in added_uuids:
-                results.append(r)
+        results.extend(r for r in radii_sources if r["uuid"] in added_uuids)
 
     return results
 
