@@ -192,6 +192,7 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
         mole_path, min_compare_age_days, use_last_changed
     )
 
+    comparison_image = None
     if comparison_image_data is not None:
         comparison_path, comparison_image = comparison_image_data
         display.set_title(comparison_path)
@@ -205,10 +206,8 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
     if context_images:
         display.new_row()
 
-    if comparison_image_data:
-        display.add_image(
-            comparison_image  # pylint: disable=possibly-used-before-assignment
-        )
+    if comparison_image is not None:
+        display.add_image(comparison_image)
 
     # wait for confirmation
     mole_acquirer = mel.lib.moleimaging.MoleAcquirer()
@@ -277,6 +276,7 @@ def capture(cap, display, capindex, mole_acquirer):
 
     centre = None
     rotation = None
+    frame = None
 
     for frame, key in mel.lib.fullscreenui.yield_frames_keys(
         cap, display._display, error_key=pygame.K_a
@@ -299,6 +299,9 @@ def capture(cap, display, capindex, mole_acquirer):
             break
         display.update_image(asys_image, capindex)
 
+    if frame is None:
+        raise RuntimeError("No frames were captured.")
+
     normal_image = numpy.copy(frame)
     if centre is not None:
         normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
@@ -312,7 +315,8 @@ def capture(cap, display, capindex, mole_acquirer):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2021 Angelos Evripiotis.
+# Copyright (C) 2015-2021, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
