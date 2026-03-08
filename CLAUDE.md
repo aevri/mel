@@ -8,9 +8,9 @@
 - Fix formatting: `./meta/autofix.sh`
 
 ## Optional Type Checking
-- Run type checking: `pyright` (checks entire codebase)
-- Run type checking on specific files: `pyright path/to/file.py`
-- Run type checking on directory: `pyright path/to/directory/`
+- Run type checking: `ty check` (checks entire codebase)
+- Run type checking on specific files: `ty check path/to/file.py`
+- Run type checking on directory: `ty check path/to/directory/`
 - Note: Install dev dependencies first with `uv pip install -e '.[dev]'`
 
 ## Pre-commit Checklist
