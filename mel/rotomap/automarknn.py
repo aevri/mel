@@ -8,6 +8,8 @@ import torchvision
 
 import mel.lib.common
 import mel.lib.fs
+import mel.rotomap.automark
+import mel.rotomap.mask
 import mel.rotomap.moles
 
 

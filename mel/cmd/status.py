@@ -25,6 +25,7 @@ from enum import IntEnum
 import colorama
 
 import mel.lib.fs
+import mel.micro.fs
 import mel.rotomap.moles
 
 

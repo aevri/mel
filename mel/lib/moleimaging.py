@@ -15,7 +15,7 @@ def find_mole(frame):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img = cv2.split(img)[1]
     _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
-    ringed, stats, _ = mel.lib.moleimaging.process_contours(img, frame)
+    ringed, stats, _ = process_contours(img, frame)
     return ringed, stats
 
 
@@ -322,7 +322,7 @@ def find_mole_ellipse(original, centre, radius):
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
     image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
-    image, _, ellipse = mel.lib.moleimaging.process_contours(image, original)
+    image, _, ellipse = process_contours(image, original)
 
     if ellipse:
         ellipse = (
@@ -335,7 +335,8 @@ def find_mole_ellipse(original, centre, radius):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

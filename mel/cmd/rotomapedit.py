@@ -59,6 +59,7 @@ import mel.lib.fs
 import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.math
+import mel.lib.moleimaging
 import mel.lib.ui
 import mel.rotomap.display
 import mel.rotomap.mask
