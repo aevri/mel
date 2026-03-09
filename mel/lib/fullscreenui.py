@@ -145,7 +145,7 @@ def yield_frames_keys(video_capture, display, error_key):
         if keys:
             for key in keys:
                 if key == error_key:
-                    raise mel.lib.ui.AbortKeyInterruptError()
+                    raise mel.lib.ui.AbortKeyInterruptError
                 else:
                     yield frame, key
         else:
@@ -181,7 +181,7 @@ def yield_events_until_quit(display, *, quit_key=None, quit_func=None, error_key
                 if event.key == quit_key:
                     return
                 elif error_key is not None and event.key == error_key:
-                    raise mel.lib.ui.AbortKeyInterruptError()
+                    raise mel.lib.ui.AbortKeyInterruptError
             yield event
             display.update_screen_if_needed()
 
@@ -436,7 +436,7 @@ class MultiImageDisplay:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020-2025 Angelos Evripiotis.
+# Copyright (C) 2020-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
