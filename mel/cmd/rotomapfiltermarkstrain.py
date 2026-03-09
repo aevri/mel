@@ -4,6 +4,7 @@ import argparse
 import json
 
 import mel.lib.common
+import mel.lib.fs
 import mel.rotomap.filtermarks
 
 # TODO: Check for masking errors, where the mole is obscured by the mask.
@@ -118,7 +119,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2022 Angelos Evripiotis.
+# Copyright (C) 2022, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

@@ -24,6 +24,7 @@ def setup_parser(parser):
 def process_args(args):
     # This is an expensive import, so only do it when necessary.
     import mel.rotomap.identifynn
+    import mel.rotomap.moles
 
     identifier = mel.rotomap.identifynn.make_identifier()
     for target in args.TARGET:
@@ -43,7 +44,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2019 Angelos Evripiotis.
+# Copyright (C) 2019, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
