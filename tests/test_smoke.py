@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 """Smoke-test mel from the CLI, make sure nothing errors out."""
 
 import contextlib

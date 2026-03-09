@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 """Benchmark test for mel rotomap guess-missing and guess-refine commands."""
 
 import contextlib
