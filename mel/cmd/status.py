@@ -38,7 +38,7 @@ class Notification:
     def __init__(self, path):
         self.path = path
 
-    def format(self, detail_level):
+    def format(self, _detail_level):
         return str(self.path)
 
     def hint(self):
@@ -174,7 +174,7 @@ class MicroMissingIdInfo(InfoNotification):
     def __init__(self, path):
         super().__init__(path)
 
-    def format(self, detail_level):
+    def format(self, _detail_level):
         return f"{self.path}"
 
     def hint(self):
@@ -633,7 +633,8 @@ def _validate_mole_dir(path, notices):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2019 Angelos Evripiotis.
+# Copyright (C) 2018-2019, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
