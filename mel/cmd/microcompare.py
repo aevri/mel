@@ -64,7 +64,7 @@ def process_args(args):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, screen, name, image_list):
+    def __init__(self, screen, _name, image_list):
         if not image_list:
             raise ValueError("image_list must be a list with at least one image.")
 
@@ -95,7 +95,8 @@ class ImageCompareDisplay:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2021 Angelos Evripiotis.
+# Copyright (C) 2016-2021, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

@@ -28,7 +28,7 @@ _PRETRAINED_SUFFIX = ".jpg.efficientnet_b0.pt"
 def record_input_context(module_to_record):
     activations = []
 
-    def record_response(module, input_):
+    def record_response(_module, input_):
         activations.append(input_)
 
     hook = module_to_record.register_forward_pre_hook(record_response)

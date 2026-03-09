@@ -117,7 +117,7 @@ class StatusOverlay:
     def __init__(self):
         self.text = ""
 
-    def __call__(self, image, transform):
+    def __call__(self, image, _transform):
         if self.text:
             text_image = mel.lib.image.render_text_as_image(self.text)
             mel.lib.common.copy_image_into_image(text_image, image, 0, 0)

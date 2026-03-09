@@ -157,7 +157,7 @@ class LightningModel(pl.LightningModule):
             # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
         )
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
@@ -165,7 +165,7 @@ class LightningModel(pl.LightningModule):
         self.log("lr", self.lr, prog_bar=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
@@ -659,7 +659,7 @@ def extend_dataset_by_frame_data(
     part_index,
     image_size,
     do_channels,
-    channel_cache,
+    _channel_cache,
     class_to_index,
     escale,
     etranslate,

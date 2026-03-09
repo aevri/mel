@@ -15,7 +15,7 @@ def setup_parser(parser):
     pass
 
 
-def process_args(args):
+def process_args(_args):
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:
@@ -101,7 +101,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2022 Angelos Evripiotis.
+# Copyright (C) 2022, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

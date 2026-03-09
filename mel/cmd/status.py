@@ -39,7 +39,7 @@ class Notification:
     def __init__(self, path):
         self.path = path
 
-    def format(self, detail_level):
+    def format(self, _detail_level):
         return str(self.path)
 
     def hint(self):
@@ -175,7 +175,7 @@ class MicroMissingIdInfo(InfoNotification):
     def __init__(self, path):
         super().__init__(path)
 
-    def format(self, detail_level):
+    def format(self, _detail_level):
         return f"{self.path}"
 
     def hint(self):
