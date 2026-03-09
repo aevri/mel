@@ -269,17 +269,15 @@ class MoleEditController:
             self.mole_uuid_list[0] = editor.get_mole_uuid(self.mouse_x, self.mouse_y)
             print(self.mole_uuid_list[0])
             if self.copy_to_clipboard:
-                mel.lib.ui.set_clipboard_contents(  # noqa: F823
-                    self.mole_uuid_list[0]
-                )
+                mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
             # Auto-identify
             #
             # Import mel.rotomap.identifynn as late as possible, because it has
             # some expensive dependencies.
-            import mel.rotomap.identifynn
+            from mel.rotomap import identifynn
 
-            identifier = mel.rotomap.identifynn.make_identifier()
+            identifier = identifynn.make_identifier()
             target = editor.moledata.current_image_path()
             frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
             new_moles = identifier.get_new_moles(frame)
@@ -626,7 +624,8 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
