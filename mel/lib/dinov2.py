@@ -57,7 +57,7 @@ def load_dinov2_model(dino_size="base"):
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
 
-                def hook_fn(module, _input_tensor, output):
+                def hook_fn(_module, _input_tensor, output):
                     if hasattr(output, "shape") and len(output.shape) == 3:
                         patch_features.append(output)
 
@@ -549,7 +549,7 @@ def extract_patch_features(image, center_x, center_y, patch_size, model, transfo
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

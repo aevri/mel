@@ -135,7 +135,7 @@ class FollowController:
         editor.follow(self.mole_uuid_list[0])
         return True
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, _key):
         self._prev_moles = editor.moledata.moles
 
     def on_key(self, editor, key):
