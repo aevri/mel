@@ -6,7 +6,6 @@ import cv2
 
 import mel.lib.image
 import mel.lib.math
-import mel.lib.moleimaging
 
 
 def find_mole(frame):
@@ -16,7 +15,7 @@ def find_mole(frame):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img = cv2.split(img)[1]
     _, img = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY)
-    ringed, stats, _ = mel.lib.moleimaging.process_contours(img, frame)
+    ringed, stats, _ = process_contours(img, frame)
     return ringed, stats
 
 
@@ -323,7 +322,7 @@ def find_mole_ellipse(original, centre, radius):
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
     image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
-    image, _, ellipse = mel.lib.moleimaging.process_contours(image, original)
+    image, _, ellipse = process_contours(image, original)
 
     if ellipse:
         ellipse = (

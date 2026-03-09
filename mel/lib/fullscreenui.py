@@ -7,7 +7,6 @@ import cv2
 import numpy
 
 import mel.lib.common
-import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.ui
 
@@ -280,13 +279,11 @@ class ZoomableMixin:
                 / 2
             )
             zoom_level = self._zoom_level * zoom_scale
-            self._transform = mel.lib.fullscreenui.ZoomedImageTransform(
+            self._transform = ZoomedImageTransform(
                 image, self._zoom_pos, window_rect, scale=zoom_level
             )
         else:
-            self._transform = mel.lib.fullscreenui.FittedImageTransform(
-                image, window_rect
-            )
+            self._transform = FittedImageTransform(image, window_rect)
 
     def zoomable_transform_render(self):
         return self._transform.render()
