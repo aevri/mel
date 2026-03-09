@@ -94,4 +94,5 @@ python-version = "3.13"
 
 [tool.ty.rules]
 possibly-unresolved-reference = "warn"
+unresolved-reference = "error"
 deprecated = "error"
