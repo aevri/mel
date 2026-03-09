@@ -80,7 +80,8 @@ target-version = "py313"
 # - RUF: ruff-specific (ruff-specific linting rules)
 # - PT: flake8-pytest-style (pytest style improvements)
 # - PERF: perflint (performance anti-patterns)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF"]
+# - RSE: flake8-raise (remove unnecessary parentheses on raised exceptions)
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
