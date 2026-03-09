@@ -8,6 +8,7 @@ import cv2
 import numpy
 
 import mel.lib.common
+import mel.lib.ellipsespace
 import mel.lib.fullscreenui
 import mel.lib.image
 import mel.rotomap.detectmoles
@@ -707,7 +708,8 @@ class MoleData:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

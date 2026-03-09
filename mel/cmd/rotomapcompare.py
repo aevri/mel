@@ -33,6 +33,9 @@ import numpy
 
 import mel.lib.common
 import mel.lib.datetime
+import mel.lib.ellipsespace
+import mel.lib.fs
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.math
 import mel.lib.moleimaging
@@ -491,7 +494,8 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2021 Angelos Evripiotis.
+# Copyright (C) 2018-2021, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

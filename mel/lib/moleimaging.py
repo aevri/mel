@@ -6,6 +6,7 @@ import cv2
 
 import mel.lib.image
 import mel.lib.math
+import mel.lib.moleimaging
 
 
 def find_mole(frame):
@@ -335,7 +336,8 @@ def find_mole_ellipse(original, centre, radius):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

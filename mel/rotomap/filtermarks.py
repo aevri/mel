@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 import mel.lib.fs
 import mel.rotomap.automark
+import mel.rotomap.detectmoles
 import mel.rotomap.mask
 import mel.rotomap.moles
 

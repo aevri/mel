@@ -7,6 +7,7 @@ import cv2
 import numpy
 
 import mel.lib.common
+import mel.lib.fullscreenui
 import mel.lib.image
 import mel.lib.ui
 

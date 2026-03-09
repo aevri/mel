@@ -70,6 +70,7 @@ def process_args(args):
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
+    import pytorch_lightning.loggers
     import torch
 
     import mel.lib.ellipsespace
@@ -200,7 +201,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2023 Angelos Evripiotis.
+# Copyright (C) 2023, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
