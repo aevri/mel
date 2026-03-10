@@ -45,7 +45,7 @@ def guess_datetime_from_string(datetime_str):
     ]
     for fmt in format_list:
         try:
-            return datetime.datetime.strptime(datetime_str, fmt)
+            return datetime.datetime.strptime(datetime_str, fmt)  # noqa: DTZ007
         except ValueError:
             pass
     return None
