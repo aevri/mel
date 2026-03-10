@@ -16,6 +16,7 @@ import random
 import mel.cmd.error
 import mel.lib.common
 import mel.rotomap.fake
+import mel.rotomap.moles
 
 
 def setup_parser(parser):
@@ -91,7 +92,8 @@ def _iterable_len(it):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2020 Angelos Evripiotis.
+# Copyright (C) 2018-2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
