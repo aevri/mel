@@ -2,6 +2,8 @@
 
 # Generated with assistance from Claude Code.
 
+import warnings
+
 import numpy as np
 import pytest
 
@@ -96,7 +98,7 @@ class TestScalarAccessors:
 
     def test_returns_plain_int(self):
         result = vec3.xval(vec3.make(5, 6, 7))
-        assert type(result) is int
+        assert isinstance(result, int)
 
 
 class TestDot:
@@ -187,6 +189,13 @@ class TestNormalized:
         m = vec3.mag(v)[0, 0]
         np.testing.assert_array_almost_equal(n * m, v.astype(float))
 
+    def test_zero_vector_produces_nan(self):
+        v = np.array([[0, 0, 0]], dtype=float)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            result = vec3.normalized(v)
+        assert np.all(np.isnan(result))
+
 
 class TestMakeFromColumns:
     def test_basic(self):
@@ -215,6 +224,7 @@ class TestBatchOperations:
         )
 
     def test_dot_single_vs_batch(self):
+        # Shape (1,3) dot (3,3) tests numpy broadcasting semantics.
         single = vec3.make(1, 0, 0)
         batch = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         result = vec3.dot(single, batch)

@@ -76,27 +76,18 @@ class TestNormalized:
         assert result[0] == pytest.approx(-0.6)
         assert result[1] == pytest.approx(-0.8)
 
+    def test_zero_vector_raises(self):
+        with pytest.raises(ZeroDivisionError):
+            mlmath.normalized((0, 0))
+
 
 class TestAngle:
-    def test_right(self):
-        assert mlmath.angle((1, 0)) == 0.0
-
-    def test_left(self):
-        assert mlmath.angle((-1, 0)) == 180.0
-
-    def test_down_positive_y(self):
-        # Positive y maps to -90 degrees.
-        assert mlmath.angle((0, 1)) == -90.0
-
-    def test_up_negative_y(self):
-        assert mlmath.angle((0, -1)) == 90.0
-
     @pytest.mark.parametrize(
         "vec,expected",
         [
             ((1, 0), 0.0),
             ((-1, 0), 180.0),
-            ((0, 1), -90.0),
+            ((0, 1), -90.0),  # Positive y maps to -90 degrees.
             ((0, -1), 90.0),
         ],
     )
