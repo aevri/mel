@@ -134,6 +134,7 @@ class TestRaiseIfNotIntVector2:
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
