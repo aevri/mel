@@ -117,7 +117,9 @@ def test_mole_acquirer_update_none_stays_unlocked():
 def test_mole_acquirer_identical_stats_locks():
     acq = mel.lib.moleimaging.MoleAcquirer()
     stats = (50.0, 80.0, 90.0, 10.0, 20.0, 30.0)
-    # Feed identical stats many times - should eventually lock.
+    # MoleAcquirer uses lerp(0.5) exponential smoothing on stat diffs, so
+    # identical inputs drive the smoothed diff to zero. ~20 iterations suffice
+    # but 100 gives a comfortable margin.
     for _ in range(100):
         acq.update(stats)
     assert acq.is_locked is True
@@ -208,15 +210,17 @@ def test_find_mole_contour_large_overrides_distance():
     # is found first, the far one needs 10x area to override. The far circle
     # (r=40) has area ~5027 vs small (r=5) ~78, so 5027 > 780.
     assert area > 1000
+    # Verify the returned contour is the large one near (50, 50).
+    moments = cv2.moments(contour)
+    cx = int(moments["m10"] / moments["m00"])
+    cy = int(moments["m01"] / moments["m00"])
+    assert abs(cx - 50) < 10
+    assert abs(cy - 50) < 10
 
 
 # --- calc_hist ---
 
 
-@pytest.mark.xfail(
-    reason="calc_hist uses int() on numpy 1-d arrays, incompatible with numpy 2.x",
-    raises=TypeError,
-)
 def test_calc_hist_sums_to_100():
     image = np.random.randint(0, 256, (100, 100, 3), dtype=np.uint8)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -225,10 +229,6 @@ def test_calc_hist_sums_to_100():
     assert sum(hist) == pytest.approx(100.0)
 
 
-@pytest.mark.xfail(
-    reason="calc_hist uses int() on numpy 1-d arrays, incompatible with numpy 2.x",
-    raises=TypeError,
-)
 def test_calc_hist_with_mask():
     image = np.full((100, 100, 3), 128, dtype=np.uint8)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -239,7 +239,7 @@ def test_calc_hist_with_mask():
     assert sum(hist) == pytest.approx(100.0)
 
 
-# --- find_mole_ellipse (original breathing tests) ---
+# --- find_mole_ellipse (smoke tests) ---
 
 
 def test_find_mole_ellipse_with_mole_image():

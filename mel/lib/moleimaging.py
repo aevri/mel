@@ -21,7 +21,7 @@ def find_mole(frame):
 
 def calc_hist(image, channel, mask):
     hist = cv2.calcHist([image], [channel], mask, [8], [0, 256])
-    hist = [int(x) for x in hist]
+    hist = [int(x[0]) for x in hist]
     hist_sum = sum(hist)
     return [100 * x / hist_sum for x in hist]
 
