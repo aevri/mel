@@ -130,7 +130,9 @@ def _list_micro_dir_if_exists(path):
 
 def calc_micro_datetime(micro_image_name):
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
-    return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S")  # noqa: DTZ007
+    return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S").replace(
+        tzinfo=datetime.UTC
+    )
 
 
 def calc_last_micro(micro_image_details):

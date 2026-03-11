@@ -10,10 +10,10 @@ def guess_datetime_from_path(path):
     Usage examples:
 
         >>> guess_datetime_from_path('inbox/Photo 05-01-2015 23 25 40.jpg')
-        datetime.datetime(2015, 1, 5, 23, 25, 40)
+        datetime.datetime(2015, 1, 5, 23, 25, 40, tzinfo=datetime.timezone.utc)
 
         >>> guess_datetime_from_path('20120107T115426.790019.jpg')
-        datetime.datetime(2012, 1, 7, 11, 54, 26)
+        datetime.datetime(2012, 1, 7, 11, 54, 26, tzinfo=datetime.timezone.utc)
 
         >>> guess_datetime_from_path('blah')
 
@@ -32,7 +32,7 @@ def guess_datetime_from_string(datetime_str):
     Usage examples:
 
         >>> guess_datetime_from_string('Photo 05-01-2015 23 25 40')
-        datetime.datetime(2015, 1, 5, 23, 25, 40)
+        datetime.datetime(2015, 1, 5, 23, 25, 40, tzinfo=datetime.timezone.utc)
 
         >>> guess_datetime_from_string('blah')
 
@@ -45,7 +45,9 @@ def guess_datetime_from_string(datetime_str):
     ]
     for fmt in format_list:
         try:
-            return datetime.datetime.strptime(datetime_str, fmt)  # noqa: DTZ007
+            return datetime.datetime.strptime(datetime_str, fmt).replace(
+                tzinfo=datetime.UTC
+            )
         except ValueError:
             pass
     return None
