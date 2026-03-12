@@ -83,7 +83,8 @@ target-version = "py313"
 # - RSE: flake8-raise (remove unnecessary parentheses on raised exceptions)
 # - EXE: flake8-executable (shebang line checks)
 # - ARG: flake8-unused-arguments (unused function/method arguments)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG"]
+# - DTZ: flake8-datetimez (enforce timezone-aware datetime usage)
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]

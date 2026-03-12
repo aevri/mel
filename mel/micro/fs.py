@@ -130,7 +130,9 @@ def _list_micro_dir_if_exists(path):
 
 def calc_micro_datetime(micro_image_name):
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
-    return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S")
+    return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S").replace(
+        tzinfo=datetime.UTC
+    )
 
 
 def calc_last_micro(micro_image_details):
@@ -144,7 +146,7 @@ def calc_last_micro_age_days(micro_image_details):
     if not micro_image_details:
         return None
 
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(tz=datetime.UTC)
     age = now - micro_image_details[-1].datetime
     return age.days
 

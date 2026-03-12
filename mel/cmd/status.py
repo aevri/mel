@@ -417,7 +417,9 @@ def make_rotomap_list(path, notices):
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
             try:
-                datetime.datetime.strptime(rotomap_path.name[:10], "%Y_%m_%d")
+                datetime.datetime.strptime(  # noqa: DTZ007
+                    rotomap_path.name[:10], "%Y_%m_%d"
+                )
             except ValueError:
                 notices.append(InvalidDateError(rotomap_path))
             else:
