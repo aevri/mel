@@ -202,7 +202,7 @@ def fullscreen_context():
     # startup-text where it is not actually used.
     import pygame
 
-    global _PYGAME_HAD_EXCLUSIVE_INIT  # noqa: PLW0603 - one-time init guard for pygame
+    global _PYGAME_HAD_EXCLUSIVE_INIT
     if _PYGAME_HAD_EXCLUSIVE_INIT:
         raise Exception("An exclusive context was already started, only 1 per run.")
     _PYGAME_HAD_EXCLUSIVE_INIT = True
