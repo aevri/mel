@@ -46,12 +46,12 @@ def _parse_debug_keypresses():
 
     keypresses = []
     for key_name in keypress_str.split(","):
-        key_name = key_name.strip()
-        if key_name in key_map:
-            keypresses.append(key_map[key_name])
+        stripped_name = key_name.strip()
+        if stripped_name in key_map:
+            keypresses.append(key_map[stripped_name])
         else:
             raise ValueError(
-                f"Unknown key name '{key_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
+                f"Unknown key name '{stripped_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
             )
 
     return keypresses
@@ -202,7 +202,7 @@ def fullscreen_context():
     # startup-text where it is not actually used.
     import pygame
 
-    global _PYGAME_HAD_EXCLUSIVE_INIT
+    global _PYGAME_HAD_EXCLUSIVE_INIT  # noqa: PLW0603 - one-time init guard for pygame
     if _PYGAME_HAD_EXCLUSIVE_INIT:
         raise Exception("An exclusive context was already started, only 1 per run.")
     _PYGAME_HAD_EXCLUSIVE_INIT = True

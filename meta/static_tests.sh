@@ -13,8 +13,9 @@ printf '.'
 # refurb (FURB)
 # pep8 naming (N)
 # Pylint Error (PLE)
+# Pylint Warning (PLW)
 # perflint (PERF)
-uv run ruff check --quiet --extend-select A,FURB,N,PLE,PERF mel/
+uv run ruff check --quiet --extend-select A,FURB,N,PLE,PERF,PLW mel/
 
 printf '.'
 uv run python -m vulture \
