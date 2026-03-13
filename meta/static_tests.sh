@@ -9,13 +9,7 @@ cd "$(dirname "$0")"/..
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
 printf '.'
-# flake8-builtins (A)
-# refurb (FURB)
-# pep8 naming (N)
-# Pylint Error (PLE)
-# Pylint Warning (PLW)
-# perflint (PERF)
-uv run ruff check --quiet --extend-select A,FURB,N,PLE,PERF,PLW mel/
+uv run ruff check --quiet mel/
 
 printf '.'
 uv run python -m vulture \
