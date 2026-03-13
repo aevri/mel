@@ -14,7 +14,7 @@ def path(mole_image_path):
 def load(mole_image_path):
     mask = cv2.imread(path(mole_image_path), cv2.IMREAD_UNCHANGED)
     if mask is None:
-        raise Exception(f'Failed to load mask: "{path}"')
+        raise Exception(f'Failed to load mask: "{path(mole_image_path)}"')
     return mask
 
 
@@ -59,7 +59,8 @@ def guess_mask_otsu(img):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
