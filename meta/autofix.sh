@@ -8,7 +8,7 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-uv run ruff check --fix-only --extend-select A,FURB,N,PLE,PERF,PLW mel/
+uv run ruff check --fix-only mel/
 printf "."
 
 uv run ruff format --quiet mel/

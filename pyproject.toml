@@ -67,6 +67,7 @@ target-version = "py313"
 # - FURB: refurb (modernize Python code)
 # - N: pep8-naming (naming conventions)
 # - PLE: pylint errors (subset of pylint)
+# - PLW: pylint warnings (global statements, unnecessary comparisons, etc.)
 # - I: isort (import sorting and organization)
 # - W: pycodestyle warnings (whitespace and formatting issues)
 # - F: pyflakes (unused imports, variables, undefined names)
@@ -84,7 +85,7 @@ target-version = "py313"
 # - EXE: flake8-executable (shebang line checks)
 # - ARG: flake8-unused-arguments (unused function/method arguments)
 # - DTZ: flake8-datetimez (enforce timezone-aware datetime usage)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ"]
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
