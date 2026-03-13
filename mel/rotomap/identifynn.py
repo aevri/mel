@@ -11,7 +11,6 @@ import tqdm
 
 import mel.lib.ellipsespace
 import mel.lib.fs
-import mel.rotomap.identifynn
 import mel.rotomap.moles
 
 
@@ -20,7 +19,7 @@ def make_identifier():
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
     metadata_path = model_dir / "identify.json"
-    return mel.rotomap.identifynn.MoleIdentifier(metadata_path, model_path)
+    return MoleIdentifier(metadata_path, model_path)
 
 
 class MoleIdentifier:
@@ -41,7 +40,7 @@ class MoleIdentifier:
         self.in_fields.extend(["molemap", "molemap_detail_2", "molemap_detail_4"])
         self.out_fields = ["uuid_index", "mole_count"]
 
-        self.model = mel.rotomap.identifynn.Model(**model_args)
+        self.model = Model(**model_args)
         self.model.load_state_dict(torch.load(model_path, weights_only=True))
 
     def get_new_moles(self, frame):
@@ -54,7 +53,7 @@ class MoleIdentifier:
                 class_to_index2[uuid_] = -1
 
         datadict = collections.defaultdict(list)
-        mel.rotomap.identifynn.extend_dataset_by_frame(
+        extend_dataset_by_frame(
             dataset=datadict,
             frame=frame,
             image_size=self.metadata["image_size"],
@@ -67,7 +66,7 @@ class MoleIdentifier:
             drop_noncanonical_moles=False,
         )
 
-        dataset = mel.rotomap.identifynn.RotomapsDataset(
+        dataset = RotomapsDataset(
             datadict,
             classes=self.classes,
             class_to_index=class_to_index2,
