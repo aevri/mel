@@ -85,7 +85,19 @@ target-version = "py313"
 # - EXE: flake8-executable (shebang line checks)
 # - ARG: flake8-unused-arguments (unused function/method arguments)
 # - DTZ: flake8-datetimez (enforce timezone-aware datetime usage)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ"]
+# - FA: flake8-future-annotations (future annotations best practices)
+# - FLY: flynt (prefer f-strings over static string joins)
+# - G: flake8-logging-format (logging statement formatting)
+# - INT: flake8-gettext (gettext/internationalization best practices)
+# - LOG: flake8-logging (logging module usage)
+# - PD: pandas-vet (pandas best practices)
+# - PGH: pygrep-hooks (blanket type:ignore/noqa, eval usage)
+# - SLOT: flake8-slots (__slots__ for immutable classes)
+# - TC: flake8-type-checking (move imports to TYPE_CHECKING blocks)
+# - TID: flake8-tidy-imports (banned imports and relative parent imports)
+# - YTT: flake8-2020 (sys.version misuse)
+# - ASYNC: flake8-async (async best practices)
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]

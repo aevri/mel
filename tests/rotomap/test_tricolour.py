@@ -3,6 +3,8 @@
 
 import unittest
 
+import pytest
+
 import mel.rotomap.tricolour
 
 
@@ -17,21 +19,13 @@ class Test(unittest.TestCase):
         pass
 
     def test_b_rotate_bounds(self):
-        self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 0), [1, 2, 3]
-        )
-        self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 1), [2, 3, 1]
-        )
-        self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 2), [3, 1, 2]
-        )
-        self.assertListEqual(
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 3), [1, 2, 3]
-        )
-        with self.assertRaises(ValueError):
+        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 0) == [1, 2, 3]
+        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 1) == [2, 3, 1]
+        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 2) == [3, 1, 2]
+        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 3) == [1, 2, 3]
+        with pytest.raises(ValueError, match="n must be zero or greater"):
             mel.rotomap.tricolour._list_rotated_left([1, 2, 3], -1)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="n must be less than list len"):
             mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 4)
 
     def test_c_yield_triband_mapping(self):
@@ -42,14 +36,15 @@ class Test(unittest.TestCase):
             )
         )
 
-        self.assertEqual(len(mapping), num_colours ** 3)
+        assert len(mapping) == num_colours ** 3
 
         mapping_set = set(mapping)
-        self.assertEqual(len(mapping_set), len(mapping))
+        assert len(mapping_set) == len(mapping)
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

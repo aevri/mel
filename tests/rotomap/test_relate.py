@@ -36,12 +36,13 @@ class Test(unittest.TestCase):
             numpy.array([0, 0]), [(numpy.array([0, 0]), [1, 2])]
         )
 
-        self.assertEqual(0.0, error)
-        self.assertTrue((value == [1.0, 2.0]).all(), True)
+        assert error == 0.0
+        assert (value == [1.0, 2.0]).all()
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018-2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

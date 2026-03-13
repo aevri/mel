@@ -83,7 +83,7 @@ class TestNormalized:
 
 class TestAngle:
     @pytest.mark.parametrize(
-        "vec,expected",
+        ("vec", "expected"),
         [
             ((1, 0), 0.0),
             ((-1, 0), 180.0),
