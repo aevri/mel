@@ -10,14 +10,12 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 import json
-import math
 import pathlib
 
 import numpy
 import pytest
 
 import mel.rotomap.moles as moles
-
 
 # ---------------------------------------------------------------------------
 # Helpers
