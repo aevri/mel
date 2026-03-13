@@ -473,11 +473,9 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
     colors = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
     if points is not None:
         for x, y in points:
-            x *= zoom
-            x = int(x)
-            y *= zoom
-            y = int(y)
-            mel.rotomap.display.draw_mole(image, x, y, colors)
+            scaled_x = int(x * zoom)
+            scaled_y = int(y * zoom)
+            mel.rotomap.display.draw_mole(image, scaled_x, scaled_y, colors)
     pos = tuple(int(v * zoom) for v in pos)
     size = numpy.array(size)
     max_size = 2 * max(size)

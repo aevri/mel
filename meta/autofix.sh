@@ -8,7 +8,7 @@ cd "$(dirname "$0")"/..
 
 allscripts=$(find mel/ -iname '*.py' |  tr '\n' ' ')
 
-uv run ruff check --fix-only mel/
+uv run ruff check --fix-only --extend-select A,FURB,N,PLE,PERF,PLW mel/
 printf "."
 
 uv run ruff format --quiet mel/
@@ -21,5 +21,5 @@ echo
 trap - EXIT
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
