@@ -414,14 +414,15 @@ def load_potential_set_file(path, filename):
         with file_path.open() as f:
             lines = f.read().splitlines()
         for text in lines:
-            text = text.strip()
-            if text and not text.startswith("#"):
-                ignore_set.add(text)
+            stripped_text = text.strip()
+            if stripped_text and not stripped_text.startswith("#"):
+                ignore_set.add(stripped_text)
     return ignore_set
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2019 Angelos Evripiotis.
+# Copyright (C) 2016-2019, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

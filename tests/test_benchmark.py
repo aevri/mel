@@ -154,7 +154,7 @@ def download_and_extract_dataset(url: str) -> pathlib.Path:
     extract_path = pathlib.Path(".")
     print(f"Extracting dataset to {extract_path}...")
     with tarfile.open(dataset_archive, "r:gz") as tar:
-        tar.extractall(extract_path)
+        tar.extractall(extract_path, filter="data")
 
     return extract_path
 
