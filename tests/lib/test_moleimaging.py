@@ -8,12 +8,11 @@ import pytest
 
 import mel.lib.moleimaging
 
-
 # --- log10_zero ---
 
 
 @pytest.mark.parametrize(
-    "x, expected",
+    ("x", "expected"),
     [
         (0, 0),
         (1, 0),
@@ -37,7 +36,7 @@ def test_log10_zero_fractional():
 
 
 @pytest.mark.parametrize(
-    "point, expected",
+    ("point", "expected"),
     [
         ((1.7, 2.3), (1, 2)),
         ((0, 0), (0, 0)),
@@ -67,7 +66,7 @@ def test_rotate_zero_degrees():
 
 
 @pytest.mark.parametrize(
-    "degrees, expected",
+    ("degrees", "expected"),
     [
         (90, (0.0, 1.0)),
         (180, (-1.0, 0.0)),
@@ -184,7 +183,7 @@ def test_find_mole_contour_prefers_center():
     contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     assert len(contours) == 2
 
-    contour, area = mel.lib.moleimaging.find_mole_contour(contours, (200, 200))
+    contour, _area = mel.lib.moleimaging.find_mole_contour(contours, (200, 200))
     assert contour is not None
     # The returned contour should be the one closer to center.
     moments = cv2.moments(contour)
