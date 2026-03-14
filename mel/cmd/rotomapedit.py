@@ -360,16 +360,15 @@ class MoleMarkController:
                         editor.show_current()
                 else:
                     editor.remove_mole(mouse_x, mouse_y)
+            elif key_mods & pygame.KMOD_ALT:
+                nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
+                if nearest_mole is not None:
+                    nearest_mole["kind"] = "mole"
+                    nearest_mole["looks_like"] = "non-mole"
+                    editor.moledata.save_moles()
+                    editor.show_current()
             else:
-                if key_mods & pygame.KMOD_ALT:
-                    nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
-                    if nearest_mole is not None:
-                        nearest_mole["kind"] = "mole"
-                        nearest_mole["looks_like"] = "non-mole"
-                        editor.moledata.save_moles()
-                        editor.show_current()
-                else:
-                    editor.add_mole(mouse_x, mouse_y)
+                editor.add_mole(mouse_x, mouse_y)
         elif event.button == 3:
             nearest_mole = editor.get_nearest_mole(mouse_x, mouse_y)
             if nearest_mole is not None:
@@ -380,13 +379,12 @@ class MoleMarkController:
                     else:
                         nearest_mole["kind"] = "mole"
                         nearest_mole["looks_like"] = "unsure"
+                elif key_mods & pygame.KMOD_SHIFT:
+                    nearest_mole["kind"] = "non-mole"
+                    nearest_mole["looks_like"] = "non-mole"
                 else:
-                    if key_mods & pygame.KMOD_SHIFT:
-                        nearest_mole["kind"] = "non-mole"
-                        nearest_mole["looks_like"] = "non-mole"
-                    else:
-                        nearest_mole["kind"] = "mole"
-                        nearest_mole["looks_like"] = "mole"
+                    nearest_mole["kind"] = "mole"
+                    nearest_mole["looks_like"] = "mole"
                 editor.moledata.save_moles()
                 editor.show_current()
 
