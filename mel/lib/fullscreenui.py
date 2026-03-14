@@ -381,6 +381,11 @@ class MultiImageDisplay:
 
         self.reset()
 
+    @property
+    def inner_display(self):
+        """Return the underlying Display object."""
+        return self._display
+
     def reset(self):
         self._images_names = []
         self._border_width = 50

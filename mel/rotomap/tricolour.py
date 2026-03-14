@@ -47,18 +47,18 @@ def uuid_to_tricolour_first_digits(uuid_):
     return hex3_to_rgb4(uuid_[:3])
 
 
-def _list_rotated_left(list_, n):
+def list_rotated_left(list_, n):
     """Return the input 'list_', rotated left by n places.
 
     'n' must be between zero and len(list_).
 
     Usage examples:
 
-        >>> _list_rotated_left([1, 2, 3], 0)
+        >>> list_rotated_left([1, 2, 3], 0)
         [1, 2, 3]
-        >>> _list_rotated_left([1, 2, 3], 1)
+        >>> list_rotated_left([1, 2, 3], 1)
         [2, 3, 1]
-        >>> _list_rotated_left([1, 2, 3], 2)
+        >>> list_rotated_left([1, 2, 3], 2)
         [3, 1, 2]
 
     :list_: a list.
@@ -85,7 +85,7 @@ def yield_triband_mapping_in_distinctive_order(num_colours):
             if colour1 == colour2:
                 continue
             for band in range(3):
-                yield tuple(_list_rotated_left([colour1, colour2, colour2], band))
+                yield tuple(list_rotated_left([colour1, colour2, colour2], band))
 
     yield from _yield_tricolours_no_repeats(num_colours)
 
@@ -129,7 +129,8 @@ class UuidTriColourPicker:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

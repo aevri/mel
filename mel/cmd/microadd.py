@@ -233,7 +233,7 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
 
         is_finished = True
         for event in mel.lib.fullscreenui.yield_events_until_quit(
-            display._display,
+            display.inner_display,
             quit_key=pygame.K_SPACE,
             error_key=pygame.K_a,
         ):
@@ -279,7 +279,7 @@ def capture(cap, display, capindex, mole_acquirer):
     frame = None
 
     for frame, key in mel.lib.fullscreenui.yield_frames_keys(
-        cap, display._display, error_key=pygame.K_a
+        cap, display.inner_display, error_key=pygame.K_a
     ):
         if key == pygame.K_c:
             print("Force capturing frame.")
