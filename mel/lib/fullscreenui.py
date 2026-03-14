@@ -4,7 +4,7 @@ import contextlib
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.image
@@ -64,7 +64,7 @@ class FittedImageTransform:
 
         letterbox = mel.lib.image.calc_letterbox(*image_rect, *self._fit_rect)
 
-        self._offset = numpy.array(letterbox[:2])
+        self._offset = np.array(letterbox[:2])
         self._scale = image.shape[1] / letterbox[2]
 
         self._image = image
@@ -73,10 +73,10 @@ class FittedImageTransform:
         return mel.lib.image.letterbox(self._image, *self._fit_rect)
 
     def imagexy_to_transformedxy(self, x, y):
-        return (numpy.array((x, y)) / self._scale + self._offset).astype(int)
+        return (np.array((x, y)) / self._scale + self._offset).astype(int)
 
     def transformedxy_to_imagexy(self, x, y):
-        return ((numpy.array((x, y)) - self._offset) * self._scale).astype(int)
+        return ((np.array((x, y)) - self._offset) * self._scale).astype(int)
 
 
 class ZoomedImageTransform:
@@ -92,10 +92,10 @@ class ZoomedImageTransform:
         return mel.lib.image.centered_at(self._image, self._pos, self._rect)
 
     def imagexy_to_transformedxy(self, x, y):
-        return ((numpy.array((x, y)) * self._scale) + self._offset).astype(int)
+        return ((np.array((x, y)) * self._scale) + self._offset).astype(int)
 
     def transformedxy_to_imagexy(self, x, y):
-        return ((numpy.array((x, y)) - self._offset) / self._scale).astype(int)
+        return ((np.array((x, y)) - self._offset) / self._scale).astype(int)
 
 
 _PYGAME_HAD_EXCLUSIVE_INIT = False
@@ -296,7 +296,7 @@ class ZoomableMixin:
         self._zoom_level = zoom_level
 
     def set_zoomed(self, x, y, zoom_level=None):
-        self._zoom_pos = numpy.array((x, y))
+        self._zoom_pos = np.array((x, y))
         self._zoom_virt_pos = None
         self._is_zoomed = True
         if zoom_level is not None:
@@ -322,10 +322,10 @@ class LeftRightDisplay(ZoomableMixin):
             raise ValueError("image_list must be a list with at least one image.")
         super().__init__()
 
-        rect = numpy.array((screen.width, screen.height))
+        rect = np.array((screen.width, screen.height))
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 10
-        self._image_rect = rect - numpy.array((0, title_height + self._spacer_height))
+        self._image_rect = rect - np.array((0, title_height + self._spacer_height))
 
         self.display = screen
         self.image_path = None
@@ -374,10 +374,10 @@ class MultiImageDisplay:
         self._display = display
 
         self._title = "_"
-        rect = numpy.array((display.width, display.height))
+        rect = np.array((display.width, display.height))
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 5
-        self._image_rect = rect - numpy.array((0, title_height + self._spacer_height))
+        self._image_rect = rect - np.array((0, title_height + self._spacer_height))
 
         self.reset()
 

@@ -15,7 +15,7 @@
 
 import unittest
 
-import numpy
+import numpy as np
 
 import mel.rotomap.relate
 
@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
     def test_b_pick_value_from_field(self):
 
         value, error = mel.rotomap.relate.pick_value_from_field(
-            numpy.array([0, 0]), [(numpy.array([0, 0]), [1, 2])]
+            np.array([0, 0]), [(np.array([0, 0]), [1, 2])]
         )
 
         assert error == 0.0

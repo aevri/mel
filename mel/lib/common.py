@@ -6,7 +6,7 @@ import datetime
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.datetime
 import mel.lib.fs
@@ -41,7 +41,7 @@ def write_image(path, image):
 
 
 def user_mark_moles(window_name, context_image, detail_image, num_moles):
-    display_image = numpy.copy(context_image)
+    display_image = np.copy(context_image)
     cv2.imshow(window_name, display_image)
 
     circle_radius = 50
@@ -71,7 +71,7 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
         if len(current_mole_positions) == num_moles:
             if not detail_mole_positions:
                 current_mole_positions = detail_mole_positions
-                display_image = numpy.copy(detail_image)
+                display_image = np.copy(detail_image)
                 cv2.setMouseCallback(
                     window_name,
                     make_mole_capture_callback(
@@ -138,10 +138,10 @@ def connect_moles(image, mole_positions):
         thickness = max(mole_a[2], mole_b[2])
 
         # draw connection
-        a = numpy.array(mole_a[:2])
-        b = numpy.array(mole_b[:2])
+        a = np.array(mole_a[:2])
+        b = np.array(mole_b[:2])
         a_to_b = b - a
-        a_to_b = a_to_b / numpy.linalg.norm(a_to_b)
+        a_to_b = a_to_b / np.linalg.norm(a_to_b)
         padding = a_to_b * (thickness * 2)
         padding = padding.astype(int)
         a += padding
@@ -165,7 +165,7 @@ def yield_neighbors(node_list):
 
 
 def new_image(height, width):
-    return numpy.zeros((height, width, 3), numpy.uint8)
+    return np.zeros((height, width, 3), np.uint8)
 
 
 def copy_image_into_image(source, dest, y, x):
@@ -198,8 +198,8 @@ def indicate_mole(image, mole):
 
 
 def draw_radial_line(image, origin, inner_radius, outer_radius, direction, thickness):
-    origin = numpy.array(origin)
-    direction = numpy.array(direction)
+    origin = np.array(origin)
+    direction = np.array(direction)
     line_start = origin + direction * inner_radius
     line_end = origin + direction * outer_radius
 
@@ -353,7 +353,7 @@ def timelogger_context(command):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Copyright (C) 2015-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

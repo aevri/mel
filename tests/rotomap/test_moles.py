@@ -12,7 +12,7 @@
 import json
 import pathlib
 
-import numpy
+import numpy as np
 import pytest
 
 import mel.rotomap.moles as moles
@@ -363,7 +363,7 @@ class TestMoleData:
         m = [_make_mole(5, 10, "u1")]
         md = moles.MoleData(m)
         assert "u1" in md.uuid_points
-        numpy.testing.assert_array_equal(md.uuid_points["u1"], [5, 10])
+        np.testing.assert_array_equal(md.uuid_points["u1"], [5, 10])
 
     def test_empty(self):
         md = moles.MoleData([])
@@ -415,20 +415,20 @@ class TestPointConversions:
     def test_mole_to_point(self):
         m = _make_mole(7, 13, "a")
         pt = moles.mole_to_point(m)
-        numpy.testing.assert_array_equal(pt, [7, 13])
-        assert numpy.issubdtype(pt.dtype, numpy.integer)
+        np.testing.assert_array_equal(pt, [7, 13])
+        assert np.issubdtype(pt.dtype, np.integer)
 
     def test_mole_list_to_pointvec(self):
         m = [_make_mole(1, 2, "a"), _make_mole(3, 4, "b")]
         pv = moles.mole_list_to_pointvec(m)
         assert pv.shape == (2, 2)
-        numpy.testing.assert_array_equal(pv[1], [3, 4])
+        np.testing.assert_array_equal(pv[1], [3, 4])
 
     def test_to_uuid_points(self):
         m = [_make_mole(10, 20, "u1")]
         up = moles.to_uuid_points(m)
         assert "u1" in up
-        numpy.testing.assert_array_equal(up["u1"], [10, 20])
+        np.testing.assert_array_equal(up["u1"], [10, 20])
 
     def test_mole_list_to_pointvec_empty(self):
         pv = moles.mole_list_to_pointvec([])

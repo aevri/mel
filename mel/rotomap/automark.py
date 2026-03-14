@@ -2,7 +2,7 @@
 
 import copy
 
-import numpy
+import numpy as np
 
 import mel.lib.image
 import mel.rotomap.detectmoles
@@ -82,11 +82,11 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
     #
     #   E1101: Function 'subtract' has no 'outer' member (no-member)
     #
-    distmatx = numpy.subtract.outer(from_pos_vec[:, 0], to_pos_vec[:, 0])
-    distmaty = numpy.subtract.outer(from_pos_vec[:, 1], to_pos_vec[:, 1])
+    distmatx = np.subtract.outer(from_pos_vec[:, 0], to_pos_vec[:, 0])
+    distmaty = np.subtract.outer(from_pos_vec[:, 1], to_pos_vec[:, 1])
     # pylint: enable=no-member
 
-    sqdistmat = numpy.square(distmatx) + numpy.square(distmaty)
+    sqdistmat = np.square(distmatx) + np.square(distmaty)
 
     assert sqdistmat.shape == (len(from_pos_vec), len(to_pos_vec))
 
@@ -97,8 +97,8 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
 
     matches = []
     while _array_nonempty(sqdistmat):
-        nextmin_i = numpy.argmin(sqdistmat)  # Gives us the 'flat index'.
-        from_i, to_i = numpy.unravel_index(nextmin_i, sqdistmat.shape)
+        nextmin_i = np.argmin(sqdistmat)  # Gives us the 'flat index'.
+        from_i, to_i = np.unravel_index(nextmin_i, sqdistmat.shape)
         nextmin = sqdistmat[from_i, to_i]
         if nextmin > max_sqdist:
             break
@@ -112,8 +112,8 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         )
         del matindex_to_fromindex[from_i]
         del matindex_to_toindex[to_i]
-        sqdistmat = numpy.delete(sqdistmat, from_i, axis=0)
-        sqdistmat = numpy.delete(sqdistmat, to_i, axis=1)
+        sqdistmat = np.delete(sqdistmat, from_i, axis=0)
+        sqdistmat = np.delete(sqdistmat, to_i, axis=1)
         # pylint: enable=invalid-sequence-index
 
     # print()

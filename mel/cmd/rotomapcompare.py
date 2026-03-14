@@ -29,7 +29,7 @@ import math
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.datetime
@@ -410,7 +410,7 @@ class ImageCompareDisplay:
     def _show(self):
         image_width = self._display.width // 2
         image_height = self._display.height
-        image_size = numpy.array((image_width, image_height))
+        image_size = np.array((image_width, image_height))
         border_colour = None
         if self._should_indicate_changed is not None:
             if self._should_indicate_changed:
@@ -477,9 +477,9 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
             scaled_y = int(y * zoom)
             mel.rotomap.display.draw_mole(image, scaled_x, scaled_y, colors)
     pos = tuple(int(v * zoom) for v in pos)
-    size = numpy.array(size)
+    size = np.array(size)
     max_size = 2 * max(size)
-    max_size = numpy.array([max_size, max_size])
+    max_size = np.array([max_size, max_size])
     max_size_2 = 2 * max_size
     image = mel.lib.image.centered_at(image, pos, max_size_2)
     image = mel.lib.image.rotated(image, rotation_degs)

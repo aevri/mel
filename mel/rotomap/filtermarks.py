@@ -8,7 +8,7 @@ import pathlib
 import pickle
 
 import cv2
-import numpy
+import numpy as np
 from tqdm import tqdm
 
 import mel.lib.fs
@@ -369,7 +369,7 @@ def open_image_for_classifier(image_path):
         raise OSError(f"Error handling image at: {image_path}") from e
 
     mask = mel.rotomap.mask.load(image_path)
-    green = numpy.zeros(original_image.shape, numpy.uint8)
+    green = np.zeros(original_image.shape, np.uint8)
     green[:, :, 1] = 255
     image = cv2.bitwise_and(original_image, original_image, mask=mask)
     not_mask = cv2.bitwise_not(mask)

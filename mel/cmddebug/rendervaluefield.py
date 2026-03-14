@@ -9,7 +9,7 @@ in the bottom-right. Where the error gets high, you can see that redness
 is introduced.
 """
 
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.rotomap.relate
@@ -23,7 +23,7 @@ def process_args(_args):
     width = 512
     height = 512
     shape = (height, width, 3)
-    image = numpy.empty(shape, dtype=int)
+    image = np.empty(shape, dtype=int)
 
     point_values = [
         ((0, 0), (255, 0)),
@@ -33,7 +33,7 @@ def process_args(_args):
     for row in range(height):
         for col in range(width):
             value, error = mel.rotomap.relate.pick_value_from_field(
-                numpy.array((col, row)), point_values
+                np.array((col, row)), point_values
             )
             image[row, col, :] = (value[0], value[1], error)
 

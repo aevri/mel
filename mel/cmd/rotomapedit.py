@@ -52,7 +52,7 @@ import argparse
 import contextlib
 import os.path
 
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.fs
@@ -614,7 +614,7 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
             )
 
             if ellipse is not None:
-                guess_pos = numpy.array(ellipse[0], dtype=int)
+                guess_pos = np.array(ellipse[0], dtype=int)
 
             editor.show_zoomed_display(guess_pos[0], guess_pos[1])
 

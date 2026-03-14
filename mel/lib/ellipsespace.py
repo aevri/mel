@@ -1,6 +1,6 @@
 """Work with ellipe-relative spaces."""
 
-import numpy
+import numpy as np
 
 import mel.lib.moleimaging
 
@@ -43,7 +43,7 @@ def from_ellipse_space(ellipse, pos):
         int(right[1] * pos[0] * rmag + up[1] * pos[1] * umag + center[1]),
     )
 
-    return numpy.array(p)
+    return np.array(p)
 
 
 def to_ellipse_space(ellipse, pos):
@@ -59,7 +59,7 @@ def to_ellipse_space(ellipse, pos):
         pos[0] * up[0] + pos[1] * up[1],
     )
 
-    return numpy.array(
+    return np.array(
         (
             pos[0] / rmag,
             pos[1] / umag,
@@ -89,7 +89,8 @@ def ellipse_center_up_right(ellipse):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

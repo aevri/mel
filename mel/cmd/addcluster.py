@@ -3,7 +3,7 @@
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.image
@@ -57,7 +57,7 @@ def process_args(args):
     mel.lib.common.box_moles(context_image, context_mole_pos, thickness=50)
 
     # Connect moles on cluster detail image
-    cluster_detail_image = numpy.copy(detail_image)
+    cluster_detail_image = np.copy(detail_image)
     mel.lib.common.connect_moles(cluster_detail_image, detail_mole_pos)
 
     # Combine context image with cluster detail image to make montage
@@ -74,7 +74,7 @@ def process_args(args):
     # Point to moles on individual detail images
     mole_images = []
     for _index, mole in enumerate(detail_mole_pos):
-        indicated_image = numpy.copy(detail_image)
+        indicated_image = np.copy(detail_image)
         mel.lib.common.indicate_mole(indicated_image, mole)
         indicated_image = mel.lib.common.shrink_to_max_dimension(
             indicated_image, mole_size
@@ -107,7 +107,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

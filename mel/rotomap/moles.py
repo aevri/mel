@@ -6,7 +6,7 @@ import math
 import pathlib
 import uuid
 
-import numpy
+import numpy as np
 
 import mel.lib.fs
 import mel.lib.image
@@ -391,11 +391,11 @@ def remove_nearest_mole(moles, x, y):
 
 
 def mole_list_to_pointvec(mole_list):
-    return numpy.array(tuple((m["x"], m["y"]) for m in mole_list))
+    return np.array(tuple((m["x"], m["y"]) for m in mole_list))
 
 
 def mole_to_point(mole):
-    pos = numpy.array((mole["x"], mole["y"]))
+    pos = np.array((mole["x"], mole["y"]))
     mel.lib.math.raise_if_not_int_vector2(pos)
     return pos
 
