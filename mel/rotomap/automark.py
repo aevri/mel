@@ -24,6 +24,7 @@ def merge_in_radiuses(
     targets: Moles,
     radii_sources: Moles,
     error_distance: int,
+    *,
     only_merge: bool,
 ) -> list:
     """Merge radius values from radius source dictionaries into target

@@ -30,7 +30,7 @@ def _get_features_path(image_path, dino_size, image_size):
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_image_with_mask(image_path, verbose=False):
+def _load_image_with_mask(image_path, *, verbose=False):
     """Load an image and apply its mask if available."""
     if verbose:
         print(f"Loading image: {image_path}")
@@ -143,7 +143,7 @@ def process_args(args):
             print(f"\nProcessing: {image_path}")
 
         # Load and scale image
-        image_rgb = _load_image_with_mask(image_path, verbose)
+        image_rgb = _load_image_with_mask(image_path, verbose=verbose)
         scaled_image, (scale_x, scale_y) = mel.lib.dinov3.scale_image_to_fit(
             image_rgb, image_size
         )

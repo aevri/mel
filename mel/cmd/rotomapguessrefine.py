@@ -293,8 +293,8 @@ def process_args(args):
                 model,
                 transform,
                 feature_dim,
-                debug_images,
-                uuid,
+                debug_images=debug_images,
+                uuid=uuid,
             )
 
             # Update the mole location if we found a better match
@@ -362,7 +362,7 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

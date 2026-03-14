@@ -43,16 +43,16 @@ def process_args(_args):
         "/", expand=True
     )[0]
     timelog.loc[
-        ~timelog.path.str.startswith("rotomaps/parts/").fillna(False),
+        ~timelog.path.str.startswith("rotomaps/parts/").fillna(value=False),
         "major_part",
     ] = None
 
     timelog["part"] = None
     timelog.loc[
-        timelog.path.str.startswith("rotomaps/parts/").fillna(False), "part"
+        timelog.path.str.startswith("rotomaps/parts/").fillna(value=False), "part"
     ] = (
         timelog.loc[
-            timelog.path.str.startswith("rotomaps/parts/").fillna(False),
+            timelog.path.str.startswith("rotomaps/parts/").fillna(value=False),
             "path",
         ]
         .str.removeprefix("rotomaps/parts/")

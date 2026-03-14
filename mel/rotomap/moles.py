@@ -360,7 +360,7 @@ def uuid_mole_index(moles, mole_uuid):
     return None
 
 
-def set_nearest_mole_uuid(moles, x, y, mole_uuid, is_canonical=True):
+def set_nearest_mole_uuid(moles, x, y, mole_uuid, *, is_canonical=True):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         moles[nearest_index]["uuid"] = mole_uuid
