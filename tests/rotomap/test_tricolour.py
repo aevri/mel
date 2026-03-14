@@ -19,14 +19,14 @@ class Test(unittest.TestCase):
         pass
 
     def test_b_rotate_bounds(self):
-        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 0) == [1, 2, 3]
-        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 1) == [2, 3, 1]
-        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 2) == [3, 1, 2]
-        assert mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 3) == [1, 2, 3]
+        assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 0) == [1, 2, 3]
+        assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 1) == [2, 3, 1]
+        assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 2) == [3, 1, 2]
+        assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 3) == [1, 2, 3]
         with pytest.raises(ValueError, match="n must be zero or greater"):
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], -1)
+            mel.rotomap.tricolour.list_rotated_left([1, 2, 3], -1)
         with pytest.raises(ValueError, match="n must be less than list len"):
-            mel.rotomap.tricolour._list_rotated_left([1, 2, 3], 4)
+            mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 4)
 
     def test_c_yield_triband_mapping(self):
         num_colours = 9
