@@ -3,7 +3,7 @@
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 
 def path(mole_image_path):
@@ -44,7 +44,7 @@ def mask_biggest_region(mask):
                 max_area = area
                 max_index = i
 
-    mask = numpy.zeros(mask.shape, numpy.uint8)
+    mask = np.zeros(mask.shape, np.uint8)
     if max_index is not None:
         c = contours[max_index]
         cv2.drawContours(mask, [c], -1, (255), -1)

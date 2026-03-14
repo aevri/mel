@@ -2,7 +2,7 @@
 
 import math
 
-import numpy
+import numpy as np
 
 RADS_TO_DEGS = 180 / math.pi
 
@@ -81,14 +81,15 @@ def rads_to_degs(theta):
 
 
 def raise_if_not_int_vector2(v):
-    if not isinstance(v, numpy.ndarray):
+    if not isinstance(v, np.ndarray):
         raise ValueError(f"{v}:{v!r}:{type(v)} is not a numpy array")
-    if not numpy.issubdtype(v.dtype.type, numpy.integer):
+    if not np.issubdtype(v.dtype.type, np.integer):
         raise ValueError(f"{v}:{v.dtype} is not an int vector2")
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2020 Angelos Evripiotis.
+# Copyright (C) 2015-2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

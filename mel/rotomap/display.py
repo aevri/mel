@@ -5,7 +5,7 @@ import functools
 import sys
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.ellipsespace
@@ -71,10 +71,10 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
         super().__init__()
         self._image_display = screen
 
-        self._rect = numpy.array((screen.width, screen.height))
+        self._rect = np.array((screen.width, screen.height))
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 10
-        self._image_rect = self._rect - numpy.array(
+        self._image_rect = self._rect - np.array(
             (0, title_height + self._spacer_height)
         )
 
@@ -201,7 +201,7 @@ class MarkedMoleOverlay:
         mask_radius = 50
 
         image = image.copy() // 2
-        mask = numpy.zeros((*image.shape[:2], 1), numpy.uint8)
+        mask = np.zeros((*image.shape[:2], 1), np.uint8)
 
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
@@ -287,7 +287,7 @@ class BoundingAreaOverlay:
                 toimage((-1, 1)),
                 toimage((-1, -1)),
             ]
-            border = numpy.array(border)
+            border = np.array(border)
             centre = [
                 toimage((0, 0.1)),
                 toimage((0, -0.1)),
@@ -297,7 +297,7 @@ class BoundingAreaOverlay:
                 toimage((0, 0)),
                 toimage((0, 0.1)),
             ]
-            centre = numpy.array(centre)
+            centre = np.array(centre)
 
             cv2.drawContours(image, [border, centre], -1, color, size)
 
@@ -660,7 +660,7 @@ class MoleData:
         self._mask_path = mel.rotomap.mask.path(image_path)
         self.mask = mel.rotomap.mask.load_or_none(image_path)
         if self.mask is None:
-            self.mask = numpy.zeros((height, width), numpy.uint8)
+            self.mask = np.zeros((height, width), np.uint8)
 
         self._loaded_index = self._list_index
 

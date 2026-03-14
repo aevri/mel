@@ -3,7 +3,7 @@
 import collections
 import json
 
-import numpy
+import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch.utils.data
@@ -198,7 +198,7 @@ def yield_frame_mole_maps_detail(
     frame_map = torch.zeros(1, image_size, image_size)
     for _uuid, pos in uuid_points:
         epos = elspace.to_space(pos)
-        ipos = numpy.array(epos)
+        ipos = np.array(epos)
         ipos *= image_size * 0.3 * escale
         ipos += image_size * 0.5
         ipos += etranslate
@@ -212,7 +212,7 @@ def yield_frame_mole_maps_detail(
             continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
-        ipos = numpy.array(epos)
+        ipos = np.array(epos)
         ipos *= image_size * 0.3 * escale
         ipos += image_size * 0.5
         ipos += etranslate
@@ -246,7 +246,7 @@ def yield_frame_mole_maps(
     frame_map = torch.zeros(1, image_size, image_size)
     for _uuid, pos in uuid_points:
         epos = elspace.to_space(pos)
-        ipos = numpy.array(epos)
+        ipos = np.array(epos)
         ipos *= image_size * 0.3 * escale
         ipos += image_size * 0.5
         ipos += etranslate
@@ -257,7 +257,7 @@ def yield_frame_mole_maps(
             continue
         mole_mark = torch.zeros(1, image_size, image_size)
         epos = elspace.to_space(pos)
-        ipos = numpy.array(epos)
+        ipos = np.array(epos)
         ipos *= image_size * 0.3 * escale
         ipos += image_size * 0.5
         ipos += etranslate
@@ -293,7 +293,7 @@ def make_dataset(
     extra_stem=None,
 ):
     if augmentations is None:
-        augmentations = [(1, numpy.array([0, 0]))]
+        augmentations = [(1, np.array([0, 0]))]
 
     total_frames = 0
     for rotomap in rotomaps:
@@ -366,7 +366,7 @@ def make_data(repo_path, data_config, channel_cache=None):
     out_fields = ["uuid_index", "mole_count"]
 
     augmentations = [
-        (scale, numpy.array([x, y]))
+        (scale, np.array([x, y]))
         for scale in [1, 0.99, 0.97, 0.95, 0.93]
         for x in [-0.01, 0, 0.01]
         for y in [-0.01, 0, 0.01]

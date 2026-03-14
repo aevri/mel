@@ -4,7 +4,7 @@ import datetime
 import os
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 import mel.lib.datetime
@@ -216,14 +216,14 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
     if not ret:
         raise Exception("Could not read frame.")
 
-    preview = numpy.copy(frame)
+    preview = np.copy(frame)
     capindex = display.add_image(preview, "capture")
 
     rotation_angle = 0
 
     while not is_finished:
         frame = capture(cap, display, capindex, mole_acquirer)
-        preview = numpy.copy(frame)
+        preview = np.copy(frame)
         rotation_angle = 0
         display.update_image(preview, capindex)
 
@@ -288,7 +288,7 @@ def capture(cap, display, capindex, mole_acquirer):
             break
 
         _, stats = mel.lib.moleimaging.find_mole(frame)
-        asys_image = numpy.copy(frame)
+        asys_image = np.copy(frame)
         is_aligned, centre, rotation = mel.lib.moleimaging.annotate_image(
             asys_image, is_rot_sensitive=False
         )
@@ -302,7 +302,7 @@ def capture(cap, display, capindex, mole_acquirer):
     if frame is None:
         raise RuntimeError("No frames were captured.")
 
-    normal_image = numpy.copy(frame)
+    normal_image = np.copy(frame)
     if centre is not None:
         normal_image = mel.lib.image.recentered_at(frame, centre[0], centre[1])
     if rotation is not None:

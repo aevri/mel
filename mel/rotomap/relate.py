@@ -3,7 +3,7 @@
 import copy
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.debugrenderer
 import mel.lib.math
@@ -258,11 +258,11 @@ def nearest_uuid_point(point, uuid_points):
     nearest_uuid = None
     for uuid_, q in uuid_points.items():
         offset = q - point
-        sqdist = numpy.dot(offset, offset)
+        sqdist = np.dot(offset, offset)
         if nearest_sqdist is None or sqdist < nearest_sqdist:
             nearest_sqdist = sqdist
             nearest_uuid = uuid_
-    return nearest_uuid, numpy.sqrt(nearest_sqdist)
+    return nearest_uuid, np.sqrt(nearest_sqdist)
 
 
 def pick_value_from_field(point, point_values):
@@ -280,8 +280,8 @@ def pick_value_from_field(point, point_values):
         certainty.
 
         >>> pick_value_from_field(
-        ...     numpy.array([0, 0]),
-        ...     [(numpy.array([0, 0]), (1,))]) == ((1.0,), 0.0)
+        ...     np.array([0, 0]),
+        ...     [(np.array([0, 0]), (1,))]) == ((1.0,), 0.0)
         True
 
     :point: a numpy.array representing a 2d point to take a sample from.
@@ -295,22 +295,22 @@ def pick_value_from_field(point, point_values):
     # slightly complicated all the existing client code. May as well leave
     # as-is.
 
-    offsets = numpy.array([q - point for q, v in point_values])
-    sq_distances = numpy.sum(offsets * offsets, axis=1)
+    offsets = np.array([q - point for q, v in point_values])
+    sq_distances = np.sum(offsets * offsets, axis=1)
 
     sqweights = 1.0 / (sq_distances + 1)
-    sqweights /= numpy.sum(sqweights)
+    sqweights /= np.sum(sqweights)
 
-    values = numpy.array([x[1] for x in point_values])
-    picked_value = numpy.dot(values.T, sqweights)
+    values = np.array([x[1] for x in point_values])
+    picked_value = np.dot(values.T, sqweights)
 
     # Note that inverse-distance instead of inverse-square-distance for
     # calculating error has been tried. This did not improve results as
     # measured by 'mel-debug bench-relate'. Also tried inverse-log10-distance,
     # and 'equal weights'.
 
-    value_errors = numpy.linalg.norm(values - picked_value, axis=1)
-    picked_error = numpy.dot(value_errors.T, sqweights)
+    value_errors = np.linalg.norm(values - picked_value, axis=1)
+    picked_error = np.dot(value_errors.T, sqweights)
 
     return picked_value, picked_error
 
@@ -368,7 +368,7 @@ def mole_min_sq_distance(moles):
 
 def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     to_moles = list(to_moles_in)
-    offset = numpy.array(offset)
+    offset = np.array(offset)
 
     theory = []
 

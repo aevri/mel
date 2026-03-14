@@ -4,7 +4,7 @@ import os
 import stat
 
 import cv2
-import numpy
+import numpy as np
 
 import mel.lib.common
 
@@ -133,9 +133,9 @@ def montage_horizontal_inner_border(divider_size, *image_list):
     Usage example:
 
         Arrange varied images in a row, with a 50 pixel separator:
-        >>> blue = numpy.full((600, 800, 3), (255, 0, 0), dtype=numpy.uint8)
-        >>> grey_half = numpy.full((300, 800, 1), (128), dtype=numpy.uint8)
-        >>> red = numpy.full((600, 800, 3), (0, 0, 255), dtype=numpy.uint8)
+        >>> blue = np.full((600, 800, 3), (255, 0, 0), dtype=np.uint8)
+        >>> grey_half = np.full((300, 800, 1), (128), dtype=np.uint8)
+        >>> red = np.full((600, 800, 3), (0, 0, 255), dtype=np.uint8)
         >>> image = montage_horizontal_inner_border(50, blue, grey_half, red)
 
     Counter example:
@@ -241,7 +241,7 @@ def centered_at(image, src_pos, dst_rect):
         get_image_rect(image), src_pos, dst_rect
     )
 
-    result = mel.lib.common.new_image(*numpy.flipud(dst_rect))
+    result = mel.lib.common.new_image(*np.flipud(dst_rect))
     result[dst_selection] = image[src_selection]
 
     return result
@@ -267,12 +267,12 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect):
     dst_end = dst_start + src_rect
 
     # Project the dst clip rect into source space and clip the src rect to it
-    src_start = numpy.clip(-dst_start, 0, src_rect)
-    src_end = numpy.clip(dst_rect - dst_start, 0, src_rect)
+    src_start = np.clip(-dst_start, 0, src_rect)
+    src_end = np.clip(dst_rect - dst_start, 0, src_rect)
 
     # Clip the dst rect
-    numpy.clip(dst_start, 0, dst_rect, dst_start)
-    numpy.clip(dst_end, 0, dst_rect, dst_end)
+    np.clip(dst_start, 0, dst_rect, dst_start)
+    np.clip(dst_end, 0, dst_rect, dst_end)
 
     dst_selection = positions_to_selection(dst_start, dst_end)
     src_selection = positions_to_selection(src_start, src_end)
@@ -312,13 +312,13 @@ def slice_square_or_none(image, lefttop, rightbottom):
     height_width = image.shape[:2]
     width_height = (height_width[1], height_width[0])
 
-    clipped_lefttop = numpy.clip(lefttop, (0, 0), width_height)
-    clipped_rightbottom = numpy.clip(rightbottom, (0, 0), width_height)
+    clipped_lefttop = np.clip(lefttop, (0, 0), width_height)
+    clipped_rightbottom = np.clip(rightbottom, (0, 0), width_height)
 
-    if not numpy.allclose(lefttop, clipped_lefttop):
+    if not np.allclose(lefttop, clipped_lefttop):
         return None
 
-    if not numpy.allclose(rightbottom, clipped_rightbottom):
+    if not np.allclose(rightbottom, clipped_rightbottom):
         return None
 
     # Note that images are stored in yx order, not xy.
@@ -341,7 +341,7 @@ def recentered_at(image, x, y):
     Returns:
         numpy.ndarray: A new OpenCV image.
     """
-    return centered_at(image, numpy.array((x, y)), get_image_rect(image))
+    return centered_at(image, np.array((x, y)), get_image_rect(image))
 
 
 def get_image_rect(image):
@@ -350,7 +350,7 @@ def get_image_rect(image):
     :image: A numpy.ndarray representing an image.
     :returns: A numpy.ndarray representing (width, height) of the image.
     """
-    return numpy.flipud(image.shape[:2])
+    return np.flipud(image.shape[:2])
 
 
 def rotated(image, degrees):
@@ -382,7 +382,7 @@ def scale_image(image, scale):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2025 Angelos Evripiotis.
+# Copyright (C) 2015-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code and Cursor.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
