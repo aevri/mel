@@ -190,7 +190,7 @@ def _make_on_keydown(
             is_unchanged = True
             uuid_ = uuid_order[index]
             mark_lesion(target_rotomap, uuid_, is_unchanged=True)
-            display.indicate_changed(False)
+            display.indicate_changed(should_indicate_changed=False)
         elif key == pygame.K_z:
             display.adjust_zoom(1.025)
         elif key == pygame.K_x:
@@ -322,7 +322,7 @@ class ImageCompareDisplay:
         self._draw_moles = not self._draw_moles
         self._show()
 
-    def indicate_changed(self, should_indicate_changed=True):
+    def indicate_changed(self, *, should_indicate_changed=True):
         self._should_indicate_changed = should_indicate_changed
         self._show()
 
@@ -424,7 +424,7 @@ class ImageCompareDisplay:
                 image_size,
                 self._should_draw_crosshairs,
                 border_colour,
-                self._draw_moles,
+                draw_moles=self._draw_moles,
             )
             for i in self._indices
         ]
@@ -442,6 +442,7 @@ def captioned_mole_image(
     size,
     should_draw_crosshairs,
     border_colour=None,
+    *,
     draw_moles=False,
 ):
     points = None

@@ -403,6 +403,7 @@ def find_best_contextual_match(
     model,
     transform,
     feature_dim,
+    *,
     debug_images=False,
     uuid=None,
 ):
