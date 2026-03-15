@@ -22,7 +22,7 @@ import mel.rotomap.moles as moles
 # ---------------------------------------------------------------------------
 
 
-def _make_mole(x, y, uuid_=None, is_confirmed=True):
+def _make_mole(x, y, uuid_=None, *, is_confirmed=True):
     """Create a mole dict with required fields."""
     return {
         "x": x,

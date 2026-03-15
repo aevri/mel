@@ -1,5 +1,8 @@
 """DINOv2 model loading and feature extraction utils for semantic matching."""
 
+# Copyright 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import cv2
 import numpy as np
 
@@ -403,6 +406,7 @@ def find_best_contextual_match(
     model,
     transform,
     feature_dim,
+    *,
     debug_images=False,
     uuid=None,
 ):

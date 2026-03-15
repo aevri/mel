@@ -6,6 +6,9 @@ reference images, then applies it to find moles in target images.
 Requires pre-computed features from 'mel rotomap automark3-precalc'.
 """
 
+# Copyright 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import argparse
 import pathlib
 
@@ -30,7 +33,7 @@ def _get_features_path(image_path, dino_size, image_size):
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_precalc_features(image_path, dino_size, image_size, verbose=False):
+def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False):
     """Load pre-computed features, raising an error if not found."""
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
@@ -437,7 +440,7 @@ def process_args(args):
     # Load pre-computed features for all references
     ref_data = {}
     for ref_path in ref_moles_by_path:
-        cached = _load_precalc_features(ref_path, dino_size, image_size, verbose)
+        cached = _load_precalc_features(ref_path, dino_size, image_size, verbose=verbose)
         ref_data[ref_path] = {
             "features": cached["features"],
             "scale_x": cached["scale_x"],
@@ -507,7 +510,7 @@ def process_args(args):
             print(f"  Found {len(missing_uuids)} missing canonical moles to locate")
 
         # Load pre-computed target features
-        cached = _load_precalc_features(tgt_path, dino_size, image_size, verbose)
+        cached = _load_precalc_features(tgt_path, dino_size, image_size, verbose=verbose)
         target_features = cached["features"]
         tgt_scale_x = cached["scale_x"]
         tgt_scale_y = cached["scale_y"]

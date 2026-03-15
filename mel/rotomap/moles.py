@@ -1,5 +1,8 @@
 """Work with a collection of moles."""
 
+# Copyright 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import argparse
 import json
 import math
@@ -360,7 +363,7 @@ def uuid_mole_index(moles, mole_uuid):
     return None
 
 
-def set_nearest_mole_uuid(moles, x, y, mole_uuid, is_canonical=True):
+def set_nearest_mole_uuid(moles, x, y, mole_uuid, *, is_canonical=True):
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         moles[nearest_index]["uuid"] = mole_uuid

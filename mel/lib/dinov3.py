@@ -1,12 +1,15 @@
 """DINOv3 model loading and feature extraction utils for semantic matching."""
 
+# Copyright 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import cv2
 import numpy as np
 
 PATCH_SIZE = 16
 
 
-def load_dinov3_model(dino_size="base", local_files_only=False, pretrained=True):
+def load_dinov3_model(dino_size="base", *, local_files_only=False, pretrained=True):
     """Load the DINOv3 model for semantic feature extraction.
 
     Args:

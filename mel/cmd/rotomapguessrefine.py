@@ -1,5 +1,8 @@
 """Refine non-canonical mole locations using DINOv2 feature matching."""
 
+# Copyright 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import argparse
 import pathlib
 
@@ -293,8 +296,8 @@ def process_args(args):
                 model,
                 transform,
                 feature_dim,
-                debug_images,
-                uuid,
+                debug_images=debug_images,
+                uuid=uuid,
             )
 
             # Update the mole location if we found a better match
