@@ -101,7 +101,8 @@ target-version = "py313"
 # - ICN: flake8-import-conventions (enforce standard import aliases like numpy as np)
 # - SLF: flake8-self (prevent access to private members of other classes)
 # - FBT: flake8-boolean-trap (avoid boolean positional args and defaults)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+# - PLR5: pylint refactor (collapsible else/elif blocks)
+extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
