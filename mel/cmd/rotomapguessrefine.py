@@ -58,7 +58,7 @@ def save_debug_patch(patch, filename):
     try:
         cv2.imwrite(filename, patch)
         print(f"  Debug: Saved patch to {filename}")
-    except Exception as e:
+    except (OSError, cv2.error) as e:
         print(f"  Debug: Failed to save patch to {filename}: {e}")
 
 
@@ -118,7 +118,7 @@ def save_debug_search_area(image, center_x, center_y, patch_size, filename):
 
         cv2.imwrite(filename, search_area)
         print(f"  Debug: Saved search area to {filename}")
-    except Exception as e:
+    except (OSError, cv2.error) as e:
         print(f"  Debug: Failed to save search area to {filename}: {e}")
 
 
@@ -141,7 +141,7 @@ def process_args(args):
         # Convert BGR to RGB for DINOv2
         src_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
         tgt_image = cv2.cvtColor(tgt_image, cv2.COLOR_BGR2RGB)
-    except Exception as e:
+    except (ValueError, OSError, cv2.error) as e:
         print(f"Error loading images: {e}")
         return 1
 
@@ -149,7 +149,7 @@ def process_args(args):
     try:
         src_moles = mel.rotomap.moles.load_image_moles(src_path)
         tgt_moles = mel.rotomap.moles.load_image_moles(tgt_path)
-    except Exception as e:
+    except (ValueError, OSError) as e:
         print(f"Error loading moles: {e}")
         return 1
 
@@ -268,7 +268,7 @@ def process_args(args):
 
                 save_debug_patch(src_context_img, f"{uuid}_src_context.jpg")
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             print(f"Error extracting source features for mole {uuid}: {e}")
             continue
 
@@ -338,12 +338,12 @@ def process_args(args):
                             refined_context = padded_patch
 
                         save_debug_patch(refined_context, f"{uuid}_tgt_refined.jpg")
-                    except Exception as e:
+                    except (OSError, cv2.error) as e:
                         print(f"  Debug: Failed to save refined context: {e}")
             else:
                 print(f"  No refinement needed (similarity: {similarity:.3f})")
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             print(f"Error refining mole {uuid}: {e}")
             continue
 
@@ -352,7 +352,7 @@ def process_args(args):
         try:
             mel.rotomap.moles.save_image_moles(tgt_moles, tgt_path)
             print(f"Successfully refined {refined_count} mole locations in {tgt_path}")
-        except Exception as e:
+        except OSError as e:
             print(f"Error saving refined moles: {e}")
             return 1
     else:

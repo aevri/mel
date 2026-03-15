@@ -516,7 +516,7 @@ def check_rotomap(notices, rotomap, importance_level):
                     missing_mask_info.frame_list.append(frame.path)
                 if "ellipse" not in frame.metadata:
                     missing_space_info.frame_list.append(frame.path)
-        except Exception as e:
+        except (ValueError, OSError) as e:
             notices.append(RotomapNotLoadable(rotomap.path, e))
 
         for i in rotomap.path.iterdir():

@@ -265,7 +265,7 @@ def load_image_moles(image_path, *, extra_stem=None):
 
     for m in moles:
         if KEY_IS_CONFIRMED not in m:
-            raise Exception(
+            raise ValueError(
                 f"Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}"
             )
 
@@ -275,7 +275,7 @@ def load_image_moles(image_path, *, extra_stem=None):
 
     for m in moles:
         if m["uuid"] is None:
-            raise Exception(f"Mole UUID cannot be None: {moles_path} {m}")
+            raise ValueError(f"Mole UUID cannot be None: {moles_path} {m}")
 
     return moles
 

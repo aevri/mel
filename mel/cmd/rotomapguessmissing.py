@@ -37,7 +37,7 @@ def process_args(args):
     try:
         src_moles = mel.rotomap.moles.load_image_moles(src_path)
         tgt_moles = mel.rotomap.moles.load_image_moles(tgt_path)
-    except Exception as e:
+    except (ValueError, OSError) as e:
         print(f"Error loading moles: {e}")
         return 1
 
@@ -96,7 +96,7 @@ def process_args(args):
         try:
             mel.rotomap.moles.save_image_moles(tgt_moles, tgt_path)
             print(f"Successfully added {guessed_count} guessed moles to {tgt_path}")
-        except Exception as e:
+        except OSError as e:
             print(f"Error saving moles: {e}")
             return 1
     else:
@@ -106,7 +106,7 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

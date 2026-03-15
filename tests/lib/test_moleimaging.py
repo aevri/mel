@@ -277,7 +277,7 @@ def test_find_mole_ellipse_parameter_types():
         result = mel.lib.moleimaging.find_mole_ellipse(image, centre_tuple, 10)
         # Should handle gracefully
         assert result is None or isinstance(result, tuple)
-    except Exception:
+    except (TypeError, ValueError):
         # If it fails with tuple input, that's also acceptable
         pass
 
