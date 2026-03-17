@@ -12,7 +12,7 @@ import mel.lib.common
 def load_image(path):
     image = cv2.imread(str(path))
     if image is None:
-        raise Exception(f'Failed to load image: "{path}"')
+        raise ValueError(f'Failed to load image: "{path}"')
 
     return image
 
@@ -25,7 +25,8 @@ def save_image(image, path):
         path (str): File path to save to
 
     Raises:
-        Exception: If the file is read-only or the image cannot be saved
+        PermissionError: If the file is read-only
+        OSError: If the image cannot be saved
     """
     path_str = str(path)
 
@@ -33,12 +34,12 @@ def save_image(image, path):
     if os.path.exists(path_str):
         file_mode = os.stat(path_str).st_mode
         if not (file_mode & stat.S_IWUSR):
-            raise Exception(f'Cannot save to read-only file: "{path_str}"')
+            raise PermissionError(f'Cannot save to read-only file: "{path_str}"')
 
     # Save the image
     success = cv2.imwrite(path_str, image)
     if not success:
-        raise Exception(f'Failed to save image: "{path_str}"')
+        raise OSError(f'Failed to save image: "{path_str}"')
 
 
 def calc_letterbox(width, height, fit_width, fit_height):

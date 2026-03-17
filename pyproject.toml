@@ -102,7 +102,8 @@ target-version = "py313"
 # - SLF: flake8-self (prevent access to private members of other classes)
 # - FBT: flake8-boolean-trap (avoid boolean positional args and defaults)
 # - PLR5: pylint refactor (collapsible else/elif blocks)
-extend-select = ["A", "B", "C4", "FURB", "N", "PLE", "PLW", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+# - BLE: flake8-blind-except (prevent catching blind Exception)
+extend-select = ["A", "B", "BLE", "C4", "FURB", "N", "PLE", "PLW", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]

@@ -405,7 +405,7 @@ def process_args(args):
     for ref_path in ref_paths:
         try:
             moles = mel.rotomap.moles.load_image_moles(ref_path)
-        except Exception as e:
+        except (ValueError, OSError) as e:
             print(f"Error loading moles from {ref_path}: {e}")
             return 1
         canonical = [m for m in moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]]
@@ -489,7 +489,7 @@ def process_args(args):
             tgt_moles = mel.rotomap.moles.load_image_moles(
                 tgt_path, extra_stem=extra_stem
             )
-        except Exception as e:
+        except (ValueError, OSError) as e:
             print(f"Error loading target moles from {tgt_path}: {e}")
             continue
 
@@ -580,7 +580,7 @@ def process_args(args):
                 )
                 if verbose:
                     print(f"  Saved {matched_count} moles to {tgt_path}")
-            except Exception as e:
+            except OSError as e:
                 print(f"Error saving moles to {tgt_path}: {e}")
                 return 1
         elif matched_count == 0 and verbose:

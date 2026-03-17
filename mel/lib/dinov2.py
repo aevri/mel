@@ -388,7 +388,7 @@ def save_contextual_similarity_heatmap(
         print(f"  Debug: Saved contextual similarity heatmap to {filename}")
         print(f"  Debug: Similarity range: {sim_min:.3f} to {sim_max:.3f}")
 
-    except Exception as e:
+    except (OSError, cv2.error) as e:
         print(
             f"  Debug: Failed to save contextual similarity heatmap to {filename}: {e}"
         )
@@ -497,7 +497,7 @@ def find_best_contextual_match(
 
         return best_x, best_y, best_similarity
 
-    except Exception as e:
+    except RuntimeError as e:
         print(f"  Error in contextual matching: {e}")
         return center_x, center_y, -1.0
 
