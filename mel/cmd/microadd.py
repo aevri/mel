@@ -90,8 +90,8 @@ def get_dirs_to_path(path_in):
 def load_context_images(path):
     image_list = []
     path_list = get_dirs_to_path(path)
-    for path in path_list:
-        name = get_context_image_name(path)
+    for dir_path in path_list:
+        name = get_context_image_name(dir_path)
         if name:
             image_list.append(mel.lib.image.load_image(name))
     return image_list
@@ -125,9 +125,9 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
         (x, mel.lib.datetime.guess_datetime_from_path(x)) for x in path_list
     ]
 
-    for path, dt in path_dt_list:
+    for candidate_path, dt in path_dt_list:
         if dt is None:
-            raise Exception("Could not determine date", path)
+            raise Exception("Could not determine date", candidate_path)
 
     path_dt_list.sort(key=lambda x: x[1], reverse=True)
 
@@ -135,9 +135,9 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
         delta = datetime.timedelta(min_compare_age_days)
         appropriate_date = datetime.datetime.now(tz=datetime.UTC) - delta
 
-        for path, dt in path_dt_list:
+        for candidate_path, dt in path_dt_list:
             if dt <= appropriate_date:
-                return path
+                return candidate_path
 
     return path_dt_list[-1][0] if path_dt_list else None
 

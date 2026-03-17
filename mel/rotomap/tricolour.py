@@ -96,7 +96,7 @@ def _yield_tricolours_no_repeats(num_colours):
             if colour1 == colour2:
                 continue
             for colour3 in range(num_colours):
-                if colour1 == colour3 or colour2 == colour3:
+                if colour3 in (colour1, colour2):
                     continue
                 yield (colour1, colour2, colour3)
 
