@@ -308,8 +308,8 @@ def make_dataset(
         total=total_frames * len(augmentations) * len(extra_stem_list)
     ) as pbar:
         for rotomap in rotomaps:
-            for extra_stem in extra_stem_list:
-                for frame in rotomap.yield_frames(extra_stem=extra_stem):
+            for stem in extra_stem_list:
+                for frame in rotomap.yield_frames(extra_stem=stem):
                     for escale, etranslate in augmentations:
                         extend_dataset_by_frame(
                             dataset,
@@ -546,10 +546,10 @@ def get_lower_limb_rotomaps(parts_path):
 def get_subpart_rotomap(parts_path, part, subpart):
     parts = {parts_path / part: [parts_path / part / subpart]}
     all_rotomaps = collections.defaultdict(list)
-    for part, subpart_list in parts.items():
-        for subpart in subpart_list:
-            for p in sorted(subpart.iterdir()):
-                all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
+    for part_path, subpart_list in parts.items():
+        for subpart_path in subpart_list:
+            for p in sorted(subpart_path.iterdir()):
+                all_rotomaps[f"{part_path.stem}/{subpart_path.stem}"].append(
                     mel.rotomap.moles.RotomapDirectory(p)
                 )
     return all_rotomaps
