@@ -32,7 +32,9 @@ def test_merge_in_radiuses_happy(only_merge, error_distance):
 
     """
     radii_sources = [x for x in RADII_SOURCES if x["uuid"] != "7"]
-    result = automark.merge_in_radiuses(TARGETS, radii_sources, error_distance, only_merge=only_merge)
+    result = automark.merge_in_radiuses(
+        TARGETS, radii_sources, error_distance, only_merge=only_merge
+    )
 
     assert len(result) == 3
     assert result[0]["uuid"] == "1"
@@ -53,7 +55,9 @@ def test_merge_in_radiuses_happy_merge_extra(only_merge, error_distance):
     It is either included or not included in the result, depending on only_merge.
 
     """
-    result = automark.merge_in_radiuses(TARGETS, RADII_SOURCES, error_distance, only_merge=only_merge)
+    result = automark.merge_in_radiuses(
+        TARGETS, RADII_SOURCES, error_distance, only_merge=only_merge
+    )
 
     if only_merge:
         assert len(result) == 3

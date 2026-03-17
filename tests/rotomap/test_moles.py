@@ -386,7 +386,9 @@ class TestMoleListDiff:
         assert diff.missing == {"a"}
 
     def test_ignore_new(self):
-        diff = moles.MoleListDiff({"a"}, {"a", "b"}, ignore_new={"b"}, ignore_missing=set())
+        diff = moles.MoleListDiff(
+            {"a"}, {"a", "b"}, ignore_new={"b"}, ignore_missing=set()
+        )
         assert diff.new == set()
 
     def test_ignore_missing(self):

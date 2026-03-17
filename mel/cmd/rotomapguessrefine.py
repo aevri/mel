@@ -168,7 +168,8 @@ def process_args(args):
         print("Error: No canonical moles found in target image")
         return 1
 
-    # Find non-canonical moles in target that have matching UUIDs with canonical moles in source
+    # Find non-canonical moles in target that have matching UUIDs with
+    # canonical moles in source
     src_canonical_uuids = {m["uuid"] for m in src_canonical_moles}
     tgt_non_canonical_to_refine = [
         m
@@ -197,7 +198,8 @@ def process_args(args):
     try:
         model, feature_dim = mel.lib.dinov2.load_dinov2_model(dino_size)
         print(
-            f"DINOv2 model ({dino_size}) loaded successfully with {feature_dim} feature dimensions"
+            f"DINOv2 model ({dino_size}) loaded successfully"
+            f" with {feature_dim} feature dimensions"
         )
     except RuntimeError as e:
         print(f"Error loading DINOv2 model: {e}")
@@ -236,7 +238,8 @@ def process_args(args):
                 feature_dim,
             )
             print(
-                f"  Extracted contextual features from {context_size}x{context_size} source context"
+                f"  Extracted contextual features from"
+                f" {context_size}x{context_size} source context"
             )
 
             # Save debug image for source context patch

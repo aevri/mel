@@ -27,7 +27,8 @@ def load_dinov2_model(dino_size="base"):
 
     if dino_size not in model_configs:
         raise ValueError(
-            f"Invalid dino_size: {dino_size}. Must be one of {list(model_configs.keys())}"
+            f"Invalid dino_size: {dino_size}."
+            f" Must be one of {list(model_configs.keys())}"
         )
 
     model_name, feature_dim = model_configs[dino_size]
@@ -48,11 +49,14 @@ def load_dinov2_model(dino_size="base"):
 
                 Args:
                     x: Input tensor [batch, channels, height, width]
-                    center_patch_idx: Index of center patch to extract (if None, extract all)
+                    center_patch_idx: Index of center patch to extract
+                        (if None, extract all)
 
                 Returns:
-                    If center_patch_idx is None: All patch features [batch, num_patches, feature_dim]
-                    If center_patch_idx is provided: Center patch features [batch, feature_dim]
+                    If center_patch_idx is None: All patch features
+                        [batch, num_patches, feature_dim]
+                    If center_patch_idx is provided: Center patch features
+                        [batch, feature_dim]
                 """
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
@@ -61,14 +65,16 @@ def load_dinov2_model(dino_size="base"):
                     if hasattr(output, "shape") and len(output.shape) == 3:
                         patch_features.append(output)
 
-                # Register hook on the normalization layer to get contextualized features
+                # Register hook on the normalization layer to get
+                # contextualized features
                 hook = self.model.norm.register_forward_hook(hook_fn)
 
                 try:
                     # Run forward pass to get contextualized features
                     _ = self.model(x)
                     if patch_features:
-                        # patch_features[0] shape: [batch, seq_len, feature_dim] where seq_len = 1 + num_patches
+                        # patch_features[0] shape: [batch, seq_len, feature_dim]
+                        # where seq_len = 1 + num_patches
                         all_tokens = patch_features[0]
                         # Remove CLS token to get just patch tokens
                         patch_tokens = all_tokens[
@@ -192,7 +198,8 @@ def extract_all_contextual_features(
         feature_dim: Feature dimension of the model
 
     Returns:
-        Tensor: All patch features [num_patches, feature_dim] where num_patches = (context_size//14)^2
+        Tensor: All patch features [num_patches, feature_dim]
+            where num_patches = (context_size//14)^2
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -250,7 +257,8 @@ def extract_all_contextual_features(
         expected_patches,
         feature_dim,
     ), (
-        f"Expected shape ({expected_patches}, {feature_dim}), got {all_patch_features.shape}"
+        f"Expected shape ({expected_patches}, {feature_dim}),"
+        f" got {all_patch_features.shape}"
     )
 
     return all_patch_features
@@ -410,7 +418,8 @@ def find_best_contextual_match(
     """Find best match using contextual semantic features.
 
     Args:
-        src_center_features: Contextual features of source mole center patch [feature_dim]
+        src_center_features: Contextual features of source mole center patch
+            [feature_dim]
         tgt_image: Target image
         center_x, center_y: Initial target location
         context_size: Size of context window for feature extraction
@@ -456,7 +465,8 @@ def find_best_contextual_match(
 
         # Compute cosine similarity between source center and all target patches
         # Calculate Euclidean distance between source and target features
-        # Note: We negate the distance to maintain the convention that higher values = better matches
+        # Note: We negate the distance to maintain the convention that
+        # higher values = better matches
         similarities = -torch.cdist(tgt_norm, src_norm.unsqueeze(0)).squeeze(
             1
         )  # [num_patches]
@@ -479,7 +489,8 @@ def find_best_contextual_match(
         best_y = center_y + offset_y
 
         print(
-            f"  Found best match at patch ({patch_row}, {patch_col}) -> pixel ({best_x}, {best_y})"
+            f"  Found best match at patch ({patch_row}, {patch_col})"
+            f" -> pixel ({best_x}, {best_y})"
         )
         print(f"  Similarity: {best_similarity:.3f}")
 
@@ -536,7 +547,8 @@ def extract_patch_features(image, center_x, center_y, patch_size, model, transfo
 
     # Assert expected DINOv2 patch features shape
     assert len(patch_features.shape) == 3, (
-        f"Expected 3D patch features tensor [batch, seq_len, feature_dim], got shape {patch_features.shape}"
+        f"Expected 3D patch features tensor [batch, seq_len, feature_dim],"
+        f" got shape {patch_features.shape}"
     )
     batch_size, seq_len, feature_dim = patch_features.shape
     assert batch_size == 1, f"Expected batch size 1, got {batch_size}"

@@ -71,11 +71,13 @@ def test_benchmark_guess_moles():
                 uuid_short = mole_result["uuid"][:8]
                 if status == "matched":
                     print(
-                        f"  ✓ Mole {uuid_short}: MATCHED at distance {mole_result['distance']:.1f} pixels"
+                        f"  ✓ Mole {uuid_short}: MATCHED at distance"
+                        f" {mole_result['distance']:.1f} pixels"
                     )
                 elif status == "found_far":
                     print(
-                        f"  ✗ Mole {uuid_short}: FOUND but distance {mole_result['distance']:.1f} pixels > 50 pixel threshold"
+                        f"  ✗ Mole {uuid_short}: FOUND but distance"
+                        f" {mole_result['distance']:.1f} pixels > 50 pixel threshold"
                     )
                 else:  # not_found
                     print(f"  ✗ Mole {uuid_short}: NOT FOUND")
@@ -89,10 +91,12 @@ def test_benchmark_guess_moles():
             print(f"  Match rate: {performance_metrics['match_rate']:.2%}")
             if performance_metrics["avg_distance"] != float("inf"):
                 print(
-                    f"  Average distance to canonical: {performance_metrics['avg_distance']:.2f} pixels"
+                    f"  Average distance to canonical:"
+                    f" {performance_metrics['avg_distance']:.2f} pixels"
                 )
                 print(
-                    f"  Max distance to canonical: {performance_metrics['max_distance']:.2f} pixels"
+                    f"  Max distance to canonical:"
+                    f" {performance_metrics['max_distance']:.2f} pixels"
                 )
 
             # Print actual results for easy copy-paste updating
@@ -130,13 +134,17 @@ def test_benchmark_guess_moles():
                 performance_metrics["moles_found"]
                 >= expected_performance_baseline["moles_found"]
             ), (
-                f"Performance regression: found {performance_metrics['moles_found']} moles, expected >= {expected_performance_baseline['moles_found']}"
+                f"Performance regression: found"
+                f" {performance_metrics['moles_found']} moles,"
+                f" expected >= {expected_performance_baseline['moles_found']}"
             )
             assert (
                 performance_metrics["matched_count"]
                 >= expected_performance_baseline["matched_count"]
             ), (
-                f"Performance regression: matched {performance_metrics['matched_count']} moles, expected >= {expected_performance_baseline['matched_count']}"
+                f"Performance regression: matched"
+                f" {performance_metrics['matched_count']} moles,"
+                f" expected >= {expected_performance_baseline['matched_count']}"
             )
 
         finally:
