@@ -15,7 +15,7 @@ import pathlib
 import numpy as np
 import pytest
 
-import mel.rotomap.moles as moles
+from mel.rotomap import moles
 
 # ---------------------------------------------------------------------------
 # Helpers

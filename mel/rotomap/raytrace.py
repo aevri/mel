@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-import mel.lib.vec3 as vec3
+from mel.lib import vec3
 
 # Note that we'll use these prefixes to make things easier to name:
 #
@@ -122,7 +122,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2020, 2026 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
