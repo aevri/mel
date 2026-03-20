@@ -5,7 +5,7 @@
 
 import pytest
 
-import mel.rotomap.automark as automark
+from mel.rotomap import automark
 
 TARGETS = [
     {"uuid": "1", "x": 0, "y": 0},

@@ -125,7 +125,7 @@ def save_debug_search_area(image, center_x, center_y, patch_size, filename):
 def process_args(args):
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
-    import torchvision.transforms as transforms
+    from torchvision import transforms
 
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG

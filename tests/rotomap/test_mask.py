@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
-import mel.rotomap.mask as mask
+from mel.rotomap import mask
 
 # -----------------------------------------------------------------------------
 # path()
