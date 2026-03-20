@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-import mel.lib.vec3 as vec3
+from mel.lib import vec3
 
 
 class TestMake:

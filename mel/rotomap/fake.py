@@ -7,9 +7,9 @@ import cv2
 import numpy as np
 
 import mel.lib.common
-import mel.lib.vec3 as vec3
 import mel.rotomap.moles
 import mel.rotomap.raytrace
+from mel.lib import vec3
 
 # Note that we'll use these prefixes to make things easier to name:
 #
@@ -105,7 +105,7 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2020, 2026 Angelos Evripiotis.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
