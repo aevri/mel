@@ -356,7 +356,8 @@ def setup_parser(parser):
         "--min-patch-distance",
         type=float,
         default=2.0,
-        help="Min distance (in patches) from moles for negative samples (default: 2.0).",
+        help="Min distance (in patches) from moles for negative samples"
+        " (default: 2.0).",
     )
     parser.add_argument(
         "--input-dropout",

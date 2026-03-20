@@ -160,15 +160,22 @@ def test_smoke():
 
         # Test additional non-interactive rotomap commands
         # uuid command returns 1 when no matches found, so expect that
-        expect_returncode(1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files)
+        expect_returncode(
+            1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files
+        )
         expect_ok(
             "mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files",
             *target_json_files
         )
-        expect_ok("mel", "rotomap", "guess-missing",
-                  str(target_image_files[0]), str(target_image_files[1]))
-        expect_ok("mel", "rotomap", "guess-refine", "--max-moles", "1", "--dino-size", "small",
-                  str(target_image_files[0]), str(target_image_files[1]))
+        expect_ok(
+            "mel", "rotomap", "guess-missing",
+            str(target_image_files[0]), str(target_image_files[1]),
+        )
+        expect_ok(
+            "mel", "rotomap", "guess-refine",
+            "--max-moles", "1", "--dino-size", "small",
+            str(target_image_files[0]), str(target_image_files[1]),
+        )
 
         # Test automark3-precalc with smallest model and image size for speed
         rotomap_0_images = list(target_rotomap_0.glob("*.jpg"))

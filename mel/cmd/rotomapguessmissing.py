@@ -63,7 +63,8 @@ def process_args(args):
 
     if not missing_uuids:
         print(
-            "No missing moles to guess - all source canonical moles already present in target"
+            "No missing moles to guess - all source canonical moles"
+            " already present in target"
         )
         return 0
 
@@ -87,7 +88,8 @@ def process_args(args):
             tgt_moles.append(new_mole)
             guessed_count += 1
             print(
-                f"Guessed position for mole {missing_uuid} at ({guessed_pos[0]}, {guessed_pos[1]})"
+                f"Guessed position for mole {missing_uuid}"
+                f" at ({guessed_pos[0]}, {guessed_pos[1]})"
             )
         else:
             print(f"Could not guess position for mole {missing_uuid}")
