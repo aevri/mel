@@ -1,5 +1,8 @@
 """Functions for drawing fake rotomaps using raytracing."""
 
+# Copyright (C) 2016-2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import math
 
 import numpy as np
@@ -49,7 +52,8 @@ def intersect_ray_at_z_pos(pos, dir_, z):
 
 def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     # Roughen the edges a little.
-    radius += np.random.random((vec3.count(d_ray), 1)) * 0.01
+    rng = np.random.default_rng()
+    radius += rng.random((vec3.count(d_ray), 1)) * 0.01
 
     did_intersect, p_flat_intersection = intersect_ray_sphere(
         vec3_flat(p_ray),

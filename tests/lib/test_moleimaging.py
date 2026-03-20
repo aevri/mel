@@ -1,5 +1,8 @@
 """Tests for mel.lib.moleimaging module."""
 
+# Copyright (C) 2016-2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+
 import math
 
 import cv2
@@ -221,7 +224,8 @@ def test_find_mole_contour_large_overrides_distance():
 
 
 def test_calc_hist_sums_to_100():
-    image = np.random.randint(0, 256, (100, 100, 3), dtype=np.uint8)
+    rng = np.random.default_rng()
+    image = rng.integers(0, 256, (100, 100, 3), dtype=np.uint8)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     hist = mel.lib.moleimaging.calc_hist(hsv, 1, None)
     assert len(hist) == 8
