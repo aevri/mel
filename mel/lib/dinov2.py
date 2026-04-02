@@ -44,8 +44,7 @@ def load_dinov2_model(dino_size="base"):
                 self.model.eval()
 
             def extract_contextual_patch_features(self, x, center_patch_idx=None):
-                """Extract patch features with full context for semantic
-                matching.
+                """Extract contextual patch features.
 
                 Args:
                     x: Input tensor [batch, channels, height, width]
@@ -273,8 +272,7 @@ def save_contextual_similarity_heatmap(
     patches_per_side,
     filename,
 ):
-    """Save a heatmap showing cosine similarities for each patch in the context
-    window.
+    """Save a heatmap of cosine similarities for each context window patch.
 
     Args:
         image: Target image
@@ -514,8 +512,7 @@ def find_best_contextual_match(
 
 
 def extract_patch_features(image, center_x, center_y, patch_size, model, transform):
-    """Extract DINOv2 CLS token from a patch centered at (center_x,
-    center_y)."""
+    """Extract DINOv2 CLS token from a patch at the given center."""
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch

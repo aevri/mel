@@ -1,10 +1,10 @@
-"""Refine mole positions using template matching (normalized cross-
-correlation).
+"""Refine mole positions using template matching.
 
-Crops a template around each canonical mole in the reference image, then
-slides it over a local search region in the target image to find the
-best match. This is a classical CV approach that gives sub-pixel
-precision without requiring a neural network.
+Normalized cross-correlation is used to find the best match. Crops a
+template around each canonical mole in the reference image, then slides
+it over a local search region in the target image to find the best
+match. This is a classical CV approach that gives sub-pixel precision
+without requiring a neural network.
 """
 
 import argparse
