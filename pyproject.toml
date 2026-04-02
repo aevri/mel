@@ -107,7 +107,8 @@ target-version = "py313"
 # - PLR04: pylint refactor (use from-import for module aliasing)
 # - BLE: flake8-blind-except (prevent catching blind Exception)
 # - E501: pycodestyle line-too-long (enforce maximum line length)
-extend-select = ["A", "B", "BLE", "C4", "E501", "FURB", "N", "NPY", "PLE", "PLW", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+# - TRY3: tryceratops (return in try/raise in try-except best practices)
+extend-select = ["A", "B", "BLE", "C4", "E501", "FURB", "N", "NPY", "PLE", "PLW", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT", "TRY3"]
 
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
