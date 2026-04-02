@@ -1,8 +1,5 @@
 """Functions for drawing fake rotomaps using raytracing."""
 
-# Copyright (C) 2016-2026 Angelos Evripiotis.
-# Generated with assistance from Claude Code.
-
 import math
 
 import numpy as np
@@ -127,6 +124,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

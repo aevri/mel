@@ -1,8 +1,5 @@
 """Tests for mel.lib.moleimaging module."""
 
-# Copyright (C) 2016-2026 Angelos Evripiotis.
-# Generated with assistance from Claude Code.
-
 import math
 
 import cv2
