@@ -125,7 +125,10 @@ def make_argparse_rotomap_directory(path):
 
 def make_argparse_image_moles(path):
     """Use in the 'type=' parameter to add_argument()."""
-    path = pathlib.Path(path)
+    try:
+        path = pathlib.Path(path)
+    except (TypeError, ValueError) as e:
+        raise argparse.ArgumentTypeError(str(e)) from e
     if not path.exists():
         raise argparse.ArgumentTypeError(f"'{path}' does not exist.")
     try:
