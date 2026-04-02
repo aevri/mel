@@ -63,11 +63,8 @@ def load_image(image_path):
     flags = cv2.IMREAD_COLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
-    except Exception as e:
-        raise OSError(f"Error handling image at: {image_path}") from e
-    if original_image is None:
-        raise OSError(f"File not recognized by opencv: {image_path}")
-    try:
+        if original_image is None:
+            raise OSError(f"File not recognized by opencv: {image_path}")  # noqa: TRY301
         original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     except Exception as e:
         raise OSError(f"Error handling image at: {image_path}") from e

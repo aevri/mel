@@ -506,11 +506,11 @@ def find_best_contextual_match(
                 f"{uuid}_tgt_heatmap.jpg",
             )
 
+        return best_x, best_y, best_similarity  # noqa: TRY300
+
     except RuntimeError as e:
         print(f"  Error in contextual matching: {e}")
         return center_x, center_y, -1.0
-    else:
-        return best_x, best_y, best_similarity
 
 
 def extract_patch_features(image, center_x, center_y, patch_size, model, transform):
