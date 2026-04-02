@@ -49,7 +49,8 @@ def intersect_ray_at_z_pos(pos, dir_, z):
 
 def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     # Roughen the edges a little.
-    radius += np.random.random((vec3.count(d_ray), 1)) * 0.01
+    rng = np.random.default_rng()
+    radius += rng.random((vec3.count(d_ray), 1)) * 0.01
 
     did_intersect, p_flat_intersection = intersect_ray_sphere(
         vec3_flat(p_ray),
@@ -123,6 +124,7 @@ def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
