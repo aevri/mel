@@ -50,5 +50,6 @@
 - Register commands in `mel/cmd/mel.py` by importing module and adding to `COMMANDS["rotomap"]` dict
 
 ## Copyright and Generation
-- In changed files, update copyright notice to include current year.
-- Ensure "Generated with assistance from Claude Code." under copyright line.
+- Copyright and license notices live at the **bottom** of each file, in the existing license block (above the `END-OF-FILE` line). Do **not** add copyright lines near the top of the file.
+- In changed files, update the copyright year range in the bottom license block to include the current year.
+- Ensure "Generated with assistance from Claude Code." appears under the copyright line in the bottom license block.
