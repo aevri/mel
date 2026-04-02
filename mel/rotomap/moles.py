@@ -128,7 +128,7 @@ def make_argparse_image_moles(path):
     try:
         path = pathlib.Path(path)
         if not path.exists():
-            raise ValueError(f"'{path}' does not exist.")  # noqa: TRY301
+            raise ValueError(f"'{path}' does not exist.")
         if path.is_file():
             yield path, load_image_moles(path)
         else:

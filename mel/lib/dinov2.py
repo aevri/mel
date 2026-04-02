@@ -506,7 +506,7 @@ def find_best_contextual_match(
                 f"{uuid}_tgt_heatmap.jpg",
             )
 
-        return best_x, best_y, best_similarity  # noqa: TRY300
+        return best_x, best_y, best_similarity
 
     except RuntimeError as e:
         print(f"  Error in contextual matching: {e}")
