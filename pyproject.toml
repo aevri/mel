@@ -125,6 +125,7 @@ python-version = "3.13"
 possibly-unresolved-reference = "warn"
 unresolved-reference = "error"
 deprecated = "error"
+division-by-zero = "warn"
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2026 Angelos Evripiotis.
