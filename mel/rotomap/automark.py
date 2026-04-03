@@ -27,8 +27,7 @@ def merge_in_radiuses(
     *,
     only_merge: bool,
 ) -> list:
-    """Merge radius values from radius source dictionaries into target
-    dictionaries based on their positions.
+    """Merge radius values from radius source dicts into targets by position.
 
     Args:
         targets (list): A list of dictionaries representing the target objects.

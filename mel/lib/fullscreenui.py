@@ -12,8 +12,7 @@ import mel.lib.ui
 
 
 def _parse_debug_keypresses():
-    """Parse MEL_DEBUG_ENQUEUE_KEYPRESSES environment variable into pygame
-    keys.
+    """Parse MEL_DEBUG_ENQUEUE_KEYPRESSES into pygame keys.
 
     Returns:
         List of pygame key constants, or empty list if not set.

@@ -99,7 +99,6 @@ def load_context_images(path):
 
 def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed):
     """Return the most appropriate image path to compare with, or None."""
-
     # Check for the __last_changed__ file if the --last-changed flag is used
     if use_last_changed:
         last_changed_path = os.path.join(path, "__last_changed__")
