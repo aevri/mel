@@ -114,11 +114,12 @@ target-version = "py313"
 # - D2: pydocstyle (docstring whitespace and formatting rules)
 # - D3: pydocstyle (docstring quoting, use triple double-quotes)
 # - D4: pydocstyle (docstring content: blank lines, argument descriptions)
+# - D104: pydocstyle (require docstrings in public packages / __init__.py)
 # - E: pycodestyle errors (indentation, whitespace, syntax, line length)
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
-extend-select = ["A", "B", "BLE", "C4", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY004", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D104", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY004", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 
