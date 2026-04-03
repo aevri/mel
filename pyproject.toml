@@ -105,6 +105,7 @@ target-version = "py313"
 # - EM101: flake8-errmsg (no string literals in exception constructors, keeps raise lines short in tracebacks)
 # - EM102: flake8-errmsg (no f-strings in exception constructors, keeps raise lines short in tracebacks)
 # - EM103: flake8-errmsg (no .format() in exception constructors, keeps raise lines short in tracebacks)
+# - TRY004: tryceratops (prefer TypeError for invalid type checks)
 # - PLR1: pylint refactor (argument redefinition, comparison merging)
 # - PLR5: pylint refactor (collapsible else/elif blocks)
 # - PLR04: pylint refactor (use from-import for module aliasing)
@@ -115,7 +116,7 @@ target-version = "py313"
 # - E: pycodestyle errors (indentation, whitespace, syntax, line length)
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
-extend-select = ["A", "B", "BLE", "C4", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY004", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 

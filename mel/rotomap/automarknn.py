@@ -115,7 +115,7 @@ class PlModule(pl.LightningModule):
         loss_dict = self.model(x, y)
         if not isinstance(loss_dict, dict):
             msg = f"Expected dict, got: {loss_dict}"
-            raise ValueError(msg)
+            raise TypeError(msg)
         losses = sum(loss for loss in loss_dict.values())
         self.log("train_loss", losses.detach())
         return losses
