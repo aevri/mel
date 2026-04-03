@@ -61,7 +61,8 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
             break
 
     context_image_name_tuple_tuple = _extend_context_image_name_tuple_tuple(
-        path, context_image_name_tuple_tuple
+        path,
+        context_image_name_tuple_tuple,
     )
 
     if should_be_mole_dir:
@@ -81,7 +82,9 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
         for sub in path.iterdir():
             if sub.is_dir():
                 yield from _yield_moles_imp(
-                    sub, refrelpath, context_image_name_tuple_tuple
+                    sub,
+                    refrelpath,
+                    context_image_name_tuple_tuple,
                 )
 
 
@@ -130,7 +133,7 @@ def _list_micro_dir_if_exists(path):
 def calc_micro_datetime(micro_image_name):
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
     return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S").replace(
-        tzinfo=datetime.UTC
+        tzinfo=datetime.UTC,
     )
 
 

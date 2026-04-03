@@ -32,8 +32,8 @@ class Test(unittest.TestCase):
         num_colours = 9
         mapping = list(
             mel.rotomap.tricolour.yield_triband_mapping_in_distinctive_order(
-                num_colours
-            )
+                num_colours,
+            ),
         )
 
         assert len(mapping) == num_colours ** 3

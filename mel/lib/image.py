@@ -73,7 +73,10 @@ def calc_letterbox(width, height, fit_width, fit_height):
 
 def letterbox(image, width, height):
     x, y, new_width, new_height = calc_letterbox(
-        image.shape[1], image.shape[0], width, height
+        image.shape[1],
+        image.shape[0],
+        width,
+        height,
     )
     resized_image = cv2.resize(image, (new_width, new_height))
     letterboxed = mel.lib.common.new_image(height, width)
@@ -113,7 +116,8 @@ def calc_montage_vertical(border_size, *frames):
         ([5, 6], [1, 1], [1, 3])
     """
     geometry = calc_montage_horizontal(
-        border_size, *[list(reversed(f)) for f in frames]
+        border_size,
+        *[list(reversed(f)) for f in frames],
     )
 
     return tuple([g[1], g[0]] for g in geometry)
@@ -176,27 +180,33 @@ def montage_horizontal_inner_border(divider_size, *image_list):
 
 def montage_horizontal(border_size, *image_list):
     geometry = calc_montage_horizontal(
-        border_size, *[list(reversed(i.shape[:2])) for i in image_list]
+        border_size,
+        *[list(reversed(i.shape[:2])) for i in image_list],
     )
 
     size_xy = geometry[0]
     geometry = geometry[1:]
 
     return arrange_images(
-        size_xy[0], size_xy[1], *list(zip(image_list, geometry, strict=False))
+        size_xy[0],
+        size_xy[1],
+        *list(zip(image_list, geometry, strict=False)),
     )
 
 
 def montage_vertical(border_size, *image_list):
     geometry = calc_montage_vertical(
-        border_size, *[list(reversed(i.shape[:2])) for i in image_list]
+        border_size,
+        *[list(reversed(i.shape[:2])) for i in image_list],
     )
 
     size_xy = geometry[0]
     geometry = geometry[1:]
 
     return arrange_images(
-        size_xy[0], size_xy[1], *list(zip(image_list, geometry, strict=False))
+        size_xy[0],
+        size_xy[1],
+        *list(zip(image_list, geometry, strict=False)),
     )
 
 
@@ -216,7 +226,11 @@ def measure_text_height_width(text, font_face=None, font_scale=None, thickness=N
 
 
 def render_text_as_image(
-    text, font_face=None, font_scale=None, thickness=None, color=None
+    text,
+    font_face=None,
+    font_scale=None,
+    thickness=None,
+    color=None,
 ):
     if font_face is None:
         font_face = cv2.FONT_HERSHEY_DUPLEX
@@ -244,7 +258,9 @@ def calc_centering_offset(centre_xy, dst_size_xy):
 
 def centered_at(image, src_pos, dst_rect):
     dst_selection, src_selection = calc_centered_at_selections(
-        get_image_rect(image), src_pos, dst_rect
+        get_image_rect(image),
+        src_pos,
+        dst_rect,
     )
 
     result = mel.lib.common.new_image(*np.flipud(dst_rect))

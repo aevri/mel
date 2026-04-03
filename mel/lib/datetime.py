@@ -46,7 +46,7 @@ def guess_datetime_from_string(datetime_str):
     for fmt in format_list:
         try:
             return datetime.datetime.strptime(datetime_str, fmt).replace(
-                tzinfo=datetime.UTC
+                tzinfo=datetime.UTC,
             )
         except ValueError:
             pass

@@ -57,7 +57,9 @@ def process_args(args):
 
         # Resize the main image
         resized_image = cv2.resize(
-            image, (target_width, target_height), interpolation=cv2.INTER_CUBIC
+            image,
+            (target_width, target_height),
+            interpolation=cv2.INTER_CUBIC,
         )
         mel.lib.image.save_image(resized_image, image_path)
 

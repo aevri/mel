@@ -88,7 +88,8 @@ def process_args(args):
     pretrained_paths = mel.rotomap.filtermarks.find_pretrained(melroot)
     pretrained_data = mel.rotomap.filtermarks.load_pretrained(pretrained_paths)
     training_data, validation_data = mel.rotomap.filtermarks.split_data(
-        pretrained_data, args.train_proportion
+        pretrained_data,
+        args.train_proportion,
     )
     print(f"Loaded {len(training_data):,} training examples.")
     print(f"Loaded {len(validation_data):,} validation examples.")
@@ -113,8 +114,9 @@ def process_args(args):
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
     with open(metadata_path, "w") as f:
+        weights_version = mel.rotomap.filtermarks.get_model_weights_version()
         metadata = {
-            "model_weights_version": mel.rotomap.filtermarks.get_model_weights_version()
+            "model_weights_version": weights_version,
         }
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")

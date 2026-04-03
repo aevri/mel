@@ -60,7 +60,9 @@ def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     )
 
     p_intersection = intersect_ray_at_z_pos(
-        p_ray, d_ray, vec3.zcol(p_flat_intersection)
+        p_ray,
+        d_ray,
+        vec3.zcol(p_flat_intersection),
     )
 
     return did_intersect, p_intersection

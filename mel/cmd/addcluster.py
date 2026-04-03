@@ -50,7 +50,10 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_pos, detail_mole_pos = mel.lib.common.user_mark_moles(
-        window_name, context_image, detail_image, len(args.moles)
+        window_name,
+        context_image,
+        detail_image,
+        len(args.moles),
     )
 
     # Put a box around moles on context image
@@ -62,10 +65,13 @@ def process_args(args):
 
     # Combine context image with cluster detail image to make montage
     cluster_montage_image = mel.lib.image.montage_horizontal(
-        50, context_image, cluster_detail_image
+        50,
+        context_image,
+        cluster_detail_image,
     )
     cluster_montage_image = mel.lib.common.shrink_to_max_dimension(
-        cluster_montage_image, montage_size
+        cluster_montage_image,
+        montage_size,
     )
 
     # Let user review montage
@@ -77,7 +83,8 @@ def process_args(args):
         indicated_image = np.copy(detail_image)
         mel.lib.common.indicate_mole(indicated_image, mole)
         indicated_image = mel.lib.common.shrink_to_max_dimension(
-            indicated_image, mole_size
+            indicated_image,
+            mole_size,
         )
         mel.lib.common.user_review_image(window_name, indicated_image)
         mole_images.append(indicated_image)

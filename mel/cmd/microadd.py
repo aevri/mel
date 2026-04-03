@@ -194,7 +194,9 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
     import pygame
 
     comparison_image_data = load_comparison_image(
-        mole_path, min_compare_age_days, use_last_changed
+        mole_path,
+        min_compare_age_days,
+        use_last_changed,
     )
 
     comparison_image = None
@@ -285,7 +287,9 @@ def capture(cap, display, capindex, mole_acquirer):
     frame = None
 
     for frame, key in mel.lib.fullscreenui.yield_frames_keys(
-        cap, display.inner_display, error_key=pygame.K_a
+        cap,
+        display.inner_display,
+        error_key=pygame.K_a,
     ):
         if key == pygame.K_c:
             print("Force capturing frame.")
@@ -296,7 +300,8 @@ def capture(cap, display, capindex, mole_acquirer):
         _, stats = mel.lib.moleimaging.find_mole(frame)
         asys_image = np.copy(frame)
         is_aligned, centre, rotation = mel.lib.moleimaging.annotate_image(
-            asys_image, is_rot_sensitive=False
+            asys_image,
+            is_rot_sensitive=False,
         )
 
         mole_acquirer.update(stats)

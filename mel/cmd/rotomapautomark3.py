@@ -244,12 +244,16 @@ def _train_classifier(
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=0.001, weight_decay=weight_decay
+        model.parameters(),
+        lr=0.001,
+        weight_decay=weight_decay,
     )
     # OneCycleLR with max_lr=0.01: higher values (e.g. 0.03) cause training
     # instability with large loss spikes around the warmup peak.
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer, max_lr=0.01, total_steps=epochs
+        optimizer,
+        max_lr=0.01,
+        total_steps=epochs,
     )
 
     model.train()
@@ -267,7 +271,7 @@ def _train_classifier(
                 accuracy = (predictions == labels).float().mean().item()
                 print(
                     f"    Epoch {epoch + 1}/{epochs}: loss={loss.item():.4f}, "
-                    f"accuracy={accuracy:.4f}"
+                    f"accuracy={accuracy:.4f}",
                 )
 
     model.eval()
@@ -402,7 +406,7 @@ def process_args(args):
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
         print(
             f"Error: --image-size must be divisible by "
-            f"{mel.lib.dinov3.PATCH_SIZE}, got {image_size}"
+            f"{mel.lib.dinov3.PATCH_SIZE}, got {image_size}",
         )
         return 1
 
@@ -427,7 +431,7 @@ def process_args(args):
     if verbose:
         print(
             f"Found {len(all_canonical_uuids)} unique canonical moles "
-            f"across {len(ref_moles_by_path)} reference images"
+            f"across {len(ref_moles_by_path)} reference images",
         )
 
     # Create UUID to class mapping (class 0 = no mole, 1..N = mole UUIDs)
@@ -438,14 +442,17 @@ def process_args(args):
     if verbose:
         print(
             f"Training classifier with {num_classes} classes "
-            f"({len(uuid_list)} moles + 1 no-mole)"
+            f"({len(uuid_list)} moles + 1 no-mole)",
         )
 
     # Load pre-computed features for all references
     ref_data = {}
     for ref_path in ref_moles_by_path:
         cached = _load_precalc_features(
-            ref_path, dino_size, image_size, verbose=verbose
+            ref_path,
+            dino_size,
+            image_size,
+            verbose=verbose,
         )
         ref_data[ref_path] = {
             "features": cached["features"],
@@ -457,7 +464,7 @@ def process_args(args):
             print(
                 f"Loaded reference features for {ref_path}: "
                 f"{cached['features'].shape[0]} patches, "
-                f"{_tensor_size_mb(cached['features']):.1f} MB"
+                f"{_tensor_size_mb(cached['features']):.1f} MB",
             )
 
     # Collect training data
@@ -494,7 +501,8 @@ def process_args(args):
         # Load target moles
         try:
             tgt_moles = mel.rotomap.moles.load_image_moles(
-                tgt_path, extra_stem=extra_stem
+                tgt_path,
+                extra_stem=extra_stem,
             )
         except (ValueError, OSError) as e:
             print(f"Error loading target moles from {tgt_path}: {e}")
@@ -508,7 +516,7 @@ def process_args(args):
             if verbose:
                 print(
                     "  No missing moles - all reference canonical moles "
-                    "already present in target"
+                    "already present in target",
                 )
             continue
 
@@ -517,7 +525,10 @@ def process_args(args):
 
         # Load pre-computed target features
         cached = _load_precalc_features(
-            tgt_path, dino_size, image_size, verbose=verbose
+            tgt_path,
+            dino_size,
+            image_size,
+            verbose=verbose,
         )
         target_features = cached["features"]
         tgt_scale_x = cached["scale_x"]
@@ -526,7 +537,7 @@ def process_args(args):
         if verbose >= 2:
             print(
                 f"  Loaded target features: {target_features.shape[0]} "
-                f"patches, {_tensor_size_mb(target_features):.1f} MB"
+                f"patches, {_tensor_size_mb(target_features):.1f} MB",
             )
 
         # Run classifier on all target patches
@@ -546,14 +557,14 @@ def process_args(args):
             if verbose >= 2:
                 print(
                     f"  Mole {missing_uuid}: best patch {best_patch_idx} "
-                    f"with confidence {confidence:.4f}"
+                    f"with confidence {confidence:.4f}",
                 )
 
             if confidence < min_confidence:
                 if verbose >= 2:
                     print(
                         f"    Skipping: confidence {confidence:.4f} "
-                        f"below threshold {min_confidence}"
+                        f"below threshold {min_confidence}",
                     )
                 continue
 
@@ -577,13 +588,15 @@ def process_args(args):
                 action = "Would add" if dry_run else "Added"
                 print(
                     f"  {action} mole {missing_uuid} at ({final_x}, {final_y}) "
-                    f"[confidence: {confidence:.4f}]"
+                    f"[confidence: {confidence:.4f}]",
                 )
 
         if matched_count > 0 and not dry_run:
             try:
                 mel.rotomap.moles.save_image_moles(
-                    tgt_moles, str(tgt_path), extra_stem=extra_stem
+                    tgt_moles,
+                    str(tgt_path),
+                    extra_stem=extra_stem,
                 )
                 if verbose:
                     print(f"  Saved {matched_count} moles to {tgt_path}")

@@ -5,7 +5,9 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        "JSON_FILE", nargs="+", help="A list of paths to image json files."
+        "JSON_FILE",
+        nargs="+",
+        help="A list of paths to image json files.",
     )
 
 

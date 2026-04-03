@@ -174,7 +174,7 @@ def process_args(args):
     if search_size <= template_size:
         print(
             f"Error: --search-size ({search_size}) must be larger "
-            f"than --template-size ({template_size})"
+            f"than --template-size ({template_size})",
         )
         return 1
 
@@ -259,7 +259,7 @@ def process_args(args):
     if verbose:
         print(
             f"Loaded {len(ref_paths)} ref, {len(tgt_paths)} target images; "
-            f"{len(templates_by_uuid)} templates"
+            f"{len(templates_by_uuid)} templates",
         )
 
     # Process each target image
@@ -270,7 +270,8 @@ def process_args(args):
         # Load target moles
         try:
             tgt_moles = mel.rotomap.moles.load_image_moles(
-                tgt_path, extra_stem=extra_stem
+                tgt_path,
+                extra_stem=extra_stem,
             )
         except (ValueError, OSError) as e:
             print(f"Error loading target moles from {tgt_path}: {e}")
@@ -356,13 +357,15 @@ def process_args(args):
                 f"  Refined {refined_count}/{len(non_canonical)} "
                 f"(unchanged={skipped_unchanged}, "
                 f"edge={skipped_edge}, "
-                f"low_score={skipped_score})"
+                f"low_score={skipped_score})",
             )
 
         if refined_count > 0 and not dry_run:
             try:
                 mel.rotomap.moles.save_image_moles(
-                    tgt_moles, str(tgt_path), extra_stem=extra_stem
+                    tgt_moles,
+                    str(tgt_path),
+                    extra_stem=extra_stem,
                 )
             except OSError as e:
                 print(f"Error saving moles to {tgt_path}: {e}")

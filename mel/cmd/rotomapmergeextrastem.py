@@ -9,7 +9,9 @@ import mel.rotomap.moles
 def setup_parser(parser):
     parser.add_argument("EXTRA_STEM", help="The 'extra stem' namespace to merge to.")
     parser.add_argument(
-        "IMAGES", nargs="+", help="A list of paths to images to automark."
+        "IMAGES",
+        nargs="+",
+        help="A list of paths to images to automark.",
     )
     parser.add_argument(
         "--verbose",

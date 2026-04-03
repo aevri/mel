@@ -12,7 +12,9 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        "TARGET", nargs="+", help="Paths to images to calculate the space of."
+        "TARGET",
+        nargs="+",
+        help="Paths to images to calculate the space of.",
     )
     parser.add_argument(
         "--verbose",
@@ -37,7 +39,9 @@ def process_args(args):
 
         try:
             mel.rotomap.moles.validate_ellipse_mask(
-                ellipse, mask.shape[1], mask.shape[0]
+                ellipse,
+                mask.shape[1],
+                mask.shape[0],
             )
         except ValueError as e:
             msg = f"Bad data from '{path}'."

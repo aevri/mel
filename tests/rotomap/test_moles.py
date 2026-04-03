@@ -126,7 +126,7 @@ class TestImageMolesRoundTrip:
                 "y": 2.3,
                 "uuid": "abc",
                 moles.KEY_IS_CONFIRMED: True,
-            }
+            },
         ]
         _write_json(pathlib.Path(str(img) + ".json"), data)
         loaded = moles.load_image_moles(img)
@@ -151,7 +151,7 @@ class TestImageMolesRoundTrip:
                 "y": 0,
                 "uuid": None,
                 moles.KEY_IS_CONFIRMED: True,
-            }
+            },
         ]
         _write_json(pathlib.Path(str(img) + ".json"), data)
         with pytest.raises(Exception, match="UUID cannot be None"):
@@ -387,13 +387,13 @@ class TestMoleListDiff:
 
     def test_ignore_new(self):
         diff = moles.MoleListDiff(
-            {"a"}, {"a", "b"}, ignore_new={"b"}, ignore_missing=set()
+            {"a"}, {"a", "b"}, ignore_new={"b"}, ignore_missing=set(),
         )
         assert diff.new == set()
 
     def test_ignore_missing(self):
         diff = moles.MoleListDiff(
-            {"a", "b"}, {"a"}, ignore_new=set(), ignore_missing={"b"}
+            {"a", "b"}, {"a"}, ignore_new=set(), ignore_missing={"b"},
         )
         assert diff.missing == set()
 

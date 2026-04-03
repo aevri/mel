@@ -69,7 +69,7 @@ def process_args(args):
     target_uuids = target_rotomap.calc_uuids()
 
     uuid_to_rotomaps_imagepos_list = collections.defaultdict(
-        lambda: collections.defaultdict(list)
+        lambda: collections.defaultdict(list),
     )
 
     for rotomap in args.ROTOMAP:
@@ -143,7 +143,10 @@ def process_args(args):
 
 
 def _make_on_keydown(
-    display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
+    display,
+    uuid_order,
+    target_rotomap,
+    uuid_to_rotomaps_imagepos_list,
 ):
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -257,7 +260,7 @@ class ImageCompareDisplay:
                 os.path.relpath(
                     os.path.abspath(self._image_path),
                     start=self._melroot,
-                )
+                ),
             )
             + ":"
             + self._uuid,
@@ -371,14 +374,16 @@ class ImageCompareDisplay:
         nearest_common_uuid = min(
             common_uuids,
             key=lambda u: mel.lib.math.distance_sq_2d(
-                left_posinfo.uuid_points[u], left_target_pos
+                left_posinfo.uuid_points[u],
+                left_target_pos,
             ),
         )
 
         left_dist = math.sqrt(
             mel.lib.math.distance_sq_2d(
-                left_posinfo.uuid_points[nearest_common_uuid], left_target_pos
-            )
+                left_posinfo.uuid_points[nearest_common_uuid],
+                left_target_pos,
+            ),
         )
 
         right_target_pos = next(
@@ -391,17 +396,17 @@ class ImageCompareDisplay:
             mel.lib.math.distance_sq_2d(
                 right_posinfo.uuid_points[nearest_common_uuid],
                 right_target_pos,
-            )
+            ),
         )
 
         self._zooms[self._indices[0]] = right_dist / left_dist
         self._zooms[self._indices[1]] = 1.0
 
         left_angle = mel.lib.math.angle(
-            left_posinfo.uuid_points[nearest_common_uuid] - left_target_pos
+            left_posinfo.uuid_points[nearest_common_uuid] - left_target_pos,
         )
         right_angle = mel.lib.math.angle(
-            right_posinfo.uuid_points[nearest_common_uuid] - right_target_pos
+            right_posinfo.uuid_points[nearest_common_uuid] - right_target_pos,
         )
 
         self._rotations[self._indices[0]] = right_angle - left_angle
@@ -459,7 +464,12 @@ def captioned_mole_image(
         points = tuple(tuple(p) for p in uuid_points.values())
 
     image, caption_shape = _cached_captioned_mole_image(
-        str(path), tuple(pos), zoom, tuple(size), rotation_degs, points
+        str(path),
+        tuple(pos),
+        zoom,
+        tuple(size),
+        rotation_degs,
+        points,
     )
 
     if should_draw_crosshairs:

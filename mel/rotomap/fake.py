@@ -53,7 +53,10 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
     d_ray = vec3.normalized(vec3.make_from_columns(x, y, z))
 
     hit, p_hit = mel.rotomap.raytrace.intersect_ray_cylinder(
-        p_ray, d_ray, p_cyl, m_cyl_radius
+        p_ray,
+        d_ray,
+        p_cyl,
+        m_cyl_radius,
     )
     hit = np.squeeze(hit)
 
@@ -79,7 +82,10 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
         mole_y_pos = m["y_offset"]
         mole_rot = m["longitude_rads"] + rot_offset_rads
         p_mole = mel.rotomap.raytrace.cylinder_mole_pos(
-            p_cyl, m_cyl_radius, mole_y_pos, mole_rot
+            p_cyl,
+            m_cyl_radius,
+            mole_y_pos,
+            mole_rot,
         )
         d_mole_to_eye = vec3.normalized(p_ray - p_mole)
         p_screen = mel.rotomap.raytrace.intersect_ray_at_z_pos(p_mole, d_mole_to_eye, 0)
@@ -94,7 +100,7 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
         if vec3.mag_sq(p_hit - p_mole) < 0.001:
             image_x = int((vec3.xval(p_screen) * image_width * 0.5) + image_width // 2)
             image_y = int(
-                (vec3.yval(p_screen) * image_width * -0.5) + image_height // 2
+                (vec3.yval(p_screen) * image_width * -0.5) + image_height // 2,
             )
             mel.rotomap.moles.add_mole(visible_moles, image_x, image_y, m["uuid"])
 

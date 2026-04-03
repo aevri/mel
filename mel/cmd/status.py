@@ -419,7 +419,8 @@ def make_rotomap_list(path, notices):
         if rotomap_path.is_dir():
             try:
                 datetime.datetime.strptime(  # noqa: DTZ007
-                    rotomap_path.name[:10], "%Y_%m_%d"
+                    rotomap_path.name[:10],
+                    "%Y_%m_%d",
                 )
             except ValueError:
                 notices.append(InvalidDateError(rotomap_path))
@@ -458,18 +459,24 @@ def check_rotomap_list(notices, rotomap_list):
     new_uuids = uuids_from_dir(newest)
 
     ignore_new = mel.rotomap.moles.load_potential_set_file(
-        newest.path, mel.rotomap.moles.IGNORE_NEW_FILENAME
+        newest.path,
+        mel.rotomap.moles.IGNORE_NEW_FILENAME,
     )
     ignore_missing = mel.rotomap.moles.load_potential_set_file(
-        newest.path, mel.rotomap.moles.IGNORE_MISSING_FILENAME
+        newest.path,
+        mel.rotomap.moles.IGNORE_MISSING_FILENAME,
     )
 
     ignore_missing |= mel.rotomap.moles.load_potential_set_file(
-        newest.path, mel.rotomap.moles.IGNORE_MISSING_CARRYFORWARD_FILENAME
+        newest.path,
+        mel.rotomap.moles.IGNORE_MISSING_CARRYFORWARD_FILENAME,
     )
 
     diff = mel.rotomap.moles.MoleListDiff(
-        old_uuids, new_uuids, ignore_new, ignore_missing
+        old_uuids,
+        new_uuids,
+        ignore_new,
+        ignore_missing,
     )
 
     if diff.new:
@@ -538,7 +545,8 @@ def check_newest_rotomap(notices, rotomap):
     changed = RotomapLesionChangedAlert(rotomap.path)
 
     ignore_new = mel.rotomap.moles.load_potential_set_file(
-        rotomap.path, mel.rotomap.moles.IGNORE_NEW_FILENAME
+        rotomap.path,
+        mel.rotomap.moles.IGNORE_NEW_FILENAME,
     )
 
     uuids = rotomap.calc_uuids()
@@ -549,7 +557,8 @@ def check_newest_rotomap(notices, rotomap):
     }
 
     ignore_changed = mel.rotomap.moles.load_potential_set_file(
-        rotomap.path, mel.rotomap.moles.IGNORE_CHANGED_FILENAME
+        rotomap.path,
+        mel.rotomap.moles.IGNORE_CHANGED_FILENAME,
     )
 
     for u in uuids:
@@ -602,13 +611,13 @@ def check_micro(path, notices):
                             changed_path = mel.micro.fs.Names.CHANGED
                             if (mole.path / changed_path).exists():
                                 notices.append(
-                                    MicroLesionChangedAlert(mole.path, mole.id)
+                                    MicroLesionChangedAlert(mole.path, mole.id),
                                 )
                             if mole.id is None:
                                 notices.append(
                                     MicroMissingIdInfo(
-                                        mole.path / mel.micro.fs.Names.ID
-                                    )
+                                        mole.path / mel.micro.fs.Names.ID,
+                                    ),
                                 )
                     else:
                         notices.append(UnexpectedFileInfo(minor_part))

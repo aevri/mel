@@ -11,7 +11,9 @@ import mel.lib.moleimaging
 
 def setup_parser(parser):
     parser.add_argument(
-        "PATH", type=str, help="Path to the mole to compare images from."
+        "PATH",
+        type=str,
+        help="Path to the mole to compare images from.",
     )
 
 
@@ -30,7 +32,9 @@ def get_comparison_images(path):
             msg = f"Failed to load file: {image_path}"
             raise ValueError(msg)
         images[i] = mel.lib.image.montage_vertical(
-            10, img, mel.lib.image.render_text_as_image(names[i])
+            10,
+            img,
+            mel.lib.image.render_text_as_image(names[i]),
         )[:]
 
     return images

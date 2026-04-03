@@ -7,7 +7,9 @@ import mel.rotomap.moles
 def setup_parser(parser):
     parser.add_argument("EXTRA_STEM", help="The 'extra stem' namespace to merge to.")
     parser.add_argument(
-        "IMAGES", nargs="+", help="A list of paths to images to automark."
+        "IMAGES",
+        nargs="+",
+        help="A list of paths to images to automark.",
     )
     parser.add_argument(
         "--verbose",
@@ -53,7 +55,9 @@ def process_args(args):
             _missing_uuids,
             added_uuids,
         ) = mel.rotomap.automark.match_moles_by_pos(
-            from_moles, to_moles, args.error_distance
+            from_moles,
+            to_moles,
+            args.error_distance,
         )
         if args.verbose:
             print(

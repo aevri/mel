@@ -33,7 +33,9 @@ def main():
     _setup_parser_for_module(subparsers, mel.cmddebug.benchautomark, "bench-automark")
     _setup_parser_for_module(subparsers, mel.cmddebug.genrepo, "gen-repo")
     _setup_parser_for_module(
-        subparsers, mel.cmddebug.rendervaluefield, "render-valuefield"
+        subparsers,
+        mel.cmddebug.rendervaluefield,
+        "render-valuefield",
     )
 
     args = parser.parse_args()

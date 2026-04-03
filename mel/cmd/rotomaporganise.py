@@ -10,7 +10,9 @@ import mel.lib.fullscreenui
 
 def setup_parser(parser):
     parser.add_argument(
-        "IMAGES", nargs="+", help="A list of paths to images sets or images."
+        "IMAGES",
+        nargs="+",
+        help="A list of paths to images sets or images.",
     )
 
 
@@ -31,7 +33,9 @@ def process_args(args):
         mel.lib.fullscreenui.fullscreen_context() as screen,
     ):
         display = OrganiserDisplay(
-            logger, screen, mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES)
+            logger,
+            screen,
+            mel.lib.fs.expand_dirs_to_jpegs(args.IMAGES),
         )
 
         display.reset_logger()

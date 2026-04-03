@@ -33,7 +33,8 @@ def process_args(_args):
     for row in range(height):
         for col in range(width):
             value, error = mel.rotomap.relate.pick_value_from_field(
-                np.array((col, row)), point_values
+                np.array((col, row)),
+                point_values,
             )
             image[row, col, :] = (value[0], value[1], error)
 

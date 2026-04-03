@@ -97,11 +97,15 @@ def main():
     top_subparsers = parser.add_subparsers()
 
     micro_parser = top_subparsers.add_parser(
-        "micro", help="Work with microscope images.", aliases=["m"]
+        "micro",
+        help="Work with microscope images.",
+        aliases=["m"],
     )
 
     rotomap_parser = top_subparsers.add_parser(
-        "rotomap", help="Work with rotomap images.", aliases=["r", "roto"]
+        "rotomap",
+        help="Work with rotomap images.",
+        aliases=["r", "roto"],
     )
 
     micro_subparsers = micro_parser.add_subparsers()

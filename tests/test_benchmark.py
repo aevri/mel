@@ -50,18 +50,18 @@ def test_benchmark_guess_moles():
         try:
             # Run mel rotomap guess-missing
             expect_ok(
-                "mel", "rotomap", "guess-missing", str(source_image), str(target_image)
+                "mel", "rotomap", "guess-missing", str(source_image), str(target_image),
             )
 
             # Run mel rotomap guess-refine
             expect_ok(
-                "mel", "rotomap", "guess-refine", str(source_image), str(target_image)
+                "mel", "rotomap", "guess-refine", str(source_image), str(target_image),
             )
 
             # Read results and measure performance
             result_moles = read_moles(target_json)
             performance_metrics = calculate_performance_metrics(
-                removed_moles, result_moles
+                removed_moles, result_moles,
             )
 
             # Print detailed per-mole results
@@ -72,12 +72,12 @@ def test_benchmark_guess_moles():
                 if status == "matched":
                     print(
                         f"  ✓ Mole {uuid_short}: MATCHED at distance"
-                        f" {mole_result['distance']:.1f} pixels"
+                        f" {mole_result['distance']:.1f} pixels",
                     )
                 elif status == "found_far":
                     print(
                         f"  ✗ Mole {uuid_short}: FOUND but distance"
-                        f" {mole_result['distance']:.1f} pixels > 50 pixel threshold"
+                        f" {mole_result['distance']:.1f} pixels > 50 pixel threshold",
                     )
                 else:  # not_found
                     print(f"  ✗ Mole {uuid_short}: NOT FOUND")
@@ -86,17 +86,17 @@ def test_benchmark_guess_moles():
             print("\nBenchmark Results:")
             print(f"  Original moles removed: {len(removed_moles)}")
             print(
-                f"  Moles found by guess commands: {performance_metrics['moles_found']}"
+                f"  Moles found by guess commands: {performance_metrics['moles_found']}",
             )
             print(f"  Match rate: {performance_metrics['match_rate']:.2%}")
             if performance_metrics["avg_distance"] != float("inf"):
                 print(
                     f"  Average distance to canonical:"
-                    f" {performance_metrics['avg_distance']:.2f} pixels"
+                    f" {performance_metrics['avg_distance']:.2f} pixels",
                 )
                 print(
                     f"  Max distance to canonical:"
-                    f" {performance_metrics['max_distance']:.2f} pixels"
+                    f" {performance_metrics['max_distance']:.2f} pixels",
                 )
 
             # Print actual results for easy copy-paste updating
@@ -199,7 +199,7 @@ def calculate_performance_metrics(removed_moles: list, result_moles: list) -> di
             found_mole = result_moles_by_uuid[removed_uuid]
             distance = math.sqrt(
                 (found_mole["x"] - canonical_x) ** 2
-                + (found_mole["y"] - canonical_y) ** 2
+                + (found_mole["y"] - canonical_y) ** 2,
             )
             distances.append(distance)
             found_count += 1
@@ -208,15 +208,15 @@ def calculate_performance_metrics(removed_moles: list, result_moles: list) -> di
             if distance <= 50:
                 matched_count += 1
                 mole_results.append(
-                    {"uuid": removed_uuid, "status": "matched", "distance": distance}
+                    {"uuid": removed_uuid, "status": "matched", "distance": distance},
                 )
             else:
                 mole_results.append(
-                    {"uuid": removed_uuid, "status": "found_far", "distance": distance}
+                    {"uuid": removed_uuid, "status": "found_far", "distance": distance},
                 )
         else:
             mole_results.append(
-                {"uuid": removed_uuid, "status": "not_found", "distance": None}
+                {"uuid": removed_uuid, "status": "not_found", "distance": None},
             )
             distances.append(float("inf"))
 

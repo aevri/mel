@@ -103,7 +103,7 @@ def process_args(args):
     if image_size % mel.lib.dinov3.PATCH_SIZE != 0:
         print(
             f"Error: --image-size must be divisible by "
-            f"{mel.lib.dinov3.PATCH_SIZE}, got {image_size}"
+            f"{mel.lib.dinov3.PATCH_SIZE}, got {image_size}",
         )
         return 1
 
@@ -147,7 +147,8 @@ def process_args(args):
         # Load and scale image
         image_rgb = _load_image_with_mask(image_path, verbose=verbose)
         scaled_image, (scale_x, scale_y) = mel.lib.dinov3.scale_image_to_fit(
-            image_rgb, image_size
+            image_rgb,
+            image_size,
         )
         scaled_h, scaled_w = scaled_image.shape[:2]
 

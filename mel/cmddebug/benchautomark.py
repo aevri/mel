@@ -70,7 +70,9 @@ def _pair_off_inputs(from_, to):
 def _common_path(from_path, to_path):
     common = []
     for char_from, char_to in zip(
-        reversed(str(from_path)), reversed(str(to_path)), strict=False
+        reversed(str(from_path)),
+        reversed(str(to_path)),
+        strict=False,
     ):
         if char_from != char_to:
             break
@@ -115,7 +117,9 @@ def match_moles(from_moles, to_moles, error_distance):
     to_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(to_moles)
 
     vec_matches, vec_missing, vec_added = _match_pos_vecs(
-        from_pos_vec, to_pos_vec, error_distance
+        from_pos_vec,
+        to_pos_vec,
+        error_distance,
     )
 
     matches = [

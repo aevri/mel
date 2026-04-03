@@ -102,7 +102,12 @@ def make_convnet2d(width, depth, channels_in):
 def make_cnn_layer(in_width, out_width):
     return torch.nn.Sequential(
         torch.nn.Conv2d(
-            in_width, out_width, kernel_size=3, stride=2, padding=1, bias=False
+            in_width,
+            out_width,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            bias=False,
         ),
         torch.nn.BatchNorm2d(out_width),
         torch.nn.ReLU(inplace=True),
@@ -228,7 +233,7 @@ def yield_frame_mole_maps_detail(
             (
                 frame_map[:, top:bottom, left:right],
                 mole_mark[:, top:bottom, left:right],
-            )
+            ),
         )
         yield uuid_, result
 
@@ -306,7 +311,7 @@ def make_dataset(
 
     dataset = collections.defaultdict(list)
     with tqdm.tqdm(
-        total=total_frames * len(augmentations) * len(extra_stem_list)
+        total=total_frames * len(augmentations) * len(extra_stem_list),
     ) as pbar:
         for rotomap in rotomaps:
             for stem in extra_stem_list:
@@ -346,7 +351,8 @@ def make_data(repo_path, data_config, channel_cache=None):
         raise Exception(msg)
 
     train_rotomaps, valid_rotomaps = split_train_valid(
-        rotomaps, data_config["train_proportion"]
+        rotomaps,
+        data_config["train_proportion"],
     )
 
     if data_config["do_augmentation"]:
@@ -424,7 +430,8 @@ def make_data(repo_path, data_config, channel_cache=None):
     )
 
     valid_dataloader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=data_config["batch_size"]
+        valid_dataset,
+        batch_size=data_config["batch_size"],
     )
 
     return (
@@ -538,7 +545,7 @@ def get_lower_limb_rotomaps(parts_path):
         for subpart in subpart_list:
             for p in sorted(subpart.iterdir()):
                 all_rotomaps[f"{part.stem}:{subpart.stem}"].append(
-                    mel.rotomap.moles.RotomapDirectory(p)
+                    mel.rotomap.moles.RotomapDirectory(p),
                 )
     return all_rotomaps
 
@@ -550,7 +557,7 @@ def get_subpart_rotomap(parts_path, part, subpart):
         for subpart_path in subpart_list:
             for p in sorted(subpart_path.iterdir()):
                 all_rotomaps[f"{part_path.stem}/{subpart_path.stem}"].append(
-                    mel.rotomap.moles.RotomapDirectory(p)
+                    mel.rotomap.moles.RotomapDirectory(p),
                 )
     return all_rotomaps
 
@@ -568,7 +575,7 @@ def get_limb_rotomaps(parts_path):
         for subpart in part.iterdir():
             for p in subpart.iterdir():
                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
-                    mel.rotomap.moles.RotomapDirectory(p)
+                    mel.rotomap.moles.RotomapDirectory(p),
                 )
 
     return all_rotomaps
@@ -581,7 +588,7 @@ def get_all_rotomaps(parts_path):
             subpart_paths = sorted(p for p in subpart.iterdir())
             for p in subpart_paths:
                 all_rotomaps[f"{part.stem}/{subpart.stem}"].append(
-                    mel.rotomap.moles.RotomapDirectory(p)
+                    mel.rotomap.moles.RotomapDirectory(p),
                 )
     return all_rotomaps
 
@@ -670,7 +677,7 @@ def extend_dataset_by_frame_data(
     dataset["uuid"].extend(uuid_list)
 
     dataset["pos"].extend(
-        [pos for uuid_, pos in uuid_points if not (drop_none_uuids and uuid_ is None)]
+        [pos for uuid_, pos in uuid_points if not (drop_none_uuids and uuid_ is None)],
     )
 
     dataset["uuid_index"].extend(
@@ -678,12 +685,12 @@ def extend_dataset_by_frame_data(
             (class_to_index[uuid_] if uuid_ is not None else -1)
             for uuid_ in uuid_list
             if not (drop_none_uuids and uuid_ is None)
-        ]
+        ],
     )
 
     # pylint: disable=not-callable
     dataset["mole_count"].extend(
-        [torch.tensor([len(uuid_list)], dtype=torch.float)] * len(uuid_list)
+        [torch.tensor([len(uuid_list)], dtype=torch.float)] * len(uuid_list),
     )
     # pylint: enable=not-callable
 

@@ -75,7 +75,7 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
         title_height, _ = mel.lib.image.measure_text_height_width("abc")
         self._spacer_height = 10
         self._image_rect = self._rect - np.array(
-            (0, title_height + self._spacer_height)
+            (0, title_height + self._spacer_height),
         )
 
         self._title = ""
@@ -548,10 +548,16 @@ class Editor:
     def confirm_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mole_uuid = mel.rotomap.moles.get_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y
+            self.moledata.moles,
+            image_x,
+            image_y,
         )
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical=True
+            self.moledata.moles,
+            image_x,
+            image_y,
+            mole_uuid,
+            is_canonical=True,
         )
         self.moledata.save_moles()
         self.show_current()
@@ -565,7 +571,11 @@ class Editor:
     def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid, *, is_canonical=True):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical
+            self.moledata.moles,
+            image_x,
+            image_y,
+            mole_uuid,
+            is_canonical,
         )
         self.moledata.save_moles()
         self.show_current()
@@ -573,13 +583,17 @@ class Editor:
     def get_mole_uuid(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         return mel.rotomap.moles.get_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y
+            self.moledata.moles,
+            image_x,
+            image_y,
         )
 
     def get_nearest_mole(self, mouse_x, mouse_y):
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         nearest_index = mel.rotomap.moles.nearest_mole_index(
-            self.moledata.moles, image_x, image_y
+            self.moledata.moles,
+            image_x,
+            image_y,
         )
         mole = None
         if nearest_index is not None:

@@ -33,13 +33,16 @@ def process_args(args):
 
         # part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
         frame = mel.rotomap.moles.RotomapFrame(
-            os.path.abspath(target), extra_stem=args.extra_stem
+            os.path.abspath(target),
+            extra_stem=args.extra_stem,
         )
 
         moles = detector.get_moles(frame)
 
         mel.rotomap.moles.save_image_moles(
-            moles, str(frame.path), extra_stem=args.extra_stem
+            moles,
+            str(frame.path),
+            extra_stem=args.extra_stem,
         )
 
 

@@ -53,7 +53,9 @@ def merge_in_radiuses(
 
     """
     match_uuids, _, added_uuids = match_moles_by_pos(
-        targets, radii_sources, error_distance
+        targets,
+        radii_sources,
+        error_distance,
     )
 
     target_to_radii_src = dict(match_uuids)
@@ -117,7 +119,7 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
             (
                 matindex_to_fromindex[from_i],
                 matindex_to_toindex[to_i],
-            )
+            ),
         )
         del matindex_to_fromindex[from_i]
         del matindex_to_toindex[to_i]
@@ -145,7 +147,9 @@ def match_moles_by_pos(from_moles, to_moles, error_distance):
     to_pos_vec = mel.rotomap.moles.mole_list_to_pointvec(to_moles)
 
     vec_matches, vec_missing, vec_added = match_pos_vecs(
-        from_pos_vec, to_pos_vec, error_distance
+        from_pos_vec,
+        to_pos_vec,
+        error_distance,
     )
 
     matches = [

@@ -21,7 +21,9 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        "PATH", help="Where to create this generated repo.", type=pathlib.Path
+        "PATH",
+        help="Where to create this generated repo.",
+        type=pathlib.Path,
     )
     parser.add_argument(
         "--num-rotomaps",

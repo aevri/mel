@@ -189,7 +189,9 @@ def process_args(args):
     if args.wandb:
         wandb_project, wandb_run_name = args.wandb
         trainer_kwargs |= {
-            "logger": pl.loggers.WandbLogger(project=wandb_project, name=wandb_run_name)
+            "logger": pl.loggers.WandbLogger(
+                project=wandb_project, name=wandb_run_name,
+            ),
         }
 
     print("Making data ..")
@@ -218,7 +220,9 @@ def process_args(args):
         init_model_args = old_metadata["model_args"]
 
     pl_model = mel.rotomap.identifynn.LightningModel(
-        init_model_args, not args.no_train_conv, lr=args.lr
+        init_model_args,
+        not args.no_train_conv,
+        lr=args.lr,
     )
 
     metadata = {

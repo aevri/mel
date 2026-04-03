@@ -101,7 +101,10 @@ def process_args(args):
         image, _ = mel.rotomap.filtermarks.open_image_for_classifier(image_path)
         try:
             filtered_moles = mel.rotomap.filtermarks.filter_marks(
-                is_mole, image, moles, args.include_canonical
+                is_mole,
+                image,
+                moles,
+                args.include_canonical,
             )
         except Exception as e:
             msg = f"Error while processing {image_path}"
@@ -113,7 +116,9 @@ def process_args(args):
 
         if not args.dry_run and num_filtered:
             mel.rotomap.moles.save_image_moles(
-                filtered_moles, image_path, extra_stem=args.extra_stem
+                filtered_moles,
+                image_path,
+                extra_stem=args.extra_stem,
             )
     return None
 

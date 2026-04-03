@@ -26,7 +26,7 @@ class MoleDetector:
         self.image_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
-            ]
+            ],
         )
 
     def get_moles(self, frame):
@@ -49,7 +49,8 @@ def make_model(model_path=None):
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = (
         torchvision.models.detection.faster_rcnn.FastRCNNPredictor(
-            in_features, num_classes
+            in_features,
+            num_classes,
         )
     )
     if model_path is not None:
@@ -92,7 +93,9 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
     if not len(poslist):
         return 0, 0
     vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
-        target_poslist, poslist, error_distance
+        target_poslist,
+        poslist,
+        error_distance,
     )
     precision = len(vec_matches) / (len(vec_matches) + len(vec_added))
     recall = len(vec_matches) / (len(vec_matches) + len(vec_missing))
@@ -172,7 +175,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
                 torchvision.transforms.ToTensor(),
                 # torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
                 #                     std=[0.229, 0.224, 0.225])
-            ]
+            ],
         )
 
     def __len__(self):
@@ -218,7 +221,8 @@ def list_train_valid_images(min_session=None):
         "Trunk/Back",
     ]
     session_images = mel.lib.fs.list_rotomap_images_by_session(
-        parts_path, exclude_parts=exclude_parts
+        parts_path,
+        exclude_parts=exclude_parts,
     )
     sessions = sorted(session_images.keys())
     if min_session:

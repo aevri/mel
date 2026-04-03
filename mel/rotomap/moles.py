@@ -345,7 +345,7 @@ def add_mole(moles, x, y, mole_uuid=None):
             "y": y,
             "uuid": mole_uuid,
             KEY_IS_CONFIRMED: is_uuid_canonical,
-        }
+        },
     )
 
 

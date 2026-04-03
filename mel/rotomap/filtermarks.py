@@ -58,7 +58,7 @@ def make_model_and_transform():
     import torchvision
 
     model = torchvision.models.efficientnet_b0(
-        weights=torchvision.models.EfficientNet_B0_Weights.IMAGENET1K_V1
+        weights=torchvision.models.EfficientNet_B0_Weights.IMAGENET1K_V1,
     )
     model.eval()
     num_features = 1280
@@ -66,9 +66,10 @@ def make_model_and_transform():
         [
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(
-                [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+                [0.485, 0.456, 0.406],
+                [0.229, 0.224, 0.225],
             ),
-        ]
+        ],
     )
     return model, num_features, transform
 
@@ -85,7 +86,8 @@ def images_to_features(images, batch_size):
 
     model, num_features, transform = make_model_and_transform()
     batcher = torch.utils.data.DataLoader(
-        [transform(i) for i in images], batch_size=batch_size
+        [transform(i) for i in images],
+        batch_size=batch_size,
     )
 
     with (
@@ -138,8 +140,8 @@ def pretrain_image(image_path, moles, batch_size):
                 "metadata": metadata,
                 "path": image_path,
                 "weights_version": weights_version,
-            }
-        )
+            },
+        ),
     )
 
 
@@ -253,7 +255,9 @@ def prepare_data(pretrained_data, sessions):
         }
         for image_data in image_dicts
         for features, is_mole in zip(
-            image_data["features"], image_data["is_mole"], strict=False
+            image_data["features"],
+            image_data["is_mole"],
+            strict=False,
         )
     ]
 
@@ -321,14 +325,17 @@ def make_model_and_fit(
     import torch
 
     training_batcher = torch.utils.data.DataLoader(
-        training_data, batch_size=batch_size, shuffle=True
+        training_data,
+        batch_size=batch_size,
+        shuffle=True,
     )
 
     for _batch in training_batcher:
         pass
 
     validation_batcher = torch.utils.data.DataLoader(
-        validation_data, batch_size=batch_size
+        validation_data,
+        batch_size=batch_size,
     )
 
     assert len(training_data[0]["features"].shape) == 1
