@@ -1,4 +1,4 @@
-"""Benchmark test for mel rotomap guess-missing and guess-refine commands."""
+"""Benchmark test for mel rotomap automark3 and refine commands."""
 
 import contextlib
 import json
@@ -48,14 +48,41 @@ def test_benchmark_guess_moles():
         save_moles(target_json, remaining_moles)
 
         try:
-            # Run mel rotomap guess-missing
+            # Run mel rotomap automark3-precalc on both images
             expect_ok(
-                "mel", "rotomap", "guess-missing", str(source_image), str(target_image)
+                "mel",
+                "rotomap",
+                "automark3-precalc",
+                "--allow-download",
+                "--dino-size",
+                "small",
+                "--no-pretrained",
+                str(source_image),
+                str(target_image),
             )
 
-            # Run mel rotomap guess-refine
+            # Run mel rotomap automark3
             expect_ok(
-                "mel", "rotomap", "guess-refine", str(source_image), str(target_image)
+                "mel",
+                "rotomap",
+                "automark3",
+                "--reference",
+                str(source_image),
+                "--target",
+                str(target_image),
+                "--dino-size",
+                "small",
+            )
+
+            # Run mel rotomap refine
+            expect_ok(
+                "mel",
+                "rotomap",
+                "refine",
+                "--reference",
+                str(source_image),
+                "--target",
+                str(target_image),
             )
 
             # Read results and measure performance
