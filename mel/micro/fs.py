@@ -1,28 +1,25 @@
 """Operate on a 'mel micro' filesystem."""
 
-import collections
 import datetime
 import pathlib
-
-Mole = collections.namedtuple(
-    "mel_micro_fs__Mole",
-    [
-        "abspath",
-        "path",
-        "refrelpath",
-        "id",
-        "need_assistance",
-        "context_image_name_tuple_tuple",  # The most local paths appear last
-        "micro_image_details",
-        "last_micro",
-        "last_micro_age_days",
-    ],
-)
+import typing
 
 
-MicroImageDetail = collections.namedtuple(
-    "mel_micro_fs__MicroImageDetail", ["name", "datetime"]
-)
+class Mole(typing.NamedTuple):
+    abspath: object
+    path: object
+    refrelpath: object
+    id: object
+    need_assistance: object
+    context_image_name_tuple_tuple: object  # The most local paths appear last
+    micro_image_details: object
+    last_micro: object
+    last_micro_age_days: object
+
+
+class MicroImageDetail(typing.NamedTuple):
+    name: object
+    datetime: object
 
 
 class Names:
