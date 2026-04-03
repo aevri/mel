@@ -12,6 +12,7 @@ def load_dinov2_model(dino_size="base"):
 
     Returns:
         tuple: (model_wrapper, feature_dimension)
+
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -56,6 +57,7 @@ def load_dinov2_model(dino_size="base"):
                         [batch, num_patches, feature_dim]
                     If center_patch_idx is provided: Center patch features
                         [batch, feature_dim]
+
                 """
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
@@ -112,7 +114,8 @@ def extract_contextual_patch_feature(
 
     Args:
         image: Input image array
-        center_x, center_y: Center coordinates of the mole
+        center_x: X coordinate of the mole center
+        center_y: Y coordinate of the mole center
         context_size: Size of context window (e.g., 910 for 910x910)
         model: DINOv2 model wrapper
         transform: Image transform pipeline
@@ -120,6 +123,7 @@ def extract_contextual_patch_feature(
 
     Returns:
         Tensor: Context-aware feature for center patch [feature_dim]
+
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -190,7 +194,8 @@ def extract_all_contextual_features(
 
     Args:
         image: Input image array
-        center_x, center_y: Center coordinates
+        center_x: X coordinate of the center
+        center_y: Y coordinate of the center
         context_size: Size of context window (e.g., 910 for 910x910)
         model: DINOv2 model wrapper
         transform: Image transform pipeline
@@ -199,6 +204,7 @@ def extract_all_contextual_features(
     Returns:
         Tensor: All patch features [num_patches, feature_dim]
             where num_patches = (context_size//14)^2
+
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -276,11 +282,13 @@ def save_contextual_similarity_heatmap(
 
     Args:
         image: Target image
-        center_x, center_y: Center of context window
+        center_x: X coordinate of context window center
+        center_y: Y coordinate of context window center
         context_size: Size of context window (e.g., 910)
         similarities: Tensor of similarities [num_patches] for each patch
         patches_per_side: Number of patches per side (e.g., 65)
         filename: Output filename
+
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -419,7 +427,8 @@ def find_best_contextual_match(
         src_center_features: Contextual features of source mole center patch
             [feature_dim]
         tgt_image: Target image
-        center_x, center_y: Initial target location
+        center_x: X coordinate of initial target location
+        center_y: Y coordinate of initial target location
         context_size: Size of context window for feature extraction
         model: DINOv2 model wrapper
         transform: Image transform pipeline
@@ -429,6 +438,7 @@ def find_best_contextual_match(
 
     Returns:
         tuple: (best_x, best_y, best_similarity)
+
     """
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.

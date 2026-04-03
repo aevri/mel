@@ -88,6 +88,7 @@ class MoleClassifier(torch.nn.Module):
             num_classes: Number of output classes
             hidden_layers: List of hidden layer sizes, e.g., [256] or [512, 256]
             input_dropout: Dropout rate on input features (default: 0.0)
+
         """
         super().__init__()
         layers = []
@@ -126,6 +127,7 @@ def _collect_training_data(
 
     Returns:
         Tuple of (features_tensor, labels_tensor)
+
     """
     positive_features = []
     positive_labels = []
@@ -228,6 +230,7 @@ def _train_classifier(
 
     Returns:
         Trained MoleClassifier model
+
     """
     feature_dim = features.shape[1]
     model = MoleClassifier(feature_dim, num_classes, hidden_layers, input_dropout)

@@ -69,10 +69,11 @@ def get_dirs_to_path(path_in):
     Raise if path is not below the current working directory (cwd).
 
     Args:
-        path (str): path to a directory (or file
+        path_in (str): path to a directory (or file
 
     Returns:
         List of strings, includes cwd and destination path
+
     """
     cwd = os.getcwd()
     path_abs = os.path.abspath(path_in)

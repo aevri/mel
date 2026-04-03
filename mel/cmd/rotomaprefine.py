@@ -52,6 +52,7 @@ def _validate_aspect_ratios(image_sizes):
 
     Raises:
         ValueError: If aspect ratios differ by more than 1%.
+
     """
     if not image_sizes:
         return
@@ -78,6 +79,7 @@ def _normalize_resolution(images_with_paths):
     Returns:
         List of (path, resized_image, scale_factor) tuples, where scale_factor
         is the factor applied (e.g. 0.5 means image was halved).
+
     """
     if not images_with_paths:
         return []

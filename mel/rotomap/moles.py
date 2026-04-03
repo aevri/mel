@@ -172,6 +172,7 @@ def normalised_ellipse_mask(ellipse):
         ...     ((1, 2), (100, 200), 90)
         ... )
         ((1, 2), (200, 100), 0)
+
     """
     # Don't overwrite the original, we'll return a new ellipse.
     centre, extents, rotation = ellipse
