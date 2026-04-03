@@ -44,7 +44,8 @@ def process_args(args):
     if not melroot.exists():
         melroot.mkdir(parents=False)
     if _iterable_len(melroot.iterdir()):
-        raise mel.cmd.error.UsageError("Target directory must be empty.")
+        msg = "Target directory must be empty."
+        raise mel.cmd.error.UsageError(msg)
 
     melrootfile = melroot / "melroot"
     melrootfile.touch()

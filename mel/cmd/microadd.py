@@ -107,16 +107,18 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
             with open(last_changed_path) as file:
                 last_changed_image = file.read().strip()
                 if not last_changed_image:
+                    msg = "last changed file must not be empty."
                     raise ValueError(
-                        "last changed file must not be empty.",
+                        msg,
                         path,
                         last_changed_image,
                     )
                 for p in sorted(path_list):
                     if p.startswith(last_changed_image):
                         return p
+                msg = "could not find referenced last changed image."
                 raise ValueError(
-                    "could not find referenced last changed image.",
+                    msg,
                     path,
                     last_changed_image,
                 )
@@ -127,7 +129,8 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
 
     for candidate_path, dt in path_dt_list:
         if dt is None:
-            raise Exception("Could not determine date", candidate_path)
+            msg = "Could not determine date"
+            raise Exception(msg, candidate_path)
 
     path_dt_list.sort(key=lambda x: x[1], reverse=True)
 
@@ -166,7 +169,8 @@ def load_comparison_image(path, min_compare_age_days, use_last_changed):
 def process_args(args):
     cap = cv2.VideoCapture(args.video_device_index)
     if not cap.isOpened():
-        raise Exception("Could not open video capture device.")
+        msg = "Could not open video capture device."
+        raise Exception(msg)
 
     with mel.lib.fullscreenui.fullscreen_context() as screen:
         display = mel.lib.fullscreenui.MultiImageDisplay(screen)
@@ -214,7 +218,8 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
     is_finished = False
     ret, frame = cap.read()
     if not ret:
-        raise Exception("Could not read frame.")
+        msg = "Could not read frame."
+        raise Exception(msg)
 
     preview = np.copy(frame)
     capindex = display.add_image(preview, "capture")
@@ -300,7 +305,8 @@ def capture(cap, display, capindex, mole_acquirer):
         display.update_image(asys_image, capindex)
 
     if frame is None:
-        raise RuntimeError("No frames were captured.")
+        msg = "No frames were captured."
+        raise RuntimeError(msg)
 
     normal_image = np.copy(frame)
     if centre is not None:

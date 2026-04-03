@@ -221,12 +221,14 @@ class Evaluator:
 
     def precision(self):
         if not self.num_predicted_moles:
-            raise ValueError("No predicted moles.")
+            msg = "No predicted moles."
+            raise ValueError(msg)
         return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()
 
     def recall(self):
         if not self.num_moles:
-            raise ValueError("No moles.")
+            msg = "No moles."
+            raise ValueError(msg)
         return 100 * self.num_moles_correct.item() / self.num_moles.item()
 
 
@@ -260,7 +262,8 @@ def split_data(pretrained_data, training_split=0.8):
     sessions = list(pretrained_data.keys())
     num_sessions = len(sessions)
     if training_split != 1 and num_sessions < 2:
-        raise ValueError("Must have at least two sessions in order to split")
+        msg = "Must have at least two sessions in order to split"
+        raise ValueError(msg)
     num_training_sessions = int(num_sessions * training_split)
     num_validation_sessions = num_sessions - num_training_sessions
     if training_split != 1:

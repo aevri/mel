@@ -276,7 +276,8 @@ def unzip_dataset_part(uuid_list, dataset_generator):
     for uuid_, item in zip(uuid_list, dataset_part, strict=False):
         item_uuid, data = item
         if item_uuid != uuid_:
-            raise ValueError("uuids don't match")
+            msg = "uuids don't match"
+            raise ValueError(msg)
         data_list.append(data)
     assert len(data_list) == len(dataset_part)
     return data_list
@@ -341,7 +342,8 @@ def make_data(repo_path, data_config, channel_cache=None):
     elif data_config["rotomaps"] == "all":
         rotomaps = get_all_rotomaps(parts_path)
     else:
-        raise Exception("Unhandled rotomap type")
+        msg = "Unhandled rotomap type"
+        raise Exception(msg)
 
     train_rotomaps, valid_rotomaps = split_train_valid(
         rotomaps, data_config["train_proportion"]

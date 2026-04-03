@@ -183,7 +183,8 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
 
         moles = mel.rotomap.moles.load_image_moles(path)
         if not moles:
-            raise ValueError("Mole list must not be empty.")
+            msg = "Mole list must not be empty."
+            raise ValueError(msg)
         fr = 10
         boxes = [[m["x"] - fr, m["y"] - fr, m["x"] + fr, m["y"] + fr] for m in moles]
 

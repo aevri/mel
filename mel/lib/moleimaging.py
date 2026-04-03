@@ -37,7 +37,8 @@ def biggest_contour(image):
     contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
-        raise Exception("No contours found.")
+        msg = "No contours found."
+        raise Exception(msg)
 
     max_area = 0
     max_index = None
@@ -53,11 +54,13 @@ def biggest_contour(image):
 
     if max_index is None:
         if num_non_none:
-            raise Exception(
+            msg = (
                 "No suitable contours found. Some contours were found, "
                 "but were too short."
             )
-        raise Exception("No non-None contours found.")
+            raise Exception(msg)
+        msg = "No non-None contours found."
+        raise Exception(msg)
 
     return contours[max_index]
 

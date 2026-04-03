@@ -124,7 +124,8 @@ def yield_frames_keys(video_capture, display, error_key):
                 ret, frame = video_capture.read()
                 retries -= 1
             else:
-                raise Exception("Could not read video frame.")
+                msg = "Could not read video frame."
+                raise Exception(msg)
 
         # Inject debug keypresses if available
         if debug_keypresses and keypress_index < len(debug_keypresses):
@@ -204,7 +205,8 @@ def fullscreen_context():
 
     global _PYGAME_HAD_EXCLUSIVE_INIT  # noqa: PLW0603
     if _PYGAME_HAD_EXCLUSIVE_INIT:
-        raise Exception("An exclusive context was already started, only 1 per run.")
+        msg = "An exclusive context was already started, only 1 per run."
+        raise Exception(msg)
     _PYGAME_HAD_EXCLUSIVE_INIT = True
 
     pygame.init()
@@ -262,7 +264,8 @@ class ZoomableMixin:
     def zoomable_transform_update(self, image, window_rect):
         if self._is_zoomed:
             if self._zoom_pos is None:
-                raise Exception("Zoomed, but no zoom position set.")
+                msg = "Zoomed, but no zoom position set."
+                raise Exception(msg)
             if self._zoom_virt_pos is None:
                 self._zoom_virt_pos = self._zoom_pos / image.shape[:2]
             else:
@@ -307,7 +310,8 @@ class ZoomableMixin:
 
     def get_zoom_pos(self):
         if not self.is_zoomed():
-            raise Exception("Not zoomed")
+            msg = "Not zoomed"
+            raise Exception(msg)
         return self._zoom_pos
 
     def windowxy_to_imagexy(self, window_x, window_y):
@@ -319,7 +323,8 @@ class LeftRightDisplay(ZoomableMixin):
 
     def __init__(self, screen, image_list):
         if not image_list:
-            raise ValueError("image_list must be a list with at least one image.")
+            msg = "image_list must be a list with at least one image."
+            raise ValueError(msg)
         super().__init__()
 
         rect = np.array((screen.width, screen.height))
