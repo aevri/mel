@@ -135,7 +135,7 @@ def process_args(args):
     max_moles = args.max_moles
     dino_size = args.dino_size
 
-    # Load images
+    # Load images and moles
     try:
         src_image = mel.lib.image.load_image(src_path)
         tgt_image = mel.lib.image.load_image(tgt_path)
@@ -143,16 +143,11 @@ def process_args(args):
         # Convert BGR to RGB for DINOv2
         src_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
         tgt_image = cv2.cvtColor(tgt_image, cv2.COLOR_BGR2RGB)
-    except (ValueError, OSError, cv2.error) as e:
-        print(f"Error loading images: {e}")
-        return 1
 
-    # Load moles
-    try:
         src_moles = mel.rotomap.moles.load_image_moles(src_path)
         tgt_moles = mel.rotomap.moles.load_image_moles(tgt_path)
-    except (ValueError, OSError) as e:
-        print(f"Error loading moles: {e}")
+    except (ValueError, OSError, cv2.error) as e:
+        print(f"Error loading images or moles: {e}")
         return 1
 
     # Filter to get canonical moles from source and target
@@ -163,11 +158,11 @@ def process_args(args):
         m for m in tgt_moles if m[mel.rotomap.moles.KEY_IS_CONFIRMED]
     ]
 
-    if not src_canonical_moles:
-        print("Error: No canonical moles found in source image")
-        return 1
-    if not tgt_canonical_moles:
-        print("Error: No canonical moles found in target image")
+    if not src_canonical_moles or not tgt_canonical_moles:
+        if not src_canonical_moles:
+            print("Error: No canonical moles found in source image")
+        else:
+            print("Error: No canonical moles found in target image")
         return 1
 
     # Find non-canonical moles in target that have matching UUIDs with
