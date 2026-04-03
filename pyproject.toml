@@ -102,7 +102,7 @@ target-version = "py313"
 # - FBT: flake8-boolean-trap (avoid boolean positional args and defaults)
 # - NPY: numpy (enforce modern numpy random API and deprecated usage)
 # - PYI: flake8-pyi (type stub and typing best practices)
-# - EM101: flake8-errmsg (no string literals in exception constructors)
+# - EM101: flake8-errmsg (no string literals in exception constructors, keeps raise lines short in tracebacks)
 # - PLR1: pylint refactor (argument redefinition, comparison merging)
 # - PLR5: pylint refactor (collapsible else/elif blocks)
 # - PLR04: pylint refactor (use from-import for module aliasing)
