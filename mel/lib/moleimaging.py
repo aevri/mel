@@ -70,9 +70,7 @@ def process_contours(mole_regions, original):
     stats = None
 
     contours, _ = cv2.findContours(
-        mole_regions.copy(),
-        cv2.RETR_LIST,
-        cv2.CHAIN_APPROX_NONE,
+        mole_regions.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
     )
 
     mole_contour, mole_area = find_mole_contour(contours, mole_regions.shape[0:2])
@@ -153,7 +151,7 @@ class MoleAcquirer:
                     lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                     self._last_stats,
                     stats,
-                ),
+                )
             )
 
             if self._last_stats_diff:
@@ -162,7 +160,7 @@ class MoleAcquirer:
                         lambda x, y: mel.lib.math.lerp(x, y, 0.5),
                         self._last_stats_diff,
                         stats_diff,
-                    ),
+                    )
                 )
 
                 should_lock = all(int(x) == 0 for x in self._last_stats_diff)

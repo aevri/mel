@@ -97,7 +97,7 @@ def test_smoke():
             json_file.with_suffix(".json.bak").rename(json_file)
 
         expect_ok(
-            "mel", "rotomap", "automark", "--extra-stem", "smoke", *target_image_files,
+            "mel", "rotomap", "automark", "--extra-stem", "smoke", *target_image_files
         )
         expect_ok(
             "mel",
@@ -105,16 +105,16 @@ def test_smoke():
             "filter-marks",
             "--extra-stem",
             "smoke",
-            *target_image_files,
+            *target_image_files
         )
         expect_ok(
-            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files,
+            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
         )
         expect_ok(
-            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files,
+            "mel", "rotomap", "compare-extra-stem", "smoke", *target_image_files
         )
         expect_ok(
-            "mel", "rotomap", "identify", "--extra-stem", "smoke", *target_image_files,
+            "mel", "rotomap", "identify", "--extra-stem", "smoke", *target_image_files
         )
         expect_ok(
             "mel",
@@ -122,7 +122,7 @@ def test_smoke():
             "compare-extra-stem",
             "--compare-uuids",
             "smoke",
-            *target_image_files,
+            *target_image_files
         )
         expect_ok("mel", "rotomap", "merge-extra-stem", "smoke", *target_image_files)
         expect_ok("mel", "rotomap", "identify-train", "--extra-stem", "smoke")
@@ -142,7 +142,7 @@ def test_smoke():
         assert target_image_files, "No target image files found for resize test"
         expect_ok(
             "mel", "rotomap", "resize", "--width", "100", "--height", "100",
-            str(target_image_files[0]),
+            str(target_image_files[0])
         )
 
         expect_ok("mel", "status", "-ttdd")
@@ -152,7 +152,7 @@ def test_smoke():
         if not timelog_path.exists():
             timelog_path.write_text(
                 "command,mode,path,start,elapsed_secs\n"
-                "test-command,test,rotomaps/parts/TestPart/Lower,2020-01-01T00:00:00,1.0\n",
+                "test-command,test,rotomaps/parts/TestPart/Lower,2020-01-01T00:00:00,1.0\n"
             )
 
         expect_ok("mel", "timelog")
@@ -161,11 +161,11 @@ def test_smoke():
         # Test additional non-interactive rotomap commands
         # uuid command returns 1 when no matches found, so expect that
         expect_returncode(
-            1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files,
+            1, "mel", "rotomap", "uuid", "nonexistent-prefix", *target_json_files
         )
         expect_ok(
             "mel", "rotomap", "rm", "--uuids", "nonexistent-uuid", "--files",
-            *target_json_files,
+            *target_json_files
         )
         expect_ok(
             "mel", "rotomap", "guess-missing",
@@ -208,7 +208,7 @@ def test_smoke():
             test_uuid = moles_data[0]["uuid"]
             expect_ok(
                 "mel", "rotomap", "montage-single",
-                corresponding_image, test_uuid, "test_montage.jpg",
+                corresponding_image, test_uuid, "test_montage.jpg"
             )
         else:
             # Skip montage-single test if no moles found
@@ -234,7 +234,7 @@ def test_smoke_interactive():
 
         # Test rotomap edit command (quit immediately)
         expect_ok_with_env(
-            env, "mel", "rotomap", "edit", str(target_rotomap_0),
+            env, "mel", "rotomap", "edit", str(target_rotomap_0)
         )
 
         # Test rotomap compare command with multiple rotomaps
@@ -251,7 +251,7 @@ def test_smoke_interactive():
 
         # Test rotomap organise command (quit immediately)
         expect_ok_with_env(
-            env, "mel", "rotomap", "organise", str(target_image_files[0]),
+            env, "mel", "rotomap", "organise", str(target_image_files[0])
         )
 
         # Test micro compare if micro images exist
@@ -261,7 +261,7 @@ def test_smoke_interactive():
             if len(micro_images) >= 2:
                 expect_ok_with_env(
                     env, "mel", "micro", "compare",
-                    str(micro_images[0]), str(micro_images[1]),
+                    str(micro_images[0]), str(micro_images[1])
                 )
 
 

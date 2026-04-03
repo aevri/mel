@@ -276,16 +276,13 @@ class ZoomableMixin:
                     [
                         self._zoom_orig_shape[0] / image.shape[0],
                         self._zoom_orig_shape[1] / image.shape[1],
-                    ],
+                    ]
                 )
                 / 2
             )
             zoom_level = self._zoom_level * zoom_scale
             self._transform = ZoomedImageTransform(
-                image,
-                self._zoom_pos,
-                window_rect,
-                scale=zoom_level,
+                image, self._zoom_pos, window_rect, scale=zoom_level
             )
         else:
             self._transform = FittedImageTransform(image, window_rect)
@@ -372,7 +369,7 @@ class LeftRightDisplay(ZoomableMixin):
         else:
             self.image_path = None
             self.display.show_opencv_image(
-                mel.lib.common.new_image(self.display.height, self.display.width),
+                mel.lib.common.new_image(self.display.height, self.display.width)
             )
 
 
@@ -428,9 +425,7 @@ class MultiImageDisplay:
                     row_image = image
                 else:
                     row_image = mel.lib.image.montage_horizontal(
-                        self._border_width,
-                        row_image,
-                        image,
+                        self._border_width, row_image, image
                     )
             row_image_list.append(row_image)
 
@@ -441,9 +436,7 @@ class MultiImageDisplay:
 
         caption = mel.lib.image.render_text_as_image(str(self._title))
         montage_image = mel.lib.image.montage_vertical(
-            self._spacer_height,
-            montage_image,
-            caption,
+            self._spacer_height, montage_image, caption
         )
 
         self._display.show_opencv_image(montage_image)

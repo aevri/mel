@@ -29,9 +29,7 @@ def moles(image, mask):
 
         # Exclude points that are near mask boundaries
         if mask is not None and not _is_mask_region_all_set(
-            mask,
-            xy,
-            _MASK_EXCLUSION_SQUARE_SIZE,
+            mask, xy, _MASK_EXCLUSION_SQUARE_SIZE
         ):
             continue
 

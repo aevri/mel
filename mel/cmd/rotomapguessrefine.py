@@ -190,7 +190,7 @@ def process_args(args):
         tgt_non_canonical_to_refine = tgt_non_canonical_to_refine[:max_moles]
         print(
             f"Found {original_count} non-canonical moles to refine, "
-            f"limiting to first {len(tgt_non_canonical_to_refine)} moles",
+            f"limiting to first {len(tgt_non_canonical_to_refine)} moles"
         )
     else:
         print(f"Found {len(tgt_non_canonical_to_refine)} non-canonical moles to refine")
@@ -201,7 +201,7 @@ def process_args(args):
         model, feature_dim = mel.lib.dinov2.load_dinov2_model(dino_size)
         print(
             f"DINOv2 model ({dino_size}) loaded successfully"
-            f" with {feature_dim} feature dimensions",
+            f" with {feature_dim} feature dimensions"
         )
     except RuntimeError as e:
         print(f"Error loading DINOv2 model: {e}")
@@ -212,7 +212,7 @@ def process_args(args):
             transforms.ToPILImage(),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ],
+        ]
     )
 
     # Create lookup dict for src canonical moles
@@ -241,7 +241,7 @@ def process_args(args):
             )
             print(
                 f"  Extracted contextual features from"
-                f" {context_size}x{context_size} source context",
+                f" {context_size}x{context_size} source context"
             )
 
             # Save debug image for source context patch
@@ -311,10 +311,8 @@ def process_args(args):
                 tgt_mole["y"] = best_y
                 refined_count += 1
                 print(
-                    f"  Refined from ({old_x}, {old_y}) to"
-                    f" ({best_x}, {best_y}) "
-                    f"(moved {distance_moved:.1f} pixels,"
-                    f" similarity: {similarity:.3f})",
+                    f"  Refined from ({old_x}, {old_y}) to ({best_x}, {best_y}) "
+                    f"(moved {distance_moved:.1f} pixels, similarity: {similarity:.3f})"
                 )
 
                 # Save debug image for final refined context

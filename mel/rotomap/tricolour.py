@@ -108,7 +108,7 @@ class UuidTriColourPicker:
         self._uuid_to_colours = {}
         self._palette = _NINE_CLASS_SET1
         self._triband_mapping = yield_triband_mapping_in_distinctive_order(
-            len(self._palette),
+            len(self._palette)
         )
 
     def _ensure_uuid(self, uuid_):

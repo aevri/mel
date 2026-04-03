@@ -109,7 +109,7 @@ class Dinov3Model:
             [
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.MEAN, std=self.STD),
-            ],
+            ]
         )
 
         # Apply transform and add batch dimension

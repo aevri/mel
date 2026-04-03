@@ -47,9 +47,7 @@ def process_args(args):
         for image_path, moles in image_mole_iter:
             try:
                 mel.rotomap.filtermarks.pretrain_image(
-                    image_path,
-                    moles,
-                    args.batch_size,
+                    image_path, moles, args.batch_size
                 )
             except Exception as e:
                 msg = f"Error while processing {image_path}"

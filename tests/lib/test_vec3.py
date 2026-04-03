@@ -131,18 +131,18 @@ class TestDot:
 class TestMagSq:
     def test_unit_vector(self):
         np.testing.assert_array_equal(
-            vec3.mag_sq(vec3.make(1, 0, 0)), np.array([[1]]),
+            vec3.mag_sq(vec3.make(1, 0, 0)), np.array([[1]])
         )
 
     def test_scaled_vector(self):
         np.testing.assert_array_equal(
-            vec3.mag_sq(vec3.make(2, 0, 0)), np.array([[4]]),
+            vec3.mag_sq(vec3.make(2, 0, 0)), np.array([[4]])
         )
 
     def test_general_vector(self):
         # 3^2 + 4^2 + 0^2 = 25
         np.testing.assert_array_equal(
-            vec3.mag_sq(vec3.make(3, 4, 0)), np.array([[25]]),
+            vec3.mag_sq(vec3.make(3, 4, 0)), np.array([[25]])
         )
 
 
@@ -200,14 +200,14 @@ class TestNormalized:
 class TestMakeFromColumns:
     def test_basic(self):
         result = vec3.make_from_columns(
-            np.array([1, 2]), np.array([3, 4]), np.array([5, 6]),
+            np.array([1, 2]), np.array([3, 4]), np.array([5, 6])
         )
         expected = np.array([[1, 3, 5], [2, 4, 6]])
         np.testing.assert_array_equal(result, expected)
 
     def test_single_element(self):
         result = vec3.make_from_columns(
-            np.array([10]), np.array([20]), np.array([30]),
+            np.array([10]), np.array([20]), np.array([30])
         )
         expected = np.array([[10, 20, 30]])
         np.testing.assert_array_equal(result, expected)
@@ -220,7 +220,7 @@ class TestBatchOperations:
         v = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         result = vec3.mag(v)
         np.testing.assert_array_almost_equal(
-            result, np.array([[1.0], [1.0], [1.0]]),
+            result, np.array([[1.0], [1.0], [1.0]])
         )
 
     def test_dot_single_vs_batch(self):

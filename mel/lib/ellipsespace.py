@@ -63,7 +63,7 @@ def to_ellipse_space(ellipse, pos):
         (
             pos[0] / rmag,
             pos[1] / umag,
-        ),
+        )
     )
 
 

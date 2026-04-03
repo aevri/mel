@@ -54,10 +54,7 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
     cv2.setMouseCallback(
         window_name,
         make_mole_capture_callback(
-            window_name,
-            display_image,
-            circle_radius,
-            context_mole_positions,
+            window_name, display_image, circle_radius, context_mole_positions
         ),
     )
 
@@ -332,7 +329,7 @@ class TimeLogger:
         now = self._now()
         elapsed = (now - self._start).total_seconds()
         self._writer.writerow(
-            [self._command, self._mode, self._path, self._start, elapsed],
+            [self._command, self._mode, self._path, self._start, elapsed]
         )
         self._start = now
         if mode is not None:

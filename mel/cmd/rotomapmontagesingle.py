@@ -29,8 +29,7 @@ def setup_parser(parser):
 
 def process_args(args):
     mel.lib.common.write_image(
-        args.OUTPUT,
-        make_montage_image(args.FRAMES, args.UUID, args.rot90),
+        args.OUTPUT, make_montage_image(args.FRAMES, args.UUID, args.rot90)
     )
 
 
@@ -72,11 +71,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     unmarked_context_image = context_image.copy()
     mel.lib.common.indicate_mole(context_image, (x, y, radius))
     context_image = cv2.addWeighted(
-        unmarked_context_image,
-        0.75,
-        context_image,
-        0.25,
-        0.0,
+        unmarked_context_image, 0.75, context_image, 0.25, 0.0
     )
 
     context_image = mel.lib.common.rotated90(context_image, rot90)
@@ -94,9 +89,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     context_image = cv2.resize(context_image, (context_scaled_width, montage_height))
 
     return mel.lib.image.montage_horizontal_inner_border(
-        25,
-        context_image,
-        detail_image,
+        25, context_image, detail_image
     )
 
 

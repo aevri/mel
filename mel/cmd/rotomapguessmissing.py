@@ -66,7 +66,7 @@ def process_args(args):
     if not missing_uuids:
         print(
             "No missing moles to guess - all source canonical moles"
-            " already present in target",
+            " already present in target"
         )
         return 0
 
@@ -76,9 +76,7 @@ def process_args(args):
     guessed_count = 0
     for missing_uuid in missing_uuids:
         guessed_pos = mel.rotomap.relate.guess_mole_pos(
-            missing_uuid,
-            src_canonical_moles,
-            tgt_canonical_moles,
+            missing_uuid, src_canonical_moles, tgt_canonical_moles
         )
 
         if guessed_pos is not None:
@@ -93,7 +91,7 @@ def process_args(args):
             guessed_count += 1
             print(
                 f"Guessed position for mole {missing_uuid}"
-                f" at ({guessed_pos[0]}, {guessed_pos[1]})",
+                f" at ({guessed_pos[0]}, {guessed_pos[1]})"
             )
         else:
             print(f"Could not guess position for mole {missing_uuid}")

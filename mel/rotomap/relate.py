@@ -106,8 +106,7 @@ def best_theory(from_moles, to_moles, iterate):
     theory_to_original = {}
     while not done:
         new_theory = reverse_theory(
-            best_offset_theory(from_moles, to_moles),
-            theory_to_original,
+            best_offset_theory(from_moles, to_moles), theory_to_original
         )
         done = new_theory == theory
         theory = new_theory
@@ -133,8 +132,7 @@ def best_offset_theory(from_moles, to_moles):
 
 def best_offset_field_theory(from_moles, to_moles):
     from_points, to_points, point_offsets, theory = offset_theory_points(
-        from_moles,
-        to_moles,
+        from_moles, to_moles
     )
 
     if not point_offsets:
@@ -155,8 +153,7 @@ def offset_theory_points(from_moles, to_moles):
 
     """
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
-        from_moles,
-        to_moles,
+        from_moles, to_moles
     )
 
     theory = []
@@ -192,8 +189,7 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
 
     """
     from_points, _to_points, point_offsets, _ = offset_theory_points(
-        from_moles,
-        to_moles,
+        from_moles, to_moles
     )
 
     if not point_offsets:
@@ -338,10 +334,7 @@ def best_baseless_offset_theory(from_moles, to_moles):
             offset_dist_sq = to_x * to_x + to_y * to_y
 
             theory, dist_sq = make_offset_theory(
-                from_moles,
-                to_moles,
-                (to_x, to_y),
-                cutoff_sq,
+                from_moles, to_moles, (to_x, to_y), cutoff_sq
             )
 
             new_best = best_theory is None
@@ -412,8 +405,7 @@ def _nearest_mole_index_to_point(point, mole_list):
     best_dist_sq = None
     for i, mole in enumerate(mole_list):
         dist_sq = mel.lib.math.distance_sq_2d(
-            point,
-            mel.rotomap.moles.mole_to_point(mole),
+            point, mel.rotomap.moles.mole_to_point(mole)
         )
         if best_index is None or dist_sq < best_dist_sq:
             best_index = i

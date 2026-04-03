@@ -80,17 +80,13 @@ def load_dinov2_model(dino_size="base"):
                         all_tokens = patch_features[0]
                         # Remove CLS token to get just patch tokens
                         patch_tokens = all_tokens[
-                            :,
-                            1:,
-                            :,
+                            :, 1:, :
                         ]  # [batch, num_patches, feature_dim]
 
                         if center_patch_idx is not None:
                             # Extract specific center patch
                             return patch_tokens[
-                                :,
-                                center_patch_idx,
-                                :,
+                                :, center_patch_idx, :
                             ]  # [batch, feature_dim]
                         # Return all patch features
                         return patch_tokens
@@ -108,18 +104,12 @@ def load_dinov2_model(dino_size="base"):
     except Exception as e:
         raise RuntimeError(
             "Failed to load DINOv2 model. Please ensure you have internet access "
-            "and the required dependencies. Error: " + str(e),
+            "and the required dependencies. Error: " + str(e)
         ) from e
 
 
 def extract_contextual_patch_feature(
-    image,
-    center_x,
-    center_y,
-    context_size,
-    model,
-    transform,
-    feature_dim,
+    image, center_x, center_y, context_size, model, transform, feature_dim
 ):
     """Extract contextual patch feature from a large context window.
 
@@ -152,8 +142,7 @@ def extract_contextual_patch_feature(
     # Pad if necessary to ensure context_size x context_size
     if context_patch.shape[0] < context_size or context_patch.shape[1] < context_size:
         padded_patch = np.zeros(
-            (context_size, context_size, 3),
-            dtype=context_patch.dtype,
+            (context_size, context_size, 3), dtype=context_patch.dtype
         )
         y_offset = (context_size - context_patch.shape[0]) // 2
         x_offset = (context_size - context_patch.shape[1]) // 2
@@ -187,8 +176,7 @@ def extract_contextual_patch_feature(
     with torch.no_grad():
         # Extract contextual features for the center patch
         center_features = model.extract_contextual_patch_features(
-            context_tensor,
-            center_patch_idx=center_patch_idx,
+            context_tensor, center_patch_idx=center_patch_idx
         )
 
     # Remove batch dimension and assert shape
@@ -201,13 +189,7 @@ def extract_contextual_patch_feature(
 
 
 def extract_all_contextual_features(
-    image,
-    center_x,
-    center_y,
-    context_size,
-    model,
-    transform,
-    feature_dim,
+    image, center_x, center_y, context_size, model, transform, feature_dim
 ):
     """Extract features for all patches in a context window.
 
@@ -241,8 +223,7 @@ def extract_all_contextual_features(
     # Pad if necessary to ensure context_size x context_size
     if context_patch.shape[0] < context_size or context_patch.shape[1] < context_size:
         padded_patch = np.zeros(
-            (context_size, context_size, 3),
-            dtype=context_patch.dtype,
+            (context_size, context_size, 3), dtype=context_patch.dtype
         )
         y_offset = (context_size - context_patch.shape[0]) // 2
         x_offset = (context_size - context_patch.shape[1]) // 2
@@ -269,8 +250,7 @@ def extract_all_contextual_features(
     with torch.no_grad():
         # Extract features for ALL patches (not just center)
         all_patch_features = model.extract_contextual_patch_features(
-            context_tensor,
-            center_patch_idx=None,
+            context_tensor, center_patch_idx=None
         )
 
     # Remove batch dimension: [1, num_patches, 384] -> [num_patches, 384]
@@ -324,15 +304,13 @@ def save_contextual_similarity_heatmap(
         context_bottom = min(image.shape[0], center_y + half_context)
 
         context_area = image[
-            context_top:context_bottom,
-            context_left:context_right,
+            context_top:context_bottom, context_left:context_right
         ].copy()
 
         # Pad if necessary
         if context_area.shape[0] < context_size or context_area.shape[1] < context_size:
             padded_area = np.zeros(
-                (context_size, context_size, 3),
-                dtype=context_area.dtype,
+                (context_size, context_size, 3), dtype=context_area.dtype
             )
             y_offset = (context_size - context_area.shape[0]) // 2
             x_offset = (context_size - context_area.shape[1]) // 2
@@ -368,8 +346,7 @@ def save_contextual_similarity_heatmap(
 
                 # Set heatmap values for this patch region
                 heatmap[y_start:y_end, x_start:x_end] = normalized_grid[
-                    patch_row,
-                    patch_col,
+                    patch_row, patch_col
                 ]
 
         # Convert heatmap to red channel overlay
@@ -428,7 +405,7 @@ def save_contextual_similarity_heatmap(
 
     except (OSError, cv2.error) as e:
         print(
-            f"  Debug: Failed to save contextual similarity heatmap to {filename}: {e}",
+            f"  Debug: Failed to save contextual similarity heatmap to {filename}: {e}"
         )
 
 
@@ -477,33 +454,22 @@ def find_best_contextual_match(
         or center_y + half_context >= tgt_image.shape[0]
     ):
         print(
-            "  Warning: Cannot extract full context window"
-            f" at ({center_x}, {center_y})",
+            f"  Warning: Cannot extract full context window at ({center_x}, {center_y})"
         )
         return center_x, center_y, -1.0
 
     try:
         # Extract features for all patches in the target context window ONCE
         tgt_all_features = extract_all_contextual_features(
-            tgt_image,
-            center_x,
-            center_y,
-            context_size,
-            model,
-            transform,
-            feature_dim,
+            tgt_image, center_x, center_y, context_size, model, transform, feature_dim
         )
 
         # Normalize source and target features for cosine similarity
         src_norm = torch.nn.functional.normalize(
-            src_center_features,
-            p=2,
-            dim=0,
+            src_center_features, p=2, dim=0
         )  # [feature_dim]
         tgt_norm = torch.nn.functional.normalize(
-            tgt_all_features,
-            p=2,
-            dim=1,
+            tgt_all_features, p=2, dim=1
         )  # [num_patches, feature_dim]
 
         # Compute cosine similarity between source center and all target patches
@@ -511,7 +477,7 @@ def find_best_contextual_match(
         # Note: We negate the distance to maintain the convention that
         # higher values = better matches
         similarities = -torch.cdist(tgt_norm, src_norm.unsqueeze(0)).squeeze(
-            1,
+            1
         )  # [num_patches]
 
         # Find the patch with highest similarity
@@ -533,7 +499,7 @@ def find_best_contextual_match(
 
         print(
             f"  Found best match at patch ({patch_row}, {patch_col})"
-            f" -> pixel ({best_x}, {best_y})",
+            f" -> pixel ({best_x}, {best_y})"
         )
         print(f"  Similarity: {best_similarity:.3f}")
 

@@ -36,10 +36,7 @@ def process_args(args):
 
     # get the user to mark the mole positions
     context_mole_pos, detail_mole_pos = mel.lib.common.user_mark_moles(
-        window_name,
-        context_image,
-        detail_image,
-        1,
+        window_name, context_image, detail_image, 1
     )
 
     # Put a box around mole on context image

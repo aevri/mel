@@ -9,9 +9,7 @@ import mel.rotomap.moles
 
 def setup_parser(parser):
     parser.add_argument(
-        "IMAGES",
-        nargs="+",
-        help="A list of paths to images to automark.",
+        "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
     parser.add_argument(
         "--verbose",
@@ -44,8 +42,7 @@ def process_args(args):
         mask = mel.rotomap.mask.load(path)
         guessed_moles = mel.rotomap.detectmoles.moles(image, mask)
         loaded_moles = mel.rotomap.moles.load_image_moles(
-            path,
-            extra_stem=args.extra_stem,
+            path, extra_stem=args.extra_stem
         )
 
         moles = mel.rotomap.automark.merge_in_radiuses(

@@ -10,7 +10,7 @@ from mel.rotomap import automark
 TARGETS = [
     {"uuid": "1", "x": 0, "y": 0},
     {"uuid": "2", "x": 1, "y": 1},
-    {"uuid": "3", "x": 2, "y": 2},
+    {"uuid": "3", "x": 2, "y": 2}
 ]
 
 RADII_SOURCES = [
@@ -33,7 +33,7 @@ def test_merge_in_radiuses_happy(only_merge, error_distance):
     """
     radii_sources = [x for x in RADII_SOURCES if x["uuid"] != "7"]
     result = automark.merge_in_radiuses(
-        TARGETS, radii_sources, error_distance, only_merge=only_merge,
+        TARGETS, radii_sources, error_distance, only_merge=only_merge
     )
 
     assert len(result) == 3
@@ -56,7 +56,7 @@ def test_merge_in_radiuses_happy_merge_extra(only_merge, error_distance):
 
     """
     result = automark.merge_in_radiuses(
-        TARGETS, RADII_SOURCES, error_distance, only_merge=only_merge,
+        TARGETS, RADII_SOURCES, error_distance, only_merge=only_merge
     )
 
     if only_merge:

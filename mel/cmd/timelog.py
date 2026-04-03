@@ -40,8 +40,7 @@ def process_args(_args):
     )
 
     timelog["major_part"] = timelog.path.str.removeprefix("rotomaps/parts/").str.split(
-        "/",
-        expand=True,
+        "/", expand=True
     )[0]
     timelog.loc[
         ~timelog.path.str.startswith("rotomaps/parts/").fillna(value=False),
@@ -50,8 +49,7 @@ def process_args(_args):
 
     timelog["part"] = None
     timelog.loc[
-        timelog.path.str.startswith("rotomaps/parts/").fillna(value=False),
-        "part",
+        timelog.path.str.startswith("rotomaps/parts/").fillna(value=False), "part"
     ] = (
         timelog.loc[
             timelog.path.str.startswith("rotomaps/parts/").fillna(value=False),
@@ -70,7 +68,7 @@ def process_args(_args):
         timelog[["command", "elapsed_secs"]]
         .groupby("command")
         .sum()["elapsed_secs"]
-        .sort_values(ascending=False),
+        .sort_values(ascending=False)
     )
 
     print()
@@ -85,7 +83,7 @@ def process_args(_args):
         timelog[["major_part", "elapsed_secs"]]
         .groupby("major_part")
         .sum()["elapsed_secs"]
-        .sort_values(ascending=False),
+        .sort_values(ascending=False)
     )
 
     print()
@@ -95,7 +93,7 @@ def process_args(_args):
         timelog[["part", "elapsed_secs"]]
         .groupby("part")
         .sum()["elapsed_secs"]
-        .sort_values(ascending=False),
+        .sort_values(ascending=False)
     )
 
     print()

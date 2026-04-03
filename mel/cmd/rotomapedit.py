@@ -213,9 +213,7 @@ class MoleEditController:
             editor.remove_mole(mouse_x, mouse_y)
         else:
             if self.sub_controller and self.sub_controller.on_lbutton_down_noflags(
-                editor,
-                mouse_x,
-                mouse_y,
+                editor, mouse_x, mouse_y
             ):
                 return
             editor.add_mole(mouse_x, mouse_y)
@@ -490,7 +488,7 @@ class Controller:
             path=os.path.relpath(
                 os.path.abspath(editor.moledata.image_path),
                 start=self._melroot,
-            ),
+            )
         )
 
     def on_key(self, editor, key):
@@ -584,11 +582,7 @@ def process_args(args):
             editor.show_next_n(args.advance_n_frames)
 
         controller = Controller(
-            editor,
-            args.follow,
-            args.copy_to_clipboard,
-            visit_list,
-            logger,
+            editor, args.follow, args.copy_to_clipboard, visit_list, logger
         )
 
         for event in mel.lib.fullscreenui.yield_events_until_quit(screen):
@@ -607,9 +601,7 @@ def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
 
     if mel.rotomap.moles.uuid_mole_index(editor.moledata.moles, follow_uuid) is None:
         guess_pos = mel.rotomap.relate.guess_mole_pos(
-            follow_uuid,
-            prev_moles,
-            editor.moledata.moles,
+            follow_uuid, prev_moles, editor.moledata.moles
         )
 
         if guess_pos is not None:
