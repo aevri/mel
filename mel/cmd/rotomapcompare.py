@@ -75,9 +75,10 @@ def process_args(args):
     for rotomap in args.ROTOMAP:
         for frame in rotomap.yield_frames():
             if "ellipse" not in frame.metadata:
-                raise Exception(
+                msg = (
                     f'{frame} has no ellipse metadata, try running "rotomap calc-space"'
                 )
+                raise Exception(msg)
             ellipse = frame.metadata["ellipse"]
             elspace = mel.lib.ellipsespace.Transform(ellipse)
             for uuid_, point in frame.moledata.uuid_points.items():

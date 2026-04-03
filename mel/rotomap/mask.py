@@ -14,7 +14,8 @@ def path(mole_image_path):
 def load(mole_image_path):
     mask = cv2.imread(path(mole_image_path), cv2.IMREAD_UNCHANGED)
     if mask is None:
-        raise Exception(f'Failed to load mask: "{path(mole_image_path)}"')
+        msg = f'Failed to load mask: "{path(mole_image_path)}"'
+        raise Exception(msg)
     return mask
 
 

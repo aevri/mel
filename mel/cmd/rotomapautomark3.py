@@ -19,9 +19,11 @@ def _existing_file_path(string):
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
-        raise argparse.ArgumentTypeError(f"File does not exist: {string}")
+        msg = f"File does not exist: {string}"
+        raise argparse.ArgumentTypeError(msg)
     if not path.is_file():
-        raise argparse.ArgumentTypeError(f"Path is not a file: {string}")
+        msg = f"Path is not a file: {string}"
+        raise argparse.ArgumentTypeError(msg)
     return path
 
 
@@ -34,10 +36,11 @@ def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False):
     """Load pre-computed features, raising an error if not found."""
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
-        raise FileNotFoundError(
+        msg = (
             f"Pre-computed features not found: {features_path}\n"
             f"Run 'mel rotomap automark3-precalc' first."
         )
+        raise FileNotFoundError(msg)
     if verbose >= 2:
         print(f"Loading features: {features_path}")
     return torch.load(features_path, weights_only=True)

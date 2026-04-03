@@ -27,10 +27,11 @@ def load_dinov2_model(dino_size="base"):
     }
 
     if dino_size not in model_configs:
-        raise ValueError(
+        msg = (
             f"Invalid dino_size: {dino_size}."
             f" Must be one of {list(model_configs.keys())}"
         )
+        raise ValueError(msg)
 
     model_name, feature_dim = model_configs[dino_size]
 

@@ -50,9 +50,8 @@ def _parse_debug_keypresses():
         if stripped_name in key_map:
             keypresses.append(key_map[stripped_name])
         else:
-            raise ValueError(
-                f"Unknown key name '{stripped_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
-            )
+            msg = f"Unknown key name '{stripped_name}' in MEL_DEBUG_ENQUEUE_KEYPRESSES"
+            raise ValueError(msg)
 
     return keypresses
 

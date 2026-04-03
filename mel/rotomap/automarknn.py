@@ -64,10 +64,12 @@ def load_image(image_path):
     try:
         original_image = cv2.imread(str(image_path), flags)
         if original_image is None:
-            raise OSError(f"File not recognized by opencv: {image_path}")
+            msg = f"File not recognized by opencv: {image_path}"
+            raise OSError(msg)
         original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     except Exception as e:
-        raise OSError(f"Error handling image at: {image_path}") from e
+        msg = f"Error handling image at: {image_path}"
+        raise OSError(msg) from e
 
     mask = mel.rotomap.mask.load(image_path)
     green = np.zeros(original_image.shape, np.uint8)
@@ -112,7 +114,8 @@ class PlModule(pl.LightningModule):
         assert self.model.training
         loss_dict = self.model(x, y)
         if not isinstance(loss_dict, dict):
-            raise ValueError(f"Expected dict, got: {loss_dict}")
+            msg = f"Expected dict, got: {loss_dict}"
+            raise ValueError(msg)
         losses = sum(loss for loss in loss_dict.values())
         self.log("train_loss", losses.detach())
         return losses

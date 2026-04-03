@@ -234,7 +234,8 @@ class MarkedMoleOverlay:
                 elif looks_like == "unsure":
                     colour = (255, 0, 128)
                 else:
-                    raise Exception(f"Mole looks_like is invalid: {mole}")
+                    msg = f"Mole looks_like is invalid: {mole}"
+                    raise Exception(msg)
             elif kind == "non-mole":
                 if looks_like == "mole":
                     colour = (0, 255, 255)
@@ -243,7 +244,8 @@ class MarkedMoleOverlay:
                 elif looks_like == "unsure":
                     colour = (128, 0, 255)
                 else:
-                    raise Exception(f"Mole looks_like is invalid: {mole}")
+                    msg = f"Mole looks_like is invalid: {mole}"
+                    raise Exception(msg)
 
             cv2.circle(image, (x, y), mask_radius, colour, 2)
             if mole is highlight_mole:

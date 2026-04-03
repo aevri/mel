@@ -44,7 +44,8 @@ def make_montage_image(images_moles, uuid_, rot90=0):
             path_moles_list.append((imagepath, moles))
 
     if not path_moles_list:
-        raise mel.cmd.error.UsageError(f'UUID "{uuid_}" not found.')
+        msg = f'UUID "{uuid_}" not found.'
+        raise mel.cmd.error.UsageError(msg)
 
     # Pick 'best' image for this particular mole, assuming that the middle
     # image is where the mole is most prominent. This assumption is based on

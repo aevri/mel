@@ -35,12 +35,12 @@ def proportion_arg(x):
     try:
         x = float(x)
     except ValueError as e:
-        raise argparse.ArgumentTypeError(f"'{x}' is not a float") from e
+        msg = f"'{x}' is not a float"
+        raise argparse.ArgumentTypeError(msg) from e
 
-    if not (x > 0.0 and x <= 1.0) and not x == -1:
-        raise argparse.ArgumentTypeError(
-            f"'{x}' is not in range 0.0 > x <= 1.0, or -1."
-        )
+    if not (x > 0.0 and x <= 1.0) and x != -1:
+        msg = f"'{x}' is not in range 0.0 > x <= 1.0, or -1."
+        raise argparse.ArgumentTypeError(msg)
 
     return x
 
@@ -135,7 +135,8 @@ def process_args(args):
     old_metadata = None
     if model_path.exists():
         if not metadata_path.exists():
-            raise Exception(f"Metadata for model does not exist: {metadata_path}")
+            msg = f"Metadata for model does not exist: {metadata_path}"
+            raise Exception(msg)
 
         if not os.access(model_path, os.W_OK):
             print("No permission to write to", model_path)
@@ -153,9 +154,8 @@ def process_args(args):
 
         def check_old_matches_new(name, old, new):
             if old != new:
-                raise Exception(
-                    f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
-                )
+                msg = f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
+                raise Exception(msg)
 
         old_model_args = old_metadata["model_args"]
         check_old_matches_new("cnn width", old_model_args["cnn_width"], cnn_width)
@@ -286,11 +286,12 @@ def _fixup_old_model(old_metadata, new_metadata, model):
         old_model_args["num_parts"] = new_model_args["num_parts"]
         old_model_args["num_classes"] = new_model_args["num_classes"]
     if old_model_args != new_model_args:
-        raise Exception(
+        msg = (
             f"Old model args not compatible.\n"
             f"old: {old_model_args}\n"
             f"new: {new_model_args}\n"
         )
+        raise Exception(msg)
 
 
 # -----------------------------------------------------------------------------

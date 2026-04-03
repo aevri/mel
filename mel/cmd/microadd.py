@@ -78,7 +78,8 @@ def get_dirs_to_path(path_in):
     cwd = os.getcwd()
     path_abs = os.path.abspath(path_in)
     if cwd != os.path.commonprefix([cwd, path_abs]):
-        raise Exception(f"{path_abs} is not under cwd ({cwd})")
+        msg = f"{path_abs} is not under cwd ({cwd})"
+        raise Exception(msg)
     path_rel = os.path.relpath(path_abs, cwd)
     path_list = []
     while path_rel:
