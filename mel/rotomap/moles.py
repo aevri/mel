@@ -58,6 +58,7 @@ class RotomapDirectory:
         }
 
     def __repr__(self):
+        """Return a string representation of the rotomap directory."""
         return f"RotomapDirectory({self.path!r})"
 
 
@@ -96,6 +97,7 @@ class RotomapFrame:
         return mel.rotomap.mask.has_mask(self.path)
 
     def __repr__(self):
+        """Return a string representation of the rotomap frame."""
         return f"RotomapFrame({self.path!r})"
 
 

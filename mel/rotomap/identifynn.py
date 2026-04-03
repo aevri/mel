@@ -594,12 +594,14 @@ class RotomapsDataset:
         self._in_fields, self._out_fields = in_fields, out_fields
 
     def __getitem__(self, index):
+        """Return input and output data for the given index."""
         in_data = [self._data[field][index] for field in self._in_fields]
         out_data = [self._data[field][index] for field in self._out_fields]
 
         return (index, in_data, out_data)
 
     def __len__(self):
+        """Return the number of items in the dataset."""
         return len(self._data[self._in_fields[0]])
 
 
