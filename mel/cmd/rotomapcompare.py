@@ -100,7 +100,8 @@ def process_args(args):
     }
 
     if not uuid_to_rotomaps_imagepos_list:
-        raise Exception("Nothing to compare.")
+        msg = "Nothing to compare."
+        raise Exception(msg)
 
     # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)
@@ -263,13 +264,13 @@ class ImageCompareDisplay:
 
     def reset(self, path_images_tuple, uuid_):
         if not path_images_tuple:
-            raise ValueError(
-                "path_images_tuple must be a tuple with at least one thing."
-            )
+            msg = "path_images_tuple must be a tuple with at least one thing."
+            raise ValueError(msg)
 
         for group in path_images_tuple:
             if not group:
-                raise ValueError("path_images_tuple not have empty groups.")
+                msg = "path_images_tuple not have empty groups."
+                raise ValueError(msg)
 
         self._uuid = uuid_
         self._rotomaps = path_images_tuple

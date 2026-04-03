@@ -464,7 +464,8 @@ class Editor:
             self.marked_mole_overlay.moles = self.moledata.moles
             self.display.show_current(image, self.marked_mole_overlay)
         else:
-            raise Exception("Unknown mode", self._mode)
+            msg = "Unknown mode"
+            raise Exception(msg, self._mode)
 
     def show_fitted(self):
         self.display.set_fitted()

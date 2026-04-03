@@ -12,7 +12,8 @@ def setup_parser(parser):
 def process_args(_args):
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        raise Exception("Could not open video capture device.")
+        msg = "Could not open video capture device."
+        raise Exception(msg)
 
     # create an 800x600 window
     window_name = "output"
@@ -29,11 +30,13 @@ def process_args(_args):
     while not is_finished:
         key = cv2.waitKey(50)
         if key != -1:
-            raise Exception("User aborted.")
+            msg = "User aborted."
+            raise Exception(msg)
 
         ret, frame = cap.read()
         if not ret:
-            raise Exception("Could not read frame.")
+            msg = "Could not read frame."
+            raise Exception(msg)
 
         ringed, stats = mel.lib.moleimaging.find_mole(frame)
 

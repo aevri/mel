@@ -24,12 +24,19 @@ Ratchet up static analysis strictness for this project by one notch.
 
 5. If violations are too numerous (>50), try a narrower sub-rule (e.g. "PLR1" instead of "PLR") or pick a different rule with fewer hits.
 
-6. Update pyproject.toml:
+6. **Gradual approach** (for rules requiring large amounts of changes): If even
+   sub-rules have too many violations, you can fix a batch of violations
+   *without* enabling the rule in pyproject.toml. This lets us chip away at the
+   debt incrementally across multiple invocations. Once the violation count
+   reaches zero (or near-zero), enable the rule. Commit with message:
+   "Fix N {RULE} violations: {description} (not yet enabled)"
+
+7. Update pyproject.toml:
    - Add the new rule to extend-select (for ruff) or the config section (for ty)
    - Add a comment explaining what the rule category covers, matching existing comment style
    - Keep the list in the same order/style as existing entries
 
-7. Commit with message: "Enable {RULE}: {description}"
+8. Commit with message: "Enable {RULE}: {description}"
    Example: "Enable DTZ: flake8-datetimez (enforce timezone-aware datetime usage)"
 
 ## Constraints

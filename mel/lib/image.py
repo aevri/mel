@@ -149,7 +149,8 @@ def montage_horizontal_inner_border(divider_size, *image_list):
         ValueError: Must provide image_list
     """
     if not image_list:
-        raise ValueError("Must provide image_list")
+        msg = "Must provide image_list"
+        raise ValueError(msg)
 
     height = max(i.shape[0] for i in image_list)
     width = sum(i.shape[1] for i in image_list)

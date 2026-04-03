@@ -66,7 +66,8 @@ class ImageCompareDisplay:
 
     def __init__(self, screen, _name, image_list):
         if not image_list:
-            raise ValueError("image_list must be a list with at least one image.")
+            msg = "image_list must be a list with at least one image."
+            raise ValueError(msg)
 
         self._display = screen
         self._image_list = image_list

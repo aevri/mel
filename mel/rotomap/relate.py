@@ -118,9 +118,11 @@ def best_theory(from_moles, to_moles, iterate):
 
 def best_offset_theory(from_moles, to_moles):
     if not from_moles:
-        raise ValueError("from_moles is empty")
+        msg = "from_moles is empty"
+        raise ValueError(msg)
     if not to_moles:
-        raise ValueError("to_moles is empty")
+        msg = "to_moles is empty"
+        raise ValueError(msg)
 
     theory = best_offset_field_theory(from_moles, to_moles)
     if theory is None:

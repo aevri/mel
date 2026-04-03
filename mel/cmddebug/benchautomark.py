@@ -92,7 +92,8 @@ def _zip_samelen(*args):
                 num_stopped += 1
         if num_stopped:
             if num_stopped != len(iterators):
-                raise ValueError("Iterators must be the same length.")
+                msg = "Iterators must be the same length."
+                raise ValueError(msg)
             return
         yield tuple(values)
 
