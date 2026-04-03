@@ -66,9 +66,11 @@ def list_rotated_left(list_, n):
     :returns: a new list.
     """
     if n < 0:
-        raise ValueError(f"n must be zero or greater, got {n}.")
+        msg = f"n must be zero or greater, got {n}."
+        raise ValueError(msg)
     if n > len(list_):
-        raise ValueError(f"n must be less than list len ({len(list_)}), got {n}.")
+        msg = f"n must be less than list len ({len(list_)}), got {n}."
+        raise ValueError(msg)
     return list_[n:] + list_[:n]
 
 

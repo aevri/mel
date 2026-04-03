@@ -41,10 +41,11 @@ def load_dinov3_model(dino_size="base", *, local_files_only=False, pretrained=Tr
     }
 
     if dino_size not in model_configs:
-        raise ValueError(
+        msg = (
             f"Invalid dino_size: {dino_size}. "
             f"Must be one of {list(model_configs.keys())}"
         )
+        raise ValueError(msg)
 
     model_name, feature_dim = model_configs[dino_size]
 
@@ -125,10 +126,11 @@ class Dinov3Model:
                 return patch_tokens[0]  # [num_patches, feature_dim]
 
             # Fallback: if features is 2D, it's already pooled
-            raise RuntimeError(
+            msg = (
                 f"Unexpected features shape: {features.shape}. "
                 "Expected 3D tensor [batch, tokens, dim]"
             )
+            raise RuntimeError(msg)
 
 
 def scale_image_to_fit(image_rgb, image_size):

@@ -40,7 +40,8 @@ def process_args(args):
                 ellipse, mask.shape[1], mask.shape[0]
             )
         except ValueError as e:
-            raise ValueError(f"Bad data from '{path}'.") from e
+            msg = f"Bad data from '{path}'."
+            raise ValueError(msg) from e
 
         metadata = {"ellipse": ellipse}
         mel.rotomap.moles.save_image_metadata(metadata, path)

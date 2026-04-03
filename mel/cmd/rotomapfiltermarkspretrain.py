@@ -50,11 +50,13 @@ def process_args(args):
                     image_path, moles, args.batch_size
                 )
             except Exception as e:
-                raise Exception(f"Error while processing {image_path}") from e
+                msg = f"Error while processing {image_path}"
+                raise Exception(msg) from e
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2020 Angelos Evripiotis.
+# Copyright (C) 2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

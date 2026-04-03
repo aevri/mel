@@ -19,9 +19,11 @@ def _existing_file_path(string):
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
-        raise argparse.ArgumentTypeError(f"File does not exist: {string}")
+        msg = f"File does not exist: {string}"
+        raise argparse.ArgumentTypeError(msg)
     if not path.is_file():
-        raise argparse.ArgumentTypeError(f"Path is not a file: {string}")
+        msg = f"Path is not a file: {string}"
+        raise argparse.ArgumentTypeError(msg)
     return path
 
 

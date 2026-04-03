@@ -29,7 +29,8 @@ class RotomapDirectory:
     def __init__(self, path):
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
-            raise ValueError(f'"{self.path}" is not a directory, so not a rotomap.')
+            msg = f'"{self.path}" is not a directory, so not a rotomap.'
+            raise ValueError(msg)
 
         self.image_paths = [
             str(f) for f in self.path.iterdir() if mel.lib.fs.is_jpeg_name(f)
@@ -39,7 +40,8 @@ class RotomapDirectory:
         self.lesions = load_rotomap_dir_lesions_file(self.path)
 
         if not self.image_paths:
-            raise ValueError(f'"{self.path}" has no images, so not a rotomap.')
+            msg = f'"{self.path}" has no images, so not a rotomap.'
+            raise ValueError(msg)
 
     def yield_mole_lists(self):
         """Yield (image_path, mole_list) for all mole image files."""
@@ -66,11 +68,14 @@ class RotomapFrame:
         self.path = pathlib.Path(path)
         self.extra_stem = extra_stem
         if self.path.is_dir():
-            raise ValueError(f"Expected file, not directory: {path}")
+            msg = f"Expected file, not directory: {path}"
+            raise ValueError(msg)
         if not self.path.exists():
-            raise ValueError(f"Path does not exist: {path}")
+            msg = f"Path does not exist: {path}"
+            raise ValueError(msg)
         if not mel.lib.fs.is_jpeg_name(self.path):
-            raise ValueError(f"Unrecognised suffix for rotomap frame: {path}")
+            msg = f"Unrecognised suffix for rotomap frame: {path}"
+            raise ValueError(msg)
 
         self.moles = load_image_moles(self.path, extra_stem=extra_stem)
         self.moledata = MoleData(self.moles)
@@ -128,7 +133,8 @@ def make_argparse_image_moles(path):
     try:
         path = pathlib.Path(path)
         if not path.exists():
-            raise ValueError(f"'{path}' does not exist.")
+            msg = f"'{path}' does not exist."
+            raise ValueError(msg)
         if path.is_file():
             yield path, load_image_moles(path)
         else:
@@ -194,13 +200,17 @@ def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000):
     max_length = max(max_x, max_y) * 2
 
     if ellipse[1][0] < 1 or ellipse[1][1] < 1:
-        raise ValueError(f"Ellipse too small: {ellipse}")
+        msg = f"Ellipse too small: {ellipse}"
+        raise ValueError(msg)
     if ellipse[1][0] > max_length or ellipse[1][1] > max_length:
-        raise ValueError(f"Ellipse too big: {ellipse}")
+        msg = f"Ellipse too big: {ellipse}"
+        raise ValueError(msg)
     if ellipse[0][0] < 0 or ellipse[0][1] < 0:
-        raise ValueError(f"Ellipse out of bounds: {ellipse}")
+        msg = f"Ellipse out of bounds: {ellipse}"
+        raise ValueError(msg)
     if ellipse[0][0] > max_x or ellipse[0][1] > max_y:
-        raise ValueError(f"Ellipse out of bounds: {ellipse}")
+        msg = f"Ellipse out of bounds: {ellipse}"
+        raise ValueError(msg)
 
 
 def load_image_metadata(image_path):
@@ -213,7 +223,8 @@ def load_image_metadata(image_path):
             try:
                 validate_ellipse_mask(metadata["ellipse"])
             except ValueError as e:
-                raise ValueError(f"Bad data from '{metadata_path}'.") from e
+                msg = f"Bad data from '{metadata_path}'."
+                raise ValueError(msg) from e
 
     return metadata
 
@@ -221,7 +232,8 @@ def load_image_metadata(image_path):
 def load_rotomap_dir_lesions_file(rotomap_dir_path):
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
-        raise ValueError(f"Rotomap directory does not exist: '{rotomap_dir_path}'.")
+        msg = f"Rotomap directory does not exist: '{rotomap_dir_path}'."
+        raise ValueError(msg)
 
     lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
 
@@ -231,13 +243,13 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
 
     for m in lesions:
         if KEY_IS_UNCHANGED not in m:
-            raise Exception(
-                f"Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}"
-            )
+            msg = f"Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}"
+            raise Exception(msg)
 
     for m in lesions:
         if m["uuid"] is None:
-            raise Exception(f"Lesion UUID cannot be None: {lesions_path} {m}")
+            msg = f"Lesion UUID cannot be None: {lesions_path} {m}"
+            raise Exception(msg)
 
     return lesions
 
@@ -245,7 +257,8 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
 def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions):
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
-        raise ValueError(f"Rotomap directory does not exist: '{rotomap_dir_path}'.")
+        msg = f"Rotomap directory does not exist: '{rotomap_dir_path}'."
+        raise ValueError(msg)
 
     lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
     save_json(lesions_path, lesions)
@@ -253,7 +266,8 @@ def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions):
 
 def load_image_moles(image_path, *, extra_stem=None):
     if not pathlib.Path(image_path).exists():
-        raise ValueError(f"Mole image does not exist: '{image_path}'.")
+        msg = f"Mole image does not exist: '{image_path}'."
+        raise ValueError(msg)
 
     suffix = ".json"
     if extra_stem is not None:
@@ -266,9 +280,8 @@ def load_image_moles(image_path, *, extra_stem=None):
 
     for m in moles:
         if KEY_IS_CONFIRMED not in m:
-            raise ValueError(
-                f"Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}"
-            )
+            msg = f"Mole must have {KEY_IS_CONFIRMED} status: {moles_path} {m}"
+            raise ValueError(msg)
 
     for m in moles:
         m["x"] = int(m["x"])
@@ -276,7 +289,8 @@ def load_image_moles(image_path, *, extra_stem=None):
 
     for m in moles:
         if m["uuid"] is None:
-            raise ValueError(f"Mole UUID cannot be None: {moles_path} {m}")
+            msg = f"Mole UUID cannot be None: {moles_path} {m}"
+            raise ValueError(msg)
 
     return moles
 

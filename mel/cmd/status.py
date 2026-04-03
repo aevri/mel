@@ -334,7 +334,8 @@ def process_args(args):
             case InfoNotification():
                 info_to_notices[notice.__class__].append(notice)
             case _:
-                raise RuntimeError(f"Unexpected notice type: {notice.__class__}")
+                msg = f"Unexpected notice type: {notice.__class__}"
+                raise RuntimeError(msg)
 
     any_notices = bool(alerts_to_notices or errors_to_notices)
 

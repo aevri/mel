@@ -16,14 +16,16 @@ def set_clipboard_contents(text):
     pbcopy = "/usr/bin/pbcopy"
 
     if not os.path.isfile(pbcopy):
-        raise NotImplementedError(f"{pbcopy} was not found, cannot write clipboard")
+        msg = f"{pbcopy} was not found, cannot write clipboard"
+        raise NotImplementedError(msg)
 
     p = subprocess.Popen([pbcopy], stdin=subprocess.PIPE, universal_newlines=True)
     p.communicate(input=text)
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2021 Angelos Evripiotis.
+# Copyright (C) 2015-2021, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

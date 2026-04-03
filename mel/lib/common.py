@@ -15,7 +15,8 @@ import mel.lib.image
 
 def determine_filename_for_ident(*source_filenames):
     if not source_filenames:
-        raise ValueError(f"{source_filenames} is not a valid list of filenames")
+        msg = f"{source_filenames} is not a valid list of filenames"
+        raise ValueError(msg)
 
     dates = [mel.lib.datetime.guess_datetime_from_path(x) for x in source_filenames]
     valid_dates = [x for x in dates if x is not None]

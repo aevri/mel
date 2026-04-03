@@ -22,9 +22,11 @@ def _existing_file_path(string):
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
-        raise argparse.ArgumentTypeError(f"File does not exist: {string}")
+        msg = f"File does not exist: {string}"
+        raise argparse.ArgumentTypeError(msg)
     if not path.is_file():
-        raise argparse.ArgumentTypeError(f"Path is not a file: {string}")
+        msg = f"Path is not a file: {string}"
+        raise argparse.ArgumentTypeError(msg)
     return path
 
 
@@ -63,11 +65,12 @@ def _validate_aspect_ratios(image_sizes):
     for path, h, w in image_sizes[1:]:
         ratio = w / h
         if abs(ratio - base_ratio) / base_ratio > 0.01:
-            raise ValueError(
+            msg = (
                 f"Aspect ratio mismatch: {base_path} is "
                 f"{base_w}x{base_h} ({base_ratio:.4f}) but "
                 f"{path} is {w}x{h} ({ratio:.4f})"
             )
+            raise ValueError(msg)
 
 
 def _normalize_resolution(images_with_paths):

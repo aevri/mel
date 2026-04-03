@@ -285,12 +285,13 @@ def load_pretrained(pretrained_paths):
         loaded_data = pickle.loads(path.read_bytes())
         pretrained_weights_version = loaded_data["weights_version"]
         if pretrained_weights_version != current_weights_version:
-            raise Exception(
+            msg = (
                 "Pretrained weights version mismatch."
                 "Please pretrain again.\n"
                 f"Pretrained: {pretrained_weights_version}\n"
                 f"Current: {current_weights_version}"
             )
+            raise Exception(msg)
         pretrained_data[session].append(loaded_data)
     return pretrained_data
 
@@ -358,18 +359,22 @@ def make_model_and_fit(
 
 def open_image_for_classifier(image_path):
     if not os.path.exists(image_path):
-        raise OSError(f"No such file or directory: {image_path}")
+        msg = f"No such file or directory: {image_path}"
+        raise OSError(msg)
     if os.path.isdir(image_path):
-        raise OSError(f"Is a directory: {image_path}")
+        msg = f"Is a directory: {image_path}"
+        raise OSError(msg)
 
     flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
         if original_image is None:
-            raise OSError(f"File not recognized by opencv: {image_path}")
+            msg = f"File not recognized by opencv: {image_path}"
+            raise OSError(msg)
         original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     except Exception as e:
-        raise OSError(f"Error handling image at: {image_path}") from e
+        msg = f"Error handling image at: {image_path}"
+        raise OSError(msg) from e
 
     mask = mel.rotomap.mask.load(image_path)
     green = np.zeros(original_image.shape, np.uint8)
@@ -470,12 +475,13 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
     current_version = get_model_weights_version()
 
     if trained_version != current_version:
-        raise Exception(
+        msg = (
             "Pretrained weights version mismatch."
             "Please pretrain again.\n"
             f"Pretrained: {trained_version}\n"
             f"Current: {current_version}"
         )
+        raise Exception(msg)
 
     model, num_features, transform = make_model_and_transform()
     head = make_model(num_features)
