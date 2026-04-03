@@ -116,15 +116,15 @@ class TestRaiseIfNotIntVector2:
 
     def test_float_array_raises(self):
         v = np.array([1.0, 2.0], dtype=np.float64)
-        with pytest.raises(ValueError, match="not an int vector2"):
+        with pytest.raises(TypeError, match="not an int vector2"):
             mlmath.raise_if_not_int_vector2(v)
 
     def test_non_array_raises(self):
-        with pytest.raises(ValueError, match="not a numpy array"):
+        with pytest.raises(TypeError, match="not a numpy array"):
             mlmath.raise_if_not_int_vector2([1, 2])
 
     def test_tuple_raises(self):
-        with pytest.raises(ValueError, match="not a numpy array"):
+        with pytest.raises(TypeError, match="not a numpy array"):
             mlmath.raise_if_not_int_vector2((1, 2))
 
     def test_int32_valid(self):
