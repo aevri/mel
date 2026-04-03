@@ -103,6 +103,7 @@ def make_composite_overlay(*overlays):
 
     Returns:
         A function which will composite *overlays and return the image.
+
     """
 
     def do_overlay(image, transform):

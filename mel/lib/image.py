@@ -27,6 +27,7 @@ def save_image(image, path):
     Raises:
         PermissionError: If the file is read-only
         OSError: If the image cannot be saved
+
     """
     path_str = str(path)
 
@@ -293,6 +294,7 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive):
 
     Returns:
         tuple: A tuple (rows, columns) slices as a selection object.
+
     """
     return (
         slice(top_left_inclusive[1], bottom_right_exclusive[1]),
@@ -314,6 +316,7 @@ def slice_square_or_none(image, lefttop, rightbottom):
     Returns:
         numpy.ndarray or None: A NumPy array representing an OpenCV image,
             stored in yx order.
+
     """
     height_width = image.shape[:2]
     width_height = (height_width[1], height_width[0])
@@ -346,6 +349,7 @@ def recentered_at(image, x, y):
 
     Returns:
         numpy.ndarray: A new OpenCV image.
+
     """
     return centered_at(image, np.array((x, y)), get_image_rect(image))
 
@@ -370,6 +374,7 @@ def rotated(image, degrees):
 
     Returns:
         numpy.ndarray: A new OpenCV image.
+
     """
     height, width = image.shape[0:2]
 

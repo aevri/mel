@@ -148,6 +148,7 @@ def offset_theory_points(from_moles, to_moles):
 
     Returns:
         tuple: A tuple containing the from_uuid_points, to_uuid_points, point_offsets.
+
     """
     from_dict, to_dict, from_set, to_set, in_both = mole_list_overlap_info(
         from_moles, to_moles
@@ -183,6 +184,7 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
 
     Returns:
         numpy.array or None: A numpy.array of the guessed position, or None if no guess.
+
     """
     from_points, _to_points, point_offsets, _ = offset_theory_points(
         from_moles, to_moles

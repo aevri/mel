@@ -12,9 +12,11 @@ def load_dinov3_model(dino_size="base", *, local_files_only=False, pretrained=Tr
     Args:
         dino_size: Model size variant ("small", "base", "large", "huge", "7b")
         local_files_only: If True, only use cached model weights (no network).
+        pretrained: If True, load pretrained weights.
 
     Returns:
         tuple: (model, feature_dimension)
+
     """
     # Import os first to set environment variable before other imports
     import os
@@ -95,6 +97,7 @@ class Dinov3Model:
 
         Returns:
             Tensor: All patch features [num_patches, feature_dim]
+
         """
         import torch
         from torchvision import transforms
@@ -137,6 +140,7 @@ def scale_image_to_fit(image_rgb, image_size):
 
     Returns:
         tuple: (scaled_image, scale_factor)
+
     """
     h, w = image_rgb.shape[:2]
     scale = image_size / max(h, w)
@@ -170,6 +174,7 @@ def extract_all_patch_features(scaled_image, model):
 
     Returns:
         Tensor: All patch features [num_patches, feature_dim]
+
     """
     return model.extract_patch_features(scaled_image)
 
@@ -183,6 +188,7 @@ def apply_mask(image_rgb, mask):
 
     Returns:
         Masked image with excluded regions set to ImageNet mean color
+
     """
     # ImageNet mean in RGB, 0-255 scale
     mean_rgb = (int(0.485 * 255), int(0.456 * 255), int(0.406 * 255))

@@ -16,6 +16,7 @@ def _parse_debug_keypresses():
 
     Returns:
         List of pygame key constants, or empty list if not set.
+
     """
     keypress_str = os.environ.get("MEL_DEBUG_ENQUEUE_KEYPRESSES")
     if not keypress_str:
