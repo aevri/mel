@@ -27,6 +27,7 @@ import collections
 import functools
 import math
 import os
+import typing
 
 import cv2
 import numpy as np
@@ -42,7 +43,13 @@ import mel.lib.moleimaging
 import mel.rotomap.display
 import mel.rotomap.moles
 
-_PosInfo = collections.namedtuple("_PosInfo", "path pos ellipse_xpos uuid uuid_points")
+
+class _PosInfo(typing.NamedTuple):
+    path: object
+    pos: object
+    ellipse_xpos: object
+    uuid: object
+    uuid_points: object
 
 
 def setup_parser(parser):
