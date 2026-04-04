@@ -181,10 +181,13 @@ exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
 python-version = "3.13"
 
 [tool.ty.rules]
-possibly-unresolved-reference = "warn"
+possibly-unresolved-reference = "error"
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"
 unresolved-reference = "error"
+unsupported-dynamic-base = "error"
 deprecated = "error"
-division-by-zero = "warn"
+division-by-zero = "error"
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2026 Angelos Evripiotis.
