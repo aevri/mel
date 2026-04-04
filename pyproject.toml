@@ -108,6 +108,8 @@ target-version = "py313"
 # - TRY003: tryceratops (avoid specifying long messages outside exception class)
 # - TRY004: tryceratops (prefer TypeError for invalid type checks)
 # - TRY201: tryceratops (verbose raise, use bare `raise` in except blocks)
+# - TRY300: tryceratops (move return/break/continue out of try, use else block)
+# - TRY301: tryceratops (abstract raise to an inner function, avoid raise within try)
 # - PLR1: pylint refactor (argument redefinition, comparison merging)
 # - PLR5: pylint refactor (collapsible else/elif blocks)
 # - PLR02: pylint refactor (enforce classmethod/staticmethod decorators, no property params)
@@ -125,7 +127,7 @@ target-version = "py313"
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
-extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY300", "TRY301", "YTT", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 

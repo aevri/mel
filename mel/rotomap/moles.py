@@ -134,9 +134,13 @@ def make_argparse_image_moles(path):
     """Use in the 'type=' parameter to add_argument()."""
     try:
         path = pathlib.Path(path)
-        if not path.exists():
-            msg = f"'{path}' does not exist."
-            raise ValueError(msg)
+        exists = path.exists()
+    except (TypeError, ValueError, OSError) as e:
+        raise argparse.ArgumentTypeError(str(e)) from e
+    if not exists:
+        msg = f"'{path}' does not exist."
+        raise argparse.ArgumentTypeError(msg)
+    try:
         if path.is_file():
             yield path, load_image_moles(path)
         else:
