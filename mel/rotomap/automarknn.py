@@ -105,6 +105,9 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
 class PlModule(pl.LightningModule):
     def __init__(self, model_path=None):
         super().__init__()
+        # self.lr = 0.0000229  # As determined by pl auto_lr_find. Not good.
+        # self.lr = 0.01  # Too high.
+        # self.lr = 0.0001  # Too low? Validation worse than '0.001'.
         self.lr = 0.001
         self.model = make_model(model_path)
 
@@ -194,6 +197,15 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
         target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
         return image, target
+
+
+# This is useful for debugging sometimes.
+#
+# def rgb_tensor_to_image(tensor):
+#     image = tensor.detach().numpy() * 255
+#     image = np.uint8(image)
+#     image = image.transpose((1, 2, 0))
+#     return image
 
 
 def list_train_valid_images(min_session=None):

@@ -1,6 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
 import copy
+import typing
 
 import numpy as np
 
@@ -8,7 +9,15 @@ import mel.lib.image
 import mel.rotomap.detectmoles
 import mel.rotomap.moles
 
-Moles = list[dict[str, str | int]]
+
+class Mole(typing.TypedDict, total=False):
+    uuid: typing.Required[str]
+    x: typing.Required[int]
+    y: typing.Required[int]
+    radius: int
+
+
+Moles = list[Mole]
 
 
 def merge_in_radiuses(

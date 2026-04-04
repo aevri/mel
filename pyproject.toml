@@ -181,6 +181,11 @@ extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 
+[tool.ruff.lint.per-file-ignores]
+# These files contain intentionally commented-out code kept for reference
+"mel/lib/fs.py" = ["ERA001"]
+"mel/rotomap/automarknn.py" = ["ERA001"]
+
 [tool.vulture]
 ignore_names = ["training_step", "validation_step", "configure_optimizers"]
 exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
