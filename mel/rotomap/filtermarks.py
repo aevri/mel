@@ -273,8 +273,25 @@ def split_data(pretrained_data, training_split=0.8):
     return training_data, validation_data
 
 
-def load_pretrained(pretrained_paths):
+def _load_pretrained_file(path):
+    import pickle
+
     import torch
+
+    try:
+        return torch.load(path, weights_only=True)
+    except pickle.UnpicklingError:
+        pass
+
+    # Convert old pickle-format file to torch format.
+    loaded_data = pickle.loads(path.read_bytes())  # noqa: S301
+    if "path" in loaded_data:
+        loaded_data["path"] = str(loaded_data["path"])
+    torch.save(loaded_data, path)
+    return loaded_data
+
+
+def load_pretrained(pretrained_paths):
 
     work_items = [
         (session, path)
@@ -284,7 +301,7 @@ def load_pretrained(pretrained_paths):
     pretrained_data = collections.defaultdict(list)
     current_weights_version = get_model_weights_version()
     for session, path in work_items:
-        loaded_data = torch.load(path, weights_only=True)
+        loaded_data = _load_pretrained_file(path)
         pretrained_weights_version = loaded_data["weights_version"]
         if pretrained_weights_version != current_weights_version:
             msg = (
