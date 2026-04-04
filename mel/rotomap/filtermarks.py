@@ -282,7 +282,7 @@ def load_pretrained(pretrained_paths):
     pretrained_data = collections.defaultdict(list)
     current_weights_version = get_model_weights_version()
     for session, path in work_items:
-        loaded_data = pickle.loads(path.read_bytes())
+        loaded_data = pickle.loads(path.read_bytes())  # noqa: S301
         pretrained_weights_version = loaded_data["weights_version"]
         if pretrained_weights_version != current_weights_version:
             msg = (

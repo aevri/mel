@@ -31,8 +31,8 @@ def random_moles(num_moles):
         {
             "uuid": mel.rotomap.moles.make_new_uuid(),
             "radius": (random.normalvariate(0.02, 0.005) * math.pi),
-            "y_offset": random.uniform(-1, 1),
-            "longitude_rads": random.uniform(0, math.pi * 2),
+            "y_offset": random.uniform(-1, 1),  # noqa: S311
+            "longitude_rads": random.uniform(0, math.pi * 2),  # noqa: S311
         }
         for _ in range(num_moles)
     ]

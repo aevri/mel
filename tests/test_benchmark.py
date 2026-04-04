@@ -157,7 +157,7 @@ def download_and_extract_dataset(url: str) -> pathlib.Path:
     dataset_archive = pathlib.Path("benchmark_dataset.tar.gz")
 
     print(f"Downloading benchmark dataset from {url}...")
-    urllib.request.urlretrieve(url, dataset_archive)
+    urllib.request.urlretrieve(url, dataset_archive)  # noqa: S310
 
     extract_path = pathlib.Path(".")
     print(f"Extracting dataset to {extract_path}...")
