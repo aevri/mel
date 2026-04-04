@@ -183,7 +183,9 @@ python-version = "3.13"
 [tool.ty.rules]
 possibly-unresolved-reference = "error"
 possibly-missing-attribute = "error"
+possibly-missing-import = "error"
 unresolved-reference = "error"
+unsupported-dynamic-base = "error"
 deprecated = "error"
 division-by-zero = "error"
 
