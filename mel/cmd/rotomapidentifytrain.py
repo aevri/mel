@@ -136,7 +136,7 @@ def process_args(args):
     if model_path.exists():
         if not metadata_path.exists():
             msg = f"Metadata for model does not exist: {metadata_path}"
-            raise Exception(msg)
+            raise FileNotFoundError(msg)
 
         if not os.access(model_path, os.W_OK):
             print("No permission to write to", model_path)
@@ -155,7 +155,7 @@ def process_args(args):
         def check_old_matches_new(name, old, new):
             if old != new:
                 msg = f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
-                raise Exception(msg)
+                raise ValueError(msg)
 
         old_model_args = old_metadata["model_args"]
         check_old_matches_new("cnn width", old_model_args["cnn_width"], cnn_width)
@@ -291,7 +291,7 @@ def _fixup_old_model(old_metadata, new_metadata, model):
             f"old: {old_model_args}\n"
             f"new: {new_model_args}\n"
         )
-        raise Exception(msg)
+        raise ValueError(msg)
 
 
 # -----------------------------------------------------------------------------

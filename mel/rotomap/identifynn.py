@@ -343,7 +343,7 @@ def make_data(repo_path, data_config, channel_cache=None):
         rotomaps = get_all_rotomaps(parts_path)
     else:
         msg = "Unhandled rotomap type"
-        raise Exception(msg)
+        raise ValueError(msg)
 
     train_rotomaps, valid_rotomaps = split_train_valid(
         rotomaps, data_config["train_proportion"]
@@ -410,11 +410,11 @@ def make_data(repo_path, data_config, channel_cache=None):
 
     if not train_dataset:
         msg = f"No data in training dataset. Tried these rotomaps: {train_rotomaps}"
-        raise Exception(msg)
+        raise ValueError(msg)
 
     if not valid_dataset and data_config["train_proportion"] != 1:
         msg = f"No data in validation dataset. Tried these rotomaps: {valid_rotomaps}"
-        raise Exception(msg)
+        raise ValueError(msg)
 
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,

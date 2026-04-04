@@ -40,7 +40,7 @@ def process_args(args):
     images = get_comparison_images(args.PATH)
     if not images:
         msg = f"No microscope images at {args.PATH}"
-        raise Exception(msg)
+        raise ValueError(msg)
 
     print("Press left arrow or right arrow to change image in the left slot.")
     print("Press space to swap left slot and right slot.")

@@ -79,7 +79,7 @@ def get_dirs_to_path(path_in):
     path_abs = os.path.abspath(path_in)
     if cwd != os.path.commonprefix([cwd, path_abs]):
         msg = f"{path_abs} is not under cwd ({cwd})"
-        raise Exception(msg)
+        raise ValueError(msg)
     path_rel = os.path.relpath(path_abs, cwd)
     path_list = []
     while path_rel:
@@ -131,7 +131,7 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
     for candidate_path, dt in path_dt_list:
         if dt is None:
             msg = "Could not determine date"
-            raise Exception(msg, candidate_path)
+            raise ValueError(msg, candidate_path)
 
     path_dt_list.sort(key=lambda x: x[1], reverse=True)
 
@@ -171,7 +171,7 @@ def process_args(args):
     cap = cv2.VideoCapture(args.video_device_index)
     if not cap.isOpened():
         msg = "Could not open video capture device."
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
     with mel.lib.fullscreenui.fullscreen_context() as screen:
         display = mel.lib.fullscreenui.MultiImageDisplay(screen)
@@ -220,7 +220,7 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
     ret, frame = cap.read()
     if not ret:
         msg = "Could not read frame."
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
     preview = np.copy(frame)
     capindex = display.add_image(preview, "capture")

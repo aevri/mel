@@ -105,7 +105,7 @@ def process_args(args):
             )
         except Exception as e:
             msg = f"Error while processing {image_path}"
-            raise Exception(msg) from e
+            raise RuntimeError(msg) from e
 
         num_filtered = len(moles) - len(filtered_moles)
         if args.verbose:

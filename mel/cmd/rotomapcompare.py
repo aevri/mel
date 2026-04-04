@@ -78,7 +78,7 @@ def process_args(args):
                 msg = (
                     f'{frame} has no ellipse metadata, try running "rotomap calc-space"'
                 )
-                raise Exception(msg)
+                raise ValueError(msg)
             ellipse = frame.metadata["ellipse"]
             elspace = mel.lib.ellipsespace.Transform(ellipse)
             for uuid_, point in frame.moledata.uuid_points.items():
@@ -102,7 +102,7 @@ def process_args(args):
 
     if not uuid_to_rotomaps_imagepos_list:
         msg = "Nothing to compare."
-        raise Exception(msg)
+        raise ValueError(msg)
 
     # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)

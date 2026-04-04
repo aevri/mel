@@ -13,7 +13,7 @@ def process_args(_args):
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         msg = "Could not open video capture device."
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
     # create an 800x600 window
     window_name = "output"
@@ -31,12 +31,12 @@ def process_args(_args):
         key = cv2.waitKey(50)
         if key != -1:
             msg = "User aborted."
-            raise Exception(msg)
+            raise RuntimeError(msg)
 
         ret, frame = cap.read()
         if not ret:
             msg = "Could not read frame."
-            raise Exception(msg)
+            raise RuntimeError(msg)
 
         ringed, stats = mel.lib.moleimaging.find_mole(frame)
 
