@@ -63,8 +63,8 @@ def process_args(args):
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
     """Display images in a window, supply controls for organising."""
 
-    def __init__(self, logger, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, logger, screen, image_list):
+        super().__init__(screen, image_list)
         self._melroot = mel.lib.fs.find_melroot()
         self._logger = logger
 
@@ -97,7 +97,8 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2020 Angelos Evripiotis.
+# Copyright (C) 2016-2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
