@@ -147,7 +147,7 @@ class LightningModel(pl.LightningModule):
         return self.model(data)
 
     @staticmethod
-    def _loss_func(model_out, out_data):
+    def _loss_func(model_out, out_data) -> torch.Tensor:
         assert len(out_data) == 2
         f = torch.nn.functional
         return (
