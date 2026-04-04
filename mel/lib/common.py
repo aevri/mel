@@ -13,7 +13,7 @@ import mel.lib.fs
 import mel.lib.image
 
 
-def determine_filename_for_ident(*source_filenames):
+def determine_filename_for_ident(*source_filenames: str):
     if not source_filenames:
         msg = f"{source_filenames} is not a valid list of filenames"
         raise ValueError(msg)

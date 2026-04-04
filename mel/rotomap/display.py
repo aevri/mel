@@ -1,5 +1,6 @@
 """Display a rotomap."""
 
+import collections.abc
 import enum
 import functools
 import sys
@@ -95,7 +96,7 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
         self._title = title
 
 
-def make_composite_overlay(*overlays):
+def make_composite_overlay(*overlays: collections.abc.Callable):
     """Return an overlay, which will composite the supplied overlays in turn.
 
     Args:

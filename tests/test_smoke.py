@@ -276,15 +276,15 @@ def chtempdir_context():
             os.chdir(saved_path)
 
 
-def expect_ok(*args):
+def expect_ok(*args: str | pathlib.PurePath):
     subprocess.check_call(args)
 
 
-def expect_ok_with_env(env, *args):
+def expect_ok_with_env(env, *args: str | pathlib.PurePath):
     subprocess.check_call(args, env=env)
 
 
-def expect_returncode(expected_code, *args):
+def expect_returncode(expected_code, *args: str | pathlib.PurePath):
     return_code = subprocess.call(args)
     assert return_code == expected_code
 
