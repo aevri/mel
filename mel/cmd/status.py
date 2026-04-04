@@ -30,8 +30,6 @@ import mel.rotomap.moles
 
 
 class ImportanceLevel(IntEnum):
-    # Alert = -1
-    # Error = 0
     Info = 1
 
 
@@ -365,7 +363,6 @@ def print_klass_to_notices(klass_to_notices, detail_level, fore):
 
 
 def check_rotomaps(path, notices, importance_level):
-    # incoming_path = path / 'incoming'
     parts_path = path / "parts"
     if parts_path.exists():
         # So far I've organised parts like so:

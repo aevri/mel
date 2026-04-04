@@ -26,14 +26,6 @@ def setup_parser(parser):
         help="Print information about the processing.",
     )
 
-    # parser.add_argument(
-    #     "--size-half",
-    #     "-s",
-    #     default=mel.rotomap.filtermarks.DEFAULT_SIZE // 2,
-    #     type=int,
-    #     help="The 'radius' around the items, pixels. i.e. x2 to calc width.",
-    # )
-
     parser.add_argument(
         "--batch-size",
         default=mel.rotomap.filtermarks.DEFAULT_BATCH_SIZE,

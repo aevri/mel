@@ -146,8 +146,6 @@ def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
 
     assert sqdistmat.shape == (len(from_pos_vec), len(to_pos_vec))
 
-    # print(sqdistmat)
-
     matindex_to_fromindex = list(range(len(from_pos_vec)))
     matindex_to_toindex = list(range(len(to_pos_vec)))
 
@@ -166,8 +164,6 @@ def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         sqdistmat = np.delete(sqdistmat, from_i, axis=0)
         sqdistmat = np.delete(sqdistmat, to_i, axis=1)
         # pylint: enable=invalid-sequence-index
-
-    # print()
 
     missing = matindex_to_fromindex
     added = matindex_to_toindex

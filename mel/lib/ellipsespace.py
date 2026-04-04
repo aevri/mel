@@ -9,30 +9,11 @@ class Transform:
     def __init__(self, ellipse):
         self.ellipse = ellipse
 
-    #         center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
-
-    #         self.center, self.up, self.right = (
-    #             numpy.array(x) for x in (center, up, right))
-
-    #         self.mag = numpy.array((rmag, umag))
-    #         self.inv_mag = 1 / self.mag
-
     def to_space(self, pos):
         return to_ellipse_space(self.ellipse, pos)
-        # pos = numpy.array(pos)
-        # pos -= self.center
-        # pos = numpy.array(
-        #     numpy.dot(pos, self.right),
-        #     numpy.dot(pos, self.up),
-        # )
-        # return pos * self.inv_mag
 
     def from_space(self, pos):
         return from_ellipse_space(self.ellipse, pos)
-        # pos = numpy.array(pos)
-        # return (self.right * pos[0] * self.mag[0]
-        #     + self.up * pos[1] * self.mag[1]
-        #     + self.center)
 
 
 def from_ellipse_space(ellipse, pos):

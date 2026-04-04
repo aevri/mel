@@ -150,13 +150,10 @@ def process_args(args):
         "log_every_n_steps": 5,
         "enable_checkpointing": False,
         "accelerator": "auto",
-        # "accumulate_grad_batches": args.accumulate_grad_batches,
         "max_epochs": args.epochs,
-        # "max_epochs": 1,
         "limit_train_batches": args.limit_train_batches,
         "limit_val_batches": args.limit_valid_batches,
         "val_check_interval": 50 if len(train_loader) > 50 else None,
-        # "auto_lr_find": True,
     }
 
     if args.wandb:
@@ -168,8 +165,6 @@ def process_args(args):
     if not args.just_validate:
         trainer = pl.Trainer(**trainer_kwargs)
 
-        # model.train()
-        # trainer.tune(model, train_loader)
         print(f"Learning rate: {model.lr:0.8f}")
 
         trainer.fit(

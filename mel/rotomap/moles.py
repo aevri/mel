@@ -85,9 +85,6 @@ class RotomapFrame:
     def load_image(self):
         return mel.lib.image.load_image(self.path)
 
-    # def load_mask(self):
-    #     return mel.rotomap.mask.load_or_none(self.path)
-
     def has_mole_file(self):
         if self.extra_stem is None:
             return pathlib.Path(f"{self.path}.json").exists()
@@ -115,11 +112,6 @@ class MoleData:
         # pylint: disable=pointless-statement
         _ = self.uuid_points_list
         # pylint: enable=pointless-statement
-
-        # self.canonical_uuids = frozenset(
-        #     m["uuid"] for m in self.moles if m[KEY_IS_CONFIRMED]
-        # )
-        # self.uuid_moles = {m['uuid']: m for m in self.moles}
 
 
 def make_argparse_rotomap_directory(path):
@@ -166,12 +158,6 @@ class MoleListDiff:
     def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
         self.new = (new_uuids - old_uuids) - ignore_new
         self.missing = (old_uuids - new_uuids) - ignore_missing
-        # self.matching = old_uuids & new_uuids
-
-        # self.ignored_new = (new_uuids - old_uuids) & ignore_new
-        # self.ignored_missing = (old_uuids - new_uuids) & ignore_missing
-        # self.would_ignore_new = ignore_new - (new_uuids - old_uuids)
-        # self.would_ignore_missing = ignore_missing - (old_uuids - new_uuids)
 
 
 def normalised_ellipse_mask(ellipse):

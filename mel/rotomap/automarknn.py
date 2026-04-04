@@ -59,7 +59,6 @@ def make_model(model_path=None):
 
 
 def load_image(image_path):
-    # flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     flags = cv2.IMREAD_COLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
@@ -106,9 +105,6 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
 class PlModule(pl.LightningModule):
     def __init__(self, model_path=None):
         super().__init__()
-        # self.lr = 0.0000229  # As determined by pl auto_lr_find. Not good.
-        # self.lr = 0.01  # Too high.
-        # self.lr = 0.0001  # Too low? Validation worse than '0.001'.
         self.lr = 0.001
         self.model = make_model(model_path)
 
@@ -126,7 +122,6 @@ class PlModule(pl.LightningModule):
 
     def validation_step(self, batch, _batch_idx):
         x, y = batch
-        # self.model.train()
         result = self.model(x, y)
         precision_list = []
         recall_list = []
@@ -174,8 +169,6 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         self.image_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
-                # torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                #                     std=[0.229, 0.224, 0.225])
             ]
         )
 
@@ -201,15 +194,6 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         target["labels"] = torch.ones((len(boxes),), dtype=torch.int64)
         target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
         return image, target
-
-
-# This is useful for debugging sometimes.
-#
-# def rgb_tensor_to_image(tensor):
-#     image = tensor.detach().numpy() * 255
-#     image = np.uint8(image)
-#     image = image.transpose((1, 2, 0))
-#     return image
 
 
 def list_train_valid_images(min_session=None):

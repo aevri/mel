@@ -31,7 +31,6 @@ def process_args(args):
         if args.verbose:
             print("Processing", target, "..")
 
-        # part = mel.lib.fs.get_rotomap_part_from_path(melroot, target)
         frame = mel.rotomap.moles.RotomapFrame(
             os.path.abspath(target), extra_stem=args.extra_stem
         )
