@@ -59,7 +59,6 @@ def make_model(model_path=None):
 
 
 def load_image(image_path):
-    # flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     flags = cv2.IMREAD_COLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
@@ -126,7 +125,6 @@ class PlModule(pl.LightningModule):
 
     def validation_step(self, batch, _batch_idx):
         x, y = batch
-        # self.model.train()
         result = self.model(x, y)
         precision_list = []
         recall_list = []
@@ -174,8 +172,6 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         self.image_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
-                # torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                #                     std=[0.229, 0.224, 0.225])
             ]
         )
 

@@ -1,6 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
 import copy
+import typing
 
 import numpy as np
 
@@ -8,16 +9,15 @@ import mel.lib.image
 import mel.rotomap.detectmoles
 import mel.rotomap.moles
 
-# Each mole should have these fields:
-#   uuid: str
-#   x: int
-#   y: int
-#   radius: int
-#
-# Note that in Python 3.11 we can use TypedDict to enforce this,
-# and make radius NotRequired.
-#
-Moles = list[dict[str, str | int]]
+
+class Mole(typing.TypedDict, total=False):
+    uuid: typing.Required[str]
+    x: typing.Required[int]
+    y: typing.Required[int]
+    radius: int
+
+
+Moles = list[Mole]
 
 
 def merge_in_radiuses(
@@ -99,8 +99,6 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
 
     assert sqdistmat.shape == (len(from_pos_vec), len(to_pos_vec))
 
-    # print(sqdistmat)
-
     matindex_to_fromindex = list(range(len(from_pos_vec)))
     matindex_to_toindex = list(range(len(to_pos_vec)))
 
@@ -124,8 +122,6 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
         sqdistmat = np.delete(sqdistmat, from_i, axis=0)
         sqdistmat = np.delete(sqdistmat, to_i, axis=1)
         # pylint: enable=invalid-sequence-index
-
-    # print()
 
     missing = matindex_to_fromindex
     added = matindex_to_toindex

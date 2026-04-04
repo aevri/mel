@@ -150,11 +150,7 @@ class LightningModel(pl.LightningModule):
     def _loss_func(model_out, out_data) -> torch.Tensor:
         assert len(out_data) == 2
         f = torch.nn.functional
-        return (
-            f.cross_entropy(model_out[0], out_data[0])
-            # + f.mse_loss(model_out[1], out_data[1])
-            # + f.mse_loss(model_out[2] / 8, out_data[2] / 8)
-        )
+        return f.cross_entropy(model_out[0], out_data[0])
 
     def training_step(self, batch, _batch_idx):
         _i, xb, yb = batch
@@ -509,8 +505,6 @@ def split_train_valid(rotomaps, train_split=0.8):
             assert num_valid_rotomaps
         train_rotomaps.extend(nonempty_rotomaps[:num_train_rotomaps])
         valid_rotomaps.extend(nonempty_rotomaps[num_train_rotomaps:])
-        # train_rotomaps.extend(rotomap_list[num_valid_rotomaps:])
-        # valid_rotomaps.extend(rotomap_list[:num_valid_rotomaps])
     return train_rotomaps, valid_rotomaps
 
 

@@ -19,10 +19,8 @@ from mel.lib import vec3
 # - m_: magnitude (scalar)
 #
 
-# Perhaps later we can also take inspiration from:
-#
-#   "Unreal Engine: Creating Human Skin"
-#
+# Perhaps later we can also take inspiration from
+# Unreal Engine: Creating Human Skin
 # https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/HowTo/Human_Skin
 
 
@@ -106,6 +104,7 @@ def render_moles(moles, image_width, image_height, rot_0_to_1):
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2020, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

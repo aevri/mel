@@ -78,7 +78,8 @@ def list_rotomap_images_by_session(parts_path, *, exclude_parts=None):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018-2023 Angelos Evripiotis.
+# Copyright (C) 2018-2023, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
