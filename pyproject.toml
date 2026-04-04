@@ -167,12 +167,15 @@ target-version = "py313"
 # - TD006: flake8-todos (invalid TODO capitalization, must be uppercase)
 # - TD007: flake8-todos (missing space after colon in TODO)
 # - E: pycodestyle errors (indentation, whitespace, syntax, line length)
+# - FIX001: flake8-fixme (line contains FIXME)
+# - FIX003: flake8-fixme (line contains XXX)
+# - FIX004: flake8-fixme (line contains HACK)
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
 # - S101: assert is used extensively in tests and validation code
 # - S603: all subprocess calls use trusted/hardcoded inputs (test helpers, internal tools)
-extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR01", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY002", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN003", "ANN205", "ANN206", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "S601", "S602", "S604", "S605", "S606", "S607", "S608", "S609", "S610", "S611", "S612", "TD001", "TD004", "TD005", "TD006", "TD007", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR01", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FIX001", "FIX003", "FIX004", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY002", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN003", "ANN205", "ANN206", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "S601", "S602", "S604", "S605", "S606", "S607", "S608", "S609", "S610", "S611", "S612", "TD001", "TD004", "TD005", "TD006", "TD007", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 
