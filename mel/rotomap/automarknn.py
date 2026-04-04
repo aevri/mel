@@ -61,11 +61,11 @@ def make_model(model_path=None):
 def load_image(image_path):
     # flags = cv2.IMREAD_UNCHANGED + cv2.IMREAD_ANYDEPTH + cv2.IMREAD_ANYCOLOR
     flags = cv2.IMREAD_COLOR
+    original_image = cv2.imread(str(image_path), flags)
+    if original_image is None:
+        msg = f"File not recognized by opencv: {image_path}"
+        raise OSError(msg)
     try:
-        original_image = cv2.imread(str(image_path), flags)
-        if original_image is None:
-            msg = f"File not recognized by opencv: {image_path}"
-            raise OSError(msg)
         original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     except Exception as e:
         msg = f"Error handling image at: {image_path}"
@@ -239,3 +239,20 @@ def drop_paths_without_moles(path_list):
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
 def collate_fn(batch):
     return tuple(zip(*batch, strict=False))
+
+
+# Copyright (C) 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------ END-OF-FILE ----------------------------------
