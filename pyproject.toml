@@ -184,6 +184,7 @@ exclude = ["*__t.py", "mel/rotomap/detectmoles.py", "mel/rotomap/identifynn.py"]
 python-version = "3.13"
 
 [tool.ty.rules]
+# Promoted from default "error" (already enforced, now explicit)
 possibly-unresolved-reference = "error"
 possibly-missing-attribute = "error"
 possibly-missing-import = "error"
@@ -191,6 +192,24 @@ unresolved-reference = "error"
 unsupported-dynamic-base = "error"
 deprecated = "error"
 division-by-zero = "error"
+# Promoted from default "warn" to "error"
+ambiguous-protocol-member = "error"
+ignore-comment-unknown-rule = "error"
+ineffective-final = "error"
+invalid-enum-member-annotation = "error"
+invalid-ignore-comment = "error"
+invalid-legacy-positional-parameter = "error"
+possibly-missing-implicit-call = "error"
+possibly-missing-submodule = "error"
+redundant-cast = "error"
+redundant-final-classvar = "error"
+undefined-reveal = "error"
+unresolved-global = "error"
+unsupported-base = "error"
+unused-awaitable = "error"
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"
+useless-overload-body = "error"
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2026 Angelos Evripiotis.
