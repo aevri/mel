@@ -5,7 +5,6 @@ import contextlib
 import json
 import os
 import pathlib
-import pickle
 
 import cv2
 import numpy as np
@@ -129,17 +128,18 @@ def pretrain_image(image_path, moles, batch_size):
 
     weights_version = get_model_weights_version()
 
+    import torch
+
     pretrained_path = image_path.with_suffix(_PRETRAINED_SUFFIX)
-    pretrained_path.write_bytes(
-        pickle.dumps(
-            {
-                "features": features,
-                "is_mole": is_mole,
-                "metadata": metadata,
-                "path": image_path,
-                "weights_version": weights_version,
-            }
-        )
+    torch.save(
+        {
+            "features": features,
+            "is_mole": is_mole,
+            "metadata": metadata,
+            "path": str(image_path),
+            "weights_version": weights_version,
+        },
+        pretrained_path,
     )
 
 
@@ -273,7 +273,32 @@ def split_data(pretrained_data, training_split=0.8):
     return training_data, validation_data
 
 
+def _load_pretrained_file(path):
+    import pickle
+    import sys
+
+    import torch
+
+    try:
+        return torch.load(path, weights_only=True)
+    except pickle.UnpicklingError:
+        pass
+
+    # TODO: Remove this pickle migration path after 2027-01-01.
+    # Convert old pickle-format file to torch format.
+    print(
+        f"Converting old pickle-format cache to torch format: {path}",
+        file=sys.stderr,
+    )
+    loaded_data = pickle.loads(path.read_bytes())  # noqa: S301
+    if "path" in loaded_data:
+        loaded_data["path"] = str(loaded_data["path"])
+    torch.save(loaded_data, path)
+    return loaded_data
+
+
 def load_pretrained(pretrained_paths):
+
     work_items = [
         (session, path)
         for session, path_list in pretrained_paths.items()
@@ -282,7 +307,7 @@ def load_pretrained(pretrained_paths):
     pretrained_data = collections.defaultdict(list)
     current_weights_version = get_model_weights_version()
     for session, path in work_items:
-        loaded_data = pickle.loads(path.read_bytes())
+        loaded_data = _load_pretrained_file(path)
         pretrained_weights_version = loaded_data["weights_version"]
         if pretrained_weights_version != current_weights_version:
             msg = (

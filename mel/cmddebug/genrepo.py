@@ -68,10 +68,10 @@ def process_args(args):
         for dirnum in range(args.num_rotomaps):
             dir_path = leftleg_lower / f"{2018 - dirnum}_01_01"
             dir_path.mkdir()
-            num_images = random.randint(10, 20)
+            num_images = random.randint(10, 20)  # noqa: S311
             for i in range(num_images):
                 rot_0_to_1 = i / num_images
-                rot_0_to_1 += random.random() / num_images
+                rot_0_to_1 += random.random() / num_images  # noqa: S311
                 image, visible_moles = mel.rotomap.fake.render_moles(
                     moles,
                     image_width=width,
