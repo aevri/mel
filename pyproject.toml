@@ -105,6 +105,7 @@ target-version = "py313"
 # - EM101: flake8-errmsg (no string literals in exception constructors, keeps raise lines short in tracebacks)
 # - EM102: flake8-errmsg (no f-strings in exception constructors, keeps raise lines short in tracebacks)
 # - EM103: flake8-errmsg (no .format() in exception constructors, keeps raise lines short in tracebacks)
+# - TRY002: tryceratops (create your own exception, avoid raising vanilla Exception)
 # - TRY003: tryceratops (avoid specifying long messages outside exception class)
 # - TRY004: tryceratops (prefer TypeError for invalid type checks)
 # - TRY201: tryceratops (verbose raise, use bare `raise` in except blocks)
@@ -169,7 +170,7 @@ target-version = "py313"
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
 # - S101: assert is used extensively in tests and validation code
 # - S603: all subprocess calls use trusted/hardcoded inputs (test helpers, internal tools)
-extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN205", "ANN206", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "S601", "S602", "S604", "S605", "S606", "S607", "S608", "S609", "S610", "S611", "S612", "TD001", "TD004", "TD005", "TD006", "TD007", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY002", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN205", "ANN206", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "S601", "S602", "S604", "S605", "S606", "S607", "S608", "S609", "S610", "S611", "S612", "TD001", "TD004", "TD005", "TD006", "TD007", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 

@@ -316,7 +316,7 @@ def load_pretrained(pretrained_paths):
                 f"Pretrained: {pretrained_weights_version}\n"
                 f"Current: {current_weights_version}"
             )
-            raise Exception(msg)
+            raise ValueError(msg)
         pretrained_data[session].append(loaded_data)
     return pretrained_data
 
@@ -510,7 +510,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
             f"Pretrained: {trained_version}\n"
             f"Current: {current_version}"
         )
-        raise Exception(msg)
+        raise ValueError(msg)
 
     model, num_features, transform = make_model_and_transform()
     head = make_model(num_features)

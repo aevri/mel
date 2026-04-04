@@ -68,7 +68,7 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
 
         if key != -1:
             msg = "User aborted."
-            raise Exception(msg)
+            raise RuntimeError(msg)
 
         if len(current_mole_positions) == num_moles:
             if not detail_mole_positions:
@@ -219,7 +219,7 @@ def user_review_image(window_name, image):
     key = cv2.waitKey()
     if key == ord("q"):
         msg = "User aborted."
-        raise Exception(msg)
+        raise RuntimeError(msg)
 
 
 def rotated90(image, times):

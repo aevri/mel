@@ -235,7 +235,7 @@ class MarkedMoleOverlay:
                     colour = (255, 0, 128)
                 else:
                     msg = f"Mole looks_like is invalid: {mole}"
-                    raise Exception(msg)
+                    raise ValueError(msg)
             elif kind == "non-mole":
                 if looks_like == "mole":
                     colour = (0, 255, 255)
@@ -245,7 +245,7 @@ class MarkedMoleOverlay:
                     colour = (128, 0, 255)
                 else:
                     msg = f"Mole looks_like is invalid: {mole}"
-                    raise Exception(msg)
+                    raise ValueError(msg)
 
             cv2.circle(image, (x, y), mask_radius, colour, 2)
             if mole is highlight_mole:
@@ -467,7 +467,7 @@ class Editor:
             self.display.show_current(image, self.marked_mole_overlay)
         else:
             msg = "Unknown mode"
-            raise Exception(msg, self._mode)
+            raise ValueError(msg, self._mode)
 
     def show_fitted(self):
         self.display.set_fitted()

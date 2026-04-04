@@ -250,12 +250,12 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path):
     for m in lesions:
         if KEY_IS_UNCHANGED not in m:
             msg = f"Mole must have {KEY_IS_UNCHANGED} status: {lesions_path} {m}"
-            raise Exception(msg)
+            raise ValueError(msg)
 
     for m in lesions:
         if m["uuid"] is None:
             msg = f"Lesion UUID cannot be None: {lesions_path} {m}"
-            raise Exception(msg)
+            raise ValueError(msg)
 
     return lesions
 

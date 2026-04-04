@@ -38,7 +38,7 @@ def biggest_contour(image):
 
     if not contours:
         msg = "No contours found."
-        raise Exception(msg)
+        raise ValueError(msg)
 
     max_area = 0
     max_index = None
@@ -58,9 +58,9 @@ def biggest_contour(image):
                 "No suitable contours found. Some contours were found, "
                 "but were too short."
             )
-            raise Exception(msg)
+            raise ValueError(msg)
         msg = "No non-None contours found."
-        raise Exception(msg)
+        raise ValueError(msg)
 
     return contours[max_index]
 

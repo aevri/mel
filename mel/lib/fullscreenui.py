@@ -124,7 +124,7 @@ def yield_frames_keys(video_capture, display, error_key):
                 retries -= 1
             else:
                 msg = "Could not read video frame."
-                raise Exception(msg)
+                raise RuntimeError(msg)
 
         # Inject debug keypresses if available
         if debug_keypresses and keypress_index < len(debug_keypresses):
@@ -205,7 +205,7 @@ def fullscreen_context():
     global _PYGAME_HAD_EXCLUSIVE_INIT  # noqa: PLW0603
     if _PYGAME_HAD_EXCLUSIVE_INIT:
         msg = "An exclusive context was already started, only 1 per run."
-        raise Exception(msg)
+        raise RuntimeError(msg)
     _PYGAME_HAD_EXCLUSIVE_INIT = True
 
     pygame.init()
@@ -264,7 +264,7 @@ class ZoomableMixin:
         if self._is_zoomed:
             if self._zoom_pos is None:
                 msg = "Zoomed, but no zoom position set."
-                raise Exception(msg)
+                raise RuntimeError(msg)
             if self._zoom_virt_pos is None:
                 self._zoom_virt_pos = self._zoom_pos / image.shape[:2]
             else:
@@ -310,7 +310,7 @@ class ZoomableMixin:
     def get_zoom_pos(self):
         if not self.is_zoomed():
             msg = "Not zoomed"
-            raise Exception(msg)
+            raise RuntimeError(msg)
         return self._zoom_pos
 
     def windowxy_to_imagexy(self, window_x, window_y):

@@ -51,7 +51,7 @@ def process_args(args):
                 )
             except Exception as e:
                 msg = f"Error while processing {image_path}"
-                raise Exception(msg) from e
+                raise RuntimeError(msg) from e
 
 
 # -----------------------------------------------------------------------------
