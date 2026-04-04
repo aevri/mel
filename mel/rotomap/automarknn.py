@@ -176,9 +176,11 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         )
 
     def __len__(self):
+        """Return the number of images in the dataset."""
         return len(self.image_paths)
 
     def __getitem__(self, index):
+        """Return transformed image and target for the given index."""
         path = self.image_paths[index]
 
         image = load_image(path)

@@ -447,6 +447,7 @@ class VisitList:
         return self._items[self._index]
 
     def __bool__(self):
+        """Return True if any items exist."""
         return bool(self._items)
 
 
