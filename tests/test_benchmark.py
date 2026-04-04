@@ -248,7 +248,7 @@ def chtempdir_context():
             os.chdir(saved_path)
 
 
-def expect_ok(*args):
+def expect_ok(*args: str):
     """Run command and expect it to succeed."""
     subprocess.check_call(args)
 

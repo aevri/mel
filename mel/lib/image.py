@@ -81,7 +81,7 @@ def letterbox(image, width, height):
     return letterboxed
 
 
-def calc_montage_horizontal(border_size, *frames):
+def calc_montage_horizontal(border_size, *frames: list[int]):
     """Return total[], pos1[], pos2[], ... for a horizontal montage.
 
     Usage example:
@@ -105,7 +105,7 @@ def calc_montage_horizontal(border_size, *frames):
     return tuple(result)
 
 
-def calc_montage_vertical(border_size, *frames):
+def calc_montage_vertical(border_size, *frames: list[int]):
     """Return total[], pos1[], pos2[], ... for a vertical montage.
 
     Usage example:
@@ -119,7 +119,7 @@ def calc_montage_vertical(border_size, *frames):
     return tuple([g[1], g[0]] for g in geometry)
 
 
-def arrange_images(total_width, total_height, *images_positions):
+def arrange_images(total_width, total_height, *images_positions: tuple):
     """Return a composited image based on the (image, pos) arguments."""
     result = mel.lib.common.new_image(total_height, total_width)
 
@@ -129,7 +129,7 @@ def arrange_images(total_width, total_height, *images_positions):
     return result
 
 
-def montage_horizontal_inner_border(divider_size, *image_list):
+def montage_horizontal_inner_border(divider_size, *image_list: np.ndarray):
     """Return a new image, of the supplied images in a row.
 
     Will keep a separator of 'divider_size' pixels between each image. The
@@ -174,7 +174,7 @@ def montage_horizontal_inner_border(divider_size, *image_list):
     return output
 
 
-def montage_horizontal(border_size, *image_list):
+def montage_horizontal(border_size, *image_list: np.ndarray):
     geometry = calc_montage_horizontal(
         border_size, *[list(reversed(i.shape[:2])) for i in image_list]
     )
@@ -187,7 +187,7 @@ def montage_horizontal(border_size, *image_list):
     )
 
 
-def montage_vertical(border_size, *image_list):
+def montage_vertical(border_size, *image_list: np.ndarray):
     geometry = calc_montage_vertical(
         border_size, *[list(reversed(i.shape[:2])) for i in image_list]
     )

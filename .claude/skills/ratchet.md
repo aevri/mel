@@ -44,5 +44,6 @@ Ratchet up static analysis strictness for this project by one notch.
 - Only enable ONE rule category per invocation
 - Never disable or weaken existing rules
 - All tests and static checks must pass before committing
+- When running unit tests, exclude `tests/test_benchmark.py` (it requires external fixtures not available in this environment and doesn't add value for ratcheting)
 - Follow the project's existing pyproject.toml comment style
 - Update copyright year in changed files per CLAUDE.md

@@ -1,5 +1,7 @@
 """Benchmark the accuracy of a set of rotomaps vs a reference."""
 
+import collections.abc
+
 import numpy as np
 
 import mel.cmd.error
@@ -78,7 +80,7 @@ def _common_path(from_path, to_path):
     return "".join(common)
 
 
-def _zip_samelen(*args):
+def _zip_samelen(*args: collections.abc.Iterable):
     iterators = [iter(it) for it in args]
     if not iterators:
         return
