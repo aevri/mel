@@ -117,6 +117,7 @@ target-version = "py313"
 # - PLR02: pylint refactor (enforce classmethod/staticmethod decorators, no property params)
 # - PLR04: pylint refactor (use from-import for module aliasing)
 # - PLR0911: pylint refactor (limit return statements per function)
+# - ANN206: flake8-annotations (missing return type annotation for classmethod)
 # - ANN401: flake8-annotations (disallow Any type in annotations)
 # - TRY203: tryceratops (useless try-except, re-raises without modification)
 # - S2: flake8-bandit (flask debug, tarfile unsafe members)
@@ -134,6 +135,17 @@ target-version = "py313"
 # - S103: flake8-bandit (os.chmod setting permissive file permissions)
 # - S104: flake8-bandit (binding to all interfaces, 0.0.0.0)
 # - S113: flake8-bandit (request without timeout)
+# - S601: flake8-bandit (paramiko shell command execution)
+# - S602: flake8-bandit (subprocess.Popen with shell=True)
+# - S604: flake8-bandit (function call with shell=True)
+# - S605: flake8-bandit (starting process with a shell, e.g. os.system)
+# - S606: flake8-bandit (starting process without shell)
+# - S607: flake8-bandit (starting process with partial executable path)
+# - S608: flake8-bandit (hardcoded SQL expression)
+# - S609: flake8-bandit (wildcard injection in subprocess call)
+# - S610: flake8-bandit (Django extra used with user input)
+# - S611: flake8-bandit (Django RawSQL used)
+# - S612: flake8-bandit (logging.config.listen used)
 # - PLC1: pylint convention (len-test, compare-to-empty-string)
 # - PLC2: pylint convention (non-ASCII names, import-private-name, unnecessary dunder calls)
 # - PLC3: pylint convention (unnecessary direct lambda calls)
@@ -145,13 +157,18 @@ target-version = "py313"
 # - D104: pydocstyle (require docstrings in public packages / __init__.py)
 # - D105: pydocstyle (require docstrings in magic methods)
 # - D106: pydocstyle (require docstrings in public nested classes)
+# - TD001: flake8-todos (invalid TODO tag, must use TODO)
+# - TD004: flake8-todos (missing colon after TODO)
+# - TD005: flake8-todos (missing description after TODO)
+# - TD006: flake8-todos (invalid TODO capitalization, must be uppercase)
+# - TD007: flake8-todos (missing space after colon in TODO)
 # - E: pycodestyle errors (indentation, whitespace, syntax, line length)
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
 # - S101: assert is used extensively in tests and validation code
 # - S603: all subprocess calls use trusted/hardcoded inputs (test helpers, internal tools)
-extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN206", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S102", "S103", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S113", "S601", "S602", "S604", "S605", "S606", "S607", "S608", "S609", "S610", "S611", "S612", "TD001", "TD004", "TD005", "TD006", "TD007", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 
