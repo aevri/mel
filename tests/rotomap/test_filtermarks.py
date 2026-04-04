@@ -14,7 +14,7 @@ def test_load_pretrained_file_torch_format(tmp_path):
     data = {
         "features": torch.tensor([1.0, 2.0]),
         "is_mole": [True, False],
-        "path": "/tmp/test.jpg",
+        "path": "images/test.jpg",
         "weights_version": "v1",
         "metadata": [{}],
     }
@@ -33,7 +33,7 @@ def test_load_pretrained_file_converts_pickle_format(tmp_path, capsys):
     data = {
         "features": torch.tensor([3.0, 4.0]),
         "is_mole": [False, True],
-        "path": pathlib.PosixPath("/tmp/old.jpg"),
+        "path": pathlib.PosixPath("images/old.jpg"),
         "weights_version": "v2",
         "metadata": [{}],
     }
@@ -44,7 +44,7 @@ def test_load_pretrained_file_converts_pickle_format(tmp_path, capsys):
     assert (loaded["features"] == data["features"]).all()
     assert loaded["is_mole"] == data["is_mole"]
     assert loaded["weights_version"] == "v2"
-    assert loaded["path"] == "/tmp/old.jpg"
+    assert loaded["path"] == "images/old.jpg"
 
     captured = capsys.readouterr()
     assert "Converting old pickle-format cache" in captured.err
