@@ -275,6 +275,7 @@ def split_data(pretrained_data, training_split=0.8):
 
 def _load_pretrained_file(path):
     import pickle
+    import sys
 
     import torch
 
@@ -283,7 +284,12 @@ def _load_pretrained_file(path):
     except pickle.UnpicklingError:
         pass
 
+    # TODO: Remove this pickle migration path after 2027-01-01.
     # Convert old pickle-format file to torch format.
+    print(
+        f"Converting old pickle-format cache to torch format: {path}",
+        file=sys.stderr,
+    )
     loaded_data = pickle.loads(path.read_bytes())  # noqa: S301
     if "path" in loaded_data:
         loaded_data["path"] = str(loaded_data["path"])
