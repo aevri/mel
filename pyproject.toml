@@ -182,6 +182,7 @@ python-version = "3.13"
 
 [tool.ty.rules]
 possibly-unresolved-reference = "warn"
+possibly-missing-attribute = "warn"
 unresolved-reference = "error"
 deprecated = "error"
 division-by-zero = "warn"
