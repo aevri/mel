@@ -124,6 +124,7 @@ target-version = "py313"
 # - S5: flake8-bandit (SSL/crypto: cert validation, unsafe yaml, SSH)
 # - S3: flake8-bandit (hashlib insecure, pseudo-random generators, pickle, XML, URL open)
 # - S7: flake8-bandit (template security: jinja2, mako, unsafe markup)
+# - S108: flake8-bandit (insecure usage of temporary file or directory)
 # - PLC1: pylint convention (len-test, compare-to-empty-string)
 # - PLC2: pylint convention (non-ASCII names, import-private-name, unnecessary dunder calls)
 # - PLC3: pylint convention (unnecessary direct lambda calls)
@@ -139,7 +140,8 @@ target-version = "py313"
 # Evaluated and rejected:
 # - TRY3: all existing violations are intentional (exception type conversion, fallback returns)
 # - COM812: conflicts with ruff formatter (formatter uses trailing commas as formatting signals)
-extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "ASYNC", "INP", "ICN", "SLF", "FBT"]
+# - S603: all subprocess calls use trusted/hardcoded inputs (test helpers, internal tools)
+extend-select = ["A", "B", "BLE", "C4", "D100", "D104", "D105", "D106", "D2", "D3", "D4", "E", "EM101", "EM102", "EM103", "FURB", "N", "NPY", "PLC1", "PLC2", "PLC3", "PLE", "PLW", "PLR02", "PLR0911", "PLR1", "PLR04", "PLR5", "I", "W", "F", "PIE", "Q", "T10", "ISC", "RET", "SIM", "UP", "RUF", "PT", "PERF", "RSE", "EXE", "ARG", "DTZ", "FA", "FLY", "G", "INT", "LOG", "PD", "PGH", "PYI", "SLOT", "TC", "TID", "TRY003", "TRY004", "TRY201", "TRY203", "TRY300", "TRY301", "TRY400", "TRY401", "ANN401", "YTT", "S2", "S3", "S4", "S5", "S7", "S108", "ASYNC", "INP", "ICN", "SLF", "FBT"]
 # D203 and D213 conflict with D211 and D212 respectively; ignore the unwanted ones
 ignore = ["D203", "D213"]
 
