@@ -8,7 +8,7 @@ import mel.lib.image
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
@@ -27,7 +27,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     mel.lib.common.write_image(
         args.OUTPUT, make_montage_image(args.FRAMES, args.UUID, args.rot90)
     )

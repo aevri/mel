@@ -233,7 +233,7 @@ class Display:
         self._title = None
         self.is_dirty = True
 
-    def show_opencv_image(self, image):
+    def show_opencv_image(self, image) -> None:
         image = mel.lib.image.letterbox(image, self.width, self.height)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.swapaxes(0, 1)
@@ -241,7 +241,7 @@ class Display:
         self.surface.blit(image, [0, 0])
         self.is_dirty = True
 
-    def update_screen_if_needed(self):
+    def update_screen_if_needed(self) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -260,7 +260,7 @@ class ZoomableMixin:
         self._is_zoomed = False
         self._zoom_level = 1
 
-    def zoomable_transform_update(self, image, window_rect):
+    def zoomable_transform_update(self, image, window_rect) -> None:
         if self._is_zoomed:
             if self._zoom_pos is None:
                 msg = "Zoomed, but no zoom position set."
@@ -290,14 +290,14 @@ class ZoomableMixin:
     def zoomable_transform_render(self):
         return self._transform.render()
 
-    def set_fitted(self):
+    def set_fitted(self) -> None:
         self._is_zoomed = False
         self._zoom_orig_shape = None
 
-    def set_zoom_level(self, zoom_level=1):
+    def set_zoom_level(self, zoom_level=1) -> None:
         self._zoom_level = zoom_level
 
-    def set_zoomed(self, x, y, zoom_level=None):
+    def set_zoomed(self, x, y, zoom_level=None) -> None:
         self._zoom_pos = np.array((x, y))
         self._zoom_virt_pos = None
         self._is_zoomed = True
@@ -337,12 +337,12 @@ class LeftRightDisplay(ZoomableMixin):
         self._index = 0
         self.show()
 
-    def next_image(self):
+    def next_image(self) -> None:
         if self._image_list:
             self._index = (self._index + 1) % len(self._image_list)
         self.show()
 
-    def prev_image(self):
+    def prev_image(self) -> None:
         if self._image_list:
             num_images = len(self._image_list)
             self._index = (self._index + num_images - 1) % len(self._image_list)
@@ -351,12 +351,12 @@ class LeftRightDisplay(ZoomableMixin):
     def _get_image(self, path) -> np.ndarray:
         return mel.lib.image.load_image(path)
 
-    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None):
+    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None) -> None:
         image_x, image_y = self.windowxy_to_imagexy(mouse_x, mouse_y)
         self.set_zoomed(image_x, image_y, zoom_level)
         self.show()
 
-    def show(self):
+    def show(self) -> None:
         if self._image_list:
             path = self._image_list[self._index]
             self.image_path = path
@@ -390,7 +390,7 @@ class MultiImageDisplay:
         """Return the underlying Display object."""
         return self._display
 
-    def reset(self):
+    def reset(self) -> None:
         self._images_names = []
         self._border_width = 50
         self._layout = [[]]
@@ -402,19 +402,19 @@ class MultiImageDisplay:
         self.refresh()
         return index
 
-    def new_row(self):
+    def new_row(self) -> None:
         assert self._layout[-1]
         self._layout.append([])
 
-    def update_image(self, image, index):
+    def update_image(self, image, index) -> None:
         name = self._images_names[index][1]
         self._images_names[index] = (image, name)
         self.refresh()
 
-    def set_title(self, title):
+    def set_title(self, title) -> None:
         self._title = title
 
-    def refresh(self):
+    def refresh(self) -> None:
         row_image_list = []
 
         for row in self._layout:

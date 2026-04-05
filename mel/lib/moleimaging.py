@@ -142,7 +142,7 @@ class MoleAcquirer:
         self._last_stats = None
         self._last_stats_diff = None
 
-    def update(self, stats):
+    def update(self, stats) -> None:
         if stats and self._last_stats:
             stats_diff = list(map(lambda x, y: x - y, self._last_stats, stats))
 
@@ -199,12 +199,12 @@ def rotate_point_around_pivot(point, pivot, degrees):
     return (rotated_point[0] + pivot[0], rotated_point[1] + pivot[1])
 
 
-def draw_vertical_lines(image, left, top, right, bottom, color, width):
+def draw_vertical_lines(image, left, top, right, bottom, color, width) -> None:
     cv2.line(image, (left, top), (left, bottom), color, width)
     cv2.line(image, (right, top), (right, bottom), color, width)
 
 
-def draw_horizontal_lines(image, left, top, right, bottom, color, width):
+def draw_horizontal_lines(image, left, top, right, bottom, color, width) -> None:
     cv2.line(image, (left, top), (right, top), color, width)
     cv2.line(image, (left, bottom), (right, bottom), color, width)
 

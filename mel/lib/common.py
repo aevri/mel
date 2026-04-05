@@ -13,7 +13,7 @@ import mel.lib.fs
 import mel.lib.image
 
 
-def determine_filename_for_ident(*source_filenames: str):
+def determine_filename_for_ident(*source_filenames: str) -> str:
     if not source_filenames:
         msg = f"{source_filenames} is not a valid list of filenames"
         raise ValueError(msg)
@@ -26,7 +26,7 @@ def determine_filename_for_ident(*source_filenames: str):
     return "ident.jpg"
 
 
-def overwrite_image(directory, filename, image):
+def overwrite_image(directory, filename, image) -> None:
     dir_path = pathlib.Path(directory)
     dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -37,7 +37,7 @@ def overwrite_image(directory, filename, image):
     write_image(str(path), image)
 
 
-def write_image(path, image):
+def write_image(path, image) -> None:
     mel.lib.image.save_image(image, path)
 
 
@@ -115,7 +115,7 @@ def make_null_mouse_callback():
     return null_callback
 
 
-def box_moles(image, mole_positions, thickness):
+def box_moles(image, mole_positions, thickness) -> None:
     left = min(m[0] - m[2] for m in mole_positions)
     top = min(m[1] - m[2] for m in mole_positions)
     right = max(m[0] + m[2] for m in mole_positions)
@@ -133,7 +133,7 @@ def box_moles(image, mole_positions, thickness):
     cv2.rectangle(image, left_top, right_bottom, blue, thickness)
 
 
-def connect_moles(image, mole_positions):
+def connect_moles(image, mole_positions) -> None:
     for mole_a, mole_b in yield_neighbors(mole_positions):
         if mole_a is None or mole_b is None:
             continue
@@ -170,7 +170,7 @@ def new_image(height, width):
     return np.zeros((height, width, 3), np.uint8)
 
 
-def copy_image_into_image(source, dest, y, x):
+def copy_image_into_image(source, dest, y, x) -> None:
     shape = source.shape
     dest[y : (y + shape[0]), x : (x + shape[1])] = source
 
@@ -189,7 +189,7 @@ def shrink_to_max_dimension(image, max_dimension):
     return cv2.resize(image, (new_width, new_height))
 
 
-def indicate_mole(image, mole):
+def indicate_mole(image, mole) -> None:
     pos = mole[:2]
     radius = mole[2]
 
@@ -199,7 +199,9 @@ def indicate_mole(image, mole):
     draw_radial_line(image, pos, radius * 4, radius * 6, (0, -1), radius)
 
 
-def draw_radial_line(image, origin, inner_radius, outer_radius, direction, thickness):
+def draw_radial_line(
+    image, origin, inner_radius, outer_radius, direction, thickness
+) -> None:
     origin = np.array(origin)
     direction = np.array(direction)
     line_start = origin + direction * inner_radius
@@ -213,7 +215,7 @@ def draw_radial_line(image, origin, inner_radius, outer_radius, direction, thick
     cv2.line(image, line_start, line_end, blue, thickness)
 
 
-def user_review_image(window_name, image):
+def user_review_image(window_name, image) -> None:
     cv2.imshow(window_name, image)
     print("Press 'q' quit, any other key to continue.")
     key = cv2.waitKey()
@@ -229,7 +231,7 @@ def rotated90(image, times):
     return image
 
 
-def add_context_detail_arguments(parser):
+def add_context_detail_arguments(parser) -> None:
     parser.add_argument(
         "context",
         type=str,
@@ -325,7 +327,7 @@ class TimeLogger:
     def _now(self) -> datetime.datetime:
         return datetime.datetime.now(datetime.UTC)
 
-    def reset(self, *, command=None, mode=None, path=None):
+    def reset(self, *, command=None, mode=None, path=None) -> None:
         now = self._now()
         elapsed = (now - self._start).total_seconds()
         self._writer.writerow(
@@ -339,7 +341,7 @@ class TimeLogger:
         if path is not None:
             self._path = path
 
-    def close(self):
+    def close(self) -> None:
         self.reset()
 
 

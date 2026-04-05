@@ -54,7 +54,7 @@ class _PosInfo(typing.NamedTuple):
     uuid_points: object
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
@@ -66,7 +66,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     target_rotomap = args.ROTOMAP[-1]
     target_uuids = target_rotomap.calc_uuids()
 
@@ -226,7 +226,7 @@ def is_lesion_unchanged(rotomap, uuid_):
     return None
 
 
-def mark_lesion(rotomap, uuid_, *, is_unchanged):
+def mark_lesion(rotomap, uuid_, *, is_unchanged) -> None:
     """Mark the provided uuid changed status in the lesions datafile."""
     target_lesion = None
     for lesion in rotomap.lesions:
@@ -265,7 +265,7 @@ class ImageCompareDisplay:
             + self._uuid,
         )
 
-    def reset(self, path_images_tuple, uuid_):
+    def reset(self, path_images_tuple, uuid_) -> None:
         if not path_images_tuple:
             msg = "path_images_tuple must be a tuple with at least one thing."
             raise ValueError(msg)
@@ -295,54 +295,54 @@ class ImageCompareDisplay:
         self.auto_align_and_show()
         self._reset_logger()
 
-    def next_image(self):
+    def next_image(self) -> None:
         ix = self._indices[0]
         num_images = len(self._rotomaps[ix])
         self._rotomap_cursors[ix] += 1
         self._rotomap_cursors[ix] %= num_images
         self.auto_align_and_show()
 
-    def prev_image(self):
+    def prev_image(self) -> None:
         ix = self._indices[0]
         num_images = len(self._rotomaps[ix])
         self._rotomap_cursors[ix] -= 1
         self._rotomap_cursors[ix] %= num_images
         self.auto_align_and_show()
 
-    def next_rotomap(self):
+    def next_rotomap(self) -> None:
         num_rotomaps = len(self._rotomaps)
         self._indices[0] += 1
         self._indices[0] %= num_rotomaps
         self.auto_align_and_show()
 
-    def prev_rotomap(self):
+    def prev_rotomap(self) -> None:
         num_rotomaps = len(self._rotomaps)
         self._indices[0] -= 1
         self._indices[0] %= num_rotomaps
         self.auto_align_and_show()
 
-    def swap_images(self):
+    def swap_images(self) -> None:
         self._indices.reverse()
         self._show()
 
-    def toggle_crosshairs(self):
+    def toggle_crosshairs(self) -> None:
         self._should_draw_crosshairs = not self._should_draw_crosshairs
         self._show()
 
-    def toggle_mole_display(self):
+    def toggle_mole_display(self) -> None:
         self._draw_moles = not self._draw_moles
         self._show()
 
-    def indicate_changed(self, *, should_indicate_changed=True):
+    def indicate_changed(self, *, should_indicate_changed=True) -> None:
         self._should_indicate_changed = should_indicate_changed
         self._show()
 
-    def adjust_zoom(self, zoom_multiplier):
+    def adjust_zoom(self, zoom_multiplier) -> None:
         ix = self._indices[0]
         self._zooms[ix] *= zoom_multiplier
         self._show()
 
-    def adjust_rotation(self, rotation_modifier):
+    def adjust_rotation(self, rotation_modifier) -> None:
         ix = self._indices[0]
         self._rotations[ix] += rotation_modifier
         self._show()
@@ -352,7 +352,7 @@ class ImageCompareDisplay:
         image_index = self._rotomap_cursors[ix]
         return self._rotomaps[ix][image_index]
 
-    def auto_align_and_show(self):
+    def auto_align_and_show(self) -> None:
         left_posinfo = self._posinfo(0)
         right_posinfo = self._posinfo(1)
         target_uuid = left_posinfo.uuid
