@@ -7,12 +7,12 @@ import numpy as np
 RADS_TO_DEGS = 180 / math.pi
 
 
-def lerp(origin, target, factor_0_to_1) -> float:
+def lerp(origin: float, target: float, factor_0_to_1: float) -> float:
     towards = target - origin
     return origin + (towards * factor_0_to_1)
 
 
-def distance_sq_2d(a, b) -> int:
+def distance_sq_2d(a: tuple, b: tuple) -> int:
     """Return the squared distance between two points in two dimensions.
 
     Usage examples:
@@ -29,7 +29,7 @@ def distance_sq_2d(a, b) -> int:
     return (x * x) + (y * y)
 
 
-def distance_2d(a, b) -> float:
+def distance_2d(a: tuple, b: tuple) -> float:
     """Return the squared distance between two points in two dimensions.
 
     Usage examples:
@@ -42,7 +42,7 @@ def distance_2d(a, b) -> float:
     return math.sqrt(distance_sq_2d(a, b))
 
 
-def normalized(v) -> tuple[float, float]:
+def normalized(v: tuple) -> tuple[float, float]:
     """Return vector v normalized to unit length.
 
     Usage examples:
@@ -53,7 +53,7 @@ def normalized(v) -> tuple[float, float]:
     return (v[0] * inv_length, v[1] * inv_length)
 
 
-def angle(v) -> float:
+def angle(v: tuple) -> float:
     """Return the angle between v and 'right'.
 
     Usage examples:
@@ -76,11 +76,11 @@ def angle(v) -> float:
     return rads_to_degs(theta)
 
 
-def rads_to_degs(theta) -> float:
+def rads_to_degs(theta: float) -> float:
     return theta * RADS_TO_DEGS
 
 
-def raise_if_not_int_vector2(v) -> None:
+def raise_if_not_int_vector2(v: object) -> None:
     if not isinstance(v, np.ndarray):
         msg = f"{v}:{v!r}:{type(v)} is not a numpy array"
         raise TypeError(msg)
