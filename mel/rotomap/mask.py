@@ -1,6 +1,6 @@
 """Manage image masks."""
 
-import os
+import pathlib
 
 import cv2
 import numpy as np
@@ -20,7 +20,7 @@ def load(mole_image_path):
 
 
 def has_mask(mole_image_path):
-    return os.path.isfile(path(mole_image_path))
+    return pathlib.Path(path(mole_image_path)).is_file()
 
 
 def load_or_none(mole_image_path):

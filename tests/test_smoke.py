@@ -202,7 +202,7 @@ def test_smoke():
         json_file = target_json_files[0]
         corresponding_image = str(json_file).replace(".jpg.json", ".jpg")
 
-        with open(json_file) as f:
+        with pathlib.Path(json_file).open() as f:
             moles_data = json.load(f)
         if moles_data:
             test_uuid = moles_data[0]["uuid"]
@@ -268,7 +268,7 @@ def test_smoke_interactive():
 @contextlib.contextmanager
 def chtempdir_context():
     with tempfile.TemporaryDirectory() as tempdir:
-        saved_path = os.getcwd()
+        saved_path = pathlib.Path.cwd()
         os.chdir(tempdir)
         try:
             yield

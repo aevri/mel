@@ -1,6 +1,6 @@
 """Guess where moles are in a rotomap image."""
 
-import os
+import pathlib
 
 
 def setup_parser(parser):
@@ -32,7 +32,7 @@ def process_args(args):
             print("Processing", target, "..")
 
         frame = mel.rotomap.moles.RotomapFrame(
-            os.path.abspath(target), extra_stem=args.extra_stem
+            str(pathlib.Path(target).resolve()), extra_stem=args.extra_stem
         )
 
         moles = detector.get_moles(frame)

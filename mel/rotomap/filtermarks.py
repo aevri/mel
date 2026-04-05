@@ -3,7 +3,6 @@
 import collections
 import contextlib
 import json
-import os
 import pathlib
 
 import cv2
@@ -383,10 +382,11 @@ def make_model_and_fit(
 
 
 def open_image_for_classifier(image_path):
-    if not os.path.exists(image_path):
+    path = pathlib.Path(image_path)
+    if not path.exists():
         msg = f"No such file or directory: {image_path}"
         raise OSError(msg)
-    if os.path.isdir(image_path):
+    if path.is_dir():
         msg = f"Is a directory: {image_path}"
         raise OSError(msg)
 

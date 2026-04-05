@@ -159,7 +159,7 @@ def download_and_extract_dataset(url: str) -> pathlib.Path:
     print(f"Downloading benchmark dataset from {url}...")
     urllib.request.urlretrieve(url, dataset_archive)  # noqa: S310
 
-    extract_path = pathlib.Path(".")
+    extract_path = pathlib.Path()
     print(f"Extracting dataset to {extract_path}...")
     with tarfile.open(dataset_archive, "r:gz") as tar:
         tar.extractall(extract_path, filter="data")
@@ -169,13 +169,13 @@ def download_and_extract_dataset(url: str) -> pathlib.Path:
 
 def read_moles(json_path: pathlib.Path) -> list:
     """Read moles from JSON file."""
-    with open(json_path) as f:
+    with json_path.open() as f:
         return json.load(f)
 
 
 def save_moles(json_path: pathlib.Path, moles: list) -> None:
     """Save moles to JSON file."""
-    with open(json_path, "w") as f:
+    with json_path.open("w") as f:
         json.dump(moles, f, indent=2)
 
 
@@ -240,7 +240,7 @@ def calculate_performance_metrics(removed_moles: list, result_moles: list) -> di
 def chtempdir_context():
     """Context manager for working in a temporary directory."""
     with tempfile.TemporaryDirectory() as tempdir:
-        saved_path = os.getcwd()
+        saved_path = pathlib.Path.cwd()
         os.chdir(tempdir)
         try:
             yield

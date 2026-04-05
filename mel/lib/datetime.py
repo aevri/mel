@@ -1,7 +1,7 @@
 """Utilities for working with datetime."""
 
 import datetime
-import os
+import pathlib
 
 
 def guess_datetime_from_path(path):
@@ -21,7 +21,7 @@ def guess_datetime_from_path(path):
     :returns: datetime.date if successful, None otherwise
     """
     # TODO: try the file date if unable to determine from name
-    filename = os.path.basename(path)
+    filename = pathlib.PurePath(path).name
     name = filename.split(".", 1)[0]
     return guess_datetime_from_string(name)
 

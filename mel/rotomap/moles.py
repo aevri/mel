@@ -309,12 +309,12 @@ def save_image_moles(moles, image_path, *, extra_stem=None):
 
 
 def load_json(path):
-    with open(path) as f:
+    with pathlib.Path(path).open() as f:
         return json.load(f)
 
 
 def save_json(path, data):
-    with open(path, "w") as f:
+    with pathlib.Path(path).open("w") as f:
         json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
 
         # There's no newline after dump(), add one here for happier viewing

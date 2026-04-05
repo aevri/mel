@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import pathlib
 
 import cv2
 import numpy as np
@@ -54,11 +55,11 @@ def setup_parser(parser):
 
 def get_context_image_name(path):
     # Paths should alpha-sort to recent last, pick the first jpg
-    children = sorted(os.listdir(path), reverse=True)
+    children = sorted((p.name for p in pathlib.Path(path).iterdir()), reverse=True)
     for name in children:
         # TODO: support more than just '.jpg'
         if name.lower().endswith(".jpg"):
-            return os.path.join(path, name)
+            return str(pathlib.Path(path) / name)
 
     return None
 
@@ -75,8 +76,8 @@ def get_dirs_to_path(path_in):
         List of strings, includes cwd and destination path
 
     """
-    cwd = os.getcwd()
-    path_abs = os.path.abspath(path_in)
+    cwd = str(pathlib.Path.cwd())
+    path_abs = str(pathlib.Path(path_in).resolve())
     if cwd != os.path.commonprefix([cwd, path_abs]):
         msg = f"{path_abs} is not under cwd ({cwd})"
         raise ValueError(msg)
@@ -84,7 +85,7 @@ def get_dirs_to_path(path_in):
     path_list = []
     while path_rel:
         path_rel, tail = os.path.split(path_rel)
-        path_list.append(os.path.join(cwd, path_rel, tail))
+        path_list.append(str(pathlib.Path(cwd) / path_rel / tail))
     path_list.append(cwd)
     return path_list
 
@@ -103,9 +104,9 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
     """Return the most appropriate image path to compare with, or None."""
     # Check for the __last_changed__ file if the --last-changed flag is used
     if use_last_changed:
-        last_changed_path = os.path.join(path, "__last_changed__")
-        if os.path.exists(last_changed_path):
-            with open(last_changed_path) as file:
+        last_changed_path = pathlib.Path(path) / "__last_changed__"
+        if last_changed_path.exists():
+            with last_changed_path.open() as file:
                 last_changed_image = file.read().strip()
                 if not last_changed_image:
                     msg = "last changed file must not be empty."
@@ -147,16 +148,16 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
 
 
 def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
-    micro_path = os.path.join(path, "__micro__")
-    if not os.path.exists(micro_path):
+    micro_path = pathlib.Path(path) / "__micro__"
+    if not micro_path.exists():
         return None
 
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
-    images = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
+    images = [p.name for p in micro_path.iterdir() if p.name.lower().endswith(".jpg")]
     path = pick_comparison_path(path, images, min_compare_age_days, use_last_changed)
     if path:
-        return os.path.join(micro_path, path)
+        return str(micro_path / path)
     return None
 
 
@@ -265,10 +266,10 @@ def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed
                     display.update_image(preview, capindex)
 
     filename = mel.lib.datetime.make_now_datetime_string() + ".jpg"
-    dirname = os.path.join(mole_path, "__micro__")
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
-    file_path = os.path.join(dirname, filename)
+    dirname = pathlib.Path(mole_path) / "__micro__"
+    if not dirname.is_dir():
+        dirname.mkdir(parents=True)
+    file_path = str(dirname / filename)
     mel.lib.common.write_image(file_path, preview)
 
 

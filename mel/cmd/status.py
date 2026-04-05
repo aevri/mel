@@ -17,7 +17,7 @@ Answers the question 'What's happening here, and what shall I do next?'.
 
 import collections
 import datetime
-import os
+import pathlib
 import sys
 import textwrap
 from enum import IntEnum
@@ -318,7 +318,7 @@ def process_args(args):
     errors_to_notices = collections.defaultdict(list)
     info_to_notices = collections.defaultdict(list)
 
-    abspath = os.path.abspath(args.PATH) if args.PATH is not None else None
+    abspath = str(pathlib.Path(args.PATH).resolve()) if args.PATH is not None else None
 
     for notice in notice_list:
         if abspath is not None and not str(notice.path).startswith(abspath):

@@ -1,6 +1,6 @@
 """Image processing routines."""
 
-import os
+import pathlib
 import stat
 
 import cv2
@@ -30,11 +30,12 @@ def save_image(image, path):
         OSError: If the image cannot be saved
 
     """
-    path_str = str(path)
+    path_obj = pathlib.Path(path)
+    path_str = str(path_obj)
 
     # Check if file exists and is read-only
-    if os.path.exists(path_str):
-        file_mode = os.stat(path_str).st_mode
+    if path_obj.exists():
+        file_mode = path_obj.stat().st_mode
         if not (file_mode & stat.S_IWUSR):
             msg = f'Cannot save to read-only file: "{path_str}"'
             raise PermissionError(msg)

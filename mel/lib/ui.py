@@ -1,6 +1,6 @@
 """User interface related things."""
 
-import os
+import pathlib
 import subprocess
 
 
@@ -15,7 +15,7 @@ def set_clipboard_contents(text):
     """
     pbcopy = "/usr/bin/pbcopy"
 
-    if not os.path.isfile(pbcopy):
+    if not pathlib.Path(pbcopy).is_file():
         msg = f"{pbcopy} was not found, cannot write clipboard"
         raise NotImplementedError(msg)
 
