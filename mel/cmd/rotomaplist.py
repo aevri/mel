@@ -4,7 +4,7 @@ import argparse
 import json
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "FILE",
         type=argparse.FileType(),
@@ -13,7 +13,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     path_data_list = [(x.name, json.load(x)) for x in args.FILE]
     for path, data in path_data_list:
         for mole in data:
@@ -21,7 +21,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2016-2018 Angelos Evripiotis.
+# Copyright (C) 2016-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

@@ -24,7 +24,7 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "SRC_JPG",
         type=_existing_file_path,
@@ -55,7 +55,7 @@ def setup_parser(parser):
     )
 
 
-def save_debug_patch(patch, filename):
+def save_debug_patch(patch, filename) -> None:
     """Save a patch for debugging purposes."""
     try:
         cv2.imwrite(filename, patch)
@@ -64,7 +64,7 @@ def save_debug_patch(patch, filename):
         print(f"  Debug: Failed to save patch to {filename}: {e}")
 
 
-def save_debug_search_area(image, center_x, center_y, patch_size, filename):
+def save_debug_search_area(image, center_x, center_y, patch_size, filename) -> None:
     """Save the target search area for debugging."""
     try:
         # Calculate search area bounds (use actual context size for accuracy)
@@ -124,7 +124,7 @@ def save_debug_search_area(image, center_x, center_y, patch_size, filename):
         print(f"  Debug: Failed to save search area to {filename}: {e}")
 
 
-def process_args(args):
+def process_args(args) -> int:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     from torchvision import transforms

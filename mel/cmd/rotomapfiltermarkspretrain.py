@@ -11,7 +11,7 @@ import mel.rotomap.moles
 # TODO: Make the mask green.
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
@@ -34,7 +34,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     for image_mole_iter in tqdm.tqdm(args.FRAMES):
         for image_path, moles in image_mole_iter:
             try:

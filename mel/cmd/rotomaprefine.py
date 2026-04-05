@@ -106,7 +106,7 @@ def _normalize_resolution(images_with_paths) -> list:
     return results
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--reference",
         "-r",
@@ -161,7 +161,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int:
     ref_paths = args.reference
     tgt_paths = args.target
     template_size = args.template_size

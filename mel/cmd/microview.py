@@ -5,11 +5,11 @@ import cv2
 import mel.lib.moleimaging
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     pass
 
 
-def process_args(_args):
+def process_args(_args) -> None:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         msg = "Could not open video capture device."

@@ -7,7 +7,7 @@ import mel.rotomap.filtermarks
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "FRAMES",
         nargs="+",
@@ -69,7 +69,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int | None:
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:

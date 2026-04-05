@@ -10,7 +10,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "TARGET", nargs="+", help="Paths to images to calculate the space of."
     )
@@ -22,7 +22,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int | None:
     for path in args.TARGET:
         if args.verbose:
             print("Target:", path)

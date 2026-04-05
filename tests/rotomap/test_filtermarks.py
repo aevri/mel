@@ -8,7 +8,7 @@ import torch
 import mel.rotomap.filtermarks
 
 
-def test_load_pretrained_file_torch_format(tmp_path):
+def test_load_pretrained_file_torch_format(tmp_path) -> None:
     """Loading a torch-format file works directly."""
     path = tmp_path / "test.pt"
     data = {
@@ -27,7 +27,7 @@ def test_load_pretrained_file_torch_format(tmp_path):
     assert loaded["weights_version"] == "v1"
 
 
-def test_load_pretrained_file_converts_pickle_format(tmp_path, capsys):
+def test_load_pretrained_file_converts_pickle_format(tmp_path, capsys) -> None:
     """Old pickle-format files are converted to torch format on load."""
     path = tmp_path / "test.pt"
     data = {

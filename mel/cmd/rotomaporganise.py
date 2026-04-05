@@ -9,13 +9,13 @@ import mel.lib.fs
 import mel.lib.fullscreenui
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images sets or images."
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     print("Press left arrow or right arrow to change image.")
     print("Press backspace to delete image.")
     print("Press 'g' to group images before current to a folder.")
@@ -69,7 +69,7 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
         self._melroot = mel.lib.fs.find_melroot()
         self._logger = logger
 
-    def reset_logger(self):
+    def reset_logger(self) -> None:
         self._logger.reset(
             mode="view",
             path=os.path.relpath(
@@ -78,14 +78,14 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
             ),
         )
 
-    def delete_image(self):
+    def delete_image(self) -> None:
         if self._image_list:
             pathlib.Path(self._image_list[self._index]).unlink()
             del self._image_list[self._index]
             self._index -= 1
             self.next_image()
 
-    def group_images(self, destination):
+    def group_images(self, destination) -> None:
         if self._image_list:
             dest_path = pathlib.Path(destination)
             if not dest_path.exists():

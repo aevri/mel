@@ -3,7 +3,7 @@
 import pathlib
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "TARGET",
         nargs="+",
@@ -21,7 +21,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     # This is an expensive import, so only do it when necessary.
     import mel.rotomap.identifynn
     import mel.rotomap.moles

@@ -32,7 +32,7 @@ import pathlib
 import warnings
 
 
-def proportion_arg(x):
+def proportion_arg(x) -> float:
     try:
         x = float(x)
     except ValueError as e:
@@ -46,7 +46,7 @@ def proportion_arg(x):
     return x
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--verbose",
         "-v",
@@ -110,7 +110,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int | None:
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl

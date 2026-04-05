@@ -4,7 +4,7 @@ import argparse
 import json
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument("PREFIX", help="Prefix to find the full id of.")
     parser.add_argument(
         "FILE",
@@ -14,7 +14,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int:
     mole_map_list = [json.load(x) for x in args.FILE]
     uuid_set = mole_uuid_set_from_map_list(mole_map_list)
     results = [mole_uuid for mole_uuid in uuid_set if mole_uuid.startswith(args.PREFIX)]
@@ -25,7 +25,7 @@ def process_args(args):
     return 1
 
 
-def mole_uuid_set_from_map_list(mole_map_list):
+def mole_uuid_set_from_map_list(mole_map_list) -> set:
     uuid_set = set()
     for mole_map in mole_map_list:
         for mole in mole_map:

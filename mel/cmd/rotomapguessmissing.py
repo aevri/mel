@@ -19,7 +19,7 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "SRC_JPG",
         type=_existing_file_path,
@@ -32,7 +32,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int:
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG
 

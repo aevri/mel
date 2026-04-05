@@ -9,13 +9,13 @@ import mel.lib.image
 import mel.lib.moleimaging
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "PATH", type=str, help="Path to the mole to compare images from."
     )
 
 
-def get_comparison_images(path):
+def get_comparison_images(path) -> list:
     micro_path = pathlib.Path(path) / "__micro__"
 
     # List all the 'jpg' files in the micro dir
@@ -36,7 +36,7 @@ def get_comparison_images(path):
     return images
 
 
-def process_args(args):
+def process_args(args) -> None:
     images = get_comparison_images(args.PATH)
     if not images:
         msg = f"No microscope images at {args.PATH}"
@@ -77,18 +77,18 @@ class ImageCompareDisplay:
         self._index = 0
         self._show_display_list()
 
-    def next_image(self):
+    def next_image(self) -> None:
         self._index = (self._index + 1) % len(self._image_list)
         self._display_list[0] = self._image_list[self._index]
         self._show_display_list()
 
-    def prev_image(self):
+    def prev_image(self) -> None:
         num_images = len(self._image_list)
         self._index = (self._index + num_images - 1) % len(self._image_list)
         self._display_list[0] = self._image_list[self._index]
         self._show_display_list()
 
-    def swap_images(self):
+    def swap_images(self) -> None:
         self._display_list.reverse()
         self._show_display_list()
 

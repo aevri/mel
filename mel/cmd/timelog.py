@@ -11,11 +11,11 @@ import mel.lib.fs
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     pass
 
 
-def process_args(_args):
+def process_args(_args) -> int | None:
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:

@@ -9,7 +9,7 @@ import mel.lib.common
 import mel.lib.image
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
@@ -28,7 +28,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 

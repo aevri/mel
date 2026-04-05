@@ -46,7 +46,7 @@ def _load_image_with_mask(image_path, *, verbose=False) -> np.ndarray:
     return image_rgb
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "JPG",
         type=_existing_file_path,
@@ -91,7 +91,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int:
     image_paths = args.JPG
     dino_size = args.dino_size
     image_size = args.image_size

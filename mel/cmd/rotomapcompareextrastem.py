@@ -4,7 +4,7 @@ import mel.rotomap.automark
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument("EXTRA_STEM", help="The 'extra stem' namespace to merge to.")
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
@@ -34,7 +34,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     total_matched = 0
     total_missing = 0
     total_added = 0

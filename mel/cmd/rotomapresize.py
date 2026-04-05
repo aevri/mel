@@ -10,7 +10,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--width",
         type=int,
@@ -30,7 +30,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     target_width = args.width
     target_height = args.height
 

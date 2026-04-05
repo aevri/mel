@@ -15,11 +15,11 @@ import mel.lib.common
 import mel.rotomap.relate
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     pass
 
 
-def process_args(_args):
+def process_args(_args) -> None:
     width = 512
     height = 512
     shape = (height, width, 3)
