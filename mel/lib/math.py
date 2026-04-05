@@ -7,12 +7,12 @@ import numpy as np
 RADS_TO_DEGS = 180 / math.pi
 
 
-def lerp(origin, target, factor_0_to_1):
+def lerp(origin, target, factor_0_to_1) -> float:
     towards = target - origin
     return origin + (towards * factor_0_to_1)
 
 
-def distance_sq_2d(a, b):
+def distance_sq_2d(a, b) -> int:
     """Return the squared distance between two points in two dimensions.
 
     Usage examples:
@@ -29,7 +29,7 @@ def distance_sq_2d(a, b):
     return (x * x) + (y * y)
 
 
-def distance_2d(a, b):
+def distance_2d(a, b) -> float:
     """Return the squared distance between two points in two dimensions.
 
     Usage examples:
@@ -42,7 +42,7 @@ def distance_2d(a, b):
     return math.sqrt(distance_sq_2d(a, b))
 
 
-def normalized(v):
+def normalized(v) -> tuple[float, float]:
     """Return vector v normalized to unit length.
 
     Usage examples:
@@ -53,7 +53,7 @@ def normalized(v):
     return (v[0] * inv_length, v[1] * inv_length)
 
 
-def angle(v):
+def angle(v) -> float:
     """Return the angle between v and 'right'.
 
     Usage examples:
@@ -76,7 +76,7 @@ def angle(v):
     return rads_to_degs(theta)
 
 
-def rads_to_degs(theta):
+def rads_to_degs(theta) -> float:
     return theta * RADS_TO_DEGS
 
 
