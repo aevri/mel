@@ -105,7 +105,7 @@ def print_items(common_path, items, label) -> None:
         print(f"{label}: {common_path}: {i}")
 
 
-def match_moles(from_moles, to_moles, error_distance):
+def match_moles(from_moles, to_moles, error_distance) -> tuple[list, list, list]:
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
     if not from_moles and to_moles:

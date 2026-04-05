@@ -218,7 +218,7 @@ def _make_on_keydown(
     return on_keydown
 
 
-def is_lesion_unchanged(rotomap, uuid_):
+def is_lesion_unchanged(rotomap, uuid_) -> bool | None:
     """Mark the provided uuid changed status in the lesions datafile."""
     for lesion in rotomap.lesions:
         if lesion["uuid"] == uuid_:
@@ -455,7 +455,7 @@ def captioned_mole_image(
     border_colour=None,
     *,
     draw_moles=False,
-):
+) -> np.ndarray:
     points = None
     if draw_moles and uuid_points is not None:
         points = tuple(tuple(p) for p in uuid_points.values())

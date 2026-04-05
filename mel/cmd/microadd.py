@@ -53,7 +53,7 @@ def setup_parser(parser) -> None:
     # Compare at least 180 days back, if possible.
 
 
-def get_context_image_name(path):
+def get_context_image_name(path) -> str | None:
     # Paths should alpha-sort to recent last, pick the first jpg
     children = sorted((p.name for p in pathlib.Path(path).iterdir()), reverse=True)
     for name in children:
@@ -64,7 +64,7 @@ def get_context_image_name(path):
     return None
 
 
-def get_dirs_to_path(path_in):
+def get_dirs_to_path(path_in) -> list[str]:
     """Return a list of the intermediate paths between cwd and path.
 
     Raise if path is not below the current working directory (cwd).
@@ -90,7 +90,7 @@ def get_dirs_to_path(path_in):
     return path_list
 
 
-def load_context_images(path):
+def load_context_images(path) -> list:
     image_list = []
     path_list = get_dirs_to_path(path)
     for dir_path in path_list:
@@ -100,7 +100,9 @@ def load_context_images(path):
     return image_list
 
 
-def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed):
+def pick_comparison_path(
+    path, path_list, min_compare_age_days, use_last_changed
+) -> str | None:
     """Return the most appropriate image path to compare with, or None."""
     # Check for the __last_changed__ file if the --last-changed flag is used
     if use_last_changed:
@@ -147,7 +149,9 @@ def pick_comparison_path(path, path_list, min_compare_age_days, use_last_changed
     return path_dt_list[-1][0] if path_dt_list else None
 
 
-def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
+def get_comparison_image_path(
+    path, min_compare_age_days, use_last_changed
+) -> str | None:
     micro_path = pathlib.Path(path) / "__micro__"
     if not micro_path.exists():
         return None
@@ -161,7 +165,7 @@ def get_comparison_image_path(path, min_compare_age_days, use_last_changed):
     return None
 
 
-def load_comparison_image(path, min_compare_age_days, use_last_changed):
+def load_comparison_image(path, min_compare_age_days, use_last_changed) -> tuple | None:
     micro_path = get_comparison_image_path(path, min_compare_age_days, use_last_changed)
     if micro_path is None:
         return None
@@ -275,7 +279,7 @@ def process_path(
     mel.lib.common.write_image(file_path, preview)
 
 
-def capture(cap, display, capindex, mole_acquirer):
+def capture(cap, display, capindex, mole_acquirer) -> np.ndarray:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

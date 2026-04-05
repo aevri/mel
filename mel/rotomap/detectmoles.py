@@ -11,7 +11,7 @@ import mel.rotomap.moles
 _MASK_EXCLUSION_SQUARE_SIZE = 5
 
 
-def draw_debug(image, mask):
+def draw_debug(image, mask) -> np.ndarray:
     keypoints_, image = _keypoints(image, mask)
     return cv2.drawKeypoints(
         image,
@@ -22,7 +22,7 @@ def draw_debug(image, mask):
     )
 
 
-def moles(image, mask):
+def moles(image, mask) -> list:
     moles_ = []
     for point in keypoints(image, mask):
         xy = point.pt
@@ -52,7 +52,7 @@ def _is_mask_region_all_set(mask, point, region_size) -> bool:
     return has_values and mask[mask_slice].mean() == 255
 
 
-def keypoints(image, mask):
+def keypoints(image, mask) -> tuple:
     return _keypoints(image, mask)[0]
 
 

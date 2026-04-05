@@ -1,12 +1,21 @@
 """DINOv3 model loading and feature extraction utils for semantic matching."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cv2
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 PATCH_SIZE = 16
 
 
-def load_dinov3_model(dino_size="base", *, local_files_only=False, pretrained=True):
+def load_dinov3_model(
+    dino_size="base", *, local_files_only=False, pretrained=True
+) -> tuple[Dinov3Model, int]:
     """Load the DINOv3 model for semantic feature extraction.
 
     Args:
@@ -89,7 +98,7 @@ class Dinov3Model:
         self.device = device
         self.num_prefix_tokens = model.num_prefix_tokens
 
-    def extract_patch_features(self, image_rgb):
+    def extract_patch_features(self, image_rgb) -> torch.Tensor:
         """Extract patch features from a numpy image.
 
         Args:
@@ -133,7 +142,7 @@ class Dinov3Model:
             raise RuntimeError(msg)
 
 
-def scale_image_to_fit(image_rgb, image_size):
+def scale_image_to_fit(image_rgb, image_size) -> tuple[np.ndarray, tuple[float, float]]:
     """Scale image to fit within image_size, preserving aspect ratio.
 
     Args:
@@ -167,7 +176,7 @@ def scale_image_to_fit(image_rgb, image_size):
     return scaled, (scale_x, scale_y)
 
 
-def extract_all_patch_features(scaled_image, model):
+def extract_all_patch_features(scaled_image, model) -> torch.Tensor:
     """Extract features for all patches in the scaled image.
 
     Args:
@@ -181,7 +190,7 @@ def extract_all_patch_features(scaled_image, model):
     return model.extract_patch_features(scaled_image)
 
 
-def apply_mask(image_rgb, mask):
+def apply_mask(image_rgb, mask) -> np.ndarray:
     """Apply mask to image, setting masked-out pixels to ImageNet mean.
 
     Args:

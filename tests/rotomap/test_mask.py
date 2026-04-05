@@ -13,22 +13,22 @@ from mel.rotomap import mask
 # -----------------------------------------------------------------------------
 
 
-def test_path_string():
+def test_path_string() -> None:
     result = mask.path("/some/image.jpg")
     assert result == "/some/image.jpg.mask.png"
 
 
-def test_path_pathlib():
+def test_path_pathlib() -> None:
     result = mask.path(pathlib.Path("/some/image.jpg"))
     assert result == "/some/image.jpg.mask.png"
 
 
-def test_path_with_spaces():
+def test_path_with_spaces() -> None:
     result = mask.path("/some/path with spaces/image.jpg")
     assert result == "/some/path with spaces/image.jpg.mask.png"
 
 
-def test_path_with_special_characters():
+def test_path_with_special_characters() -> None:
     result = mask.path("/some/path-with_special.chars/image.jpg")
     assert result == "/some/path-with_special.chars/image.jpg.mask.png"
 
@@ -38,14 +38,14 @@ def test_path_with_special_characters():
 # -----------------------------------------------------------------------------
 
 
-def test_has_mask_exists(tmp_path):
+def test_has_mask_exists(tmp_path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     mask_path.write_bytes(b"")
     assert mask.has_mask(image_path) is True
 
 
-def test_has_mask_not_exists(tmp_path):
+def test_has_mask_not_exists(tmp_path) -> None:
     image_path = tmp_path / "image.jpg"
     assert mask.has_mask(image_path) is False
 
@@ -60,7 +60,7 @@ def _write_mask(path, shape=(10, 10)) -> None:
     cv2.imwrite(str(path), img)
 
 
-def test_load_valid(tmp_path):
+def test_load_valid(tmp_path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     _write_mask(mask_path)
@@ -69,7 +69,7 @@ def test_load_valid(tmp_path):
     assert isinstance(result, np.ndarray)
 
 
-def test_load_missing_raises(tmp_path):
+def test_load_missing_raises(tmp_path) -> None:
     image_path = tmp_path / "nonexistent.jpg"
     # Source uses bare Exception, so we match that broad type intentionally.
     with pytest.raises(Exception, match="Failed to load mask"):
@@ -81,7 +81,7 @@ def test_load_missing_raises(tmp_path):
 # -----------------------------------------------------------------------------
 
 
-def test_load_or_none_valid(tmp_path):
+def test_load_or_none_valid(tmp_path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     _write_mask(mask_path)
@@ -90,7 +90,7 @@ def test_load_or_none_valid(tmp_path):
     assert isinstance(result, np.ndarray)
 
 
-def test_load_or_none_missing(tmp_path):
+def test_load_or_none_missing(tmp_path) -> None:
     image_path = tmp_path / "nonexistent.jpg"
     result = mask.load_or_none(image_path)
     assert result is None
@@ -101,7 +101,7 @@ def test_load_or_none_missing(tmp_path):
 # -----------------------------------------------------------------------------
 
 
-def test_mask_biggest_region_single_region():
+def test_mask_biggest_region_single_region() -> None:
     img = np.zeros((100, 100), dtype=np.uint8)
     cv2.rectangle(img, (20, 20), (80, 80), 255, -1)
     result = mask.mask_biggest_region(img)
@@ -109,7 +109,7 @@ def test_mask_biggest_region_single_region():
     assert result.sum() > 0
 
 
-def test_mask_biggest_region_keeps_largest():
+def test_mask_biggest_region_keeps_largest() -> None:
     img = np.zeros((200, 200), dtype=np.uint8)
     # Large region
     cv2.rectangle(img, (10, 10), (100, 100), 255, -1)
@@ -125,21 +125,21 @@ def test_mask_biggest_region_keeps_largest():
     assert result[50, 50] == 255
 
 
-def test_mask_biggest_region_all_black():
+def test_mask_biggest_region_all_black() -> None:
     img = np.zeros((100, 100), dtype=np.uint8)
     result = mask.mask_biggest_region(img)
     assert result.shape == img.shape
     assert result.sum() == 0
 
 
-def test_mask_biggest_region_same_shape():
+def test_mask_biggest_region_same_shape() -> None:
     img = np.zeros((50, 80), dtype=np.uint8)
     cv2.circle(img, (25, 40), 10, 255, -1)
     result = mask.mask_biggest_region(img)
     assert result.shape == (50, 80)
 
 
-def test_mask_biggest_region_small_contour_filtered():
+def test_mask_biggest_region_small_contour_filtered() -> None:
     # A 2x2 white square produces a contour with <= 5 points, which the
     # implementation filters out via `len(c) > 5`. Result should be all-black.
     img = np.zeros((50, 50), dtype=np.uint8)
@@ -154,7 +154,7 @@ def test_mask_biggest_region_small_contour_filtered():
 # -----------------------------------------------------------------------------
 
 
-def test_guess_mask_otsu_bright_object_on_dark():
+def test_guess_mask_otsu_bright_object_on_dark() -> None:
     # Create a BGR image with a bright white circle on black background
     img = np.zeros((100, 100, 3), dtype=np.uint8)
     cv2.circle(img, (50, 50), 30, (255, 255, 255), -1)
@@ -165,7 +165,7 @@ def test_guess_mask_otsu_bright_object_on_dark():
     assert result[50, 50] == 255
 
 
-def test_guess_mask_otsu_uniform_image():
+def test_guess_mask_otsu_uniform_image() -> None:
     # Uniform image - Otsu threshold on a uniform image produces all-zero mask
     img = np.full((100, 100, 3), 128, dtype=np.uint8)
     result = mask.guess_mask_otsu(img)
@@ -173,7 +173,7 @@ def test_guess_mask_otsu_uniform_image():
     assert result.dtype == np.uint8
 
 
-def test_guess_mask_otsu_output_single_channel():
+def test_guess_mask_otsu_output_single_channel() -> None:
     img = np.zeros((50, 50, 3), dtype=np.uint8)
     cv2.rectangle(img, (10, 10), (40, 40), (200, 200, 200), -1)
     result = mask.guess_mask_otsu(img)

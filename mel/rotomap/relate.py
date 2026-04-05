@@ -49,19 +49,19 @@ _DEBUG_RENDERER = mel.lib.debugrenderer.GlobalContext()
 _MAGIC_FIELD_ERROR = 300
 
 
-def draw_canonical_mole(image, x, y, colour):
+def draw_canonical_mole(image, x, y, colour) -> None:
     radius = 16
     cv2.circle(image, (x, y), radius, colour, -1)
 
 
-def draw_non_canonical_mole(image, x, y, colour):
+def draw_non_canonical_mole(image, x, y, colour) -> None:
     radius = 16
     top_left = (x - radius, y - radius)
     bottom_right = (x + radius, y + radius)
     cv2.rectangle(image, top_left, bottom_right, colour, -1)
 
 
-def draw_mole(image, mole, colour):
+def draw_mole(image, mole, colour) -> None:
     x = mole["x"]
     y = mole["y"]
     if mole[mel.rotomap.moles.KEY_IS_CONFIRMED]:
@@ -70,11 +70,11 @@ def draw_mole(image, mole, colour):
         draw_non_canonical_mole(image, x, y, colour)
 
 
-def mole_list_to_uuid_dict(mole_list):
+def mole_list_to_uuid_dict(mole_list) -> dict:
     return {m["uuid"]: m for m in mole_list}
 
 
-def apply_theory(theory, to_moles):
+def apply_theory(theory, to_moles) -> dict:
     theory_to_original = {}
     for mole in to_moles:
         for from_, to in theory:
@@ -85,7 +85,7 @@ def apply_theory(theory, to_moles):
     return theory_to_original
 
 
-def reverse_theory(theory, theory_to_original):
+def reverse_theory(theory, theory_to_original) -> list:
     new_theory = []
     for from_, to in theory:
         if to in theory_to_original:
@@ -95,7 +95,7 @@ def reverse_theory(theory, theory_to_original):
     return new_theory
 
 
-def best_theory(from_moles, to_moles, iterate):
+def best_theory(from_moles, to_moles, iterate) -> list:
     if not iterate:
         return best_offset_theory(from_moles, to_moles)
 
@@ -116,7 +116,7 @@ def best_theory(from_moles, to_moles, iterate):
     return theory
 
 
-def best_offset_theory(from_moles, to_moles):
+def best_offset_theory(from_moles, to_moles) -> list:
     if not from_moles:
         msg = "from_moles is empty"
         raise ValueError(msg)
@@ -130,7 +130,7 @@ def best_offset_theory(from_moles, to_moles):
     return theory
 
 
-def best_offset_field_theory(from_moles, to_moles):
+def best_offset_field_theory(from_moles, to_moles) -> list | None:
     from_points, to_points, point_offsets, theory = offset_theory_points(
         from_moles, to_moles
     )
@@ -141,7 +141,7 @@ def best_offset_field_theory(from_moles, to_moles):
     return make_offset_field_theory(from_points, to_points, point_offsets, theory)
 
 
-def offset_theory_points(from_moles, to_moles):
+def offset_theory_points(from_moles, to_moles) -> tuple:
     """Return (from_points, to_points, point_offsets, theory) from input.
 
     Args:
@@ -167,7 +167,7 @@ def offset_theory_points(from_moles, to_moles):
     return from_uuid_points, to_uuid_points, point_offsets, theory
 
 
-def mole_list_overlap_info(from_moles, to_moles):
+def mole_list_overlap_info(from_moles, to_moles) -> tuple:
     from_dict = mole_list_to_uuid_dict(from_moles)
     to_dict = mole_list_to_uuid_dict(to_moles)
     from_set = set(from_dict.keys())
@@ -176,7 +176,7 @@ def mole_list_overlap_info(from_moles, to_moles):
     return from_dict, to_dict, from_set, to_set, in_both
 
 
-def guess_mole_pos(from_uuid, from_moles, to_moles):
+def guess_mole_pos(from_uuid, from_moles, to_moles) -> np.ndarray | None:
     """Return a numpy.array position guessing the location of uuid_, or None.
 
     Args:
@@ -203,7 +203,7 @@ def guess_mole_pos(from_uuid, from_moles, to_moles):
     return (point + offset).astype(int)
 
 
-def to_point_offsets(mole_pairs):
+def to_point_offsets(mole_pairs) -> list:
     point_offsets = []
     for from_mole, to_mole in mole_pairs:
         from_pos = mel.rotomap.moles.mole_to_point(from_mole)
@@ -212,7 +212,9 @@ def to_point_offsets(mole_pairs):
     return point_offsets
 
 
-def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets, theory):
+def make_offset_field_theory(
+    from_uuid_points, to_uuid_points, point_offsets, theory
+) -> list:
     to_uuid_points = dict(to_uuid_points)
     inv_point_offsets = invert_point_offsets(point_offsets)
     for uuid_, point in from_uuid_points.items():
@@ -253,11 +255,11 @@ def make_offset_field_theory(from_uuid_points, to_uuid_points, point_offsets, th
     return theory
 
 
-def invert_point_offsets(point_offsets):
+def invert_point_offsets(point_offsets) -> list:
     return [(point + offset, -offset) for point, offset in point_offsets]
 
 
-def nearest_uuid_point(point, uuid_points):
+def nearest_uuid_point(point, uuid_points) -> tuple:
     nearest_sqdist = None
     nearest_uuid = None
     for uuid_, q in uuid_points.items():
@@ -269,7 +271,7 @@ def nearest_uuid_point(point, uuid_points):
     return nearest_uuid, np.sqrt(nearest_sqdist)
 
 
-def pick_value_from_field(point, point_values):
+def pick_value_from_field(point, point_values) -> tuple:
     """Return (value, error) sampled from supplied array of (point, value).
 
     Given a number of points in space, which have values associated with them -
@@ -319,7 +321,7 @@ def pick_value_from_field(point, point_values):
     return picked_value, picked_error
 
 
-def best_baseless_offset_theory(from_moles, to_moles):
+def best_baseless_offset_theory(from_moles, to_moles) -> list | None:
     cutoff_sq = mole_min_sq_distance(to_moles)
     if cutoff_sq is None:
         cutoff_sq = 0
@@ -358,7 +360,7 @@ def best_baseless_offset_theory(from_moles, to_moles):
     return best_theory
 
 
-def mole_min_sq_distance(moles):
+def mole_min_sq_distance(moles) -> float | None:
     min_dist = None
     for i, a in enumerate(moles):
         for j, b in enumerate(moles):
@@ -370,7 +372,7 @@ def mole_min_sq_distance(moles):
     return min_dist
 
 
-def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
+def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq) -> tuple:
     to_moles = list(to_moles_in)
     offset = np.array(offset)
 

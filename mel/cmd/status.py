@@ -37,7 +37,7 @@ class Notification:
     def __init__(self, path) -> None:
         self.path = path
 
-    def format(self, _detail_level):
+    def format(self, _detail_level) -> str:
         return str(self.path)
 
     def hint(self) -> None:
@@ -61,7 +61,7 @@ class RotomapNewMoleAlert(AlertNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -76,7 +76,7 @@ class RotomapLesionChangedAlert(AlertNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -91,7 +91,7 @@ class MicroLesionChangedAlert(AlertNotification):
         super().__init__(path)
         self.id_ = id_
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -110,7 +110,7 @@ class RotomapDuplicateUuidError(ErrorNotification):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -135,7 +135,7 @@ class RotomapNotLoadable(ErrorNotification):
         super().__init__(path)
         self.error = error
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
 
         if detail_level > 0 and self.error is not None:
@@ -188,7 +188,7 @@ class RotomapMissingMoleInfo(InfoNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -203,7 +203,7 @@ class RotomapMissingLesionUnchangedStatus(InfoNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -218,7 +218,7 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -243,7 +243,7 @@ class RotomapMissingMoleFileInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -258,7 +258,7 @@ class RotomapMissingMaskInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -273,7 +273,7 @@ class RotomapMissingSpaceInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level):
+    def format(self, detail_level) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -289,7 +289,7 @@ def setup_parser(parser) -> None:
     parser.add_argument("--trivia", "-t", action="count", default=0)
 
 
-def process_args(args):
+def process_args(args) -> int | bool:
     colorama.init()
     try:
         melroot = mel.lib.fs.find_melroot()
@@ -410,7 +410,7 @@ def check_rotomap_minor_part(path, notices, importance_level) -> None:
         check_newest_rotomap(notices, rotomap_list[-1])
 
 
-def make_rotomap_list(path, notices):
+def make_rotomap_list(path, notices) -> list:
     rotomap_list = []
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
@@ -428,7 +428,7 @@ def make_rotomap_list(path, notices):
     return rotomap_list
 
 
-def uuids_from_dir(rotomap_dir):
+def uuids_from_dir(rotomap_dir) -> set:
     uuid_set = set()
     for _, moles in rotomap_dir.yield_mole_lists():
         for m in moles:

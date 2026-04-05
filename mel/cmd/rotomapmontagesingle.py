@@ -1,6 +1,7 @@
 """Create a montage image for a single mole from a rotomap."""
 
 import cv2
+import numpy as np
 
 import mel.cmd.error
 import mel.lib.common
@@ -33,7 +34,7 @@ def process_args(args) -> None:
     )
 
 
-def make_montage_image(images_moles, uuid_, rot90=0):
+def make_montage_image(images_moles, uuid_, rot90=0) -> np.ndarray:
     path_moles_list = []
 
     radius = 10
@@ -93,7 +94,7 @@ def make_montage_image(images_moles, uuid_, rot90=0):
     )
 
 
-def make_detail_image(context_image, x, y, size):
+def make_detail_image(context_image, x, y, size) -> np.ndarray:
     half_size = size // 2
     left = max(x - half_size, 0)
     top = max(y - half_size, 0)
