@@ -17,7 +17,7 @@ _NINE_CLASS_SET1 = [
 ]
 
 
-def hex3_to_rgb4(hex_string) -> list:
+def hex3_to_rgb4(hex_string: str) -> list:
     # "12 class paired" from http://colorbrewer2.org/
     scheme = [
         (166, 206, 227),
@@ -45,11 +45,11 @@ def hex3_to_rgb4(hex_string) -> list:
     return rgb_list
 
 
-def uuid_to_tricolour_first_digits(uuid_) -> list:
+def uuid_to_tricolour_first_digits(uuid_: str) -> list:
     return hex3_to_rgb4(uuid_[:3])
 
 
-def list_rotated_left(list_, n) -> list:
+def list_rotated_left(list_: list, n: int) -> list:
     """Return the input 'list_', rotated left by n places.
 
     'n' must be between zero and len(list_).
@@ -77,7 +77,7 @@ def list_rotated_left(list_, n) -> list:
 
 
 def yield_triband_mapping_in_distinctive_order(
-    num_colours,
+    num_colours: int,
 ) -> collections.abc.Generator:
     # Assume that pure colours are better than mixed.
     # All bands are the same colour.
@@ -96,7 +96,7 @@ def yield_triband_mapping_in_distinctive_order(
     yield from _yield_tricolours_no_repeats(num_colours)
 
 
-def _yield_tricolours_no_repeats(num_colours) -> collections.abc.Generator:
+def _yield_tricolours_no_repeats(num_colours: int) -> collections.abc.Generator:
     for colour1 in range(num_colours):
         for colour2 in range(num_colours):
             if colour1 == colour2:
@@ -115,7 +115,7 @@ class UuidTriColourPicker:
             len(self._palette)
         )
 
-    def _ensure_uuid(self, uuid_) -> None:
+    def _ensure_uuid(self, uuid_: str) -> None:
         if uuid_ in self._uuid_to_colours:
             return
         try:
@@ -129,7 +129,7 @@ class UuidTriColourPicker:
         else:
             self._uuid_to_colours[uuid_] = tuple(self._palette[x] for x in indices)
 
-    def __call__(self, uuid_) -> tuple:
+    def __call__(self, uuid_: str) -> tuple:
         self._ensure_uuid(uuid_)
         return self._uuid_to_colours[uuid_]
 

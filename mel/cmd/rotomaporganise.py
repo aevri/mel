@@ -1,5 +1,6 @@
 """Organise images into rotomaps."""
 
+import argparse
 import os
 import pathlib
 import shutil
@@ -9,13 +10,13 @@ import mel.lib.fs
 import mel.lib.fullscreenui
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images sets or images."
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     print("Press left arrow or right arrow to change image.")
     print("Press backspace to delete image.")
     print("Press 'g' to group images before current to a folder.")
@@ -64,7 +65,12 @@ def process_args(args) -> None:
 class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
     """Display images in a window, supply controls for organising."""
 
-    def __init__(self, logger, screen, image_list) -> None:
+    def __init__(
+        self,
+        logger: mel.lib.common.TimeLogger,
+        screen: mel.lib.fullscreenui.Display,
+        image_list: list[str],
+    ) -> None:
         super().__init__(screen, image_list)
         self._melroot = mel.lib.fs.find_melroot()
         self._logger = logger
@@ -85,7 +91,7 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
             self._index -= 1
             self.next_image()
 
-    def group_images(self, destination) -> None:
+    def group_images(self, destination: str) -> None:
         if self._image_list:
             dest_path = pathlib.Path(destination)
             if not dest_path.exists():

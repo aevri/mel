@@ -1,6 +1,9 @@
 """Compare existing microscope images of a mole."""
 
+import argparse
 import pathlib
+
+import numpy as np
 
 import mel.lib.common
 import mel.lib.datetime
@@ -9,13 +12,13 @@ import mel.lib.image
 import mel.lib.moleimaging
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "PATH", type=str, help="Path to the mole to compare images from."
     )
 
 
-def get_comparison_images(path) -> list:
+def get_comparison_images(path: str) -> list:
     micro_path = pathlib.Path(path) / "__micro__"
 
     # List all the 'jpg' files in the micro dir
@@ -36,7 +39,7 @@ def get_comparison_images(path) -> list:
     return images
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     images = get_comparison_images(args.PATH)
     if not images:
         msg = f"No microscope images at {args.PATH}"
@@ -66,7 +69,12 @@ def process_args(args) -> None:
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, screen, _name, image_list) -> None:
+    def __init__(
+        self,
+        screen: mel.lib.fullscreenui.Display,
+        _name: str,
+        image_list: list[np.ndarray],
+    ) -> None:
         if not image_list:
             msg = "image_list must be a list with at least one image."
             raise ValueError(msg)

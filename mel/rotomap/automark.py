@@ -79,11 +79,13 @@ def merge_in_radiuses(
     return results
 
 
-def _array_nonempty(numpy_array) -> bool:
+def _array_nonempty(numpy_array: np.ndarray) -> bool:
     return all(numpy_array.shape)
 
 
-def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance) -> tuple[list, list, list]:
+def match_pos_vecs(
+    from_pos_vec: np.ndarray, to_pos_vec: np.ndarray, error_distance: int
+) -> tuple[list, list, list]:
     max_sqdist = error_distance**2
 
     # pylint: disable=no-member
@@ -129,7 +131,9 @@ def match_pos_vecs(from_pos_vec, to_pos_vec, error_distance) -> tuple[list, list
     return matches, missing, added
 
 
-def match_moles_by_pos(from_moles, to_moles, error_distance) -> tuple[list, list, list]:
+def match_moles_by_pos(
+    from_moles: Moles, to_moles: Moles, error_distance: int
+) -> tuple[list, list, list]:
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
     if not from_moles and to_moles:

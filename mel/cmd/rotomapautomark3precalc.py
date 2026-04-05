@@ -16,7 +16,7 @@ import mel.lib.image
 import mel.rotomap.mask
 
 
-def _existing_file_path(string) -> pathlib.Path:
+def _existing_file_path(string: str) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -28,12 +28,16 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def _get_features_path(image_path, dino_size, image_size) -> pathlib.Path:
+def _get_features_path(
+    image_path: pathlib.Path, dino_size: str, image_size: int
+) -> pathlib.Path:
     """Generate path for cached features file."""
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_image_with_mask(image_path, *, verbose=False) -> np.ndarray:
+def _load_image_with_mask(
+    image_path: pathlib.Path, *, verbose: bool = False
+) -> np.ndarray:
     """Load an image and apply its mask if available."""
     if verbose:
         print(f"Loading image: {image_path}")
@@ -46,7 +50,7 @@ def _load_image_with_mask(image_path, *, verbose=False) -> np.ndarray:
     return image_rgb
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "JPG",
         type=_existing_file_path,
@@ -91,7 +95,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int:
+def process_args(args: argparse.Namespace) -> int:
     image_paths = args.JPG
     dino_size = args.dino_size
     image_size = args.image_size
