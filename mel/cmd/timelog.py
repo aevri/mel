@@ -3,6 +3,7 @@
 Answers the question 'How long do things take?'.
 """
 
+import argparse
 import sys
 
 import pandas as pd
@@ -11,11 +12,11 @@ import mel.lib.fs
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     pass
 
 
-def process_args(_args) -> int | None:
+def process_args(_args: argparse.Namespace) -> int | None:
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:

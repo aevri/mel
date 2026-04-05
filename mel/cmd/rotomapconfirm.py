@@ -1,15 +1,17 @@
 """Set moles to be manually confirmed to have the correct UUID."""
 
+import argparse
+
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "JSON_FILE", nargs="+", help="A list of paths to image json files."
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     changed_count = 0
 
     for path in args.JSON_FILE:

@@ -1,10 +1,11 @@
 """Train to guess where moles are in a rotomap image."""
 
+import argparse
 import os
 import warnings
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--epochs",
         "-e",
@@ -66,7 +67,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int | None:
+def process_args(args: argparse.Namespace) -> int | None:
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
@@ -116,7 +117,7 @@ def process_args(args) -> int | None:
     train_images = mel.rotomap.automarknn.drop_paths_without_moles(train_images)
     valid_images = mel.rotomap.automarknn.drop_paths_without_moles(valid_images)
 
-    def print_sessions(kind, sessions) -> None:
+    def print_sessions(kind: str, sessions: list) -> None:
         print(f"{kind} image sessions:")
         print()
         for session in sessions:

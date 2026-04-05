@@ -4,10 +4,12 @@ Note that if a mole file did not exist for the image before, it will be
 created.
 """
 
+import argparse
+
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
@@ -19,7 +21,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for path in args.IMAGES:
         if args.verbose:
             print(path)

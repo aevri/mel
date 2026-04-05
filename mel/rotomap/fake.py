@@ -24,7 +24,7 @@ from mel.lib import vec3
 # https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/HowTo/Human_Skin
 
 
-def random_moles(num_moles) -> list[dict]:
+def random_moles(num_moles: int) -> list[dict]:
     return [
         {
             "uuid": mel.rotomap.moles.make_new_uuid(),
@@ -37,7 +37,7 @@ def random_moles(num_moles) -> list[dict]:
 
 
 def render_moles(
-    moles, image_width, image_height, rot_0_to_1
+    moles: list[dict], image_width: int, image_height: int, rot_0_to_1: float
 ) -> tuple[np.ndarray, list]:
     rot_offset_rads = rot_0_to_1 * math.pi * 2
     p_light = vec3.make(1.0, 0.0, -1.0)

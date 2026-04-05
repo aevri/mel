@@ -10,6 +10,8 @@ For example, testing some commands:
 
 """
 
+import argparse
+import collections.abc
 import pathlib
 import random
 
@@ -19,7 +21,7 @@ import mel.rotomap.fake
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "PATH", help="Where to create this generated repo.", type=pathlib.Path
     )
@@ -39,7 +41,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     melroot = args.PATH
     if not melroot.exists():
         melroot.mkdir(parents=False)
@@ -83,12 +85,12 @@ def process_args(args) -> None:
                 mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
-def make_fake_micro(melroot) -> None:
+def make_fake_micro(melroot: pathlib.Path) -> None:
     micro_parts_path = melroot / "micro" / "data"
     micro_parts_path.mkdir(parents=True)
 
 
-def _iterable_len(it) -> int:
+def _iterable_len(it: collections.abc.Iterable) -> int:
     return sum(1 for _ in it)
 
 

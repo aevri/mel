@@ -1,12 +1,14 @@
 """Automatically mask rotomap images."""
 
+import argparse
+
 import mel.lib.common
 import mel.lib.fs
 import mel.lib.image
 import mel.rotomap.mask
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("TARGET", nargs="+", help="Paths to images to automask.")
     parser.add_argument(
         "--verbose",
@@ -16,7 +18,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for path in args.TARGET:
         if args.verbose:
             print("Target:", path)

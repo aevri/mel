@@ -1,5 +1,7 @@
 """Pre-calculate features for training 'filter-marks' with."""
 
+import argparse
+
 import tqdm
 
 import mel.lib.common
@@ -11,7 +13,7 @@ import mel.rotomap.moles
 # TODO: Make the mask green.
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
@@ -34,7 +36,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for image_mole_iter in tqdm.tqdm(args.FRAMES):
         for image_path, moles in image_mole_iter:
             try:

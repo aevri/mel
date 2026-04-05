@@ -4,7 +4,7 @@ import argparse
 import json
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "FILE",
         type=argparse.FileType(),
@@ -13,7 +13,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     path_data_list = [(x.name, json.load(x)) for x in args.FILE]
     for path, data in path_data_list:
         for mole in data:

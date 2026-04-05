@@ -1,15 +1,17 @@
 """Show a live view through an attached microscope."""
 
+import argparse
+
 import cv2
 
 import mel.lib.moleimaging
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     pass
 
 
-def process_args(_args) -> None:
+def process_args(_args: argparse.Namespace) -> None:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         msg = "Could not open video capture device."

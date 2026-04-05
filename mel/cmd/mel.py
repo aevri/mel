@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import types
 
 import mel.cmd.addcluster
 import mel.cmd.addsingle
@@ -150,7 +151,9 @@ def main() -> int | None:
         return 255
 
 
-def _setup_parser_for_module(subparsers, module, name) -> None:
+def _setup_parser_for_module(
+    subparsers: argparse._SubParsersAction, module: types.ModuleType, name: str
+) -> None:
     doc = module.__doc__
     doc_subject = doc.splitlines()[0]
     doc_epilog = "\n".join(doc.splitlines()[1:])

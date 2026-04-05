@@ -12,7 +12,7 @@ import mel.rotomap.filtermarks
 # TODO: Make the mask green.
 
 
-def proportion_arg(x) -> float:
+def proportion_arg(x: str) -> float:
     try:
         x = float(x)
     except ValueError as e:
@@ -26,7 +26,7 @@ def proportion_arg(x) -> float:
     return x
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--verbose",
         "-v",
@@ -74,7 +74,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch

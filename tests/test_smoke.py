@@ -281,11 +281,11 @@ def expect_ok(*args: str | pathlib.PurePath) -> None:
     subprocess.check_call(args)
 
 
-def expect_ok_with_env(env, *args: str | pathlib.PurePath) -> None:
+def expect_ok_with_env(env: dict[str, str], *args: str | pathlib.PurePath) -> None:
     subprocess.check_call(args, env=env)
 
 
-def expect_returncode(expected_code, *args: str | pathlib.PurePath) -> None:
+def expect_returncode(expected_code: int, *args: str | pathlib.PurePath) -> None:
     return_code = subprocess.call(args)
     assert return_code == expected_code
 

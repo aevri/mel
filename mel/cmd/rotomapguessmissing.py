@@ -7,7 +7,7 @@ import mel.rotomap.moles
 import mel.rotomap.relate
 
 
-def _existing_file_path(string) -> pathlib.Path:
+def _existing_file_path(string: str) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -19,7 +19,7 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "SRC_JPG",
         type=_existing_file_path,
@@ -32,7 +32,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int:
+def process_args(args: argparse.Namespace) -> int:
     src_path = args.SRC_JPG
     tgt_path = args.TGT_JPG
 

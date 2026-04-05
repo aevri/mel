@@ -13,7 +13,7 @@ ROTOMAPS_PATH = pathlib.Path("rotomaps")
 MICRO_PATH = pathlib.Path("micro")
 
 
-def expand_dirs_to_jpegs(path_list) -> list[str]:
+def expand_dirs_to_jpegs(path_list: list[str]) -> list[str]:
     image_paths = []
     for path in path_list:
         if pathlib.Path(path).is_dir():
@@ -23,13 +23,15 @@ def expand_dirs_to_jpegs(path_list) -> list[str]:
     return image_paths
 
 
-def yield_only_jpegs_from_dir(path) -> collections.abc.Generator[str]:
+def yield_only_jpegs_from_dir(
+    path: str | pathlib.Path,
+) -> collections.abc.Generator[str]:
     for entry in pathlib.Path(path).iterdir():
         if is_jpeg_name(entry.name):
             yield str(entry)
 
 
-def is_jpeg_name(filename) -> bool:
+def is_jpeg_name(filename: str) -> bool:
     lower_ext = pathlib.PurePath(filename).suffix.lower()
     return lower_ext in (".jpg", ".jpeg")
 
@@ -65,7 +67,7 @@ def find_melroot() -> pathlib.Path:
 
 
 def list_rotomap_images_by_session(
-    parts_path, *, exclude_parts=None
+    parts_path: pathlib.Path, *, exclude_parts: set[str] | None = None
 ) -> collections.defaultdict[str, list]:
     images = collections.defaultdict(list)
     for part in sorted(parts_path.iterdir()):

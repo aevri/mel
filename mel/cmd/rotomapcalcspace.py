@@ -1,5 +1,6 @@
 """Determine the space described by the mask of a rotomap image."""
 
+import argparse
 import sys
 
 import cv2
@@ -10,7 +11,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "TARGET", nargs="+", help="Paths to images to calculate the space of."
     )
@@ -22,7 +23,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int | None:
+def process_args(args: argparse.Namespace) -> int | None:
     for path in args.TARGET:
         if args.verbose:
             print("Target:", path)
