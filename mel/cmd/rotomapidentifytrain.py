@@ -28,6 +28,7 @@ Here is a good recipe if you have a GPU:
 import argparse
 import json
 import os
+import pathlib
 import warnings
 
 
@@ -149,7 +150,7 @@ def process_args(args):
         print(f"Will fine-tune {model_path}")
         print(f"           and {metadata_path}")
 
-        with open(metadata_path) as f:
+        with pathlib.Path(metadata_path).open() as f:
             old_metadata = json.load(f)
 
         def check_old_matches_new(name, old, new):
@@ -258,7 +259,7 @@ def process_args(args):
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
 
-    with open(metadata_path, "w") as f:
+    with pathlib.Path(metadata_path).open("w") as f:
         json.dump(metadata, f)
         print(f"Saved {metadata_path}")
 

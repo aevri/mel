@@ -1,6 +1,6 @@
 """Compare existing microscope images of a mole."""
 
-import os
+import pathlib
 
 import mel.lib.common
 import mel.lib.datetime
@@ -16,13 +16,13 @@ def setup_parser(parser):
 
 
 def get_comparison_images(path):
-    micro_path = os.path.join(path, "__micro__")
+    micro_path = pathlib.Path(path) / "__micro__"
 
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
-    names = [x for x in os.listdir(micro_path) if x.lower().endswith(".jpg")]
+    names = [p.name for p in micro_path.iterdir() if p.name.lower().endswith(".jpg")]
     names.sort()
-    paths = [os.path.join(micro_path, x) for x in names]
+    paths = [str(micro_path / x) for x in names]
     images = [mel.lib.image.load_image(x) for x in paths]
 
     for i, (image_path, img) in enumerate(zip(paths, images, strict=False)):

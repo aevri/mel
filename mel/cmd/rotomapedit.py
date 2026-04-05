@@ -51,6 +51,7 @@ In 'mole marking' mode:
 import argparse
 import contextlib
 import os.path
+import pathlib
 
 import numpy as np
 
@@ -280,7 +281,7 @@ class MoleEditController:
 
             identifier = identifynn.make_identifier()
             target = editor.moledata.current_image_path()
-            frame = mel.rotomap.moles.RotomapFrame(os.path.abspath(target))
+            frame = mel.rotomap.moles.RotomapFrame(str(pathlib.Path(target).resolve()))
             new_moles = identifier.get_new_moles(frame)
             mel.rotomap.moles.save_image_moles(new_moles, str(frame.path))
             editor.moledata.reload()
@@ -486,7 +487,7 @@ class Controller:
     def _reset_logger_new_image(self, editor):
         self._logger.reset(
             path=os.path.relpath(
-                os.path.abspath(editor.moledata.image_path),
+                str(pathlib.Path(editor.moledata.image_path).resolve()),
                 start=self._melroot,
             )
         )

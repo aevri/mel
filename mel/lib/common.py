@@ -3,7 +3,7 @@
 import contextlib
 import csv
 import datetime
-import os
+import pathlib
 
 import cv2
 import numpy as np
@@ -27,14 +27,14 @@ def determine_filename_for_ident(*source_filenames: str):
 
 
 def overwrite_image(directory, filename, image):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    dir_path = pathlib.Path(directory)
+    dir_path.mkdir(parents=True, exist_ok=True)
 
-    path = os.path.join(directory, filename)
-    if os.path.exists(path):
-        os.remove(path)
+    path = dir_path / filename
+    if path.exists():
+        path.unlink()
 
-    write_image(path, image)
+    write_image(str(path), image)
 
 
 def write_image(path, image):

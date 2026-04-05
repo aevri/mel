@@ -1,6 +1,7 @@
 """Organise images into rotomaps."""
 
 import os
+import pathlib
 import shutil
 
 import mel.lib.common
@@ -72,22 +73,23 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
         self._logger.reset(
             mode="view",
             path=os.path.relpath(
-                os.path.abspath(self.image_path),
+                str(pathlib.Path(self.image_path).resolve()),
                 start=self._melroot,
             ),
         )
 
     def delete_image(self):
         if self._image_list:
-            os.remove(self._image_list[self._index])
+            pathlib.Path(self._image_list[self._index]).unlink()
             del self._image_list[self._index]
             self._index -= 1
             self.next_image()
 
     def group_images(self, destination):
         if self._image_list:
-            if not os.path.exists(destination):
-                os.makedirs(destination)
+            dest_path = pathlib.Path(destination)
+            if not dest_path.exists():
+                dest_path.mkdir(parents=True)
             for image_path in self._image_list[: self._index + 1]:
                 shutil.move(image_path, destination)
             del self._image_list[: self._index + 1]

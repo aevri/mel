@@ -1,6 +1,6 @@
 """A tool for adding a new cluster / constellation from photographs."""
 
-import os
+import pathlib
 
 import cv2
 import numpy as np
@@ -96,7 +96,7 @@ def process_args(args):
         cluster_montage_image,
     )
     for index, mole in enumerate(args.moles):
-        mole_dir = os.path.join(args.destination, mole)
+        mole_dir = str(pathlib.Path(args.destination) / mole)
         mel.lib.common.overwrite_image(
             mole_dir,
             mel.lib.common.determine_filename_for_ident(args.detail),

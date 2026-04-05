@@ -33,7 +33,7 @@ def _make_mole(x, y, uuid_=None, *, is_confirmed=True):
 
 
 def _write_json(path, data):
-    with open(path, "w") as f:
+    with pathlib.Path(path).open("w") as f:
         json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
         print(file=f)
 

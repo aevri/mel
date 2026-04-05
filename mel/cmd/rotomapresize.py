@@ -1,7 +1,7 @@
 """Resize images and their associated mole files, masks, and ellipses."""
 
 import json
-import os
+import pathlib
 
 import cv2
 
@@ -39,7 +39,7 @@ def process_args(args):
             print(f"Skipping non-JPEG file: {image_path}")
             continue
 
-        if not os.path.exists(image_path):
+        if not pathlib.Path(image_path).exists():
             print(f"File not found: {image_path}")
             continue
 
@@ -73,9 +73,9 @@ def process_args(args):
 
 def _resize_mole_files(image_path, scale_x, scale_y):
     """Resize mole coordinates in .json files."""
-    mole_file_path = image_path + ".json"
-    if os.path.exists(mole_file_path):
-        with open(mole_file_path) as f:
+    mole_file_path = pathlib.Path(image_path + ".json")
+    if mole_file_path.exists():
+        with mole_file_path.open() as f:
             moles = json.load(f)
 
         for mole in moles:
@@ -88,7 +88,7 @@ def _resize_mole_files(image_path, scale_x, scale_y):
 def _resize_mask_file(image_path, target_width, target_height):
     """Resize mask file if it exists."""
     mask_path = mel.rotomap.mask.path(image_path)
-    if os.path.exists(mask_path):
+    if pathlib.Path(mask_path).exists():
         mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
         if mask is not None:
             resized_mask = cv2.resize(
@@ -101,9 +101,9 @@ def _resize_mask_file(image_path, target_width, target_height):
 
 def _resize_ellipse_metadata(image_path, scale_x, scale_y):
     """Resize ellipse coordinates in .meta.json file."""
-    meta_path = image_path + ".meta.json"
-    if os.path.exists(meta_path):
-        with open(meta_path) as f:
+    meta_path = pathlib.Path(image_path + ".meta.json")
+    if meta_path.exists():
+        with meta_path.open() as f:
             metadata = json.load(f)
 
         if "ellipse" in metadata:
@@ -128,7 +128,7 @@ def _resize_ellipse_metadata(image_path, scale_x, scale_y):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2025 Angelos Evripiotis.
+# Copyright (C) 2025-2026 Angelos Evripiotis.
 # Generated with assistance from Claude Code and Cursor.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

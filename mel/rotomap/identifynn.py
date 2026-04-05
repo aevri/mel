@@ -2,6 +2,7 @@
 
 import collections
 import json
+import pathlib
 
 import numpy as np
 import pytest
@@ -28,7 +29,7 @@ class MoleIdentifier:
         # lower, import them only when necessary.
         import torch
 
-        with open(metadata_path) as f:
+        with pathlib.Path(metadata_path).open() as f:
             self.metadata = json.load(f)
 
         model_args = self.metadata["model_args"]

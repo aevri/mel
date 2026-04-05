@@ -1,7 +1,6 @@
 """FileSystem helpers."""
 
 import collections
-import os
 import pathlib
 
 DEFAULT_CLASSIFIER_PATH = "classifiers"
@@ -16,7 +15,7 @@ MICRO_PATH = pathlib.Path("micro")
 def expand_dirs_to_jpegs(path_list):
     image_paths = []
     for path in path_list:
-        if os.path.isdir(path):
+        if pathlib.Path(path).is_dir():
             image_paths.extend(sorted(yield_only_jpegs_from_dir(path)))
         else:
             image_paths.append(path)
@@ -24,13 +23,13 @@ def expand_dirs_to_jpegs(path_list):
 
 
 def yield_only_jpegs_from_dir(path):
-    for filename in os.listdir(path):
-        if is_jpeg_name(filename):
-            yield os.path.join(path, filename)
+    for entry in pathlib.Path(path).iterdir():
+        if is_jpeg_name(entry.name):
+            yield str(entry)
 
 
 def is_jpeg_name(filename):
-    lower_ext = os.path.splitext(filename)[1].lower()
+    lower_ext = pathlib.PurePath(filename).suffix.lower()
     return lower_ext in (".jpg", ".jpeg")
 
 

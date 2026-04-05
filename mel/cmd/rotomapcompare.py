@@ -27,6 +27,7 @@ import collections
 import functools
 import math
 import os
+import pathlib
 import typing
 
 import cv2
@@ -255,7 +256,7 @@ class ImageCompareDisplay:
             mode="compare",
             path=str(
                 os.path.relpath(
-                    os.path.abspath(self._image_path),
+                    str(pathlib.Path(self._image_path).resolve()),
                     start=self._melroot,
                 )
             )

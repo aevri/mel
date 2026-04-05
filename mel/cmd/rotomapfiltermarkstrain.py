@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import pathlib
 
 import mel.lib.common
 import mel.lib.fs
@@ -112,7 +113,7 @@ def process_args(args):
 
     torch.save(model.state_dict(), model_path)
     print(f"Saved {model_path}")
-    with open(metadata_path, "w") as f:
+    with pathlib.Path(metadata_path).open("w") as f:
         metadata = {
             "model_weights_version": mel.rotomap.filtermarks.get_model_weights_version()
         }
