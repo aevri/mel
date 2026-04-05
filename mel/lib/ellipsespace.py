@@ -6,7 +6,7 @@ import mel.lib.moleimaging
 
 
 class Transform:
-    def __init__(self, ellipse):
+    def __init__(self, ellipse) -> None:
         self.ellipse = ellipse
 
     def to_space(self, pos):

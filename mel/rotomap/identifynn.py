@@ -24,7 +24,7 @@ def make_identifier():
 
 
 class MoleIdentifier:
-    def __init__(self, metadata_path, model_path):
+    def __init__(self, metadata_path, model_path) -> None:
         # Some of these imports are expensive, so to keep program start-up time
         # lower, import them only when necessary.
         import torch
@@ -111,7 +111,7 @@ def make_cnn_layer(in_width, out_width):
 
 
 class Lambda(torch.nn.Module):
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         super().__init__()
         self.func = func
 
@@ -120,7 +120,7 @@ class Lambda(torch.nn.Module):
 
 
 class RotomapsClassMapping:
-    def __init__(self, rotomap_dict):
+    def __init__(self, rotomap_dict) -> None:
         all_uuids = set()
         for rotomap_list in rotomap_dict.values():
             for rotomap in rotomap_list:
@@ -133,7 +133,7 @@ class RotomapsClassMapping:
 
 
 class LightningModel(pl.LightningModule):
-    def __init__(self, model_args, trainable_conv, lr=1e-3):
+    def __init__(self, model_args, trainable_conv, lr=1e-3) -> None:
         super().__init__()
         model = Model(**model_args)
         self.lr = lr
@@ -582,20 +582,20 @@ def get_all_rotomaps(parts_path):
 
 
 class RotomapsDataset:
-    def __init__(self, data, classes, class_to_index, in_fields, out_fields):
+    def __init__(self, data, classes, class_to_index, in_fields, out_fields) -> None:
         self._data = data
         self.classes = classes
         self.class_to_index = class_to_index
         self._in_fields, self._out_fields = in_fields, out_fields
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> tuple:
         """Return input and output data for the given index."""
         in_data = [self._data[field][index] for field in self._in_fields]
         out_data = [self._data[field][index] for field in self._out_fields]
 
         return (index, in_data, out_data)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of items in the dataset."""
         return len(self._data[self._in_fields[0]])
 
@@ -746,7 +746,7 @@ class Model(torch.nn.Module):
         num_classes,
         num_cnns,
         channels_in=2,
-    ):
+    ) -> None:
         super().__init__()
 
         self.embedding_len = num_parts // 2

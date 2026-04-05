@@ -21,7 +21,7 @@ def make_detector():
 
 
 class MoleDetector:
-    def __init__(self, model_path):
+    def __init__(self, model_path) -> None:
         self.model = make_model(model_path)
         self.image_transform = torchvision.transforms.Compose(
             [
@@ -103,7 +103,7 @@ def calc_precision_recall(target_poslist, poslist, error_distance=5):
 
 
 class PlModule(pl.LightningModule):
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None) -> None:
         super().__init__()
         # self.lr = 0.0000229  # As determined by pl auto_lr_find. Not good.
         # self.lr = 0.01  # Too high.
@@ -167,7 +167,7 @@ class PlModule(pl.LightningModule):
 
 
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
-    def __init__(self, image_paths):
+    def __init__(self, image_paths) -> None:
         self.image_paths = image_paths
         self.image_transform = torchvision.transforms.Compose(
             [
@@ -175,11 +175,11 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
             ]
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of images in the dataset."""
         return len(self.image_paths)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> tuple:
         """Return transformed image and target for the given index."""
         path = self.image_paths[index]
 

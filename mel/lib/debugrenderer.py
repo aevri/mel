@@ -4,7 +4,7 @@ import cv2
 
 
 class GlobalContext:
-    def __init__(self):
+    def __init__(self) -> None:
         self._image = None
 
     def arrow(self, from_, to):
@@ -32,7 +32,8 @@ class GlobalContext:
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

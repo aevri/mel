@@ -315,7 +315,7 @@ def process_context_detail_args(args):
 
 
 class TimeLogger:
-    def __init__(self, csv_writer, command):
+    def __init__(self, csv_writer, command) -> None:
         self._writer = csv_writer
         self._command = command
         self._mode = ""

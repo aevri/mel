@@ -200,7 +200,7 @@ def train(
 
 
 class Evaluator:
-    def __init__(self, threshold):
+    def __init__(self, threshold) -> None:
         # Import this as lazily as possible as it takes a while to import, so
         # that we only pay the import cost when we use it.
         import torch

@@ -104,7 +104,7 @@ def _yield_tricolours_no_repeats(num_colours):
 
 
 class UuidTriColourPicker:
-    def __init__(self):
+    def __init__(self) -> None:
         self._uuid_to_colours = {}
         self._palette = _NINE_CLASS_SET1
         self._triband_mapping = yield_triband_mapping_in_distinctive_order(
@@ -125,7 +125,7 @@ class UuidTriColourPicker:
         else:
             self._uuid_to_colours[uuid_] = tuple(self._palette[x] for x in indices)
 
-    def __call__(self, uuid_):
+    def __call__(self, uuid_) -> tuple:
         self._ensure_uuid(uuid_)
         return self._uuid_to_colours[uuid_]
 

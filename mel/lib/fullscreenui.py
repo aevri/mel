@@ -57,7 +57,7 @@ def _parse_debug_keypresses():
 
 
 class FittedImageTransform:
-    def __init__(self, image, fit_rect):
+    def __init__(self, image, fit_rect) -> None:
         self._fit_rect = fit_rect
         image_rect = mel.lib.image.get_image_rect(image)
 
@@ -79,7 +79,7 @@ class FittedImageTransform:
 
 
 class ZoomedImageTransform:
-    def __init__(self, image, pos, rect, scale):
+    def __init__(self, image, pos, rect, scale) -> None:
         self._pos = tuple(int(v * scale) for v in pos)
         self._rect = rect
         self._offset = mel.lib.image.calc_centering_offset(self._pos, rect)
@@ -220,7 +220,7 @@ def fullscreen_context():
 class Display:
     """Display an opencv image, centered in a surface."""
 
-    def __init__(self, surface):
+    def __init__(self, surface) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -252,7 +252,7 @@ class Display:
 
 
 class ZoomableMixin:
-    def __init__(self):
+    def __init__(self) -> None:
         self._transform = None
         self._zoom_pos = None
         self._zoom_virt_pos = None
@@ -320,7 +320,7 @@ class ZoomableMixin:
 class LeftRightDisplay(ZoomableMixin):
     """Display images in a window, supply controls for navigating."""
 
-    def __init__(self, screen, image_list):
+    def __init__(self, screen, image_list) -> None:
         if not image_list:
             msg = "image_list must be a list with at least one image."
             raise ValueError(msg)
@@ -374,7 +374,7 @@ class LeftRightDisplay(ZoomableMixin):
 
 
 class MultiImageDisplay:
-    def __init__(self, display):
+    def __init__(self, display) -> None:
         self._display = display
 
         self._title = "_"

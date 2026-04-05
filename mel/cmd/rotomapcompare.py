@@ -241,7 +241,7 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, logger, screen, path_images_tuple, uuid_):
+    def __init__(self, logger, screen, path_images_tuple, uuid_) -> None:
         self._logger = logger
         self._image_path = None
         self._uuid = None
