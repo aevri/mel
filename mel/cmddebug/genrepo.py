@@ -88,7 +88,7 @@ def make_fake_micro(melroot):
     micro_parts_path.mkdir(parents=True)
 
 
-def _iterable_len(it):
+def _iterable_len(it) -> int:
     return sum(1 for _ in it)
 
 

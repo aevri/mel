@@ -1,5 +1,7 @@
 """Pick colours for moles, based on a tricolour scheme."""
 
+import collections.abc
+
 # "9 class set1" from http://colorbrewer2.org/
 # This set seems to be the most colour-blind friendly for 9 colours
 _NINE_CLASS_SET1 = [
@@ -92,7 +94,7 @@ def yield_triband_mapping_in_distinctive_order(num_colours):
     yield from _yield_tricolours_no_repeats(num_colours)
 
 
-def _yield_tricolours_no_repeats(num_colours):
+def _yield_tricolours_no_repeats(num_colours) -> collections.abc.Generator:
     for colour1 in range(num_colours):
         for colour2 in range(num_colours):
             if colour1 == colour2:
@@ -111,7 +113,7 @@ class UuidTriColourPicker:
             len(self._palette)
         )
 
-    def _ensure_uuid(self, uuid_):
+    def _ensure_uuid(self, uuid_) -> None:
         if uuid_ in self._uuid_to_colours:
             return
         try:

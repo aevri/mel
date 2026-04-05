@@ -11,7 +11,7 @@ import mel.lib.image
 import mel.lib.ui
 
 
-def _parse_debug_keypresses():
+def _parse_debug_keypresses() -> list[int]:
     """Parse MEL_DEBUG_ENQUEUE_KEYPRESSES into pygame keys.
 
     Returns:
@@ -348,7 +348,7 @@ class LeftRightDisplay(ZoomableMixin):
             self._index = (self._index + num_images - 1) % len(self._image_list)
         self.show()
 
-    def _get_image(self, path):
+    def _get_image(self, path) -> np.ndarray:
         return mel.lib.image.load_image(path)
 
     def show_zoomed(self, mouse_x, mouse_y, zoom_level=None):

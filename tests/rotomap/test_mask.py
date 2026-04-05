@@ -55,7 +55,7 @@ def test_has_mask_not_exists(tmp_path):
 # -----------------------------------------------------------------------------
 
 
-def _write_mask(path, shape=(10, 10)):
+def _write_mask(path, shape=(10, 10)) -> None:
     img = np.zeros(shape, dtype=np.uint8)
     cv2.imwrite(str(path), img)
 

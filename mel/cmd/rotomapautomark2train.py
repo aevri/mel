@@ -116,7 +116,7 @@ def process_args(args):
     train_images = mel.rotomap.automarknn.drop_paths_without_moles(train_images)
     valid_images = mel.rotomap.automarknn.drop_paths_without_moles(valid_images)
 
-    def print_sessions(kind, sessions):
+    def print_sessions(kind, sessions) -> None:
         print(f"{kind} image sessions:")
         print()
         for session in sessions:

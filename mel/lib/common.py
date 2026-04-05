@@ -98,7 +98,7 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
 
 
 def make_mole_capture_callback(window_name, image, radius, mole_positions):
-    def draw_circle(event, x, y, _flags, _param):
+    def draw_circle(event, x, y, _flags, _param) -> None:
         del _flags, _param
         if event == cv2.EVENT_LBUTTONDOWN:
             cv2.circle(image, (x, y), radius, (255, 0, 0), -1)
@@ -109,7 +109,7 @@ def make_mole_capture_callback(window_name, image, radius, mole_positions):
 
 
 def make_null_mouse_callback():
-    def null_callback(_event, _x, _y, _flags, _param):
+    def null_callback(_event, _x, _y, _flags, _param) -> None:
         del _event, _x, _y, _flags, _param
 
     return null_callback
@@ -322,7 +322,7 @@ class TimeLogger:
         self._path = ""
         self._start = self._now()
 
-    def _now(self):
+    def _now(self) -> datetime.datetime:
         return datetime.datetime.now(datetime.UTC)
 
     def reset(self, *, command=None, mode=None, path=None):

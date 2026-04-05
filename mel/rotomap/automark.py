@@ -79,7 +79,7 @@ def merge_in_radiuses(
     return results
 
 
-def _array_nonempty(numpy_array):
+def _array_nonempty(numpy_array) -> bool:
     return all(numpy_array.shape)
 
 

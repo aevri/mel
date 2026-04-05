@@ -38,7 +38,7 @@ def moles(image, mask):
     return moles_
 
 
-def _is_mask_region_all_set(mask, point, region_size):
+def _is_mask_region_all_set(mask, point, region_size) -> bool:
     x, y = (int(i) for i in point)
     x_slice = slice(x - region_size, x + region_size)
     y_slice = slice(y - region_size, y + region_size)
@@ -56,7 +56,7 @@ def keypoints(image, mask):
     return _keypoints(image, mask)[0]
 
 
-def _keypoints(original_image, mask):
+def _keypoints(original_image, mask) -> tuple:
     image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
     image = image[:, :, 1]
 

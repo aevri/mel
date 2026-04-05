@@ -15,7 +15,7 @@ import mel.lib.dinov3
 import mel.rotomap.moles
 
 
-def _existing_file_path(string):
+def _existing_file_path(string) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -27,12 +27,12 @@ def _existing_file_path(string):
     return path
 
 
-def _get_features_path(image_path, dino_size, image_size):
+def _get_features_path(image_path, dino_size, image_size) -> pathlib.Path:
     """Generate path for cached features file."""
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False):
+def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False) -> dict:
     """Load pre-computed features, raising an error if not found."""
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
@@ -46,12 +46,12 @@ def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False):
     return torch.load(features_path, weights_only=True)
 
 
-def _tensor_size_mb(tensor):
+def _tensor_size_mb(tensor) -> float:
     """Return size of a tensor in megabytes."""
     return tensor.numel() * tensor.element_size() / (1024 * 1024)
 
 
-def _get_patch_index(img_w, mole_x, mole_y):
+def _get_patch_index(img_w, mole_x, mole_y) -> int:
     """Convert scaled coordinates to patch index."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -60,7 +60,7 @@ def _get_patch_index(img_w, mole_x, mole_y):
     return patch_row * patches_per_row + patch_col
 
 
-def _patch_index_to_coords(patch_idx, img_w):
+def _patch_index_to_coords(patch_idx, img_w) -> tuple[int, int]:
     """Convert patch index to patch center coordinates."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -71,7 +71,7 @@ def _patch_index_to_coords(patch_idx, img_w):
     return x, y
 
 
-def _get_patch_distance(idx1, idx2, img_w):
+def _get_patch_distance(idx1, idx2, img_w) -> float:
     """Compute distance between two patches in patch units."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -119,7 +119,7 @@ def _collect_training_data(
     negative_ratio,
     min_patch_distance,
     verbose,
-):
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Collect training features and labels from reference images.
 
     Args:
@@ -220,7 +220,7 @@ def _train_classifier(
     weight_decay,
     verbose,
     input_dropout=0.0,
-):
+) -> MoleClassifier:
     """Train the mole classifier.
 
     Args:

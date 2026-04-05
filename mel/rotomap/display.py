@@ -24,7 +24,7 @@ _BLACK = (0, 0, 0)
 
 
 def draw_mole(image, x, y, colours):
-    def circle(radius, col):
+    def circle(radius, col) -> None:
         cv2.circle(image, (x, y), radius, col, -1)
 
     circle(20, _WHITE)
@@ -37,7 +37,7 @@ def draw_mole(image, x, y, colours):
 
 
 def draw_non_canonical_mole(image, x, y, colours):
-    def rect(size, col):
+    def rect(size, col) -> None:
         top_left = (x - size, y - size)
         bottom_right = (x + size, y + size)
         cv2.rectangle(image, top_left, bottom_right, col, -1)
@@ -107,7 +107,7 @@ def make_composite_overlay(*overlays: collections.abc.Callable):
 
     """
 
-    def do_overlay(image, transform):
+    def do_overlay(image, transform) -> np.ndarray:
         for o in overlays:
             image = o(image, transform)
         return image
@@ -195,7 +195,7 @@ class MarkedMoleOverlay:
             return self._draw_accentuated(image, transform)
         return self._draw_markers(image, transform)
 
-    def _draw_accentuated(self, image, transform):
+    def _draw_accentuated(self, image, transform) -> np.ndarray:
         # Reveal the moles that have been marked, whilst still showing
         # markers. This is good for verifying that markers are actually
         # positioned on moles.
@@ -254,7 +254,7 @@ class MarkedMoleOverlay:
 
         return image
 
-    def _draw_markers(self, image, transform):
+    def _draw_markers(self, image, transform) -> np.ndarray:
         # Hide the moles that have been marked, showing markers
         # distinctly from moles. This is good for marking moles that
         # haven't been marked, without worrying about the ones that
@@ -280,7 +280,7 @@ class BoundingAreaOverlay:
             size = 2
             space = mel.lib.ellipsespace.Transform(self.bounding_box)
 
-            def toimage(point):
+            def toimage(point) -> np.ndarray:
                 point = space.from_space(point)
                 return transform.imagexy_to_transformedxy(*point)
 
@@ -488,7 +488,7 @@ class Editor:
         self.show_current()
 
     def show_prev_map(self):
-        def transition():
+        def transition() -> None:
             self.moledata_index -= 1
             self.moledata_index %= len(self.moledata_list)
             self.moledata = self.moledata_list[self.moledata_index]
@@ -497,7 +497,7 @@ class Editor:
         self.show_current()
 
     def show_next_map(self):
-        def transition():
+        def transition() -> None:
             self.moledata_index += 1
             self.moledata_index %= len(self.moledata_list)
             self.moledata = self.moledata_list[self.moledata_index]
@@ -513,7 +513,7 @@ class Editor:
         self._adjusted_transition(self.moledata.increment)
         self.show_current()
 
-    def _adjusted_transition(self, transition_func):
+    def _adjusted_transition(self, transition_func) -> None:
         if self.display.is_zoomed() and "ellipse" in self.moledata.metadata:
             pos = self.display.get_zoom_pos()
             ellipse = self.moledata.metadata["ellipse"]
@@ -625,7 +625,7 @@ class MoleData:
         # images. This seems to be fine for use-cases to date, only the mole
         # data seems to change from underneath really.
         @functools.lru_cache
-        def load_image(image_path):
+        def load_image(image_path) -> np.ndarray:
             return mel.lib.image.load_image(image_path)
 
         self._load_image = load_image

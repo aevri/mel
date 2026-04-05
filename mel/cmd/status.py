@@ -615,7 +615,7 @@ def check_micro(path, notices):
         notices.append(NoBaseDirInfo(parts_path))
 
 
-def _validate_mole_dir(path, notices):
+def _validate_mole_dir(path, notices) -> None:
     for sub in path.iterdir():
         if sub.name.lower() not in mel.micro.fs.MOLE_DIR_ENTRIES:
             if sub.suffix.lower() in mel.micro.fs.IMAGE_SUFFIXES:
