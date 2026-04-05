@@ -110,7 +110,7 @@ def setup_parser(parser):
 
 
 class MoveController:
-    def __init__(self):
+    def __init__(self) -> None:
         self.status = "Move mode"
 
     def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
@@ -122,7 +122,7 @@ class MoveController:
 
 
 class FollowController:
-    def __init__(self, editor, follow, mole_uuid_list):
+    def __init__(self, editor, follow, mole_uuid_list) -> None:
         self.mole_uuid_list = mole_uuid_list
         if follow:
             self.mole_uuid_list[0] = follow
@@ -172,7 +172,7 @@ class FollowController:
 
 
 class MoleEditController:
-    def __init__(self, editor, follow, copy_to_clipboard):
+    def __init__(self, editor, follow, copy_to_clipboard) -> None:
         self.mole_uuid_list = [None]
 
         self.follow_controller = FollowController(editor, follow, self.mole_uuid_list)
@@ -299,7 +299,7 @@ class MoleEditController:
 
 
 class MaskEditController:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def on_mouse_event(self, editor, event):
@@ -335,7 +335,7 @@ class MaskEditController:
 
 
 class MoleMarkController:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def on_mouse_event(self, editor, event):
@@ -403,7 +403,7 @@ class MoleMarkController:
 
 
 class BoundingAreaController:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def on_mouse_event(self, editor, event):
@@ -417,7 +417,7 @@ class BoundingAreaController:
 
 
 class AutomoleDebugController:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def on_mouse_event(self, editor, event):
@@ -431,7 +431,7 @@ class AutomoleDebugController:
 
 
 class VisitList:
-    def __init__(self, items):
+    def __init__(self, items) -> None:
         self._items = items
         self._index = 0
 
@@ -446,13 +446,13 @@ class VisitList:
     def current(self):
         return self._items[self._index]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Return True if any items exist."""
         return bool(self._items)
 
 
 class Controller:
-    def __init__(self, editor, follow, copy_to_clipboard, visit_list, logger):
+    def __init__(self, editor, follow, copy_to_clipboard, visit_list, logger) -> None:
         self._visit_list = VisitList(visit_list)
 
         self._logger = logger

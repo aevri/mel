@@ -68,7 +68,7 @@ def draw_crosshair(image, x, y):
 
 
 class Display(mel.lib.fullscreenui.ZoomableMixin):
-    def __init__(self, screen):
+    def __init__(self, screen) -> None:
         super().__init__()
         self._image_display = screen
 
@@ -116,10 +116,10 @@ def make_composite_overlay(*overlays: collections.abc.Callable):
 
 
 class StatusOverlay:
-    def __init__(self):
+    def __init__(self) -> None:
         self.text = ""
 
-    def __call__(self, image, _transform):
+    def __call__(self, image, _transform) -> np.ndarray:
         if self.text:
             text_image = mel.lib.image.render_text_as_image(self.text)
             mel.lib.common.copy_image_into_image(text_image, image, 0, 0)
@@ -128,7 +128,7 @@ class StatusOverlay:
 
 
 class MoleMarkerOverlay:
-    def __init__(self, uuid_to_tricolour):
+    def __init__(self, uuid_to_tricolour) -> None:
         self._is_showing_markers = True
         self._is_faded_markers = True
         self._highlight_uuid = None
@@ -150,7 +150,7 @@ class MoleMarkerOverlay:
     def toggle_faded_markers(self):
         self._is_faded_markers = not self._is_faded_markers
 
-    def __call__(self, image, transform):
+    def __call__(self, image, transform) -> np.ndarray:
         if not self._is_showing_markers:
             return image
 
@@ -182,7 +182,7 @@ class MoleMarkerOverlay:
 class MarkedMoleOverlay:
     """An overlay to make marked moles obvious, for checking mark positions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.moles = None
         self._highlight_uuid = None
         self.is_accentuate_marked_mode = False
@@ -190,7 +190,7 @@ class MarkedMoleOverlay:
     def set_highlight_uuid(self, highlight_uuid):
         self._highlight_uuid = highlight_uuid
 
-    def __call__(self, image, transform):
+    def __call__(self, image, transform) -> np.ndarray:
         if self.is_accentuate_marked_mode:
             return self._draw_accentuated(image, transform)
         return self._draw_markers(image, transform)
@@ -270,10 +270,10 @@ class MarkedMoleOverlay:
 class BoundingAreaOverlay:
     """An overlay to show the bounding area, if any."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.bounding_box = None
 
-    def __call__(self, image, transform):
+    def __call__(self, image, transform) -> np.ndarray:
         image //= 2
         if self.bounding_box is not None:
             color = (0, 0, 255)
@@ -317,7 +317,7 @@ class EditorMode(enum.Enum):
 
 
 class Editor:
-    def __init__(self, directory_list, screen):
+    def __init__(self, directory_list, screen) -> None:
         self._uuid_to_tricolour = mel.rotomap.tricolour.UuidTriColourPicker()
         self.display = Display(screen)
         self.moledata_list = [MoleData(x.image_paths) for x in directory_list]
@@ -619,7 +619,7 @@ class Editor:
 
 
 class MoleData:
-    def __init__(self, path_list):
+    def __init__(self, path_list) -> None:
         # Make an instance-specific cache of images. Note that this means that
         # mel will need to be re-run in order to pick up changes to mole
         # images. This seems to be fine for use-cases to date, only the mole

@@ -66,7 +66,7 @@ def process_args(args):
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, screen, _name, image_list):
+    def __init__(self, screen, _name, image_list) -> None:
         if not image_list:
             msg = "image_list must be a list with at least one image."
             raise ValueError(msg)

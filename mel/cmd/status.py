@@ -34,7 +34,7 @@ class ImportanceLevel(IntEnum):
 
 
 class Notification:
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         self.path = path
 
     def format(self, _detail_level):
@@ -57,7 +57,7 @@ class InfoNotification(Notification):
 
 
 class RotomapNewMoleAlert(AlertNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
@@ -72,7 +72,7 @@ class RotomapNewMoleAlert(AlertNotification):
 
 
 class RotomapLesionChangedAlert(AlertNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
@@ -87,7 +87,7 @@ class RotomapLesionChangedAlert(AlertNotification):
 
 
 class MicroLesionChangedAlert(AlertNotification):
-    def __init__(self, path, id_):
+    def __init__(self, path, id_) -> None:
         super().__init__(path)
         self.id_ = id_
 
@@ -106,7 +106,7 @@ class InvalidDateError(ErrorNotification):
 
 
 class RotomapDuplicateUuidError(ErrorNotification):
-    def __init__(self, rotomap_path):
+    def __init__(self, rotomap_path) -> None:
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
@@ -131,7 +131,7 @@ class RotomapDuplicateUuidError(ErrorNotification):
 
 
 class RotomapNotLoadable(ErrorNotification):
-    def __init__(self, path, error=None):
+    def __init__(self, path, error=None) -> None:
         super().__init__(path)
         self.error = error
 
@@ -170,7 +170,7 @@ class UnexpectedDirInfo(InfoNotification):
 
 
 class MicroMissingIdInfo(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
 
     def format(self, _detail_level):
@@ -184,7 +184,7 @@ class MicroMissingIdInfo(InfoNotification):
 
 
 class RotomapMissingMoleInfo(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
@@ -199,7 +199,7 @@ class RotomapMissingMoleInfo(InfoNotification):
 
 
 class RotomapMissingLesionUnchangedStatus(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
@@ -214,7 +214,7 @@ class RotomapMissingLesionUnchangedStatus(InfoNotification):
 
 
 class RotomapUnconfirmedMoleInfo(InfoNotification):
-    def __init__(self, rotomap_path):
+    def __init__(self, rotomap_path) -> None:
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
@@ -239,7 +239,7 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
 
 
 class RotomapMissingMoleFileInfo(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.frame_list = []
 
@@ -254,7 +254,7 @@ class RotomapMissingMoleFileInfo(InfoNotification):
 
 
 class RotomapMissingMaskInfo(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.frame_list = []
 
@@ -269,7 +269,7 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 
 class RotomapMissingSpaceInfo(InfoNotification):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__(path)
         self.frame_list = []
 

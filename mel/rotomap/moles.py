@@ -26,7 +26,7 @@ ROTOMAP_DIR_LESIONS_FILENAME = "lesions.json"
 class RotomapDirectory:
     """RotomapFrame-s for all images in a single rotomap dir."""
 
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
             msg = f'"{self.path}" is not a directory, so not a rotomap.'
@@ -57,7 +57,7 @@ class RotomapDirectory:
             uuid_ for frame in self.yield_frames() for uuid_ in frame.moledata.uuids
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string representation of the rotomap directory."""
         return f"RotomapDirectory({self.path!r})"
 
@@ -65,7 +65,7 @@ class RotomapDirectory:
 class RotomapFrame:
     """Image and mole data for a single image in a rotomap."""
 
-    def __init__(self, path, *, extra_stem=None):
+    def __init__(self, path, *, extra_stem=None) -> None:
         self.path = pathlib.Path(path)
         self.extra_stem = extra_stem
         if self.path.is_dir():
@@ -93,7 +93,7 @@ class RotomapFrame:
     def has_mask(self):
         return mel.rotomap.mask.has_mask(self.path)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string representation of the rotomap frame."""
         return f"RotomapFrame({self.path!r})"
 
@@ -101,7 +101,7 @@ class RotomapFrame:
 class MoleData:
     """Iterables of UUIDs, locations, and other data on moles in an image."""
 
-    def __init__(self, mole_iter):
+    def __init__(self, mole_iter) -> None:
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
@@ -155,7 +155,7 @@ def make_argparse_image_moles_tree(path):
 
 
 class MoleListDiff:
-    def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing):
+    def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing) -> None:
         self.new = (new_uuids - old_uuids) - ignore_new
         self.missing = (old_uuids - new_uuids) - ignore_missing
 

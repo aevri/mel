@@ -83,7 +83,9 @@ def _get_patch_distance(idx1, idx2, img_w):
 class MoleClassifier(torch.nn.Module):
     """MLP classifier for mole identification."""
 
-    def __init__(self, feature_dim, num_classes, hidden_layers, input_dropout=0.0):
+    def __init__(
+        self, feature_dim, num_classes, hidden_layers, input_dropout=0.0
+    ) -> None:
         """Initialize the classifier.
 
         Args:

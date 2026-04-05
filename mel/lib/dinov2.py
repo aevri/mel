@@ -41,7 +41,7 @@ def load_dinov2_model(dino_size="base"):
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
-            def __init__(self, model):
+            def __init__(self, model) -> None:
                 self.model = model
                 self.model.eval()
 
