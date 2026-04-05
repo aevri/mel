@@ -18,7 +18,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def _existing_file_path(string) -> pathlib.Path:
+def _existing_file_path(string: str) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -30,7 +30,7 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def _load_image_with_mask(image_path) -> np.ndarray:
+def _load_image_with_mask(image_path: pathlib.Path) -> np.ndarray:
     """Load an image and apply its mask if available.
 
     Returns the image in BGR format (for OpenCV template matching).
@@ -46,7 +46,7 @@ def _load_image_with_mask(image_path) -> np.ndarray:
     return image_bgr
 
 
-def _validate_aspect_ratios(image_sizes) -> None:
+def _validate_aspect_ratios(image_sizes: list[tuple[pathlib.Path, int, int]]) -> None:
     """Validate that all images have the same aspect ratio.
 
     Args:
@@ -73,7 +73,9 @@ def _validate_aspect_ratios(image_sizes) -> None:
             raise ValueError(msg)
 
 
-def _normalize_resolution(images_with_paths) -> list:
+def _normalize_resolution(
+    images_with_paths: list[tuple[pathlib.Path, np.ndarray]],
+) -> list:
     """Resize all images to the smallest resolution.
 
     Args:
@@ -106,7 +108,7 @@ def _normalize_resolution(images_with_paths) -> list:
     return results
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--reference",
         "-r",
@@ -161,7 +163,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int:
+def process_args(args: argparse.Namespace) -> int:
     ref_paths = args.reference
     tgt_paths = args.target
     template_size = args.template_size

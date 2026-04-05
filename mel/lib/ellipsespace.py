@@ -6,17 +6,17 @@ import mel.lib.moleimaging
 
 
 class Transform:
-    def __init__(self, ellipse) -> None:
+    def __init__(self, ellipse: tuple) -> None:
         self.ellipse = ellipse
 
-    def to_space(self, pos) -> np.ndarray:
+    def to_space(self, pos: tuple) -> np.ndarray:
         return to_ellipse_space(self.ellipse, pos)
 
-    def from_space(self, pos) -> np.ndarray:
+    def from_space(self, pos: tuple) -> np.ndarray:
         return from_ellipse_space(self.ellipse, pos)
 
 
-def from_ellipse_space(ellipse, pos) -> np.ndarray:
+def from_ellipse_space(ellipse: tuple, pos: tuple) -> np.ndarray:
     center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
 
     p = (
@@ -27,7 +27,7 @@ def from_ellipse_space(ellipse, pos) -> np.ndarray:
     return np.array(p)
 
 
-def to_ellipse_space(ellipse, pos) -> np.ndarray:
+def to_ellipse_space(ellipse: tuple, pos: tuple) -> np.ndarray:
     center, up, right, umag, rmag = ellipse_center_up_right(ellipse)
 
     pos = (
@@ -48,7 +48,7 @@ def to_ellipse_space(ellipse, pos) -> np.ndarray:
     )
 
 
-def ellipse_center_up_right(ellipse) -> tuple:
+def ellipse_center_up_right(ellipse: tuple) -> tuple:
     center = ellipse[0]
     center = mel.lib.moleimaging.point_to_int_point(center)
     angle_degs = ellipse[2]

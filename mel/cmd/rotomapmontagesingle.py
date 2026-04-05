@@ -1,5 +1,7 @@
 """Create a montage image for a single mole from a rotomap."""
 
+import argparse
+
 import cv2
 import numpy as np
 
@@ -9,7 +11,7 @@ import mel.lib.image
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles,
@@ -28,13 +30,13 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     mel.lib.common.write_image(
         args.OUTPUT, make_montage_image(args.FRAMES, args.UUID, args.rot90)
     )
 
 
-def make_montage_image(images_moles, uuid_, rot90=0) -> np.ndarray:
+def make_montage_image(images_moles: list, uuid_: str, rot90: int = 0) -> np.ndarray:
     path_moles_list = []
 
     radius = 10
@@ -94,7 +96,9 @@ def make_montage_image(images_moles, uuid_, rot90=0) -> np.ndarray:
     )
 
 
-def make_detail_image(context_image, x, y, size) -> np.ndarray:
+def make_detail_image(
+    context_image: np.ndarray, x: int, y: int, size: int
+) -> np.ndarray:
     half_size = size // 2
     left = max(x - half_size, 0)
     top = max(y - half_size, 0)

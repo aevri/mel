@@ -38,14 +38,14 @@ def test_path_with_special_characters() -> None:
 # -----------------------------------------------------------------------------
 
 
-def test_has_mask_exists(tmp_path) -> None:
+def test_has_mask_exists(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     mask_path.write_bytes(b"")
     assert mask.has_mask(image_path) is True
 
 
-def test_has_mask_not_exists(tmp_path) -> None:
+def test_has_mask_not_exists(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "image.jpg"
     assert mask.has_mask(image_path) is False
 
@@ -55,12 +55,12 @@ def test_has_mask_not_exists(tmp_path) -> None:
 # -----------------------------------------------------------------------------
 
 
-def _write_mask(path, shape=(10, 10)) -> None:
+def _write_mask(path: pathlib.Path, shape: tuple[int, int] = (10, 10)) -> None:
     img = np.zeros(shape, dtype=np.uint8)
     cv2.imwrite(str(path), img)
 
 
-def test_load_valid(tmp_path) -> None:
+def test_load_valid(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     _write_mask(mask_path)
@@ -69,7 +69,7 @@ def test_load_valid(tmp_path) -> None:
     assert isinstance(result, np.ndarray)
 
 
-def test_load_missing_raises(tmp_path) -> None:
+def test_load_missing_raises(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "nonexistent.jpg"
     # Source uses bare Exception, so we match that broad type intentionally.
     with pytest.raises(Exception, match="Failed to load mask"):
@@ -81,7 +81,7 @@ def test_load_missing_raises(tmp_path) -> None:
 # -----------------------------------------------------------------------------
 
 
-def test_load_or_none_valid(tmp_path) -> None:
+def test_load_or_none_valid(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "image.jpg"
     mask_path = tmp_path / "image.jpg.mask.png"
     _write_mask(mask_path)
@@ -90,7 +90,7 @@ def test_load_or_none_valid(tmp_path) -> None:
     assert isinstance(result, np.ndarray)
 
 
-def test_load_or_none_missing(tmp_path) -> None:
+def test_load_or_none_missing(tmp_path: pathlib.Path) -> None:
     image_path = tmp_path / "nonexistent.jpg"
     result = mask.load_or_none(image_path)
     assert result is None

@@ -32,7 +32,7 @@ import pathlib
 import warnings
 
 
-def proportion_arg(x) -> float:
+def proportion_arg(x: str) -> float:
     try:
         x = float(x)
     except ValueError as e:
@@ -46,7 +46,7 @@ def proportion_arg(x) -> float:
     return x
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--verbose",
         "-v",
@@ -110,7 +110,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int | None:
+def process_args(args: argparse.Namespace) -> int | None:
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl
@@ -153,7 +153,7 @@ def process_args(args) -> int | None:
         with pathlib.Path(metadata_path).open() as f:
             old_metadata = json.load(f)
 
-        def check_old_matches_new(name, old, new) -> None:
+        def check_old_matches_new(name: str, old: object, new: object) -> None:
             if old != new:
                 msg = f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
                 raise ValueError(msg)
@@ -271,7 +271,7 @@ def process_args(args) -> int | None:
     return None
 
 
-def _fixup_old_model(old_metadata, new_metadata, model) -> None:
+def _fixup_old_model(old_metadata: dict, new_metadata: dict, model: object) -> None:
     old_model_args = old_metadata["model_args"]
     new_model_args = new_metadata["model_args"]
     if (

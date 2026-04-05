@@ -23,7 +23,7 @@ import mel.lib.moleimaging
         (1000, 3),
     ],
 )
-def test_log10_zero(x, expected) -> None:
+def test_log10_zero(x: float, expected: float) -> None:
     assert mel.lib.moleimaging.log10_zero(x) == pytest.approx(expected)
 
 
@@ -44,7 +44,7 @@ def test_log10_zero_fractional() -> None:
         ((3, 4), (3, 4)),
     ],
 )
-def test_point_to_int_point(point, expected) -> None:
+def test_point_to_int_point(point: tuple[float, float], expected: tuple[int, int]) -> None:
     assert mel.lib.moleimaging.point_to_int_point(point) == expected
 
 
@@ -73,7 +73,7 @@ def test_rotate_zero_degrees() -> None:
         (270, (0.0, -1.0)),
     ],
 )
-def test_rotate_cardinal_around_origin(degrees, expected) -> None:
+def test_rotate_cardinal_around_origin(degrees: int, expected: tuple[float, float]) -> None:
     point = (1.0, 0.0)
     pivot = (0.0, 0.0)
     result = mel.lib.moleimaging.rotate_point_around_pivot(point, pivot, degrees)

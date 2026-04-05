@@ -6,12 +6,12 @@ import cv2
 import numpy as np
 
 
-def path(mole_image_path) -> str:
+def path(mole_image_path: str | pathlib.Path) -> str:
     # Path might be a pathlib.Path, so convert to string first.
     return str(mole_image_path) + ".mask.png"
 
 
-def load(mole_image_path) -> np.ndarray:
+def load(mole_image_path: str | pathlib.Path) -> np.ndarray:
     mask = cv2.imread(path(mole_image_path), cv2.IMREAD_UNCHANGED)
     if mask is None:
         msg = f'Failed to load mask: "{path(mole_image_path)}"'
@@ -19,17 +19,17 @@ def load(mole_image_path) -> np.ndarray:
     return mask
 
 
-def has_mask(mole_image_path) -> bool:
+def has_mask(mole_image_path: str | pathlib.Path) -> bool:
     return pathlib.Path(path(mole_image_path)).is_file()
 
 
-def load_or_none(mole_image_path) -> np.ndarray | None:
+def load_or_none(mole_image_path: str | pathlib.Path) -> np.ndarray | None:
     if has_mask(mole_image_path):
         return load(mole_image_path)
     return None
 
 
-def mask_biggest_region(mask) -> np.ndarray:
+def mask_biggest_region(mask: np.ndarray) -> np.ndarray:
     # Pick only the biggest connected region - there may be other things in the
     # image which have a similar colour profile. Assume that the biggest region
     # is the area that we're interested in.
@@ -53,7 +53,7 @@ def mask_biggest_region(mask) -> np.ndarray:
     return mask
 
 
-def guess_mask_otsu(img) -> np.ndarray:
+def guess_mask_otsu(img: np.ndarray) -> np.ndarray:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_OTSU)
     return mask_biggest_region(img)
