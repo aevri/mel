@@ -1,6 +1,7 @@
 """FileSystem helpers."""
 
 import collections
+import collections.abc
 import pathlib
 
 DEFAULT_CLASSIFIER_PATH = "classifiers"
@@ -12,7 +13,7 @@ ROTOMAPS_PATH = pathlib.Path("rotomaps")
 MICRO_PATH = pathlib.Path("micro")
 
 
-def expand_dirs_to_jpegs(path_list):
+def expand_dirs_to_jpegs(path_list) -> list[str]:
     image_paths = []
     for path in path_list:
         if pathlib.Path(path).is_dir():
@@ -22,13 +23,13 @@ def expand_dirs_to_jpegs(path_list):
     return image_paths
 
 
-def yield_only_jpegs_from_dir(path):
+def yield_only_jpegs_from_dir(path) -> collections.abc.Generator[str]:
     for entry in pathlib.Path(path).iterdir():
         if is_jpeg_name(entry.name):
             yield str(entry)
 
 
-def is_jpeg_name(filename):
+def is_jpeg_name(filename) -> bool:
     lower_ext = pathlib.PurePath(filename).suffix.lower()
     return lower_ext in (".jpg", ".jpeg")
 
@@ -37,7 +38,7 @@ class NoMelrootError(Exception):
     pass
 
 
-def find_melroot():
+def find_melroot() -> pathlib.Path:
     original_path = pathlib.Path.cwd()
 
     path = original_path
@@ -63,7 +64,9 @@ def find_melroot():
 #     return all_rotomaps
 
 
-def list_rotomap_images_by_session(parts_path, *, exclude_parts=None):
+def list_rotomap_images_by_session(
+    parts_path, *, exclude_parts=None
+) -> collections.defaultdict[str, list]:
     images = collections.defaultdict(list)
     for part in sorted(parts_path.iterdir()):
         for subpart in sorted(part.iterdir()):

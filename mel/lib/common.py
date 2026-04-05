@@ -1,9 +1,11 @@
 """A big ball of mud to hold common functionality pending a re-org."""
 
+import collections.abc
 import contextlib
 import csv
 import datetime
 import pathlib
+import typing
 
 import cv2
 import numpy as np
@@ -41,7 +43,9 @@ def write_image(path, image) -> None:
     mel.lib.image.save_image(image, path)
 
 
-def user_mark_moles(window_name, context_image, detail_image, num_moles):
+def user_mark_moles(
+    window_name, context_image, detail_image, num_moles
+) -> tuple[list, list]:
     display_image = np.copy(context_image)
     cv2.imshow(window_name, display_image)
 
@@ -97,7 +101,9 @@ def user_mark_moles(window_name, context_image, detail_image, num_moles):
     return context_mole_positions, detail_mole_positions
 
 
-def make_mole_capture_callback(window_name, image, radius, mole_positions):
+def make_mole_capture_callback(
+    window_name, image, radius, mole_positions
+) -> typing.Callable:
     def draw_circle(event, x, y, _flags, _param) -> None:
         del _flags, _param
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -108,7 +114,7 @@ def make_mole_capture_callback(window_name, image, radius, mole_positions):
     return draw_circle
 
 
-def make_null_mouse_callback():
+def make_null_mouse_callback() -> typing.Callable:
     def null_callback(_event, _x, _y, _flags, _param) -> None:
         del _event, _x, _y, _flags, _param
 
@@ -155,7 +161,7 @@ def connect_moles(image, mole_positions) -> None:
         cv2.line(image, a, b, blue, thickness)
 
 
-def yield_neighbors(node_list):
+def yield_neighbors(node_list) -> collections.abc.Generator:
     is_first = True
     prev_node = None
     for node in node_list:
@@ -166,7 +172,7 @@ def yield_neighbors(node_list):
         prev_node = node
 
 
-def new_image(height, width):
+def new_image(height, width) -> np.ndarray:
     return np.zeros((height, width, 3), np.uint8)
 
 
@@ -175,7 +181,7 @@ def copy_image_into_image(source, dest, y, x) -> None:
     dest[y : (y + shape[0]), x : (x + shape[1])] = source
 
 
-def shrink_to_max_dimension(image, max_dimension):
+def shrink_to_max_dimension(image, max_dimension) -> np.ndarray:
     """May or may not return the original image."""
     shape = image.shape
     height = shape[0]
@@ -224,7 +230,7 @@ def user_review_image(window_name, image) -> None:
         raise RuntimeError(msg)
 
 
-def rotated90(image, times):
+def rotated90(image, times) -> np.ndarray:
     for _ in range(times % 4):
         image = cv2.transpose(image)
         image = cv2.flip(image, 1)
@@ -286,7 +292,7 @@ def add_context_detail_arguments(parser) -> None:
     )
 
 
-def process_context_detail_args(args):
+def process_context_detail_args(args) -> tuple[np.ndarray, np.ndarray]:
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
@@ -346,7 +352,7 @@ class TimeLogger:
 
 
 @contextlib.contextmanager
-def timelogger_context(command):
+def timelogger_context(command) -> collections.abc.Generator[TimeLogger]:
     path = mel.lib.fs.find_melroot() / mel.lib.fs.TIMELOG_NAME
     if not path.exists():
         path.write_text("command,mode,path,start,elapsed_secs\n")

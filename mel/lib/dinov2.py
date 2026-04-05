@@ -1,10 +1,15 @@
 """DINOv2 model loading and feature extraction utils for semantic matching."""
 
+import typing
+
 import cv2
 import numpy as np
 
+if typing.TYPE_CHECKING:
+    import torch
 
-def load_dinov2_model(dino_size="base"):
+
+def load_dinov2_model(dino_size="base") -> tuple:
     """Load the DINOv2 model for semantic feature extraction with context.
 
     Args:
@@ -112,7 +117,7 @@ def load_dinov2_model(dino_size="base"):
 
 def extract_contextual_patch_feature(
     image, center_x, center_y, context_size, model, transform, feature_dim
-):
+) -> "torch.Tensor":
     """Extract contextual patch feature from a large context window.
 
     Args:
@@ -192,7 +197,7 @@ def extract_contextual_patch_feature(
 
 def extract_all_contextual_features(
     image, center_x, center_y, context_size, model, transform, feature_dim
-):
+) -> "torch.Tensor":
     """Extract features for all patches in a context window.
 
     Args:
@@ -423,7 +428,7 @@ def find_best_contextual_match(
     *,
     debug_images=False,
     uuid=None,
-):
+) -> tuple:
     """Find best match using contextual semantic features.
 
     Args:
@@ -524,7 +529,9 @@ def find_best_contextual_match(
         return best_x, best_y, best_similarity
 
 
-def extract_patch_features(image, center_x, center_y, patch_size, model, transform):
+def extract_patch_features(
+    image, center_x, center_y, patch_size, model, transform
+) -> "torch.Tensor":
     """Extract DINOv2 CLS token from a patch at the given center."""
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.

@@ -17,7 +17,7 @@ _NINE_CLASS_SET1 = [
 ]
 
 
-def hex3_to_rgb4(hex_string):
+def hex3_to_rgb4(hex_string) -> list:
     # "12 class paired" from http://colorbrewer2.org/
     scheme = [
         (166, 206, 227),
@@ -45,11 +45,11 @@ def hex3_to_rgb4(hex_string):
     return rgb_list
 
 
-def uuid_to_tricolour_first_digits(uuid_):
+def uuid_to_tricolour_first_digits(uuid_) -> list:
     return hex3_to_rgb4(uuid_[:3])
 
 
-def list_rotated_left(list_, n):
+def list_rotated_left(list_, n) -> list:
     """Return the input 'list_', rotated left by n places.
 
     'n' must be between zero and len(list_).
@@ -76,7 +76,9 @@ def list_rotated_left(list_, n):
     return list_[n:] + list_[:n]
 
 
-def yield_triband_mapping_in_distinctive_order(num_colours):
+def yield_triband_mapping_in_distinctive_order(
+    num_colours,
+) -> collections.abc.Generator:
     # Assume that pure colours are better than mixed.
     # All bands are the same colour.
     for i in range(num_colours):

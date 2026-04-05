@@ -18,14 +18,14 @@ from mel.lib import vec3
 # https://www.excamera.com/sphinx/article-ray.html
 
 
-def vec3_flat(v):
+def vec3_flat(v) -> np.ndarray:
     assert vec3.is_vec3(v)
     copy = v.copy()
     copy[:, 1] = 0.0
     return copy
 
 
-def intersect_ray_sphere(p_ray, d_ray, p_sph, m_radius):
+def intersect_ray_sphere(p_ray, d_ray, p_sph, m_radius) -> tuple:
     v_ray_to_sph = p_sph - p_ray
     m_ray_to_nearest = vec3.dot(d_ray, v_ray_to_sph)
     m_ray_to_nearest_sq = m_ray_to_nearest * m_ray_to_nearest
@@ -39,7 +39,7 @@ def intersect_ray_sphere(p_ray, d_ray, p_sph, m_radius):
     return did_intersect, p_intersection
 
 
-def intersect_ray_at_z_pos(pos, dir_, z):
+def intersect_ray_at_z_pos(pos, dir_, z) -> np.ndarray:
     z_target = z - vec3.zcol(pos)
     z_ratio = z_target / vec3.zcol(dir_)
     x = z_ratio * vec3.xcol(dir_) + vec3.xcol(pos)
@@ -47,7 +47,7 @@ def intersect_ray_at_z_pos(pos, dir_, z):
     return vec3.make_from_columns(x, y, z)
 
 
-def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
+def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius) -> tuple:
     # Roughen the edges a little.
     rng = np.random.default_rng()
     radius += rng.random((vec3.count(d_ray), 1)) * 0.01
@@ -66,7 +66,9 @@ def intersect_ray_cylinder(p_ray, d_ray, p_cyl, radius):
     return did_intersect, p_intersection
 
 
-def light_cylinder(p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offset_rads):
+def light_cylinder(
+    p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offset_rads
+) -> np.ndarray:
     assert vec3.is_vec3(p_ray)
     assert vec3.is_vec3(d_ray)
     assert vec3.is_vec3(p_hit)
@@ -86,13 +88,13 @@ def light_cylinder(p_ray, d_ray, p_hit, p_light, p_cyl, radius, moles, rot_offse
     return color
 
 
-def cylinder_mole_pos(p_cyl, cyl_radius, mole_y_pos, mole_rot):
+def cylinder_mole_pos(p_cyl, cyl_radius, mole_y_pos, mole_rot) -> np.ndarray:
     d_mole = vec3.make(-math.sin(mole_rot), 0, math.cos(mole_rot))
     p_flat_mole = p_cyl + d_mole * cyl_radius
     return vec3.make(vec3.xval(p_flat_mole), mole_y_pos, vec3.zval(p_flat_mole))
 
 
-def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads):
+def skin_colour_cylinder(p_cyl, radius, p_hit, moles, rot_offset_rads) -> np.ndarray:
     # Skin tone colours:
     # https://www.schemecolor.com/real-skin-tones-color-palette.php
     light_skin_colour = vec3.make(1, 0.86, 0.67)
