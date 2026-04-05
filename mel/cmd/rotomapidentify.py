@@ -1,9 +1,10 @@
 """Guess which mole is which in a rotomap image."""
 
+import argparse
 import pathlib
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "TARGET",
         nargs="+",
@@ -21,7 +22,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     # This is an expensive import, so only do it when necessary.
     import mel.rotomap.identifynn
     import mel.rotomap.moles

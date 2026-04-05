@@ -1,9 +1,11 @@
 """Set moles in this rotomap to be marked unchanged."""
 
+import argparse
+
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
@@ -12,7 +14,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     changed_count = 0
 
     for rotomap in args.ROTOMAP:

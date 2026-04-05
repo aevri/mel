@@ -1,5 +1,6 @@
 """List the moles in a mole catalog."""
 
+import argparse
 import collections.abc
 
 import mel.micro.fs
@@ -12,7 +13,7 @@ import mel.micro.fs
 _DEFAULT_NO_RECENT_DAYS = 15
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--only-no-micro",
         action="store_true",
@@ -80,7 +81,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for mole in _yield_mole_dirs(".", args):
         mole_data = {
             "relpath": mole.refrelpath,
@@ -92,12 +93,14 @@ def process_args(args) -> None:
         print(args.format.format(**mole_data))
 
 
-def _yield_mole_dirs(rootpath, args) -> collections.abc.Generator:
+def _yield_mole_dirs(
+    rootpath: str, args: argparse.Namespace
+) -> collections.abc.Generator:
     mole_iter = mel.micro.fs.yield_moles(rootpath)
 
     if args.sort == "lastmicro" or args.sort is None:
 
-        def keyfunc(x) -> str:
+        def keyfunc(x: mel.micro.fs.Mole) -> str:
             if not x.micro_image_details:
                 return ""
             return x.micro_image_details[-1].name

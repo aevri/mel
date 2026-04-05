@@ -91,7 +91,7 @@ class TestAngle:
             ((0, -1), 90.0),
         ],
     )
-    def test_cardinal_directions(self, vec, expected) -> None:
+    def test_cardinal_directions(self, vec: tuple[int, int], expected: float) -> None:
         assert mlmath.angle(vec) == pytest.approx(expected)
 
 

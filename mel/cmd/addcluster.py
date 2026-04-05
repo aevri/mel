@@ -1,5 +1,6 @@
 """A tool for adding a new cluster / constellation from photographs."""
 
+import argparse
 import pathlib
 
 import cv2
@@ -9,7 +10,7 @@ import mel.lib.common
 import mel.lib.image
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
@@ -28,7 +29,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 

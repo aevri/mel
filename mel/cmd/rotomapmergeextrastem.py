@@ -1,12 +1,13 @@
 """Merge data to data in an 'extra stem' namespace."""
 
+import argparse
 import copy
 
 import mel.rotomap.automark
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("EXTRA_STEM", help="The 'extra stem' namespace to merge to.")
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
@@ -25,7 +26,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for path in args.IMAGES:
         if args.verbose:
             print(path)
@@ -42,7 +43,7 @@ def process_args(args) -> None:
         mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.EXTRA_STEM)
 
 
-def _merge(from_moles, to_moles, error_distance) -> list:
+def _merge(from_moles: list[dict], to_moles: list[dict], error_distance: int) -> list:
     (
         match_uuids,
         _missing_uuids,

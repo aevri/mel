@@ -250,7 +250,7 @@ class TestEdgeCases:
             np.array([[3, 4, 5]], dtype=float),
         ],
     )
-    def test_normalize_then_mag_is_one(self, v) -> None:
+    def test_normalize_then_mag_is_one(self, v: np.ndarray) -> None:
         n = vec3.normalized(v)
         np.testing.assert_array_almost_equal(vec3.mag(n), np.array([[1.0]]))
 

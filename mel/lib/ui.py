@@ -8,7 +8,7 @@ class AbortKeyInterruptError(Exception):
     pass
 
 
-def set_clipboard_contents(text) -> None:
+def set_clipboard_contents(text: str) -> None:
     """Set the contents of the clipbaord, only works on Mac OSX.
 
     :returns: None

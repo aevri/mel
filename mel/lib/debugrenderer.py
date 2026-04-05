@@ -1,13 +1,14 @@
 """A global object for debug rendering into images without around."""
 
 import cv2
+import numpy as np
 
 
 class GlobalContext:
     def __init__(self) -> None:
         self._image = None
 
-    def arrow(self, from_, to) -> None:
+    def arrow(self, from_: np.ndarray, to: np.ndarray) -> None:
         if self._image is None:
             return
         cv2.arrowedLine(
@@ -19,7 +20,7 @@ class GlobalContext:
             cv2.LINE_AA,
         )
 
-    def circle(self, point, radius) -> None:
+    def circle(self, point: np.ndarray, radius: float) -> None:
         if self._image is None:
             return
         cv2.circle(

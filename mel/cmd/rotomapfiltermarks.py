@@ -1,5 +1,6 @@
 """Automatically remove marked regions that are probably not moles."""
 
+import argparse
 import sys
 
 import mel.lib.fs
@@ -7,7 +8,7 @@ import mel.rotomap.filtermarks
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "FRAMES",
         nargs="+",
@@ -69,7 +70,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int | None:
+def process_args(args: argparse.Namespace) -> int | None:
     try:
         melroot = mel.lib.fs.find_melroot()
     except mel.lib.fs.NoMelrootError:

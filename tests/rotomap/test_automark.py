@@ -23,7 +23,7 @@ RADII_SOURCES = [
 
 @pytest.mark.parametrize("only_merge", [True, False])
 @pytest.mark.parametrize("error_distance", [0, 1, 2, 3, 4, 5])
-def test_merge_in_radiuses_happy(only_merge, error_distance) -> None:
+def test_merge_in_radiuses_happy(only_merge: bool, error_distance: int) -> None:
     """Test merge_in_radiuses() with happy path.
 
     For simplicity, there are no radius sources that are not matched to a target.
@@ -47,7 +47,7 @@ def test_merge_in_radiuses_happy(only_merge, error_distance) -> None:
 
 @pytest.mark.parametrize("only_merge", [True, False])
 @pytest.mark.parametrize("error_distance", [0, 1, 2, 3, 4, 5])
-def test_merge_in_radiuses_happy_merge_extra(only_merge, error_distance) -> None:
+def test_merge_in_radiuses_happy_merge_extra(only_merge: bool, error_distance: int) -> None:
     """Test merge_in_radiuses() with happy path and extra radius sources.
 
     There is one radius source that is not matched to a target.

@@ -3,12 +3,13 @@
 import pathlib
 import pickle
 
+import pytest
 import torch
 
 import mel.rotomap.filtermarks
 
 
-def test_load_pretrained_file_torch_format(tmp_path) -> None:
+def test_load_pretrained_file_torch_format(tmp_path: pathlib.Path) -> None:
     """Loading a torch-format file works directly."""
     path = tmp_path / "test.pt"
     data = {
@@ -27,7 +28,7 @@ def test_load_pretrained_file_torch_format(tmp_path) -> None:
     assert loaded["weights_version"] == "v1"
 
 
-def test_load_pretrained_file_converts_pickle_format(tmp_path, capsys) -> None:
+def test_load_pretrained_file_converts_pickle_format(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Old pickle-format files are converted to torch format on load."""
     path = tmp_path / "test.pt"
     data = {

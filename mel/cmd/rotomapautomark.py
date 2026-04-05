@@ -1,5 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
+import argparse
+
 import mel.lib.image
 import mel.rotomap.automark
 import mel.rotomap.detectmoles
@@ -7,7 +9,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
@@ -34,7 +36,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     for path in args.IMAGES:
         if args.verbose:
             print(path)

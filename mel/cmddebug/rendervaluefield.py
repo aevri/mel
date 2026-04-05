@@ -9,17 +9,19 @@ in the bottom-right. Where the error gets high, you can see that redness
 is introduced.
 """
 
+import argparse
+
 import numpy as np
 
 import mel.lib.common
 import mel.rotomap.relate
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     pass
 
 
-def process_args(_args) -> None:
+def process_args(_args: argparse.Namespace) -> None:
     width = 512
     height = 512
     shape = (height, width, 3)

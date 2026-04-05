@@ -1,9 +1,11 @@
 """Remove moles matching specified UUIDs from selected JSONs."""
 
+import argparse
+
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--uuids",
         "-u",
@@ -22,7 +24,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     changed_count = 0
 
     for path in args.files:
