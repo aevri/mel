@@ -23,11 +23,11 @@ import mel.lib.moleimaging
         (1000, 3),
     ],
 )
-def test_log10_zero(x, expected):
+def test_log10_zero(x, expected) -> None:
     assert mel.lib.moleimaging.log10_zero(x) == pytest.approx(expected)
 
 
-def test_log10_zero_fractional():
+def test_log10_zero_fractional() -> None:
     result = mel.lib.moleimaging.log10_zero(5)
     assert result == pytest.approx(math.log10(5))
 
@@ -44,11 +44,11 @@ def test_log10_zero_fractional():
         ((3, 4), (3, 4)),
     ],
 )
-def test_point_to_int_point(point, expected):
+def test_point_to_int_point(point, expected) -> None:
     assert mel.lib.moleimaging.point_to_int_point(point) == expected
 
 
-def test_point_to_int_point_numpy():
+def test_point_to_int_point_numpy() -> None:
     point = np.array([1.7, 2.3])
     result = mel.lib.moleimaging.point_to_int_point(point)
     assert result == (1, 2)
@@ -57,7 +57,7 @@ def test_point_to_int_point_numpy():
 # --- rotate_point_around_pivot ---
 
 
-def test_rotate_zero_degrees():
+def test_rotate_zero_degrees() -> None:
     point = (10.0, 5.0)
     pivot = (0.0, 0.0)
     result = mel.lib.moleimaging.rotate_point_around_pivot(point, pivot, 0)
@@ -73,7 +73,7 @@ def test_rotate_zero_degrees():
         (270, (0.0, -1.0)),
     ],
 )
-def test_rotate_cardinal_around_origin(degrees, expected):
+def test_rotate_cardinal_around_origin(degrees, expected) -> None:
     point = (1.0, 0.0)
     pivot = (0.0, 0.0)
     result = mel.lib.moleimaging.rotate_point_around_pivot(point, pivot, degrees)
@@ -81,7 +81,7 @@ def test_rotate_cardinal_around_origin(degrees, expected):
     assert result[1] == pytest.approx(expected[1], abs=1e-9)
 
 
-def test_rotate_around_arbitrary_pivot():
+def test_rotate_around_arbitrary_pivot() -> None:
     point = (3.0, 0.0)
     pivot = (2.0, 0.0)
     result = mel.lib.moleimaging.rotate_point_around_pivot(point, pivot, 90)
@@ -89,7 +89,7 @@ def test_rotate_around_arbitrary_pivot():
     assert result[1] == pytest.approx(1.0, abs=1e-9)
 
 
-def test_rotate_360_roundtrip():
+def test_rotate_360_roundtrip() -> None:
     point = (7.5, 3.2)
     pivot = (1.0, -2.0)
     result = mel.lib.moleimaging.rotate_point_around_pivot(point, pivot, 360)
@@ -100,12 +100,12 @@ def test_rotate_360_roundtrip():
 # --- MoleAcquirer ---
 
 
-def test_mole_acquirer_initial_state():
+def test_mole_acquirer_initial_state() -> None:
     acq = mel.lib.moleimaging.MoleAcquirer()
     assert acq.is_locked is False
 
 
-def test_mole_acquirer_update_none_stays_unlocked():
+def test_mole_acquirer_update_none_stays_unlocked() -> None:
     acq = mel.lib.moleimaging.MoleAcquirer()
     acq.update(None)
     assert acq.is_locked is False
@@ -113,7 +113,7 @@ def test_mole_acquirer_update_none_stays_unlocked():
     assert acq.is_locked is False
 
 
-def test_mole_acquirer_identical_stats_locks():
+def test_mole_acquirer_identical_stats_locks() -> None:
     acq = mel.lib.moleimaging.MoleAcquirer()
     stats = (50.0, 80.0, 90.0, 10.0, 20.0, 30.0)
     # MoleAcquirer uses lerp(0.5) exponential smoothing on stat diffs, so
@@ -124,7 +124,7 @@ def test_mole_acquirer_identical_stats_locks():
     assert acq.is_locked is True
 
 
-def test_mole_acquirer_varying_stats_unlocks():
+def test_mole_acquirer_varying_stats_unlocks() -> None:
     acq = mel.lib.moleimaging.MoleAcquirer()
     stats = (50.0, 80.0, 90.0, 10.0, 20.0, 30.0)
     # Lock it first.
@@ -141,7 +141,7 @@ def test_mole_acquirer_varying_stats_unlocks():
 # --- biggest_contour ---
 
 
-def test_biggest_contour_single():
+def test_biggest_contour_single() -> None:
     image = np.zeros((100, 100), dtype=np.uint8)
     cv2.circle(image, (50, 50), 20, 255, -1)
     contour = mel.lib.moleimaging.biggest_contour(image)
@@ -149,7 +149,7 @@ def test_biggest_contour_single():
     assert len(contour) > 5
 
 
-def test_biggest_contour_returns_largest():
+def test_biggest_contour_returns_largest() -> None:
     image = np.zeros((200, 200), dtype=np.uint8)
     cv2.circle(image, (50, 50), 10, 255, -1)  # small
     cv2.circle(image, (150, 150), 40, 255, -1)  # large
@@ -159,7 +159,7 @@ def test_biggest_contour_returns_largest():
     assert area > 3000
 
 
-def test_biggest_contour_empty_image_raises():
+def test_biggest_contour_empty_image_raises() -> None:
     image = np.zeros((100, 100), dtype=np.uint8)
     with pytest.raises(Exception, match="No contours found"):
         mel.lib.moleimaging.biggest_contour(image)
@@ -168,13 +168,13 @@ def test_biggest_contour_empty_image_raises():
 # --- find_mole_contour ---
 
 
-def test_find_mole_contour_empty_list():
+def test_find_mole_contour_empty_list() -> None:
     contour, area = mel.lib.moleimaging.find_mole_contour([], (100, 100))
     assert contour is None
     assert area is None
 
 
-def test_find_mole_contour_prefers_center():
+def test_find_mole_contour_prefers_center() -> None:
     image = np.zeros((200, 200), dtype=np.uint8)
     # Circle near center.
     cv2.circle(image, (100, 100), 15, 255, -1)
@@ -194,7 +194,7 @@ def test_find_mole_contour_prefers_center():
     assert abs(cy - 100) < 20
 
 
-def test_find_mole_contour_large_overrides_distance():
+def test_find_mole_contour_large_overrides_distance() -> None:
     image = np.zeros((300, 300), dtype=np.uint8)
     # Small circle near center.
     cv2.circle(image, (150, 150), 5, 255, -1)
@@ -220,7 +220,7 @@ def test_find_mole_contour_large_overrides_distance():
 # --- calc_hist ---
 
 
-def test_calc_hist_sums_to_100():
+def test_calc_hist_sums_to_100() -> None:
     rng = np.random.default_rng()
     image = rng.integers(0, 256, (100, 100, 3), dtype=np.uint8)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -229,7 +229,7 @@ def test_calc_hist_sums_to_100():
     assert sum(hist) == pytest.approx(100.0)
 
 
-def test_calc_hist_with_mask():
+def test_calc_hist_with_mask() -> None:
     image = np.full((100, 100, 3), 128, dtype=np.uint8)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     mask = np.zeros((100, 100), dtype=np.uint8)
@@ -242,7 +242,7 @@ def test_calc_hist_with_mask():
 # --- find_mole_ellipse (smoke tests) ---
 
 
-def test_find_mole_ellipse_with_mole_image():
+def test_find_mole_ellipse_with_mole_image() -> None:
     """Test find_mole_ellipse with an image that contains a detectable mole."""
     # Create a simple test image with a dark spot (simulating a mole)
     image = np.full((100, 100, 3), 200, dtype=np.uint8)  # Light gray background
@@ -262,7 +262,7 @@ def test_find_mole_ellipse_with_mole_image():
     assert result is None or isinstance(result, tuple)
 
 
-def test_find_mole_ellipse_parameter_types():
+def test_find_mole_ellipse_parameter_types() -> None:
     """Test that find_mole_ellipse handles different input types correctly."""
     # Test image
     image = np.zeros((50, 50, 3), dtype=np.uint8)

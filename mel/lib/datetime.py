@@ -4,7 +4,7 @@ import datetime
 import pathlib
 
 
-def guess_datetime_from_path(path):
+def guess_datetime_from_path(path) -> datetime.datetime | None:
     """Return None if no date could be guessed, datetime otherwise.
 
     Usage examples:
@@ -26,7 +26,7 @@ def guess_datetime_from_path(path):
     return guess_datetime_from_string(name)
 
 
-def guess_datetime_from_string(datetime_str):
+def guess_datetime_from_string(datetime_str) -> datetime.datetime | None:
     """Return None if no datetime could be guessed, datetime otherwise.
 
     Usage examples:
@@ -53,11 +53,11 @@ def guess_datetime_from_string(datetime_str):
     return None
 
 
-def make_now_datetime_string():
+def make_now_datetime_string() -> str:
     return make_datetime_string(datetime.datetime.now(datetime.UTC))
 
 
-def make_datetime_string(datetime_):
+def make_datetime_string(datetime_) -> str:
     return datetime_.strftime("%Y%m%dT%H%M%S")
 
 

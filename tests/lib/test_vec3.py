@@ -11,75 +11,75 @@ from mel.lib import vec3
 
 
 class TestMake:
-    def test_shape(self):
+    def test_shape(self) -> None:
         v = vec3.make(1, 2, 3)
         assert v.shape == (1, 3)
 
-    def test_values(self):
+    def test_values(self) -> None:
         v = vec3.make(4, 5, 6)
         assert v[0, 0] == 4
         assert v[0, 1] == 5
         assert v[0, 2] == 6
 
-    def test_negative_values(self):
+    def test_negative_values(self) -> None:
         v = vec3.make(-1, -2, -3)
         np.testing.assert_array_equal(v, np.array([[-1, -2, -3]]))
 
 
 class TestIsVec3:
-    def test_valid_single(self):
+    def test_valid_single(self) -> None:
         assert vec3.is_vec3(vec3.make(1, 2, 3))
 
-    def test_valid_multiple(self):
+    def test_valid_multiple(self) -> None:
         v = np.array([[1, 2, 3], [4, 5, 6]])
         assert vec3.is_vec3(v)
 
-    def test_1d_array_invalid(self):
+    def test_1d_array_invalid(self) -> None:
         assert not vec3.is_vec3(np.array([1, 2, 3]))
 
-    def test_wrong_columns_invalid(self):
+    def test_wrong_columns_invalid(self) -> None:
         assert not vec3.is_vec3(np.array([[1, 2]]))
 
-    def test_empty_rows_invalid(self):
+    def test_empty_rows_invalid(self) -> None:
         v = np.zeros((0, 3))
         assert not vec3.is_vec3(v)
 
 
 class TestZeros:
-    def test_single(self):
+    def test_single(self) -> None:
         v = vec3.zeros()
         assert v.shape == (1, 3)
         np.testing.assert_array_equal(v, np.array([[0.0, 0.0, 0.0]]))
 
-    def test_multiple(self):
+    def test_multiple(self) -> None:
         v = vec3.zeros(3)
         assert v.shape == (3, 3)
         assert np.all(v == 0.0)
 
 
 class TestCount:
-    def test_single(self):
+    def test_single(self) -> None:
         assert vec3.count(vec3.make(1, 2, 3)) == 1
 
-    def test_multiple(self):
+    def test_multiple(self) -> None:
         v = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         assert vec3.count(v) == 3
 
 
 class TestColumnAccessors:
-    def test_xcol(self):
+    def test_xcol(self) -> None:
         v = vec3.make(1, 2, 3)
         np.testing.assert_array_equal(vec3.xcol(v), np.array([[1]]))
 
-    def test_ycol(self):
+    def test_ycol(self) -> None:
         v = vec3.make(1, 2, 3)
         np.testing.assert_array_equal(vec3.ycol(v), np.array([[2]]))
 
-    def test_zcol(self):
+    def test_zcol(self) -> None:
         v = vec3.make(1, 2, 3)
         np.testing.assert_array_equal(vec3.zcol(v), np.array([[3]]))
 
-    def test_columns_broadcast(self):
+    def test_columns_broadcast(self) -> None:
         v = np.array([[1, 2, 3], [4, 5, 6]])
         assert vec3.xcol(v).shape == (2, 1)
         assert vec3.ycol(v).shape == (2, 1)
@@ -87,59 +87,59 @@ class TestColumnAccessors:
 
 
 class TestScalarAccessors:
-    def test_xval(self):
+    def test_xval(self) -> None:
         assert vec3.xval(vec3.make(10, 20, 30)) == 10
 
-    def test_yval(self):
+    def test_yval(self) -> None:
         assert vec3.yval(vec3.make(10, 20, 30)) == 20
 
-    def test_zval(self):
+    def test_zval(self) -> None:
         assert vec3.zval(vec3.make(10, 20, 30)) == 30
 
-    def test_returns_plain_int(self):
+    def test_returns_plain_int(self) -> None:
         result = vec3.xval(vec3.make(5, 6, 7))
         assert isinstance(result, int)
 
 
 class TestDot:
-    def test_same_vector(self):
+    def test_same_vector(self) -> None:
         x = vec3.make(1, 0, 0)
         np.testing.assert_array_equal(vec3.dot(x, x), np.array([[1]]))
 
-    def test_orthogonal_vectors(self):
+    def test_orthogonal_vectors(self) -> None:
         x = vec3.make(1, 0, 0)
         y = vec3.make(0, 1, 0)
         np.testing.assert_array_equal(vec3.dot(x, y), np.array([[0]]))
 
-    def test_known_dot_product(self):
+    def test_known_dot_product(self) -> None:
         a = vec3.make(1, 2, 3)
         b = vec3.make(4, 5, 6)
         # 1*4 + 2*5 + 3*6 = 32
         np.testing.assert_array_equal(vec3.dot(a, b), np.array([[32]]))
 
-    def test_batch_dot(self):
+    def test_batch_dot(self) -> None:
         xyz = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         result = vec3.dot(xyz, xyz)
         np.testing.assert_array_equal(result, np.array([[1], [1], [1]]))
 
-    def test_commutative(self):
+    def test_commutative(self) -> None:
         a = vec3.make(1, 2, 3)
         b = vec3.make(4, 5, 6)
         np.testing.assert_array_equal(vec3.dot(a, b), vec3.dot(b, a))
 
 
 class TestMagSq:
-    def test_unit_vector(self):
+    def test_unit_vector(self) -> None:
         np.testing.assert_array_equal(
             vec3.mag_sq(vec3.make(1, 0, 0)), np.array([[1]])
         )
 
-    def test_scaled_vector(self):
+    def test_scaled_vector(self) -> None:
         np.testing.assert_array_equal(
             vec3.mag_sq(vec3.make(2, 0, 0)), np.array([[4]])
         )
 
-    def test_general_vector(self):
+    def test_general_vector(self) -> None:
         # 3^2 + 4^2 + 0^2 = 25
         np.testing.assert_array_equal(
             vec3.mag_sq(vec3.make(3, 4, 0)), np.array([[25]])
@@ -147,49 +147,49 @@ class TestMagSq:
 
 
 class TestMag:
-    def test_unit_vectors(self):
+    def test_unit_vectors(self) -> None:
         for v in [vec3.make(1, 0, 0), vec3.make(0, 1, 0), vec3.make(0, 0, 1)]:
             np.testing.assert_array_almost_equal(vec3.mag(v), np.array([[1.0]]))
 
-    def test_known_magnitude(self):
+    def test_known_magnitude(self) -> None:
         # sqrt(9 + 16) = 5
         v = vec3.make(3, 4, 0)
         np.testing.assert_array_almost_equal(vec3.mag(v), np.array([[5.0]]))
 
-    def test_scaled_vector(self):
+    def test_scaled_vector(self) -> None:
         v = vec3.make(2, 0, 0)
         np.testing.assert_array_almost_equal(vec3.mag(v), np.array([[2.0]]))
 
 
 class TestNormalized:
-    def test_unit_x(self):
+    def test_unit_x(self) -> None:
         v = vec3.make(5, 0, 0)
         result = vec3.normalized(v)
         np.testing.assert_array_almost_equal(result, np.array([[1.0, 0.0, 0.0]]))
 
-    def test_unit_y(self):
+    def test_unit_y(self) -> None:
         v = vec3.make(0, 3, 0)
         result = vec3.normalized(v)
         np.testing.assert_array_almost_equal(result, np.array([[0.0, 1.0, 0.0]]))
 
-    def test_result_has_unit_magnitude(self):
+    def test_result_has_unit_magnitude(self) -> None:
         v = vec3.make(1, 2, 3)
         result = vec3.normalized(v)
         np.testing.assert_array_almost_equal(vec3.mag(result), np.array([[1.0]]))
 
-    def test_negative_vector(self):
+    def test_negative_vector(self) -> None:
         v = vec3.make(-4, 0, 0)
         result = vec3.normalized(v)
         np.testing.assert_array_almost_equal(result, np.array([[-1.0, 0.0, 0.0]]))
 
-    def test_roundtrip_direction_preserved(self):
+    def test_roundtrip_direction_preserved(self) -> None:
         v = vec3.make(3, 4, 5)
         n = vec3.normalized(v)
         # Scaling normalized back should give proportional vector.
         m = vec3.mag(v)[0, 0]
         np.testing.assert_array_almost_equal(n * m, v.astype(float))
 
-    def test_zero_vector_produces_nan(self):
+    def test_zero_vector_produces_nan(self) -> None:
         v = np.array([[0, 0, 0]], dtype=float)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
@@ -198,14 +198,14 @@ class TestNormalized:
 
 
 class TestMakeFromColumns:
-    def test_basic(self):
+    def test_basic(self) -> None:
         result = vec3.make_from_columns(
             np.array([1, 2]), np.array([3, 4]), np.array([5, 6])
         )
         expected = np.array([[1, 3, 5], [2, 4, 6]])
         np.testing.assert_array_equal(result, expected)
 
-    def test_single_element(self):
+    def test_single_element(self) -> None:
         result = vec3.make_from_columns(
             np.array([10]), np.array([20]), np.array([30])
         )
@@ -216,21 +216,21 @@ class TestMakeFromColumns:
 class TestBatchOperations:
     """Test operations on arrays containing multiple vectors."""
 
-    def test_mag_batch(self):
+    def test_mag_batch(self) -> None:
         v = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         result = vec3.mag(v)
         np.testing.assert_array_almost_equal(
             result, np.array([[1.0], [1.0], [1.0]])
         )
 
-    def test_dot_single_vs_batch(self):
+    def test_dot_single_vs_batch(self) -> None:
         # Shape (1,3) dot (3,3) tests numpy broadcasting semantics.
         single = vec3.make(1, 0, 0)
         batch = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         result = vec3.dot(single, batch)
         np.testing.assert_array_equal(result, np.array([[1], [0], [0]]))
 
-    def test_normalized_batch(self):
+    def test_normalized_batch(self) -> None:
         v = np.array([[3, 0, 0], [0, 4, 0], [0, 0, 5]], dtype=float)
         result = vec3.normalized(v)
         expected = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float)
@@ -250,17 +250,17 @@ class TestEdgeCases:
             np.array([[3, 4, 5]], dtype=float),
         ],
     )
-    def test_normalize_then_mag_is_one(self, v):
+    def test_normalize_then_mag_is_one(self, v) -> None:
         n = vec3.normalized(v)
         np.testing.assert_array_almost_equal(vec3.mag(n), np.array([[1.0]]))
 
-    def test_dot_product_sign(self):
+    def test_dot_product_sign(self) -> None:
         a = vec3.make(1, 0, 0)
         b = vec3.make(-1, 0, 0)
         result = vec3.dot(a, b)
         assert result[0, 0] == -1
 
-    def test_large_values(self):
+    def test_large_values(self) -> None:
         v = vec3.make(1e6, 1e6, 1e6)
         n = vec3.normalized(v)
         np.testing.assert_array_almost_equal(vec3.mag(n), np.array([[1.0]]))
