@@ -11,72 +11,72 @@ import mel.lib.math as mlmath
 
 
 class TestLerp:
-    def test_factor_zero_returns_origin(self):
+    def test_factor_zero_returns_origin(self) -> None:
         assert mlmath.lerp(0, 10, 0) == 0
 
-    def test_factor_one_returns_target(self):
+    def test_factor_one_returns_target(self) -> None:
         assert mlmath.lerp(0, 10, 1) == 10
 
-    def test_factor_half_returns_midpoint(self):
+    def test_factor_half_returns_midpoint(self) -> None:
         assert mlmath.lerp(0, 10, 0.5) == 5.0
 
-    def test_negative_values(self):
+    def test_negative_values(self) -> None:
         assert mlmath.lerp(-10, 10, 0.5) == 0.0
 
-    def test_factor_beyond_one_extrapolates(self):
+    def test_factor_beyond_one_extrapolates(self) -> None:
         assert mlmath.lerp(0, 10, 2) == 20
 
 
 class TestDistanceSq2d:
-    def test_same_point(self):
+    def test_same_point(self) -> None:
         assert mlmath.distance_sq_2d((0, 0), (0, 0)) == 0
 
-    def test_unit_distance(self):
+    def test_unit_distance(self) -> None:
         assert mlmath.distance_sq_2d((0, 0), (1, 0)) == 1
 
-    def test_diagonal(self):
+    def test_diagonal(self) -> None:
         assert mlmath.distance_sq_2d((0, 0), (3, 4)) == 25
 
-    def test_negative_coords(self):
+    def test_negative_coords(self) -> None:
         assert mlmath.distance_sq_2d((-1, -1), (2, 3)) == 25
 
-    def test_symmetric(self):
+    def test_symmetric(self) -> None:
         a, b = (1, 2), (4, 6)
         assert mlmath.distance_sq_2d(a, b) == mlmath.distance_sq_2d(b, a)
 
 
 class TestDistance2d:
-    def test_same_point(self):
+    def test_same_point(self) -> None:
         assert mlmath.distance_2d((0, 0), (0, 0)) == 0.0
 
-    def test_known_distance(self):
+    def test_known_distance(self) -> None:
         assert mlmath.distance_2d((0, 0), (3, 4)) == 5.0
 
-    def test_unit_distance(self):
+    def test_unit_distance(self) -> None:
         assert mlmath.distance_2d((0, 0), (1, 0)) == 1.0
 
-    def test_negative_coords(self):
+    def test_negative_coords(self) -> None:
         assert mlmath.distance_2d((-3, 0), (0, 4)) == 5.0
 
 
 class TestNormalized:
-    def test_unit_x(self):
+    def test_unit_x(self) -> None:
         assert mlmath.normalized((5, 0)) == (1.0, 0.0)
 
-    def test_unit_y(self):
+    def test_unit_y(self) -> None:
         assert mlmath.normalized((0, 3)) == (0.0, 1.0)
 
-    def test_result_has_unit_length(self):
+    def test_result_has_unit_length(self) -> None:
         result = mlmath.normalized((3, 4))
         length = math.sqrt(result[0] ** 2 + result[1] ** 2)
         assert length == pytest.approx(1.0)
 
-    def test_negative_vector(self):
+    def test_negative_vector(self) -> None:
         result = mlmath.normalized((-3, -4))
         assert result[0] == pytest.approx(-0.6)
         assert result[1] == pytest.approx(-0.8)
 
-    def test_zero_vector_raises(self):
+    def test_zero_vector_raises(self) -> None:
         with pytest.raises(ZeroDivisionError):
             mlmath.normalized((0, 0))
 
@@ -91,43 +91,43 @@ class TestAngle:
             ((0, -1), 90.0),
         ],
     )
-    def test_cardinal_directions(self, vec, expected):
+    def test_cardinal_directions(self, vec, expected) -> None:
         assert mlmath.angle(vec) == pytest.approx(expected)
 
 
 class TestRadsToDegs:
-    def test_zero(self):
+    def test_zero(self) -> None:
         assert mlmath.rads_to_degs(0) == 0.0
 
-    def test_pi(self):
+    def test_pi(self) -> None:
         assert mlmath.rads_to_degs(math.pi) == pytest.approx(180.0)
 
-    def test_half_pi(self):
+    def test_half_pi(self) -> None:
         assert mlmath.rads_to_degs(math.pi / 2) == pytest.approx(90.0)
 
-    def test_negative(self):
+    def test_negative(self) -> None:
         assert mlmath.rads_to_degs(-math.pi) == pytest.approx(-180.0)
 
 
 class TestRaiseIfNotIntVector2:
-    def test_valid_int_array(self):
+    def test_valid_int_array(self) -> None:
         v = np.array([1, 2], dtype=np.int64)
         mlmath.raise_if_not_int_vector2(v)  # Should not raise.
 
-    def test_float_array_raises(self):
+    def test_float_array_raises(self) -> None:
         v = np.array([1.0, 2.0], dtype=np.float64)
         with pytest.raises(TypeError, match="not an int vector2"):
             mlmath.raise_if_not_int_vector2(v)
 
-    def test_non_array_raises(self):
+    def test_non_array_raises(self) -> None:
         with pytest.raises(TypeError, match="not a numpy array"):
             mlmath.raise_if_not_int_vector2([1, 2])
 
-    def test_tuple_raises(self):
+    def test_tuple_raises(self) -> None:
         with pytest.raises(TypeError, match="not a numpy array"):
             mlmath.raise_if_not_int_vector2((1, 2))
 
-    def test_int32_valid(self):
+    def test_int32_valid(self) -> None:
         v = np.array([1, 2], dtype=np.int32)
         mlmath.raise_if_not_int_vector2(v)  # Should not raise.
 
