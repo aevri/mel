@@ -1,5 +1,6 @@
 """Smoke-test mel from the CLI, make sure nothing errors out."""
 
+import collections.abc
 import contextlib
 import json
 import os
@@ -10,7 +11,7 @@ import tempfile
 import mel.cmd.mel
 
 
-def test_mel_help():
+def test_mel_help() -> None:
 
     mel_cmd = "mel"
 
@@ -27,7 +28,7 @@ def test_mel_help():
         expect_ok(mel_cmd, "rotomap", subcommand, "-h")
 
 
-def test_mel_debug_help():
+def test_mel_debug_help() -> None:
 
     mel_cmd = "mel-debug"
 
@@ -44,7 +45,7 @@ def test_mel_debug_help():
         expect_ok(mel_cmd, s, "-h")
 
 
-def test_smoke():
+def test_smoke() -> None:
     with chtempdir_context():
         expect_ok("mel-debug", "gen-repo", ".")
         target_part = pathlib.Path("rotomaps/parts/LeftLeg/Lower")
@@ -215,7 +216,7 @@ def test_smoke():
             print("Skipping montage-single test - no moles found in test data")
 
 
-def test_smoke_interactive():
+def test_smoke_interactive() -> None:
     """Test interactive commands in headless mode."""
     with chtempdir_context():
         expect_ok("mel-debug", "gen-repo", ".")
@@ -266,7 +267,7 @@ def test_smoke_interactive():
 
 
 @contextlib.contextmanager
-def chtempdir_context():
+def chtempdir_context() -> collections.abc.Generator[None]:
     with tempfile.TemporaryDirectory() as tempdir:
         saved_path = pathlib.Path.cwd()
         os.chdir(tempdir)
@@ -276,15 +277,15 @@ def chtempdir_context():
             os.chdir(saved_path)
 
 
-def expect_ok(*args: str | pathlib.PurePath):
+def expect_ok(*args: str | pathlib.PurePath) -> None:
     subprocess.check_call(args)
 
 
-def expect_ok_with_env(env, *args: str | pathlib.PurePath):
+def expect_ok_with_env(env, *args: str | pathlib.PurePath) -> None:
     subprocess.check_call(args, env=env)
 
 
-def expect_returncode(expected_code, *args: str | pathlib.PurePath):
+def expect_returncode(expected_code, *args: str | pathlib.PurePath) -> None:
     return_code = subprocess.call(args)
     assert return_code == expected_code
 

@@ -1,5 +1,7 @@
 """Automatically mark moles on rotomap images."""
 
+from __future__ import annotations
+
 import cv2
 import numpy as np
 import pytorch_lightning as pl
@@ -13,7 +15,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def make_detector():
+def make_detector() -> MoleDetector:
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "detect.pth"
@@ -29,7 +31,7 @@ class MoleDetector:
             ]
         )
 
-    def get_moles(self, frame):
+    def get_moles(self, frame) -> list[dict]:
         image = load_image(frame.path)
         image = self.image_transform(image)
 
@@ -43,7 +45,7 @@ class MoleDetector:
         return moles
 
 
-def make_model(model_path=None):
+def make_model(model_path=None) -> torch.nn.Module:
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -58,7 +60,7 @@ def make_model(model_path=None):
     return model
 
 
-def load_image(image_path):
+def load_image(image_path) -> np.ndarray:
     flags = cv2.IMREAD_COLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
@@ -83,7 +85,7 @@ def load_image(image_path):
     return cv2.bitwise_or(image, green)
 
 
-def boxes_to_poslist(boxes):
+def boxes_to_poslist(boxes) -> np.ndarray:
     poslist = [
         [int(0.5 * (xmin + xmax)), int(0.5 * (ymin + ymax))]
         for xmin, ymin, xmax, ymax in boxes
@@ -91,7 +93,9 @@ def boxes_to_poslist(boxes):
     return np.array(poslist)
 
 
-def calc_precision_recall(target_poslist, poslist, error_distance=5):
+def calc_precision_recall(
+    target_poslist, poslist, error_distance=5
+) -> tuple[float, float]:
     if not len(poslist):
         return 0, 0
     vec_matches, vec_missing, vec_added = mel.rotomap.automark.match_pos_vecs(
@@ -111,7 +115,7 @@ class PlModule(pl.LightningModule):
         self.lr = 0.001
         self.model = make_model(model_path)
 
-    def training_step(self, batch, _batch_idx):
+    def training_step(self, batch, _batch_idx) -> torch.Tensor:
         x, y = batch
         self.model.train()  # Oddly this seemst to be necessary.
         assert self.model.training
@@ -143,10 +147,10 @@ class PlModule(pl.LightningModule):
         self.log("val_prec", precision, prog_bar=True)
         self.log("val_reca", recall, prog_bar=True)
 
-    def forward(self, x):
+    def forward(self, x) -> list[dict[str, torch.Tensor]]:
         return self.model(x)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.AdamW:
         return torch.optim.AdamW(
             [
                 {
@@ -208,7 +212,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
 #     return image
 
 
-def list_train_valid_images(min_session=None):
+def list_train_valid_images(min_session=None) -> tuple[list, list, list, list]:
     melroot = mel.lib.fs.find_melroot()
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
     exclude_parts = [
@@ -232,12 +236,12 @@ def list_train_valid_images(min_session=None):
     return train_images, valid_images, train_sessions, valid_sessions
 
 
-def drop_paths_without_moles(path_list):
+def drop_paths_without_moles(path_list) -> list:
     return [path for path in path_list if mel.rotomap.moles.load_image_moles(path)]
 
 
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
-def collate_fn(batch):
+def collate_fn(batch) -> tuple:
     return tuple(zip(*batch, strict=False))
 
 

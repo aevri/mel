@@ -1,10 +1,19 @@
 """Provide a full-screen UI."""
 
+from __future__ import annotations
+
 import contextlib
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import collections.abc
 
 import cv2
 import numpy as np
+
+if TYPE_CHECKING:
+    import pygame
 
 import mel.lib.common
 import mel.lib.image
@@ -68,13 +77,13 @@ class FittedImageTransform:
 
         self._image = image
 
-    def render(self):
+    def render(self) -> np.ndarray:
         return mel.lib.image.letterbox(self._image, *self._fit_rect)
 
-    def imagexy_to_transformedxy(self, x, y):
+    def imagexy_to_transformedxy(self, x, y) -> np.ndarray:
         return (np.array((x, y)) / self._scale + self._offset).astype(int)
 
-    def transformedxy_to_imagexy(self, x, y):
+    def transformedxy_to_imagexy(self, x, y) -> np.ndarray:
         return ((np.array((x, y)) - self._offset) * self._scale).astype(int)
 
 
@@ -87,20 +96,22 @@ class ZoomedImageTransform:
 
         self._image = mel.lib.image.scale_image(image, self._scale)
 
-    def render(self):
+    def render(self) -> np.ndarray:
         return mel.lib.image.centered_at(self._image, self._pos, self._rect)
 
-    def imagexy_to_transformedxy(self, x, y):
+    def imagexy_to_transformedxy(self, x, y) -> np.ndarray:
         return ((np.array((x, y)) * self._scale) + self._offset).astype(int)
 
-    def transformedxy_to_imagexy(self, x, y):
+    def transformedxy_to_imagexy(self, x, y) -> np.ndarray:
         return ((np.array((x, y)) - self._offset) / self._scale).astype(int)
 
 
 _PYGAME_HAD_EXCLUSIVE_INIT = False
 
 
-def yield_frames_keys(video_capture, display, error_key):
+def yield_frames_keys(
+    video_capture, display, error_key
+) -> collections.abc.Generator[tuple[np.ndarray, int | None]]:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
@@ -152,7 +163,9 @@ def yield_frames_keys(video_capture, display, error_key):
             yield frame, None
 
 
-def yield_events_until_quit(display, *, quit_key=None, quit_func=None, error_key=None):
+def yield_events_until_quit(
+    display, *, quit_key=None, quit_func=None, error_key=None
+) -> collections.abc.Generator[pygame.event.Event]:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
@@ -190,7 +203,7 @@ def yield_events_until_quit(display, *, quit_key=None, quit_func=None, error_key
 
 
 @contextlib.contextmanager
-def fullscreen_context():
+def fullscreen_context() -> collections.abc.Generator[Display]:
     """Initialise and return a fullscreen surface for drawing onto.
 
     Shutdown the underlying `pygame` library when the context expires.
@@ -287,7 +300,7 @@ class ZoomableMixin:
         else:
             self._transform = FittedImageTransform(image, window_rect)
 
-    def zoomable_transform_render(self):
+    def zoomable_transform_render(self) -> np.ndarray:
         return self._transform.render()
 
     def set_fitted(self) -> None:
@@ -304,16 +317,16 @@ class ZoomableMixin:
         if zoom_level is not None:
             self._zoom_level = zoom_level
 
-    def is_zoomed(self):
+    def is_zoomed(self) -> bool:
         return self._is_zoomed
 
-    def get_zoom_pos(self):
+    def get_zoom_pos(self) -> np.ndarray:
         if not self.is_zoomed():
             msg = "Not zoomed"
             raise RuntimeError(msg)
         return self._zoom_pos
 
-    def windowxy_to_imagexy(self, window_x, window_y):
+    def windowxy_to_imagexy(self, window_x, window_y) -> np.ndarray:
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
 
@@ -386,7 +399,7 @@ class MultiImageDisplay:
         self.reset()
 
     @property
-    def inner_display(self):
+    def inner_display(self) -> Display:
         """Return the underlying Display object."""
         return self._display
 
@@ -395,7 +408,7 @@ class MultiImageDisplay:
         self._border_width = 50
         self._layout = [[]]
 
-    def add_image(self, image, name=None):
+    def add_image(self, image, name=None) -> int:
         self._images_names.append((image, name))
         index = len(self._images_names) - 1
         self._layout[-1].append(index)

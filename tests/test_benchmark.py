@@ -1,5 +1,6 @@
 """Benchmark test for mel rotomap guess-missing and guess-refine commands."""
 
+import collections.abc
 import contextlib
 import json
 import math
@@ -11,7 +12,7 @@ import tempfile
 import urllib.request
 
 
-def test_benchmark_guess_moles():
+def test_benchmark_guess_moles() -> None:
     """Test mole guessing performance using benchmark dataset."""
     with chtempdir_context():
         # Download and extract benchmark dataset
@@ -237,7 +238,7 @@ def calculate_performance_metrics(removed_moles: list, result_moles: list) -> di
 
 
 @contextlib.contextmanager
-def chtempdir_context():
+def chtempdir_context() -> collections.abc.Generator[None]:
     """Context manager for working in a temporary directory."""
     with tempfile.TemporaryDirectory() as tempdir:
         saved_path = pathlib.Path.cwd()
@@ -248,7 +249,7 @@ def chtempdir_context():
             os.chdir(saved_path)
 
 
-def expect_ok(*args: str):
+def expect_ok(*args: str) -> None:
     """Run command and expect it to succeed."""
     subprocess.check_call(args)
 

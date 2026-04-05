@@ -435,15 +435,15 @@ class VisitList:
         self._items = items
         self._index = 0
 
-    def back(self):
+    def back(self) -> str:
         self._index = (self._index + len(self._items) - 1) % len(self._items)
         return self.current()
 
-    def forward(self):
+    def forward(self) -> str:
         self._index = (self._index + 1) % len(self._items)
         return self.current()
 
-    def current(self):
+    def current(self) -> str:
         return self._items[self._index]
 
     def __bool__(self) -> bool:
@@ -596,7 +596,7 @@ def process_args(args) -> None:
                 controller.on_mouse_event(editor, event)
 
 
-def update_follow(editor, follow_uuid, prev_moles, is_paste_mode):
+def update_follow(editor, follow_uuid, prev_moles, is_paste_mode) -> np.ndarray | None:
     guess_pos = None
     editor.follow(follow_uuid)
 

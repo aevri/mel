@@ -1,13 +1,20 @@
 """Automatically remove marked regions that are probably not moles."""
 
+from __future__ import annotations
+
 import collections
+import collections.abc
 import contextlib
 import json
 import pathlib
+import typing
 
 import cv2
 import numpy as np
 from tqdm import tqdm
+
+if typing.TYPE_CHECKING:
+    import torch
 
 import mel.lib.fs
 import mel.rotomap.automark
@@ -23,7 +30,7 @@ _PRETRAINED_SUFFIX = ".jpg.efficientnet_b0.pt"
 
 
 @contextlib.contextmanager
-def record_input_context(module_to_record):
+def record_input_context(module_to_record) -> collections.abc.Generator[list]:
     activations = []
 
     def record_response(_module, input_) -> None:
@@ -35,7 +42,7 @@ def record_input_context(module_to_record):
         yield activations
 
 
-def get_model_weights_version():
+def get_model_weights_version() -> str:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torchvision
@@ -46,7 +53,7 @@ def get_model_weights_version():
     return model_url.split("/")[-1]
 
 
-def make_model_and_transform():
+def make_model_and_transform() -> tuple:
     # After experimentation, it seems that we can get away with using this
     # model instead of deeper models. This doesn't seem to make much difference
     # to the quality of the results. It does improve the running time somewhat.
@@ -71,7 +78,7 @@ def make_model_and_transform():
     return model, num_features, transform
 
 
-def images_to_features(images, batch_size):
+def images_to_features(images, batch_size) -> torch.Tensor:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch.utils.data
@@ -98,7 +105,7 @@ def images_to_features(images, batch_size):
     return features
 
 
-def pretrain_image(image_path, moles, batch_size):
+def pretrain_image(image_path, moles, batch_size) -> None:
     image_path = pathlib.Path(image_path)
     image, mask = open_image_for_classifier(image_path)
 
@@ -142,7 +149,7 @@ def pretrain_image(image_path, moles, batch_size):
     )
 
 
-def get_item_image(image, mask, item, size):
+def get_item_image(image, mask, item, size) -> np.ndarray | None:
     x = item["x"]
     y = item["y"]
 
@@ -166,7 +173,7 @@ def train(
     loss_func,
     scheduler,
     evaluators,
-):
+) -> None:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
@@ -212,26 +219,26 @@ class Evaluator:
 
         self.softmax = torch.nn.Softmax(dim=1)
 
-    def update(self, out, data):
+    def update(self, out, data) -> None:
         predictions = self.softmax(out)[:, 1] > self.threshold
         self.num_predicted_moles += predictions.sum()
         self.num_moles_correct += ((data["is_mole"] > 0) & predictions).sum()
         self.num_moles += (data["is_mole"] > 0).sum()
 
-    def precision(self):
+    def precision(self) -> float:
         if not self.num_predicted_moles:
             msg = "No predicted moles."
             raise ValueError(msg)
         return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()
 
-    def recall(self):
+    def recall(self) -> float:
         if not self.num_moles:
             msg = "No moles."
             raise ValueError(msg)
         return 100 * self.num_moles_correct.item() / self.num_moles.item()
 
 
-def make_model(num_features):
+def make_model(num_features) -> torch.nn.Linear:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
@@ -243,7 +250,7 @@ def make_model(num_features):
     return torch.nn.Linear(num_features, 2)
 
 
-def prepare_data(pretrained_data, sessions):
+def prepare_data(pretrained_data, sessions) -> list[dict]:
     image_dicts = (data for session in sessions for data in pretrained_data[session])
     return [
         {
@@ -257,7 +264,7 @@ def prepare_data(pretrained_data, sessions):
     ]
 
 
-def split_data(pretrained_data, training_split=0.8):
+def split_data(pretrained_data, training_split=0.8) -> tuple[list[dict], list[dict]]:
     sessions = list(pretrained_data.keys())
     num_sessions = len(sessions)
     if training_split != 1 and num_sessions < 2:
@@ -296,7 +303,7 @@ def _load_pretrained_file(path) -> dict:
     return loaded_data
 
 
-def load_pretrained(pretrained_paths):
+def load_pretrained(pretrained_paths) -> dict:
 
     work_items = [
         (session, path)
@@ -320,7 +327,7 @@ def load_pretrained(pretrained_paths):
     return pretrained_data
 
 
-def find_pretrained(melroot):
+def find_pretrained(melroot) -> dict:
     parts_path = melroot / "rotomaps" / "parts"
     all_sessions = collections.defaultdict(list)
     for part in parts_path.iterdir():
@@ -339,7 +346,7 @@ def make_model_and_fit(
     batch_size,
     num_epochs,
     learning_rate,
-):
+) -> torch.nn.Linear:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
@@ -381,7 +388,7 @@ def make_model_and_fit(
     return model
 
 
-def open_image_for_classifier(image_path):
+def open_image_for_classifier(image_path) -> tuple[np.ndarray, np.ndarray]:
     path = pathlib.Path(image_path)
     if not path.exists():
         msg = f"No such file or directory: {image_path}"
@@ -415,7 +422,7 @@ def open_image_for_classifier(image_path):
     return image, mask
 
 
-def select_moles(moles_and_marks):
+def select_moles(moles_and_marks) -> list[dict]:
     moles = []
 
     for item in moles_and_marks:
@@ -434,7 +441,7 @@ def select_moles(moles_and_marks):
     return moles
 
 
-def select_marks(moles_and_marks):
+def select_marks(moles_and_marks) -> list[dict]:
     marks = []
 
     for item in moles_and_marks:
@@ -457,7 +464,7 @@ def select_marks(moles_and_marks):
     return marks
 
 
-def filter_marks(is_mole, image, moles, include_canonical):
+def filter_marks(is_mole, image, moles, include_canonical) -> list[dict]:
     """Return a list of moles with the unlikely ones filtered out."""
     filtered_moles = []
     for m in moles:
@@ -485,7 +492,9 @@ def filter_marks(is_mole, image, moles, include_canonical):
     return filtered_moles
 
 
-def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
+def make_is_mole_func(
+    metadata_dir, model_fname, softmax_threshold
+) -> collections.abc.Callable:
     # These imports can be very expensive, so we delay them as late as
     # possible.
     #

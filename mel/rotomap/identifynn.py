@@ -1,6 +1,7 @@
 """Identify which moles are which, using neural nets."""
 
 import collections
+import collections.abc
 import json
 import pathlib
 
@@ -15,7 +16,7 @@ import mel.lib.fs
 import mel.rotomap.moles
 
 
-def make_identifier():
+def make_identifier() -> "MoleIdentifier":
     melroot = mel.lib.fs.find_melroot()
     model_dir = melroot / mel.lib.fs.DEFAULT_CLASSIFIER_PATH
     model_path = model_dir / "identify.pth"
@@ -44,7 +45,7 @@ class MoleIdentifier:
         self.model = Model(**model_args)
         self.model.load_state_dict(torch.load(model_path, weights_only=True))
 
-    def get_new_moles(self, frame):
+    def get_new_moles(self, frame) -> list:
         import torch
 
         class_to_index2 = self.class_to_index.copy()
@@ -90,7 +91,7 @@ class MoleIdentifier:
         return new_moles
 
 
-def make_convnet2d(width, depth, channels_in):
+def make_convnet2d(width, depth, channels_in) -> torch.nn.Sequential:
     return torch.nn.Sequential(
         torch.nn.BatchNorm2d(channels_in),
         make_cnn_layer(channels_in, width),
@@ -100,7 +101,7 @@ def make_convnet2d(width, depth, channels_in):
     )
 
 
-def make_cnn_layer(in_width, out_width):
+def make_cnn_layer(in_width, out_width) -> torch.nn.Sequential:
     return torch.nn.Sequential(
         torch.nn.Conv2d(
             in_width, out_width, kernel_size=3, stride=2, padding=1, bias=False
@@ -115,7 +116,7 @@ class Lambda(torch.nn.Module):
         super().__init__()
         self.func = func
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.func(x)
 
 
@@ -144,7 +145,7 @@ class LightningModel(pl.LightningModule):
 
         self.model = model
 
-    def forward(self, data):
+    def forward(self, data) -> list:
         return self.model(data)
 
     @staticmethod
@@ -153,7 +154,7 @@ class LightningModel(pl.LightningModule):
         f = torch.nn.functional
         return f.cross_entropy(model_out[0], out_data[0])
 
-    def training_step(self, batch, _batch_idx):
+    def training_step(self, batch, _batch_idx) -> torch.Tensor:
         _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
@@ -161,7 +162,7 @@ class LightningModel(pl.LightningModule):
         self.log("lr", self.lr, prog_bar=True)
         return loss
 
-    def validation_step(self, batch, _batch_idx):
+    def validation_step(self, batch, _batch_idx) -> torch.Tensor:
         _i, xb, yb = batch
         out = self.model(xb)
         loss = self._loss_func(out, yb)
@@ -175,7 +176,7 @@ class LightningModel(pl.LightningModule):
 
         return loss
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Adam:
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
 
@@ -187,7 +188,7 @@ def yield_frame_mole_maps_detail(
     escale,
     etranslate,
     drop_none_uuids,
-):
+) -> collections.abc.Generator[tuple]:
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
     image_size = final_image_size * zoom
@@ -237,7 +238,7 @@ def yield_frame_mole_maps(
     escale,
     etranslate,
     drop_none_uuids,
-):
+) -> collections.abc.Generator[tuple]:
     elspace = mel.lib.ellipsespace.Transform(ellipse)
 
     frame_map = torch.zeros(1, image_size, image_size)
@@ -263,11 +264,11 @@ def yield_frame_mole_maps(
         yield uuid_, torch.cat((frame_map, mole_mark))
 
 
-def frame_to_part_name(frame):
+def frame_to_part_name(frame) -> str:
     return f"{frame.path.parents[2].stem}/{frame.path.parents[1].stem}"
 
 
-def unzip_dataset_part(uuid_list, dataset_generator):
+def unzip_dataset_part(uuid_list, dataset_generator) -> list:
     dataset_part = list(dataset_generator)
     data_list = []
     for uuid_, item in zip(uuid_list, dataset_part, strict=False):
@@ -289,7 +290,7 @@ def make_dataset(
     class_mapping,
     augmentations,
     extra_stem=None,
-):
+) -> collections.defaultdict:
     if augmentations is None:
         augmentations = [(1, np.array([0, 0]))]
 
@@ -326,7 +327,7 @@ def make_dataset(
     return dataset
 
 
-def make_data(repo_path, data_config, channel_cache=None):
+def make_data(repo_path, data_config, channel_cache=None) -> tuple:
     parts_path = repo_path / "rotomaps" / "parts"
 
     if data_config["rotomaps"][0] == "subpart":
@@ -433,7 +434,7 @@ def make_data(repo_path, data_config, channel_cache=None):
     )
 
 
-def splat5(tensor, x, y, alpha=1.0):
+def splat5(tensor, x, y, alpha=1.0) -> None:
     splat(tensor, x, y, alpha)
     splat(tensor, x + 1, y, alpha)
     splat(tensor, x - 1, y, alpha)
@@ -441,7 +442,7 @@ def splat5(tensor, x, y, alpha=1.0):
     splat(tensor, x, y - 1, alpha)
 
 
-def splat(tensor, x, y, alpha=1.0):
+def splat(tensor, x, y, alpha=1.0) -> None:
     intx, inty = int(x), int(y)
     partx, party = x - intx, y - inty
     if partx <= 0.5:
@@ -461,7 +462,7 @@ def splat(tensor, x, y, alpha=1.0):
     draw_add(tensor, x2, y2, cy2 * cx2 * alpha)
 
 
-def draw_add(tensor, x, y, value):
+def draw_add(tensor, x, y, value) -> None:
     if x < 0 or y < 0:
         return
     if x >= tensor.shape[1] or y >= tensor.shape[0]:
@@ -469,7 +470,7 @@ def draw_add(tensor, x, y, value):
     tensor[y][x] += value
 
 
-def split_train_valid_last(rotomaps):
+def split_train_valid_last(rotomaps) -> tuple[list, list]:
     train_rotomaps = []
     valid_rotomaps = []
     for rotomap_list in rotomaps.values():
@@ -488,7 +489,7 @@ def split_train_valid_last(rotomaps):
     return train_rotomaps, valid_rotomaps
 
 
-def split_train_valid(rotomaps, train_split=0.8):
+def split_train_valid(rotomaps, train_split=0.8) -> tuple[list, list]:
     if train_split == -1:
         return split_train_valid_last(rotomaps)
     train_rotomaps = []
@@ -509,7 +510,7 @@ def split_train_valid(rotomaps, train_split=0.8):
     return train_rotomaps, valid_rotomaps
 
 
-def get_lower_limb_rotomaps(parts_path):
+def get_lower_limb_rotomaps(parts_path) -> collections.defaultdict:
     parts = {
         parts_path / "LeftLeg": [
             parts_path / "LeftLeg" / "Lower",
@@ -538,7 +539,7 @@ def get_lower_limb_rotomaps(parts_path):
     return all_rotomaps
 
 
-def get_subpart_rotomap(parts_path, part, subpart):
+def get_subpart_rotomap(parts_path, part, subpart) -> collections.defaultdict:
     parts = {parts_path / part: [parts_path / part / subpart]}
     all_rotomaps = collections.defaultdict(list)
     for part_path, subpart_list in parts.items():
@@ -550,7 +551,7 @@ def get_subpart_rotomap(parts_path, part, subpart):
     return all_rotomaps
 
 
-def get_limb_rotomaps(parts_path):
+def get_limb_rotomaps(parts_path) -> collections.defaultdict:
     bits = [
         parts_path / "LeftArm",
         parts_path / "RightArm",
@@ -569,7 +570,7 @@ def get_limb_rotomaps(parts_path):
     return all_rotomaps
 
 
-def get_all_rotomaps(parts_path):
+def get_all_rotomaps(parts_path) -> collections.defaultdict:
     all_rotomaps = collections.defaultdict(list)
     for part in parts_path.iterdir():
         for subpart in part.iterdir():
@@ -611,7 +612,7 @@ def extend_dataset_by_frame(
     escale,
     etranslate,
     drop_noncanonical_moles,
-):
+) -> None:
     if "ellipse" not in frame.metadata:
         return
 
@@ -629,7 +630,7 @@ def extend_dataset_by_frame(
     )
 
 
-def frame_to_framedata(frame, part_to_index):
+def frame_to_framedata(frame, part_to_index) -> tuple | None:
     if "ellipse" not in frame.metadata:
         return None
 
@@ -660,7 +661,7 @@ def extend_dataset_by_frame_data(
     escale,
     etranslate,
     drop_none_uuids,
-):
+) -> None:
     uuid_list = [
         uuid_ for uuid_, pos in uuid_points if not (drop_none_uuids and uuid_ is None)
     ]
@@ -768,7 +769,7 @@ class Model(torch.nn.Module):
                 torch.nn.Linear(num_classes, num_classes),
             )
 
-    def forward(self, data):
+    def forward(self, data) -> list:
         part, *rest = data
         part_embedding = self.embedding(part)
 
@@ -782,7 +783,7 @@ class Model(torch.nn.Module):
 
         return [self.fc(combined)]
 
-    def reset_num_parts_classes(self, new_num_parts, new_num_classes):
+    def reset_num_parts_classes(self, new_num_parts, new_num_classes) -> None:
         self.end_width -= self.embedding_len
         self.embedding_len = new_num_parts // 2
         self.end_width += self.embedding_len
@@ -794,7 +795,7 @@ class Model(torch.nn.Module):
             torch.nn.Linear(new_num_classes, new_num_classes),
         )
 
-    def clear_non_cnn(self):
+    def clear_non_cnn(self) -> None:
         self.end_width -= self.embedding_len
         self.embedding_len = 0
         self.embedding = None

@@ -88,7 +88,7 @@ COMMANDS = {
 }
 
 
-def main():
+def main() -> int | None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,

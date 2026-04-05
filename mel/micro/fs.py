@@ -49,7 +49,7 @@ MOLE_DIR_ENTRIES = {
 }
 
 
-def yield_moles(path):
+def yield_moles(path) -> collections.abc.Generator:
     path = pathlib.Path(path)
     yield from _yield_moles_imp(path, path, ())
 
@@ -132,21 +132,21 @@ def _list_micro_dir_if_exists(path) -> tuple:
     return tuple(details)
 
 
-def calc_micro_datetime(micro_image_name):
+def calc_micro_datetime(micro_image_name) -> datetime.datetime:
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
     return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S").replace(
         tzinfo=datetime.UTC
     )
 
 
-def calc_last_micro(micro_image_details):
+def calc_last_micro(micro_image_details) -> str | None:
     if not micro_image_details:
         return None
 
     return micro_image_details[-1].name
 
 
-def calc_last_micro_age_days(micro_image_details):
+def calc_last_micro_age_days(micro_image_details) -> int | None:
     if not micro_image_details:
         return None
 

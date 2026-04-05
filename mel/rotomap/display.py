@@ -3,6 +3,7 @@
 import collections.abc
 import enum
 import functools
+import pathlib
 import sys
 
 import cv2
@@ -23,7 +24,7 @@ _WHITE = (255, 255, 255)
 _BLACK = (0, 0, 0)
 
 
-def draw_mole(image, x, y, colours):
+def draw_mole(image, x, y, colours) -> None:
     def circle(radius, col) -> None:
         cv2.circle(image, (x, y), radius, col, -1)
 
@@ -36,7 +37,7 @@ def draw_mole(image, x, y, colours):
         radius -= 4
 
 
-def draw_non_canonical_mole(image, x, y, colours):
+def draw_non_canonical_mole(image, x, y, colours) -> None:
     def rect(size, col) -> None:
         top_left = (x - size, y - size)
         bottom_right = (x + size, y + size)
@@ -48,7 +49,7 @@ def draw_non_canonical_mole(image, x, y, colours):
     draw_mole(image, x, y, colours)
 
 
-def draw_crosshair(image, x, y):
+def draw_crosshair(image, x, y) -> None:
     inner_radius = 16
     outer_radius = 24
 
@@ -81,7 +82,7 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
 
         self._title = ""
 
-    def show_current(self, image, overlay):
+    def show_current(self, image, overlay) -> None:
         self.zoomable_transform_update(image, self._image_rect)
         image = self.zoomable_transform_render()
 
@@ -92,11 +93,13 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
         image = mel.lib.image.montage_vertical(self._spacer_height, image, caption)
         self._image_display.show_opencv_image(image)
 
-    def set_title(self, title):
+    def set_title(self, title) -> None:
         self._title = title
 
 
-def make_composite_overlay(*overlays: collections.abc.Callable):
+def make_composite_overlay(
+    *overlays: collections.abc.Callable,
+) -> collections.abc.Callable:
     """Return an overlay, which will composite the supplied overlays in turn.
 
     Args:
@@ -141,13 +144,13 @@ class MoleMarkerOverlay:
 
         self.moles = None
 
-    def toggle_markers(self):
+    def toggle_markers(self) -> None:
         self._is_showing_markers = not self._is_showing_markers
 
-    def set_highlight_uuid(self, highlight_uuid):
+    def set_highlight_uuid(self, highlight_uuid) -> None:
         self._highlight_uuid = highlight_uuid
 
-    def toggle_faded_markers(self):
+    def toggle_faded_markers(self) -> None:
         self._is_faded_markers = not self._is_faded_markers
 
     def __call__(self, image, transform) -> np.ndarray:
@@ -187,7 +190,7 @@ class MarkedMoleOverlay:
         self._highlight_uuid = None
         self.is_accentuate_marked_mode = False
 
-    def set_highlight_uuid(self, highlight_uuid):
+    def set_highlight_uuid(self, highlight_uuid) -> None:
         self._highlight_uuid = highlight_uuid
 
     def __call__(self, image, transform) -> np.ndarray:
@@ -335,39 +338,39 @@ class Editor:
 
         self.masker_radius = DEFAULT_MASKER_RADIUS
 
-    def set_smaller_masker(self):
+    def set_smaller_masker(self) -> None:
         self.masker_radius //= 2
 
-    def set_larger_masker(self):
+    def set_larger_masker(self) -> None:
         self.masker_radius *= 2
 
-    def set_default_masker(self):
+    def set_default_masker(self) -> None:
         self.masker_radius = DEFAULT_MASKER_RADIUS
 
-    def set_automoledebug_mode(self):
+    def set_automoledebug_mode(self) -> None:
         self._mode = EditorMode.debug_automole
         self.show_current()
 
-    def set_editmole_mode(self):
+    def set_editmole_mode(self) -> None:
         self._mode = EditorMode.edit_mole
         self.show_current()
 
-    def set_editmask_mode(self):
+    def set_editmask_mode(self) -> None:
         self._mode = EditorMode.edit_mask
         self.show_current()
 
-    def set_boundingarea_mode(self):
+    def set_boundingarea_mode(self) -> None:
         self._mode = EditorMode.bounding_area
         self.show_current()
 
-    def set_molemark_mode(self):
+    def set_molemark_mode(self) -> None:
         self._mode = EditorMode.mole_mark
         self.show_current()
 
-    def set_status(self, text):
+    def set_status(self, text) -> None:
         self._status_overlay.text = text
 
-    def visit(self, visit_target_str):
+    def visit(self, visit_target_str) -> None:
         # Expect a string formatted like this:
         #
         #   path/to/jpg:uuid
@@ -397,7 +400,7 @@ class Editor:
         print("Could not find:", path, ":", visit_uuid, file=sys.stderr)
         self.show_current()
 
-    def follow(self, uuid_to_follow):
+    def follow(self, uuid_to_follow) -> None:
         self._follow = uuid_to_follow
         self._mole_overlay.set_highlight_uuid(self._follow)
         self.marked_mole_overlay.set_highlight_uuid(self._follow)
@@ -411,7 +414,7 @@ class Editor:
         if follow_mole is not None:
             self.show_zoomed_display(follow_mole["x"], follow_mole["y"])
 
-    def skip_to_mole(self, uuid_to_skip_to):
+    def skip_to_mole(self, uuid_to_skip_to) -> None:
         original_index = self.moledata.index()
         done = False
         while not done:
@@ -423,15 +426,15 @@ class Editor:
             if self.moledata.index() == original_index:
                 return
 
-    def toggle_markers(self):
+    def toggle_markers(self) -> None:
         self._mole_overlay.toggle_markers()
         self.show_current()
 
-    def toggle_faded_markers(self):
+    def toggle_faded_markers(self) -> None:
         self._mole_overlay.toggle_faded_markers()
         self.show_current()
 
-    def set_mask(self, mouse_x, mouse_y, enable):
+    def set_mask(self, mouse_x, mouse_y, enable) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         value = 255 if enable else 0
         radius = self.masker_radius
@@ -439,7 +442,7 @@ class Editor:
         self.moledata.save_mask()
         self.show_current()
 
-    def show_current(self):
+    def show_current(self) -> None:
         self.display.set_title(self.moledata.current_image_path())
         image = self.moledata.get_image()
 
@@ -470,24 +473,24 @@ class Editor:
             msg = "Unknown mode"
             raise ValueError(msg, self._mode)
 
-    def show_fitted(self):
+    def show_fitted(self) -> None:
         self.display.set_fitted()
         self.show_current()
 
-    def set_zoom_level(self, zoom_level):
+    def set_zoom_level(self, zoom_level) -> None:
         self.display.set_zoom_level(zoom_level)
         self.show_current()
 
-    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None):
+    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         self.display.set_zoomed(image_x, image_y, zoom_level)
         self.show_current()
 
-    def show_zoomed_display(self, image_x, image_y, zoom_level=None):
+    def show_zoomed_display(self, image_x, image_y, zoom_level=None) -> None:
         self.display.set_zoomed(image_x, image_y, zoom_level)
         self.show_current()
 
-    def show_prev_map(self):
+    def show_prev_map(self) -> None:
         def transition() -> None:
             self.moledata_index -= 1
             self.moledata_index %= len(self.moledata_list)
@@ -496,7 +499,7 @@ class Editor:
         self._adjusted_transition(transition)
         self.show_current()
 
-    def show_next_map(self):
+    def show_next_map(self) -> None:
         def transition() -> None:
             self.moledata_index += 1
             self.moledata_index %= len(self.moledata_list)
@@ -505,11 +508,11 @@ class Editor:
         self._adjusted_transition(transition)
         self.show_current()
 
-    def show_prev(self):
+    def show_prev(self) -> None:
         self._adjusted_transition(self.moledata.decrement)
         self.show_current()
 
-    def show_next(self):
+    def show_next(self) -> None:
         self._adjusted_transition(self.moledata.increment)
         self.show_current()
 
@@ -529,24 +532,24 @@ class Editor:
         else:
             transition_func()
 
-    def show_next_n(self, number_to_advance):
+    def show_next_n(self, number_to_advance) -> None:
         for _i in range(number_to_advance):
             self.moledata.increment()
             self.moledata.get_image()
         self.show_current()
 
-    def add_mole(self, mouse_x, mouse_y):
+    def add_mole(self, mouse_x, mouse_y) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
-    def add_mole_display(self, image_x, image_y, mole_uuid=None):
+    def add_mole_display(self, image_x, image_y, mole_uuid=None) -> None:
         mel.rotomap.moles.add_mole(self.moledata.moles, image_x, image_y, mole_uuid)
         self.moledata.save_moles()
         self.show_current()
 
-    def confirm_mole(self, mouse_x, mouse_y):
+    def confirm_mole(self, mouse_x, mouse_y) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mole_uuid = mel.rotomap.moles.get_nearest_mole_uuid(
             self.moledata.moles, image_x, image_y
@@ -557,13 +560,13 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
-    def confirm_all(self):
+    def confirm_all(self) -> None:
         for m in self.moledata.moles:
             m["is_uuid_canonical"] = True
         self.moledata.save_moles()
         self.show_current()
 
-    def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid, *, is_canonical=True):
+    def set_mole_uuid(self, mouse_x, mouse_y, mole_uuid, *, is_canonical=True) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
             self.moledata.moles, image_x, image_y, mole_uuid, is_canonical
@@ -571,13 +574,13 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
-    def get_mole_uuid(self, mouse_x, mouse_y):
+    def get_mole_uuid(self, mouse_x, mouse_y) -> str | None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         return mel.rotomap.moles.get_nearest_mole_uuid(
             self.moledata.moles, image_x, image_y
         )
 
-    def get_nearest_mole(self, mouse_x, mouse_y):
+    def get_nearest_mole(self, mouse_x, mouse_y) -> dict | None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         nearest_index = mel.rotomap.moles.nearest_mole_index(
             self.moledata.moles, image_x, image_y
@@ -587,19 +590,19 @@ class Editor:
             mole = self.moledata.moles[nearest_index]
         return mole
 
-    def move_nearest_mole(self, mouse_x, mouse_y):
+    def move_nearest_mole(self, mouse_x, mouse_y) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.move_nearest_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
-    def remove_mole(self, mouse_x, mouse_y):
+    def remove_mole(self, mouse_x, mouse_y) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.remove_nearest_mole(self.moledata.moles, image_x, image_y)
         self.moledata.save_moles()
         self.show_current()
 
-    def crud_mole(self, mole_uuid, mouse_x, mouse_y):
+    def crud_mole(self, mole_uuid, mouse_x, mouse_y) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
 
         i = mel.rotomap.moles.uuid_mole_index(self.moledata.moles, mole_uuid)
@@ -612,7 +615,7 @@ class Editor:
         self.moledata.save_moles()
         self.show_current()
 
-    def remap_uuid(self, from_uuid, to_uuid):
+    def remap_uuid(self, from_uuid, to_uuid) -> None:
         print(f"Remap globally {from_uuid} to {to_uuid}.")
         self.moledata.remap_uuid(from_uuid, to_uuid)
         self.show_current()
@@ -642,15 +645,15 @@ class MoleData:
         self._loaded_index = None
         self.ensure_loaded()
 
-    def get_image(self):
+    def get_image(self) -> np.ndarray:
         self.ensure_loaded()
         return self.image
 
-    def reload(self):
+    def reload(self) -> None:
         self._loaded_index = None
         self.ensure_loaded()
 
-    def ensure_loaded(self):
+    def ensure_loaded(self) -> None:
         if self._loaded_index == self._list_index:
             return
 
@@ -669,7 +672,7 @@ class MoleData:
 
         self._loaded_index = self._list_index
 
-    def remap_uuid(self, from_uuid, to_uuid):
+    def remap_uuid(self, from_uuid, to_uuid) -> None:
         for image_path in self._path_list:
             moles = mel.rotomap.moles.load_image_moles(image_path)
             for m in moles:
@@ -681,28 +684,28 @@ class MoleData:
         image_path = self._path_list[self._list_index]
         self.moles = mel.rotomap.moles.load_image_moles(image_path)
 
-    def decrement(self):
+    def decrement(self) -> None:
         new_index = self._list_index + self._num_images - 1
         self._list_index = new_index % self._num_images
 
-    def increment(self):
+    def increment(self) -> None:
         self._list_index = (self._list_index + 1) % self._num_images
 
-    def index(self):
+    def index(self) -> int:
         return self._list_index
 
-    def save_mask(self):
+    def save_mask(self) -> None:
         mel.lib.common.write_image(self._mask_path, self.mask)
 
-    def save_moles(self):
+    def save_moles(self) -> None:
         image_path = self._path_list[self._list_index]
         mel.rotomap.moles.normalise_moles(self.moles)
         mel.rotomap.moles.save_image_moles(self.moles, image_path)
 
-    def current_image_path(self):
+    def current_image_path(self) -> pathlib.Path:
         return self._path_list[self._list_index]
 
-    def try_jump_to_path(self, path):
+    def try_jump_to_path(self, path) -> bool:
         for i, image_path in enumerate(self._path_list):
             if str(path) == str(image_path):
                 if self._list_index != i:

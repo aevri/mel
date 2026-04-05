@@ -10,7 +10,7 @@ import mel.cmddebug.rendervaluefield
 import mel.lib.ui
 
 
-def main():
+def main() -> int | None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
