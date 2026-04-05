@@ -42,7 +42,7 @@ def process_args(args):
         mel.rotomap.moles.save_image_moles(moles, path, extra_stem=args.EXTRA_STEM)
 
 
-def _merge(from_moles, to_moles, error_distance):
+def _merge(from_moles, to_moles, error_distance) -> list:
     (
         match_uuids,
         _missing_uuids,
@@ -68,7 +68,8 @@ def _merge(from_moles, to_moles, error_distance):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2021 Angelos Evripiotis.
+# Copyright (C) 2021, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

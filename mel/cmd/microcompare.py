@@ -92,7 +92,7 @@ class ImageCompareDisplay:
         self._display_list.reverse()
         self._show_display_list()
 
-    def _show_display_list(self):
+    def _show_display_list(self) -> None:
         montage = mel.lib.image.montage_horizontal(10, *self._display_list)
         self._display.show_opencv_image(montage)
 

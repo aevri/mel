@@ -18,7 +18,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def _existing_file_path(string):
+def _existing_file_path(string) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -30,7 +30,7 @@ def _existing_file_path(string):
     return path
 
 
-def _load_image_with_mask(image_path):
+def _load_image_with_mask(image_path) -> np.ndarray:
     """Load an image and apply its mask if available.
 
     Returns the image in BGR format (for OpenCV template matching).
@@ -46,7 +46,7 @@ def _load_image_with_mask(image_path):
     return image_bgr
 
 
-def _validate_aspect_ratios(image_sizes):
+def _validate_aspect_ratios(image_sizes) -> None:
     """Validate that all images have the same aspect ratio.
 
     Args:
@@ -73,7 +73,7 @@ def _validate_aspect_ratios(image_sizes):
             raise ValueError(msg)
 
 
-def _normalize_resolution(images_with_paths):
+def _normalize_resolution(images_with_paths) -> list:
     """Resize all images to the smallest resolution.
 
     Args:

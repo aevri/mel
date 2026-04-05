@@ -24,6 +24,7 @@ Controls:
 """
 
 import collections
+import collections.abc
 import functools
 import math
 import os
@@ -108,7 +109,7 @@ def process_args(args):
     # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)
 
-    def unchanged_status_keyfunc(uuid_):
+    def unchanged_status_keyfunc(uuid_) -> int:
         is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
         if is_unchanged is None:
             return 1
@@ -145,7 +146,7 @@ def process_args(args):
 
 def _make_on_keydown(
     display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
-):
+) -> collections.abc.Callable:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
@@ -156,7 +157,7 @@ def _make_on_keydown(
     if is_unchanged is not None:
         display.indicate_changed(not is_unchanged)
 
-    def on_keydown(event):
+    def on_keydown(event) -> None:
         key = event.key
         nonlocal index
         if key == pygame.K_RIGHT:
@@ -251,7 +252,7 @@ class ImageCompareDisplay:
         self._melroot = mel.lib.fs.find_melroot()
         self.reset(path_images_tuple, uuid_)
 
-    def _reset_logger(self):
+    def _reset_logger(self) -> None:
         self._logger.reset(
             mode="compare",
             path=str(
@@ -346,7 +347,7 @@ class ImageCompareDisplay:
         self._rotations[ix] += rotation_modifier
         self._show()
 
-    def _posinfo(self, index):
+    def _posinfo(self, index) -> _PosInfo:
         ix = self._indices[index]
         image_index = self._rotomap_cursors[ix]
         return self._rotomaps[ix][image_index]
@@ -410,14 +411,14 @@ class ImageCompareDisplay:
 
         self._show()
 
-    def _path_pos_zoom_rotation_moles(self, index):
+    def _path_pos_zoom_rotation_moles(self, index) -> tuple:
         image_index = self._rotomap_cursors[index]
         posinfo = self._rotomaps[index][image_index]
         zoom = self._zooms[index]
         rotation = self._rotations[index]
         return posinfo.path, posinfo.pos, zoom, rotation, posinfo.uuid_points
 
-    def _show(self):
+    def _show(self) -> None:
         image_width = self._display.width // 2
         image_height = self._display.height
         image_size = np.array((image_width, image_height))
@@ -478,7 +479,7 @@ def captioned_mole_image(
 
 
 @functools.lru_cache
-def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points):
+def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points) -> tuple:
     image = mel.lib.image.load_image(path)
     image = mel.lib.image.scale_image(image, zoom)
     colors = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]

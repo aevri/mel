@@ -26,7 +26,7 @@ _PRETRAINED_SUFFIX = ".jpg.efficientnet_b0.pt"
 def record_input_context(module_to_record):
     activations = []
 
-    def record_response(_module, input_):
+    def record_response(_module, input_) -> None:
         activations.append(input_)
 
     hook = module_to_record.register_forward_pre_hook(record_response)
@@ -272,7 +272,7 @@ def split_data(pretrained_data, training_split=0.8):
     return training_data, validation_data
 
 
-def _load_pretrained_file(path):
+def _load_pretrained_file(path) -> dict:
     import pickle
     import sys
 
@@ -520,7 +520,7 @@ def make_is_mole_func(metadata_dir, model_fname, softmax_threshold):
 
     softmax = torch.nn.Softmax(dim=1)
 
-    def is_mole(image):
+    def is_mole(image) -> bool:
         batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)
 
         with torch.no_grad():

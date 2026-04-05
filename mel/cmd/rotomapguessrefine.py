@@ -12,7 +12,7 @@ import mel.lib.math
 import mel.rotomap.moles
 
 
-def _existing_file_path(string):
+def _existing_file_path(string) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():

@@ -45,7 +45,9 @@ def load_dinov2_model(dino_size="base"):
                 self.model = model
                 self.model.eval()
 
-            def extract_contextual_patch_features(self, x, center_patch_idx=None):
+            def extract_contextual_patch_features(
+                self, x, center_patch_idx=None
+            ) -> "torch.Tensor":
                 """Extract contextual patch features.
 
                 Args:
@@ -63,7 +65,7 @@ def load_dinov2_model(dino_size="base"):
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
 
-                def hook_fn(_module, _input_tensor, output):
+                def hook_fn(_module, _input_tensor, output) -> None:
                     if hasattr(output, "shape") and len(output.shape) == 3:
                         patch_features.append(output)
 

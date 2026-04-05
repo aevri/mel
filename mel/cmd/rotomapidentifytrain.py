@@ -153,7 +153,7 @@ def process_args(args):
         with pathlib.Path(metadata_path).open() as f:
             old_metadata = json.load(f)
 
-        def check_old_matches_new(name, old, new):
+        def check_old_matches_new(name, old, new) -> None:
             if old != new:
                 msg = f"Old {name} is not the same.\nold: {old}\nnew: {new}\n"
                 raise ValueError(msg)
@@ -271,7 +271,7 @@ def process_args(args):
     return None
 
 
-def _fixup_old_model(old_metadata, new_metadata, model):
+def _fixup_old_model(old_metadata, new_metadata, model) -> None:
     old_model_args = old_metadata["model_args"]
     new_model_args = new_metadata["model_args"]
     if (

@@ -684,7 +684,7 @@ def extend_dataset_by_frame_data(
     )
     # pylint: enable=not-callable
 
-    def extend_dataset(field_name, dataset_part):
+    def extend_dataset(field_name, dataset_part) -> None:
         dataset[field_name].extend(unzip_dataset_part(uuid_list, dataset_part))
 
     extend_dataset("part_index", [(uuid_, part_index) for uuid_ in uuid_list])

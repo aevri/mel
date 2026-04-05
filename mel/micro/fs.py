@@ -1,5 +1,6 @@
 """Operate on a 'mel micro' filesystem."""
 
+import collections.abc
 import datetime
 import pathlib
 import typing
@@ -53,7 +54,9 @@ def yield_moles(path):
     yield from _yield_moles_imp(path, path, ())
 
 
-def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
+def _yield_moles_imp(
+    path, refrelpath, context_image_name_tuple_tuple
+) -> collections.abc.Generator:
     should_be_mole_dir = False
     for sub in path.iterdir():
         if sub.name.lower() in MOLE_DIR_ENTRIES:
@@ -85,7 +88,9 @@ def _yield_moles_imp(path, refrelpath, context_image_name_tuple_tuple):
                 )
 
 
-def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple):
+def _extend_context_image_name_tuple_tuple(
+    path, context_image_name_tuple_tuple
+) -> tuple:
     image_names = [
         sub.name for sub in path.iterdir() if sub.suffix.lower() in IMAGE_SUFFIXES
     ]
@@ -96,7 +101,7 @@ def _extend_context_image_name_tuple_tuple(path, context_image_name_tuple_tuple)
     return context_image_name_tuple_tuple
 
 
-def _list_micro_dir_if_exists(path):
+def _list_micro_dir_if_exists(path) -> tuple:
     if not path.exists():
         return ()
 
@@ -150,7 +155,7 @@ def calc_last_micro_age_days(micro_image_details):
     return age.days
 
 
-def _read_stripped_text_file_if_exists(path):
+def _read_stripped_text_file_if_exists(path) -> str | None:
     if path.exists():
         return path.read_text().strip()
     return None

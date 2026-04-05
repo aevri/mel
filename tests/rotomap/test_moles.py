@@ -22,7 +22,7 @@ from mel.rotomap import moles
 # ---------------------------------------------------------------------------
 
 
-def _make_mole(x, y, uuid_=None, *, is_confirmed=True):
+def _make_mole(x, y, uuid_=None, *, is_confirmed=True) -> dict:
     """Create a mole dict with required fields."""
     return {
         "x": x,
@@ -32,13 +32,13 @@ def _make_mole(x, y, uuid_=None, *, is_confirmed=True):
     }
 
 
-def _write_json(path, data):
+def _write_json(path, data) -> None:
     with pathlib.Path(path).open("w") as f:
         json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
         print(file=f)
 
 
-def _create_jpeg_stub(path):
+def _create_jpeg_stub(path) -> None:
     """Create a minimal file that qualifies as a JPEG by name."""
     pathlib.Path(path).write_bytes(b"\xff\xd8\xff")
 
@@ -521,7 +521,7 @@ class TestLoadPotentialSetFile:
 
 
 class TestRotomapDirectory:
-    def _make_rotomap(self, tmp_path, image_names=("a.jpg",)):
+    def _make_rotomap(self, tmp_path, image_names=("a.jpg",)) -> pathlib.Path:
         for name in image_names:
             img = tmp_path / name
             _create_jpeg_stub(img)

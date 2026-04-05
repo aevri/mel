@@ -61,7 +61,7 @@ def process_args(args):
     print(f"{recall * 100:0.1f}% recall")
 
 
-def _pair_off_inputs(from_, to):
+def _pair_off_inputs(from_, to) -> collections.abc.Generator:
     for from_frame, to_frame in _zip_samelen(from_, to):
         from_image_path, from_moles = from_frame
         to_image_path, to_moles = to_frame
@@ -69,7 +69,7 @@ def _pair_off_inputs(from_, to):
         yield common_path, from_moles, to_moles
 
 
-def _common_path(from_path, to_path):
+def _common_path(from_path, to_path) -> str:
     common = []
     for char_from, char_to in zip(
         reversed(str(from_path)), reversed(str(to_path)), strict=False
@@ -80,7 +80,7 @@ def _common_path(from_path, to_path):
     return "".join(common)
 
 
-def _zip_samelen(*args: collections.abc.Iterable):
+def _zip_samelen(*args: collections.abc.Iterable) -> collections.abc.Generator:
     iterators = [iter(it) for it in args]
     if not iterators:
         return
@@ -130,7 +130,9 @@ def match_moles(from_moles, to_moles, error_distance):
     return matches, missing, added
 
 
-def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
+def _match_pos_vecs(
+    from_pos_vec, to_pos_vec, error_distance
+) -> tuple[list, list, list]:
     max_sqdist = error_distance**2
 
     # pylint: disable=no-member
@@ -171,7 +173,7 @@ def _match_pos_vecs(from_pos_vec, to_pos_vec, error_distance):
     return matches, missing, added
 
 
-def _array_nonempty(numpy_array):
+def _array_nonempty(numpy_array) -> bool:
     return all(numpy_array.shape)
 
 

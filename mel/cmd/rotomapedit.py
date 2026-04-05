@@ -484,7 +484,7 @@ class Controller:
 
         self.current_controller.on_mouse_event(editor, event)
 
-    def _reset_logger_new_image(self, editor):
+    def _reset_logger_new_image(self, editor) -> None:
         self._logger.reset(
             path=os.path.relpath(
                 str(pathlib.Path(editor.moledata.image_path).resolve()),

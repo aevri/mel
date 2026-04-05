@@ -71,7 +71,7 @@ def process_args(args):
         _resize_ellipse_metadata(image_path, scale_x, scale_y)
 
 
-def _resize_mole_files(image_path, scale_x, scale_y):
+def _resize_mole_files(image_path, scale_x, scale_y) -> None:
     """Resize mole coordinates in .json files."""
     mole_file_path = pathlib.Path(image_path + ".json")
     if mole_file_path.exists():
@@ -85,7 +85,7 @@ def _resize_mole_files(image_path, scale_x, scale_y):
         mel.rotomap.moles.save_json(mole_file_path, moles)
 
 
-def _resize_mask_file(image_path, target_width, target_height):
+def _resize_mask_file(image_path, target_width, target_height) -> None:
     """Resize mask file if it exists."""
     mask_path = mel.rotomap.mask.path(image_path)
     if pathlib.Path(mask_path).exists():
@@ -99,7 +99,7 @@ def _resize_mask_file(image_path, target_width, target_height):
             mel.lib.image.save_image(resized_mask, mask_path)
 
 
-def _resize_ellipse_metadata(image_path, scale_x, scale_y):
+def _resize_ellipse_metadata(image_path, scale_x, scale_y) -> None:
     """Resize ellipse coordinates in .meta.json file."""
     meta_path = pathlib.Path(image_path + ".meta.json")
     if meta_path.exists():

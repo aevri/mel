@@ -150,7 +150,7 @@ def main():
         return 255
 
 
-def _setup_parser_for_module(subparsers, module, name):
+def _setup_parser_for_module(subparsers, module, name) -> None:
     doc = module.__doc__
     doc_subject = doc.splitlines()[0]
     doc_epilog = "\n".join(doc.splitlines()[1:])

@@ -400,7 +400,7 @@ def make_offset_theory(from_moles, to_moles_in, offset, cutoff_sq):
     return theory, dist_sq_sum
 
 
-def _nearest_mole_index_to_point(point, mole_list):
+def _nearest_mole_index_to_point(point, mole_list) -> tuple:
     best_index = None
     best_dist_sq = None
     for i, mole in enumerate(mole_list):
@@ -413,7 +413,7 @@ def _nearest_mole_index_to_point(point, mole_list):
     return best_index, best_dist_sq
 
 
-def _mole_distance_sq(from_mole, to_mole):
+def _mole_distance_sq(from_mole, to_mole) -> float:
     return mel.lib.math.distance_sq_2d(
         mel.rotomap.moles.mole_to_point(from_mole),
         mel.rotomap.moles.mole_to_point(to_mole),

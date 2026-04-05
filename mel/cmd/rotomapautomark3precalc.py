@@ -8,6 +8,7 @@ import argparse
 import pathlib
 
 import cv2
+import numpy as np
 import torch
 
 import mel.lib.dinov3
@@ -15,7 +16,7 @@ import mel.lib.image
 import mel.rotomap.mask
 
 
-def _existing_file_path(string):
+def _existing_file_path(string) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -27,12 +28,12 @@ def _existing_file_path(string):
     return path
 
 
-def _get_features_path(image_path, dino_size, image_size):
+def _get_features_path(image_path, dino_size, image_size) -> pathlib.Path:
     """Generate path for cached features file."""
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_image_with_mask(image_path, *, verbose=False):
+def _load_image_with_mask(image_path, *, verbose=False) -> np.ndarray:
     """Load an image and apply its mask if available."""
     if verbose:
         print(f"Loading image: {image_path}")

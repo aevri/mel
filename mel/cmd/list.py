@@ -1,5 +1,7 @@
 """List the moles in a mole catalog."""
 
+import collections.abc
+
 import mel.micro.fs
 
 # If we're trying to stick to 'Every mole compared every month', we won't want
@@ -90,12 +92,12 @@ def process_args(args):
         print(args.format.format(**mole_data))
 
 
-def _yield_mole_dirs(rootpath, args):
+def _yield_mole_dirs(rootpath, args) -> collections.abc.Generator:
     mole_iter = mel.micro.fs.yield_moles(rootpath)
 
     if args.sort == "lastmicro" or args.sort is None:
 
-        def keyfunc(x):
+        def keyfunc(x) -> str:
             if not x.micro_image_details:
                 return ""
             return x.micro_image_details[-1].name
@@ -127,7 +129,8 @@ def _yield_mole_dirs(rootpath, args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
