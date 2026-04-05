@@ -28,8 +28,7 @@ def determine_filename_for_ident(*source_filenames: str):
 
 def overwrite_image(directory, filename, image):
     dir_path = pathlib.Path(directory)
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
+    dir_path.mkdir(parents=True, exist_ok=True)
 
     path = dir_path / filename
     if path.exists():
