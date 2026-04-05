@@ -80,7 +80,7 @@ def rads_to_degs(theta):
     return theta * RADS_TO_DEGS
 
 
-def raise_if_not_int_vector2(v):
+def raise_if_not_int_vector2(v) -> None:
     if not isinstance(v, np.ndarray):
         msg = f"{v}:{v!r}:{type(v)} is not a numpy array"
         raise TypeError(msg)

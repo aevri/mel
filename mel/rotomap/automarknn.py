@@ -123,7 +123,7 @@ class PlModule(pl.LightningModule):
         self.log("train_loss", losses.detach())
         return losses
 
-    def validation_step(self, batch, _batch_idx):
+    def validation_step(self, batch, _batch_idx) -> None:
         x, y = batch
         result = self.model(x, y)
         precision_list = []

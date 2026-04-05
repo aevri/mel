@@ -72,7 +72,7 @@ import mel.rotomap.relate
 _MAGIC_MOLE_FINDER_RADIUS = 50
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
@@ -113,11 +113,11 @@ class MoveController:
     def __init__(self) -> None:
         self.status = "Move mode"
 
-    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
+    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y) -> bool:
         editor.move_nearest_mole(mouse_x, mouse_y)
         return True
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         pass
 
 
@@ -132,15 +132,15 @@ class FollowController:
         self.is_paste_mode = False
         self.update_status()
 
-    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y):
+    def on_lbutton_down_noflags(self, editor, mouse_x, mouse_y) -> bool:
         editor.crud_mole(self.mole_uuid_list[0], mouse_x, mouse_y)
         editor.follow(self.mole_uuid_list[0])
         return True
 
-    def pre_key(self, editor, _key):
+    def pre_key(self, editor, _key) -> None:
         self._prev_moles = editor.moledata.moles
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -164,7 +164,7 @@ class FollowController:
             editor.set_status(self.status)
             editor.show_current()
 
-    def update_status(self):
+    def update_status(self) -> None:
         if self.is_paste_mode:
             self.status = "follow paste mode"
         else:
@@ -184,7 +184,7 @@ class MoleEditController:
 
         self.copy_to_clipboard = copy_to_clipboard
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -196,7 +196,7 @@ class MoleEditController:
             elif event.button == 3:
                 self.on_rbutton_down(editor, self.mouse_x, self.mouse_y)
 
-    def on_lbutton_down(self, editor, mouse_x, mouse_y):
+    def on_lbutton_down(self, editor, mouse_x, mouse_y) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -219,7 +219,7 @@ class MoleEditController:
                 return
             editor.add_mole(mouse_x, mouse_y)
 
-    def on_rbutton_down(self, editor, mouse_x, mouse_y):
+    def on_rbutton_down(self, editor, mouse_x, mouse_y) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -236,12 +236,12 @@ class MoleEditController:
                 is_canonical=False,
             )
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, key) -> None:
         if self.sub_controller:
             with contextlib.suppress(AttributeError):
                 self.sub_controller.pre_key(editor, key)
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -302,7 +302,7 @@ class MaskEditController:
     def __init__(self) -> None:
         pass
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -315,10 +315,10 @@ class MaskEditController:
             if is_mouse_button_pressed[0]:
                 editor.set_mask(mouse_x, mouse_y, enable)
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, key) -> None:
         pass
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -338,7 +338,7 @@ class MoleMarkController:
     def __init__(self) -> None:
         pass
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -388,10 +388,10 @@ class MoleMarkController:
                 editor.moledata.save_moles()
                 editor.show_current()
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, key) -> None:
         pass
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -406,13 +406,13 @@ class BoundingAreaController:
     def __init__(self) -> None:
         pass
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         pass
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, key) -> None:
         pass
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         pass
 
 
@@ -420,13 +420,13 @@ class AutomoleDebugController:
     def __init__(self) -> None:
         pass
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         pass
 
-    def pre_key(self, editor, key):
+    def pre_key(self, editor, key) -> None:
         pass
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         pass
 
 
@@ -470,7 +470,7 @@ class Controller:
 
         self._reset_logger_new_image(editor)
 
-    def on_mouse_event(self, editor, event):
+    def on_mouse_event(self, editor, event) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -492,7 +492,7 @@ class Controller:
             )
         )
 
-    def on_key(self, editor, key):
+    def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -564,7 +564,7 @@ class Controller:
         self.current_controller.on_key(editor, key)
 
 
-def process_args(args):
+def process_args(args) -> None:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

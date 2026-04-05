@@ -14,7 +14,7 @@ import mel.lib.image
 import mel.lib.moleimaging
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "PATH",
         nargs="+",
@@ -168,7 +168,7 @@ def load_comparison_image(path, min_compare_age_days, use_last_changed):
     return micro_path, mel.lib.image.load_image(micro_path)
 
 
-def process_args(args):
+def process_args(args) -> None:
     cap = cv2.VideoCapture(args.video_device_index)
     if not cap.isOpened():
         msg = "Could not open video capture device."
@@ -189,7 +189,9 @@ def process_args(args):
             )
 
 
-def process_path(mole_path, min_compare_age_days, display, cap, use_last_changed):
+def process_path(
+    mole_path, min_compare_age_days, display, cap, use_last_changed
+) -> None:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

@@ -18,7 +18,7 @@ def load_image(path):
     return image
 
 
-def save_image(image, path):
+def save_image(image, path) -> None:
     """Save image to path, respecting file permissions.
 
     Args:

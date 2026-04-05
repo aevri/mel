@@ -12,7 +12,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "FROM_FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles_tree,
@@ -32,7 +32,7 @@ def setup_parser(parser):
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
 
-def process_args(args):
+def process_args(args) -> None:
     from_to_pairs = _pair_off_inputs(args.FROM_FRAMES, args.TO_FRAMES)
     num_matches = 0
     num_missing = 0
@@ -100,7 +100,7 @@ def _zip_samelen(*args: collections.abc.Iterable) -> collections.abc.Generator:
         yield tuple(values)
 
 
-def print_items(common_path, items, label):
+def print_items(common_path, items, label) -> None:
     for i in items:
         print(f"{label}: {common_path}: {i}")
 

@@ -40,7 +40,7 @@ class Notification:
     def format(self, _detail_level):
         return str(self.path)
 
-    def hint(self):
+    def hint(self) -> None:
         return None
 
 
@@ -173,10 +173,10 @@ class MicroMissingIdInfo(InfoNotification):
     def __init__(self, path) -> None:
         super().__init__(path)
 
-    def format(self, _detail_level):
+    def format(self, _detail_level) -> str:
         return f"{self.path}"
 
-    def hint(self):
+    def hint(self) -> str:
         return (
             "Copy the id from the appropriate rotomap, or "
             "use e.g. `uuidgen` to generate a new id."
@@ -283,7 +283,7 @@ class RotomapMissingSpaceInfo(InfoNotification):
         return output
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument("PATH", nargs="?")
     parser.add_argument("--detail", "-d", action="count", default=0)
     parser.add_argument("--trivia", "-t", action="count", default=0)
@@ -349,7 +349,7 @@ def process_args(args):
     return any_notices
 
 
-def print_klass_to_notices(klass_to_notices, detail_level, fore):
+def print_klass_to_notices(klass_to_notices, detail_level, fore) -> None:
     for klass, notice_list in klass_to_notices.items():
         print()
         print(fore, klass.__name__, colorama.Fore.RESET)
@@ -362,7 +362,7 @@ def print_klass_to_notices(klass_to_notices, detail_level, fore):
                 print(textwrap.indent(textwrap.fill(hint), "  "))
 
 
-def check_rotomaps(path, notices, importance_level):
+def check_rotomaps(path, notices, importance_level) -> None:
     parts_path = path / "parts"
     if parts_path.exists():
         # So far I've organised parts like so:
@@ -399,7 +399,7 @@ def check_rotomaps(path, notices, importance_level):
         notices.append(NoBaseDirInfo(parts_path))
 
 
-def check_rotomap_minor_part(path, notices, importance_level):
+def check_rotomap_minor_part(path, notices, importance_level) -> None:
     rotomap_list = make_rotomap_list(path, notices)
     check_rotomap_list(notices, rotomap_list)
 
@@ -437,7 +437,7 @@ def uuids_from_dir(rotomap_dir):
     return uuid_set
 
 
-def check_rotomap_list(notices, rotomap_list):
+def check_rotomap_list(notices, rotomap_list) -> None:
     if len(rotomap_list) < 2:
         return
 
@@ -480,7 +480,7 @@ def check_rotomap_list(notices, rotomap_list):
         notices.append(missing_notification)
 
 
-def check_rotomap(notices, rotomap, importance_level):
+def check_rotomap(notices, rotomap, importance_level) -> None:
     unconfirmed = RotomapUnconfirmedMoleInfo(rotomap.path)
     duplicates = RotomapDuplicateUuidError(rotomap.path)
 
@@ -529,7 +529,7 @@ def check_rotomap(notices, rotomap, importance_level):
             notices.append(missing_space_info)
 
 
-def check_newest_rotomap(notices, rotomap):
+def check_newest_rotomap(notices, rotomap) -> None:
     missing_unchanged_status = RotomapMissingLesionUnchangedStatus(rotomap.path)
 
     changed = RotomapLesionChangedAlert(rotomap.path)
@@ -571,7 +571,7 @@ def check_newest_rotomap(notices, rotomap):
         notices.append(changed)
 
 
-def check_micro(path, notices):
+def check_micro(path, notices) -> None:
     parts_path = path / "data"
     if parts_path.exists():
         # So far I've organised parts like so:

@@ -280,7 +280,7 @@ def save_contextual_similarity_heatmap(
     similarities,
     patches_per_side,
     filename,
-):
+) -> None:
     """Save a heatmap of cosine similarities for each context window patch.
 
     Args:
