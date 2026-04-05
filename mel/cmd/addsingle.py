@@ -6,7 +6,7 @@ import mel.lib.common
 import mel.lib.image
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     mel.lib.common.add_context_detail_arguments(parser)
 
     parser.add_argument(
@@ -17,7 +17,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
@@ -67,7 +67,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2015-2018 Angelos Evripiotis.
+# Copyright (C) 2015-2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

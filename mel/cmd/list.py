@@ -12,7 +12,7 @@ import mel.micro.fs
 _DEFAULT_NO_RECENT_DAYS = 15
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--only-no-micro",
         action="store_true",
@@ -80,7 +80,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     for mole in _yield_mole_dirs(".", args):
         mole_data = {
             "relpath": mole.refrelpath,

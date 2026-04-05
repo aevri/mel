@@ -21,16 +21,16 @@ import mel.rotomap.relate
 
 
 class Test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         pass
 
-    def test_a_breathing(self):
+    def test_a_breathing(self) -> None:
         pass
 
-    def test_b_pick_value_from_field(self):
+    def test_b_pick_value_from_field(self) -> None:
 
         value, error = mel.rotomap.relate.pick_value_from_field(
             np.array([0, 0]), [(np.array([0, 0]), [1, 2])]

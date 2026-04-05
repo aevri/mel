@@ -7,7 +7,7 @@ class GlobalContext:
     def __init__(self) -> None:
         self._image = None
 
-    def arrow(self, from_, to):
+    def arrow(self, from_, to) -> None:
         if self._image is None:
             return
         cv2.arrowedLine(
@@ -19,7 +19,7 @@ class GlobalContext:
             cv2.LINE_AA,
         )
 
-    def circle(self, point, radius):
+    def circle(self, point, radius) -> None:
         if self._image is None:
             return
         cv2.circle(

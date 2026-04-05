@@ -19,7 +19,7 @@ import mel.rotomap.fake
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "PATH", help="Where to create this generated repo.", type=pathlib.Path
     )
@@ -39,7 +39,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     melroot = args.PATH
     if not melroot.exists():
         melroot.mkdir(parents=False)
@@ -83,7 +83,7 @@ def process_args(args):
                 mel.rotomap.moles.save_image_moles(visible_moles, image_path)
 
 
-def make_fake_micro(melroot):
+def make_fake_micro(melroot) -> None:
     micro_parts_path = melroot / "micro" / "data"
     micro_parts_path.mkdir(parents=True)
 

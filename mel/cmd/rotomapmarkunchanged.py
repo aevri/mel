@@ -3,7 +3,7 @@
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
@@ -12,7 +12,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     changed_count = 0
 
     for rotomap in args.ROTOMAP:
@@ -34,7 +34,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

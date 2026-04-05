@@ -4,7 +4,7 @@ import os
 import warnings
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--epochs",
         "-e",
@@ -66,7 +66,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int | None:
     # Some of are expensive imports, so to keep program start-up time lower,
     # import them only when necessary.
     import pytorch_lightning as pl

@@ -7,7 +7,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "IMAGES", nargs="+", help="A list of paths to images to automark."
     )
@@ -34,7 +34,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> None:
     for path in args.IMAGES:
         if args.verbose:
             print(path)
@@ -56,7 +56,8 @@ def process_args(args):
 
 
 # -----------------------------------------------------------------------------
-# Copyright (C) 2018 Angelos Evripiotis.
+# Copyright (C) 2018, 2026 Angelos Evripiotis.
+# Generated with assistance from Claude Code.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

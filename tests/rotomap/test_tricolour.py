@@ -9,16 +9,16 @@ import mel.rotomap.tricolour
 
 
 class Test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         pass
 
-    def test_a_breathing(self):
+    def test_a_breathing(self) -> None:
         pass
 
-    def test_b_rotate_bounds(self):
+    def test_b_rotate_bounds(self) -> None:
         assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 0) == [1, 2, 3]
         assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 1) == [2, 3, 1]
         assert mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 2) == [3, 1, 2]
@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
         with pytest.raises(ValueError, match="n must be less than list len"):
             mel.rotomap.tricolour.list_rotated_left([1, 2, 3], 4)
 
-    def test_c_yield_triband_mapping(self):
+    def test_c_yield_triband_mapping(self) -> None:
         num_colours = 9
         mapping = list(
             mel.rotomap.tricolour.yield_triband_mapping_in_distinctive_order(

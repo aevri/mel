@@ -108,7 +108,7 @@ class MoleClassifier(torch.nn.Module):
         layers.append(torch.nn.Linear(prev_dim, num_classes))
         self.layers = torch.nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.layers(x)
 
 
@@ -276,7 +276,7 @@ def _train_classifier(
     return model
 
 
-def setup_parser(parser):
+def setup_parser(parser) -> None:
     parser.add_argument(
         "--reference",
         "-r",
@@ -375,7 +375,7 @@ def setup_parser(parser):
     )
 
 
-def process_args(args):
+def process_args(args) -> int:
     ref_paths = args.reference
     tgt_paths = args.target
     dino_size = args.dino_size
