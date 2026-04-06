@@ -3,12 +3,12 @@
 import numpy as np
 
 
-def normalized(v) -> np.ndarray:
+def normalized(v: np.ndarray) -> np.ndarray:
     assert is_vec3(v)
     return v / mag(v)
 
 
-def mag(v) -> np.ndarray:
+def mag(v: np.ndarray) -> np.ndarray:
     """Return the length of the supplied vector.
 
     >>> x = make(1, 0, 0)
@@ -35,7 +35,7 @@ def mag(v) -> np.ndarray:
     return np.sqrt(mag_sq(v))
 
 
-def mag_sq(v) -> np.ndarray:
+def mag_sq(v: np.ndarray) -> np.ndarray:
     """Return the squared length of the supplied vector.
 
     >>> x = make(1, 0, 0)
@@ -62,7 +62,7 @@ def mag_sq(v) -> np.ndarray:
     return dot(v, v)
 
 
-def dot(a, b) -> np.ndarray:
+def dot(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Return the dot products of all the vectors in x and y.
 
     >>> x = make(1, 0, 0)
@@ -95,7 +95,7 @@ def dot(a, b) -> np.ndarray:
     return (xcol(a) * xcol(b)) + (ycol(a) * ycol(b)) + (zcol(a) * zcol(b))
 
 
-def xcol(v) -> np.ndarray:
+def xcol(v: np.ndarray) -> np.ndarray:
     """Return the x column of the supplied vectors.
 
     Ensure that they still broadcast.
@@ -107,7 +107,7 @@ def xcol(v) -> np.ndarray:
     return v[:, 0:1]
 
 
-def ycol(v) -> np.ndarray:
+def ycol(v: np.ndarray) -> np.ndarray:
     """Return the y column of the supplied vectors.
 
     Ensure that they still broadcast.
@@ -119,7 +119,7 @@ def ycol(v) -> np.ndarray:
     return v[:, 1:2]
 
 
-def zcol(v) -> np.ndarray:
+def zcol(v: np.ndarray) -> np.ndarray:
     """Return the z column of the supplied vectors.
 
     Ensure that they still broadcast.
@@ -131,7 +131,7 @@ def zcol(v) -> np.ndarray:
     return v[:, 2:3]
 
 
-def xval(v) -> int:
+def xval(v: np.ndarray) -> int:
     """Return the scalar x value of a single vector.
 
     >>> xval(make(1, 2, 3))
@@ -142,7 +142,7 @@ def xval(v) -> int:
     return int(v[0, 0])  # Convert np.int64 to plain Python int
 
 
-def yval(v) -> int:
+def yval(v: np.ndarray) -> int:
     """Return the scalar y value of a single vector.
 
     >>> yval(make(1, 2, 3))
@@ -153,7 +153,7 @@ def yval(v) -> int:
     return int(v[0, 1])  # Convert np.int64 to plain Python int
 
 
-def zval(v) -> int:
+def zval(v: np.ndarray) -> int:
     """Return the scalar z value of a single vector.
 
     >>> zval(make(1, 2, 3))
@@ -164,7 +164,9 @@ def zval(v) -> int:
     return int(v[0, 2])  # Convert np.int64 to plain Python int
 
 
-def make_from_columns(x_array, y_array, z_array) -> np.ndarray:
+def make_from_columns(
+    x_array: np.ndarray, y_array: np.ndarray, z_array: np.ndarray | float
+) -> np.ndarray:
     """Given arrays for x, y, and z values, make them into an array of vectors.
 
     >>> x_array = np.array([1, 2])
@@ -177,7 +179,7 @@ def make_from_columns(x_array, y_array, z_array) -> np.ndarray:
     return np.column_stack([x_array, y_array, z_array])
 
 
-def zeros(num_vectors=1) -> np.ndarray:
+def zeros(num_vectors: int = 1) -> np.ndarray:
     """Return an array of vectors set to zero.
 
     >>> zeros()
@@ -190,7 +192,7 @@ def zeros(num_vectors=1) -> np.ndarray:
     return np.zeros((num_vectors, 3))
 
 
-def count(v) -> int:
+def count(v: np.ndarray) -> int:
     """Return the number of vectors in 'v'.
 
     >>> count(zeros(1))
@@ -202,11 +204,11 @@ def count(v) -> int:
     return v.shape[0]
 
 
-def is_vec3(v) -> bool:
+def is_vec3(v: np.ndarray) -> bool:
     return v.ndim == 2 and v.shape[0] > 0 and v.shape[1] == 3
 
 
-def make(x, y, z) -> np.ndarray:
+def make(x: float, y: float, z: float) -> np.ndarray:
     return np.array([[x, y, z]])
 
 

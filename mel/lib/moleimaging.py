@@ -1,6 +1,7 @@
 """Routines for analysing images of moles."""
 
 import math
+from collections.abc import Sequence
 
 import cv2
 import numpy as np
@@ -9,7 +10,7 @@ import mel.lib.image
 import mel.lib.math
 
 
-def find_mole(frame) -> tuple[np.ndarray, tuple | None]:
+def find_mole(frame: np.ndarray) -> tuple[np.ndarray, tuple | None]:
     # look for areas of high saturation, they are likely moles
     img = frame.copy()
     img = cv2.blur(img, (40, 40))
@@ -20,21 +21,21 @@ def find_mole(frame) -> tuple[np.ndarray, tuple | None]:
     return ringed, stats
 
 
-def calc_hist(image, channel, mask) -> list[float]:
+def calc_hist(image: np.ndarray, channel: int, mask: np.ndarray | None) -> list[float]:
     hist = cv2.calcHist([image], [channel], mask, [8], [0, 256])
     hist = [int(x[0]) for x in hist]
     hist_sum = sum(hist)
     return [100 * x / hist_sum for x in hist]
 
 
-def log10_zero(x) -> float:
+def log10_zero(x: float) -> float:
     """Return the log10 of x, map log10(0) -> 0."""
     if x == 0:
         return 0
     return math.log10(x)
 
 
-def biggest_contour(image) -> np.ndarray:
+def biggest_contour(image: np.ndarray) -> np.ndarray:
     contours, _ = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
@@ -67,7 +68,7 @@ def biggest_contour(image) -> np.ndarray:
 
 
 def process_contours(
-    mole_regions, original
+    mole_regions: np.ndarray, original: np.ndarray
 ) -> tuple[np.ndarray, tuple | None, tuple | None]:
     final = original.copy()
     stats = None
@@ -108,7 +109,9 @@ def process_contours(
     return final, stats, ellipse
 
 
-def find_mole_contour(contours, width_height) -> tuple[np.ndarray | None, float | None]:
+def find_mole_contour(
+    contours: Sequence[np.ndarray | None], width_height: tuple[int, ...]
+) -> tuple[np.ndarray | None, float | None]:
     centre = (
         width_height[0] // 2,
         width_height[1] // 2,
@@ -145,7 +148,7 @@ class MoleAcquirer:
         self._last_stats = None
         self._last_stats_diff = None
 
-    def update(self, stats) -> None:
+    def update(self, stats: tuple | None) -> None:
         if stats and self._last_stats:
             stats_diff = list(map(lambda x, y: x - y, self._last_stats, stats))
 
@@ -188,11 +191,13 @@ class MoleAcquirer:
         return self._is_locked
 
 
-def point_to_int_point(point) -> tuple[int, int]:
+def point_to_int_point(point: Sequence[float] | np.ndarray) -> tuple[int, int]:
     return (int(point[0]), int(point[1]))
 
 
-def rotate_point_around_pivot(point, pivot, degrees) -> tuple[float, float]:
+def rotate_point_around_pivot(
+    point: tuple[float, float], pivot: tuple[float, float], degrees: float
+) -> tuple[float, float]:
     centre_point = (point[0] - pivot[0], point[1] - pivot[1])
     theta = degrees * (math.pi / 180.0)
     rotated_point = (
@@ -202,18 +207,34 @@ def rotate_point_around_pivot(point, pivot, degrees) -> tuple[float, float]:
     return (rotated_point[0] + pivot[0], rotated_point[1] + pivot[1])
 
 
-def draw_vertical_lines(image, left, top, right, bottom, color, width) -> None:
+def draw_vertical_lines(
+    image: np.ndarray,
+    left: int,
+    top: int,
+    right: int,
+    bottom: int,
+    color: tuple[int, int, int],
+    width: int,
+) -> None:
     cv2.line(image, (left, top), (left, bottom), color, width)
     cv2.line(image, (right, top), (right, bottom), color, width)
 
 
-def draw_horizontal_lines(image, left, top, right, bottom, color, width) -> None:
+def draw_horizontal_lines(
+    image: np.ndarray,
+    left: int,
+    top: int,
+    right: int,
+    bottom: int,
+    color: tuple[int, int, int],
+    width: int,
+) -> None:
     cv2.line(image, (left, top), (right, top), color, width)
     cv2.line(image, (left, bottom), (right, bottom), color, width)
 
 
 def annotate_image(
-    original, is_rot_sensitive
+    original: np.ndarray, *, is_rot_sensitive: bool
 ) -> tuple[bool, tuple[int, int] | None, float | None]:
     is_aligned = False
     center_xy = None
@@ -316,21 +337,23 @@ def annotate_image(
     return is_aligned, center_xy, angle_degs
 
 
-def find_mole_ellipse(original, centre, radius) -> tuple | None:
+def find_mole_ellipse(
+    original: np.ndarray, centre: np.ndarray, radius: int
+) -> tuple | None:
     lefttop = centre - (radius, radius)
     rightbottom = centre + (radius + 1, radius + 1)  # noqa: RUF005
 
-    original = mel.lib.image.slice_square_or_none(original, lefttop, rightbottom)
+    sliced = mel.lib.image.slice_square_or_none(original, lefttop, rightbottom)
 
-    if original is None:
+    if sliced is None:
         return None
 
-    image = original[:]
+    image = sliced[:]
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = cv2.split(image)[1]
     image = cv2.equalizeHist(image)
     image = cv2.threshold(image, 252, 255, cv2.THRESH_BINARY)[1]
-    image, _, ellipse = process_contours(image, original)
+    image, _, ellipse = process_contours(image, sliced)
 
     if ellipse:
         ellipse = (

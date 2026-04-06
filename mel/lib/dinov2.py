@@ -1,15 +1,27 @@
 """DINOv2 model loading and feature extraction utils for semantic matching."""
 
 import typing
+from collections.abc import Callable
 
 import cv2
 import numpy as np
 
 if typing.TYPE_CHECKING:
     import torch
+    import torch.nn
+
+    class _FeatureExtractorProtocol(typing.Protocol):
+        def extract_contextual_patch_features(
+            self,
+            x: "torch.Tensor",
+            center_patch_idx: int | None = None,
+        ) -> "torch.Tensor": ...
+
+    class _PatchFeatureExtractorProtocol(typing.Protocol):
+        def extract_patch_features(self, x: "torch.Tensor") -> "torch.Tensor": ...
 
 
-def load_dinov2_model(dino_size="base") -> tuple:
+def load_dinov2_model(dino_size: str = "base") -> tuple:
     """Load the DINOv2 model for semantic feature extraction with context.
 
     Args:
@@ -46,12 +58,12 @@ def load_dinov2_model(dino_size="base") -> tuple:
 
         # Create a wrapper to extract patch tokens for context-aware matching
         class ContextualFeatureExtractor:
-            def __init__(self, model) -> None:
+            def __init__(self, model: "torch.nn.Module") -> None:
                 self.model = model
                 self.model.eval()
 
             def extract_contextual_patch_features(
-                self, x, center_patch_idx=None
+                self, x: "torch.Tensor", center_patch_idx: int | None = None
             ) -> "torch.Tensor":
                 """Extract contextual patch features.
 
@@ -70,13 +82,19 @@ def load_dinov2_model(dino_size="base") -> tuple:
                 # Use forward hook to capture patch tokens with full context
                 patch_features = []
 
-                def hook_fn(_module, _input_tensor, output) -> None:
+                def hook_fn(
+                    _module: "torch.nn.Module",
+                    _input_tensor: tuple,
+                    output: "torch.Tensor",
+                ) -> None:
                     if hasattr(output, "shape") and len(output.shape) == 3:
                         patch_features.append(output)
 
                 # Register hook on the normalization layer to get
                 # contextualized features
-                hook = self.model.norm.register_forward_hook(hook_fn)
+                norm_layer = self.model.norm
+                assert isinstance(norm_layer, torch.nn.Module)
+                hook = norm_layer.register_forward_hook(hook_fn)
 
                 try:
                     # Run forward pass to get contextualized features
@@ -116,7 +134,13 @@ def load_dinov2_model(dino_size="base") -> tuple:
 
 
 def extract_contextual_patch_feature(
-    image, center_x, center_y, context_size, model, transform, feature_dim
+    image: np.ndarray,
+    center_x: int,
+    center_y: int,
+    context_size: int,
+    model: "_FeatureExtractorProtocol",
+    transform: Callable[..., "torch.Tensor"],
+    feature_dim: int,
 ) -> "torch.Tensor":
     """Extract contextual patch feature from a large context window.
 
@@ -196,7 +220,13 @@ def extract_contextual_patch_feature(
 
 
 def extract_all_contextual_features(
-    image, center_x, center_y, context_size, model, transform, feature_dim
+    image: np.ndarray,
+    center_x: int,
+    center_y: int,
+    context_size: int,
+    model: "_FeatureExtractorProtocol",
+    transform: Callable[..., "torch.Tensor"],
+    feature_dim: int,
 ) -> "torch.Tensor":
     """Extract features for all patches in a context window.
 
@@ -278,13 +308,13 @@ def extract_all_contextual_features(
 
 
 def save_contextual_similarity_heatmap(
-    image,
-    center_x,
-    center_y,
-    context_size,
-    similarities,
-    patches_per_side,
-    filename,
+    image: np.ndarray,
+    center_x: int,
+    center_y: int,
+    context_size: int,
+    similarities: "torch.Tensor",
+    patches_per_side: int,
+    filename: str,
 ) -> None:
     """Save a heatmap of cosine similarities for each context window patch.
 
@@ -364,7 +394,7 @@ def save_contextual_similarity_heatmap(
         blended = cv2.addWeighted(context_area, 0.7, heatmap_colored, 0.3, 0)
 
         # Find and mark the best match location
-        best_patch_idx = torch.argmax(similarities).item()
+        best_patch_idx = int(torch.argmax(similarities).item())
         best_patch_row = best_patch_idx // patches_per_side
         best_patch_col = best_patch_idx % patches_per_side
 
@@ -417,17 +447,17 @@ def save_contextual_similarity_heatmap(
 
 
 def find_best_contextual_match(
-    src_center_features,
-    tgt_image,
-    center_x,
-    center_y,
-    context_size,
-    model,
-    transform,
-    feature_dim,
+    src_center_features: "torch.Tensor",
+    tgt_image: np.ndarray,
+    center_x: int,
+    center_y: int,
+    context_size: int,
+    model: "_FeatureExtractorProtocol",
+    transform: Callable[..., "torch.Tensor"],
+    feature_dim: int,
     *,
-    debug_images=False,
-    uuid=None,
+    debug_images: bool = False,
+    uuid: str | None = None,
 ) -> tuple:
     """Find best match using contextual semantic features.
 
@@ -530,7 +560,12 @@ def find_best_contextual_match(
 
 
 def extract_patch_features(
-    image, center_x, center_y, patch_size, model, transform
+    image: np.ndarray,
+    center_x: int,
+    center_y: int,
+    patch_size: int,
+    model: "_PatchFeatureExtractorProtocol",
+    transform: Callable[..., "torch.Tensor"],
 ) -> "torch.Tensor":
     """Extract DINOv2 CLS token from a patch at the given center."""
     # Import this as lazily as possible as it takes a while to import, so that

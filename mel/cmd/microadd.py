@@ -1,5 +1,6 @@
 """Capture images from an attached microscope and add to existing moles."""
 
+import argparse
 import datetime
 import os
 import pathlib
@@ -14,7 +15,7 @@ import mel.lib.image
 import mel.lib.moleimaging
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "PATH",
         nargs="+",
@@ -53,7 +54,7 @@ def setup_parser(parser) -> None:
     # Compare at least 180 days back, if possible.
 
 
-def get_context_image_name(path) -> str | None:
+def get_context_image_name(path: str) -> str | None:
     # Paths should alpha-sort to recent last, pick the first jpg
     children = sorted((p.name for p in pathlib.Path(path).iterdir()), reverse=True)
     for name in children:
@@ -64,7 +65,7 @@ def get_context_image_name(path) -> str | None:
     return None
 
 
-def get_dirs_to_path(path_in) -> list[str]:
+def get_dirs_to_path(path_in: str) -> list[str]:
     """Return a list of the intermediate paths between cwd and path.
 
     Raise if path is not below the current working directory (cwd).
@@ -90,7 +91,7 @@ def get_dirs_to_path(path_in) -> list[str]:
     return path_list
 
 
-def load_context_images(path) -> list:
+def load_context_images(path: str) -> list:
     image_list = []
     path_list = get_dirs_to_path(path)
     for dir_path in path_list:
@@ -101,7 +102,11 @@ def load_context_images(path) -> list:
 
 
 def pick_comparison_path(
-    path, path_list, min_compare_age_days, use_last_changed
+    path: str,
+    path_list: list[str],
+    min_compare_age_days: int | None,
+    *,
+    use_last_changed: bool,
 ) -> str | None:
     """Return the most appropriate image path to compare with, or None."""
     # Check for the __last_changed__ file if the --last-changed flag is used
@@ -150,7 +155,7 @@ def pick_comparison_path(
 
 
 def get_comparison_image_path(
-    path, min_compare_age_days, use_last_changed
+    path: str, min_compare_age_days: int | None, *, use_last_changed: bool
 ) -> str | None:
     micro_path = pathlib.Path(path) / "__micro__"
     if not micro_path.exists():
@@ -159,20 +164,26 @@ def get_comparison_image_path(
     # List all the 'jpg' files in the micro dir
     # TODO: support more than just '.jpg'
     images = [p.name for p in micro_path.iterdir() if p.name.lower().endswith(".jpg")]
-    path = pick_comparison_path(path, images, min_compare_age_days, use_last_changed)
-    if path:
-        return str(micro_path / path)
+    comparison = pick_comparison_path(
+        path, images, min_compare_age_days, use_last_changed=use_last_changed
+    )
+    if comparison:
+        return str(micro_path / comparison)
     return None
 
 
-def load_comparison_image(path, min_compare_age_days, use_last_changed) -> tuple | None:
-    micro_path = get_comparison_image_path(path, min_compare_age_days, use_last_changed)
+def load_comparison_image(
+    path: str, min_compare_age_days: int | None, *, use_last_changed: bool
+) -> tuple | None:
+    micro_path = get_comparison_image_path(
+        path, min_compare_age_days, use_last_changed=use_last_changed
+    )
     if micro_path is None:
         return None
     return micro_path, mel.lib.image.load_image(micro_path)
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     cap = cv2.VideoCapture(args.video_device_index)
     if not cap.isOpened():
         msg = "Could not open video capture device."
@@ -189,19 +200,24 @@ def process_args(args) -> None:
                 args.min_compare_age_days,
                 display,
                 cap,
-                args.last_changed,
+                use_last_changed=args.last_changed,
             )
 
 
 def process_path(
-    mole_path, min_compare_age_days, display, cap, use_last_changed
+    mole_path: str,
+    min_compare_age_days: int | None,
+    display: mel.lib.fullscreenui.MultiImageDisplay,
+    cap: cv2.VideoCapture,
+    *,
+    use_last_changed: bool,
 ) -> None:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame
 
     comparison_image_data = load_comparison_image(
-        mole_path, min_compare_age_days, use_last_changed
+        mole_path, min_compare_age_days, use_last_changed=use_last_changed
     )
 
     comparison_image = None
@@ -279,7 +295,12 @@ def process_path(
     mel.lib.common.write_image(file_path, preview)
 
 
-def capture(cap, display, capindex, mole_acquirer) -> np.ndarray:
+def capture(
+    cap: cv2.VideoCapture,
+    display: mel.lib.fullscreenui.MultiImageDisplay,
+    capindex: int,
+    mole_acquirer: mel.lib.moleimaging.MoleAcquirer,
+) -> np.ndarray:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
     import pygame

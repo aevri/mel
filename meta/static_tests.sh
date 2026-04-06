@@ -13,7 +13,7 @@ uv run ruff check --quiet mel/
 
 printf '.'
 uv run python -m vulture \
-    --ignore-names training_step,validation_step,configure_optimizers \
+    --ignore-names training_step,validation_step,configure_optimizers,_FeatureExtractorProtocol,_PatchFeatureExtractorProtocol \
     --exclude '*__t.py,mel/rotomap/detectmoles.py,mel/rotomap/identifynn.py' \
     mel/
 
