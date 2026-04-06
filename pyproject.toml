@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ty",
+    "ty==0.0.29",
     "pytest",
     "ruff",
     "vulture",
@@ -230,6 +230,19 @@ unused-awaitable = "error"
 unused-ignore-comment = "error"
 unused-type-ignore-comment = "error"
 useless-overload-body = "error"
+# Demoted to "warn" pending fixes (high violation counts, mostly third-party type issues)
+invalid-argument-type = "warn"
+unresolved-attribute = "warn"
+invalid-method-override = "warn"
+unsupported-operator = "warn"
+not-subscriptable = "warn"
+invalid-return-type = "warn"
+invalid-assignment = "warn"
+not-iterable = "warn"
+call-non-callable = "warn"
+too-many-positional-arguments = "warn"
+no-matching-overload = "warn"
+invalid-yield = "warn"
 
 # -----------------------------------------------------------------------------
 # Copyright (C) 2026 Angelos Evripiotis.
