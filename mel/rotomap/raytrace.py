@@ -26,7 +26,10 @@ def vec3_flat(v: np.ndarray) -> np.ndarray:
 
 
 def intersect_ray_sphere(
-    p_ray: np.ndarray, d_ray: np.ndarray, p_sph: np.ndarray, m_radius: float
+    p_ray: np.ndarray,
+    d_ray: np.ndarray,
+    p_sph: np.ndarray,
+    m_radius: float | np.ndarray,
 ) -> tuple:
     v_ray_to_sph = p_sph - p_ray
     m_ray_to_nearest = vec3.dot(d_ray, v_ray_to_sph)
@@ -41,7 +44,9 @@ def intersect_ray_sphere(
     return did_intersect, p_intersection
 
 
-def intersect_ray_at_z_pos(pos: np.ndarray, dir_: np.ndarray, z: float) -> np.ndarray:
+def intersect_ray_at_z_pos(
+    pos: np.ndarray, dir_: np.ndarray, z: float | np.ndarray
+) -> np.ndarray:
     z_target = z - vec3.zcol(pos)
     z_ratio = z_target / vec3.zcol(dir_)
     x = z_ratio * vec3.xcol(dir_) + vec3.xcol(pos)
@@ -50,7 +55,10 @@ def intersect_ray_at_z_pos(pos: np.ndarray, dir_: np.ndarray, z: float) -> np.nd
 
 
 def intersect_ray_cylinder(
-    p_ray: np.ndarray, d_ray: np.ndarray, p_cyl: np.ndarray, radius: float
+    p_ray: np.ndarray,
+    d_ray: np.ndarray,
+    p_cyl: np.ndarray,
+    radius: float | np.ndarray,
 ) -> tuple:
     # Roughen the edges a little.
     rng = np.random.default_rng()

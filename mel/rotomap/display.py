@@ -18,6 +18,11 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 import mel.rotomap.tricolour
 
+_ImageTransform = (
+    mel.lib.fullscreenui.FittedImageTransform
+    | mel.lib.fullscreenui.ZoomedImageTransform
+)
+
 DEFAULT_MASKER_RADIUS = 200
 
 _WHITE = (255, 255, 255)
@@ -95,7 +100,7 @@ class Display(mel.lib.fullscreenui.ZoomableMixin):
         image = mel.lib.image.montage_vertical(self._spacer_height, image, caption)
         self._image_display.show_opencv_image(image)
 
-    def set_title(self, title: str) -> None:
+    def set_title(self, title: str | pathlib.Path) -> None:
         self._title = title
 
 
@@ -112,7 +117,7 @@ def make_composite_overlay(
 
     """
 
-    def do_overlay(image: np.ndarray, transform: object) -> np.ndarray:
+    def do_overlay(image: np.ndarray, transform: _ImageTransform) -> np.ndarray:
         for o in overlays:
             image = o(image, transform)
         return image
@@ -124,7 +129,7 @@ class StatusOverlay:
     def __init__(self) -> None:
         self.text = ""
 
-    def __call__(self, image: np.ndarray, _transform: object) -> np.ndarray:
+    def __call__(self, image: np.ndarray, _transform: _ImageTransform) -> np.ndarray:
         if self.text:
             text_image = mel.lib.image.render_text_as_image(self.text)
             mel.lib.common.copy_image_into_image(text_image, image, 0, 0)
@@ -155,7 +160,7 @@ class MoleMarkerOverlay:
     def toggle_faded_markers(self) -> None:
         self._is_faded_markers = not self._is_faded_markers
 
-    def __call__(self, image: np.ndarray, transform: object) -> np.ndarray:
+    def __call__(self, image: np.ndarray, transform: _ImageTransform) -> np.ndarray:
         if not self._is_showing_markers:
             return image
 
@@ -195,12 +200,14 @@ class MarkedMoleOverlay:
     def set_highlight_uuid(self, highlight_uuid: str | None) -> None:
         self._highlight_uuid = highlight_uuid
 
-    def __call__(self, image: np.ndarray, transform: object) -> np.ndarray:
+    def __call__(self, image: np.ndarray, transform: _ImageTransform) -> np.ndarray:
         if self.is_accentuate_marked_mode:
             return self._draw_accentuated(image, transform)
         return self._draw_markers(image, transform)
 
-    def _draw_accentuated(self, image: np.ndarray, transform: object) -> np.ndarray:
+    def _draw_accentuated(
+        self, image: np.ndarray, transform: _ImageTransform
+    ) -> np.ndarray:
         # Reveal the moles that have been marked, whilst still showing
         # markers. This is good for verifying that markers are actually
         # positioned on moles.
@@ -259,7 +266,9 @@ class MarkedMoleOverlay:
 
         return image
 
-    def _draw_markers(self, image: np.ndarray, transform: object) -> np.ndarray:
+    def _draw_markers(
+        self, image: np.ndarray, transform: _ImageTransform
+    ) -> np.ndarray:
         # Hide the moles that have been marked, showing markers
         # distinctly from moles. This is good for marking moles that
         # haven't been marked, without worrying about the ones that
@@ -278,7 +287,7 @@ class BoundingAreaOverlay:
     def __init__(self) -> None:
         self.bounding_box = None
 
-    def __call__(self, image: np.ndarray, transform: object) -> np.ndarray:
+    def __call__(self, image: np.ndarray, transform: _ImageTransform) -> np.ndarray:
         image //= 2
         if self.bounding_box is not None:
             color = (0, 0, 255)
