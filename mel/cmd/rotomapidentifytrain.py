@@ -247,6 +247,7 @@ def process_args(args: argparse.Namespace) -> int | None:
         ),
     )
 
+    # ty can't narrow dict values through **kwargs unpacking
     trainer = pl.Trainer(**trainer_kwargs)  # ty: ignore[invalid-argument-type]
     if not valid_dataloader:
         valid_dataloader = None

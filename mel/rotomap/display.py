@@ -543,6 +543,7 @@ class Editor:
         if self.display.is_zoomed() and "ellipse" in self.moledata.metadata:
             pos = self.display.get_zoom_pos()
             ellipse = self.moledata.metadata["ellipse"]
+            # Ellipse from JSON metadata dict, typed as object not tuple
             pos = mel.lib.ellipsespace.Transform(ellipse).to_space(pos)  # ty: ignore[invalid-argument-type]
 
             transition_func()
@@ -550,6 +551,7 @@ class Editor:
 
             if "ellipse" in self.moledata.metadata:
                 ellipse = self.moledata.metadata["ellipse"]
+                # Ellipse from JSON metadata dict, typed as object
                 pos = mel.lib.ellipsespace.Transform(ellipse).from_space(pos)  # ty: ignore[invalid-argument-type]
                 self.display.set_zoomed(pos[0], pos[1])
         else:

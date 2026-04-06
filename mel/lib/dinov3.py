@@ -127,7 +127,7 @@ class Dinov3Model:
         image_tensor = transform(image_rgb).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            # Get intermediate features - this returns patch tokens
+            # torch.hub model typed as Module, lacks forward_features
             features = self.model.forward_features(image_tensor)  # ty: ignore[call-non-callable]
 
             # features shape: [batch, num_tokens, feature_dim]

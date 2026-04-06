@@ -239,6 +239,7 @@ class MoleEditController:
     def pre_key(self, editor, key) -> None:
         if self.sub_controller:
             with contextlib.suppress(AttributeError):
+                # Intentional duck typing, suppress handles missing attr
                 self.sub_controller.pre_key(editor, key)  # ty: ignore[unresolved-attribute]
 
     def on_key(self, editor, key) -> None:

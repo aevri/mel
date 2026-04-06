@@ -141,6 +141,7 @@ def make_argparse_image_moles(
         if path.is_file():
             yield path, load_image_moles(path)
         else:
+            # yield_mole_lists yields (str, list), generator typed (Path, list)
             yield from RotomapDirectory(path).yield_mole_lists()  # ty: ignore[invalid-yield]
     except ValueError as e:
         raise argparse.ArgumentTypeError(str(e)) from e

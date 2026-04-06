@@ -76,6 +76,7 @@ class MoleIdentifier:
             out_fields=self.out_fields,
         )
 
+        # RotomapsDataset doesn't inherit Dataset, but works at runtime
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)  # ty: ignore[invalid-argument-type]
         assert len(dataloader) == len(frame.moles)
 
@@ -414,6 +415,7 @@ def make_data(repo_path, data_config, channel_cache=None) -> tuple:
         msg = f"No data in validation dataset. Tried these rotomaps: {valid_rotomaps}"
         raise ValueError(msg)
 
+    # RotomapsDataset doesn't inherit Dataset, but works at runtime
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,  # ty: ignore[invalid-argument-type]
         batch_size=data_config["batch_size"],

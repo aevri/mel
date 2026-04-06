@@ -431,6 +431,7 @@ class ImageCompareDisplay:
 
         images = [
             captioned_mole_image(
+                # *tuple unpacking; ty can't verify arg count
                 *self._path_pos_zoom_rotation_moles(i),
                 image_size,  # ty: ignore[too-many-positional-arguments]
                 self._should_draw_crosshairs,
