@@ -36,8 +36,8 @@ class MoleDetector:
             ]
         )
 
-    def get_moles(self, frame: object) -> list[dict]:
-        image = load_image(frame.path)  # ty: ignore[unresolved-attribute]
+    def get_moles(self, frame: mel.rotomap.moles.RotomapFrame) -> list[dict]:
+        image = load_image(frame.path)
         image = self.image_transform(image)
 
         self.model.eval()
@@ -50,7 +50,9 @@ class MoleDetector:
         return moles
 
 
-def make_model(model_path: pathlib.Path | None = None) -> torch.nn.Module:
+def make_model(
+    model_path: pathlib.Path | None = None,
+) -> torchvision.models.detection.FasterRCNN:
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -159,15 +161,15 @@ class PlModule(pl.LightningModule):
         return torch.optim.AdamW(
             [
                 {
-                    "params": self.model.backbone.parameters(),  # ty: ignore[unresolved-attribute]
+                    "params": self.model.backbone.parameters(),
                     "lr": self.lr * 0.01,
                 },
                 {
-                    "params": self.model.rpn.parameters(),  # ty: ignore[unresolved-attribute]
+                    "params": self.model.rpn.parameters(),
                     "lr": self.lr * 1.0,
                 },
                 {
-                    "params": self.model.roi_heads.parameters(),  # ty: ignore[unresolved-attribute]
+                    "params": self.model.roi_heads.parameters(),
                     "lr": self.lr * 1.0,
                 },
             ],

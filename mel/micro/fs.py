@@ -6,21 +6,21 @@ import pathlib
 import typing
 
 
-class Mole(typing.NamedTuple):
-    abspath: object
-    path: object
-    refrelpath: object
-    id: object
-    need_assistance: object
-    context_image_name_tuple_tuple: object  # The most local paths appear last
-    micro_image_details: object
-    last_micro: object
-    last_micro_age_days: object
-
-
 class MicroImageDetail(typing.NamedTuple):
-    name: object
-    datetime: object
+    name: str
+    datetime: datetime.datetime
+
+
+class Mole(typing.NamedTuple):
+    abspath: pathlib.Path
+    path: pathlib.Path
+    refrelpath: pathlib.Path
+    id: str | None
+    need_assistance: bool
+    context_image_name_tuple_tuple: tuple  # The most local paths appear last
+    micro_image_details: tuple[MicroImageDetail, ...]
+    last_micro: str | None
+    last_micro_age_days: int | None
 
 
 class Names:
@@ -103,7 +103,7 @@ def _extend_context_image_name_tuple_tuple(
     return context_image_name_tuple_tuple
 
 
-def _list_micro_dir_if_exists(path: pathlib.Path) -> tuple:
+def _list_micro_dir_if_exists(path: pathlib.Path) -> tuple[MicroImageDetail, ...]:
     if not path.exists():
         return ()
 
@@ -141,14 +141,16 @@ def calc_micro_datetime(micro_image_name: str) -> datetime.datetime:
     )
 
 
-def calc_last_micro(micro_image_details: tuple) -> str | None:
+def calc_last_micro(micro_image_details: tuple[MicroImageDetail, ...]) -> str | None:
     if not micro_image_details:
         return None
 
     return micro_image_details[-1].name
 
 
-def calc_last_micro_age_days(micro_image_details: tuple) -> int | None:
+def calc_last_micro_age_days(
+    micro_image_details: tuple[MicroImageDetail, ...],
+) -> int | None:
     if not micro_image_details:
         return None
 

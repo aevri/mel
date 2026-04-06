@@ -214,9 +214,9 @@ class Evaluator:
         import torch
 
         self.threshold = threshold
-        self.num_moles = 0
-        self.num_predicted_moles = 0
-        self.num_moles_correct = 0
+        self.num_moles = torch.tensor(0)
+        self.num_predicted_moles = torch.tensor(0)
+        self.num_moles_correct = torch.tensor(0)
 
         self.softmax = torch.nn.Softmax(dim=1)
 
@@ -230,13 +230,13 @@ class Evaluator:
         if not self.num_predicted_moles:
             msg = "No predicted moles."
             raise ValueError(msg)
-        return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()  # ty: ignore[unresolved-attribute]
+        return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()
 
     def recall(self) -> float:
         if not self.num_moles:
             msg = "No moles."
             raise ValueError(msg)
-        return 100 * self.num_moles_correct.item() / self.num_moles.item()  # ty: ignore[unresolved-attribute]
+        return 100 * self.num_moles_correct.item() / self.num_moles.item()
 
 
 def make_model(num_features) -> torch.nn.Linear:

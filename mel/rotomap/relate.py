@@ -271,7 +271,8 @@ def nearest_uuid_point(point: np.ndarray, uuid_points: dict) -> tuple:
         if nearest_sqdist is None or sqdist < nearest_sqdist:
             nearest_sqdist = sqdist
             nearest_uuid = uuid_
-    return nearest_uuid, np.sqrt(nearest_sqdist)  # ty: ignore[no-matching-overload]
+    assert nearest_sqdist is not None
+    return nearest_uuid, np.sqrt(nearest_sqdist)
 
 
 def pick_value_from_field(point: np.ndarray, point_values: list) -> tuple:
@@ -422,7 +423,7 @@ def _nearest_mole_index_to_point(point: np.ndarray, mole_list: list) -> tuple:
         dist_sq = mel.lib.math.distance_sq_2d(
             tuple(point), tuple(mel.rotomap.moles.mole_to_point(mole))
         )
-        if best_index is None or dist_sq < best_dist_sq:  # ty: ignore[unsupported-operator]
+        if best_index is None or best_dist_sq is None or dist_sq < best_dist_sq:
             best_index = i
             best_dist_sq = dist_sq
     return best_index, best_dist_sq
