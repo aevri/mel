@@ -301,6 +301,7 @@ class ZoomableMixin:
             self._transform = FittedImageTransform(image, window_rect)
 
     def zoomable_transform_render(self) -> np.ndarray:
+        assert self._transform is not None
         return self._transform.render()
 
     def set_fitted(self) -> None:
@@ -324,9 +325,11 @@ class ZoomableMixin:
         if not self.is_zoomed():
             msg = "Not zoomed"
             raise RuntimeError(msg)
+        assert self._zoom_pos is not None
         return self._zoom_pos
 
     def windowxy_to_imagexy(self, window_x, window_y) -> np.ndarray:
+        assert self._transform is not None
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
 

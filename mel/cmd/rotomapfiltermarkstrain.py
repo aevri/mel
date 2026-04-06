@@ -14,16 +14,16 @@ import mel.rotomap.filtermarks
 
 def proportion_arg(x: str) -> float:
     try:
-        x = float(x)
+        result = float(x)
     except ValueError as e:
         msg = f"'{x}' is not a float"
         raise argparse.ArgumentTypeError(msg) from e
 
-    if not (0.0 < x <= 1.0):
+    if not (0.0 < result <= 1.0):
         msg = f"'{x}' is not in range 0.0 < x <= 1.0"
         raise argparse.ArgumentTypeError(msg)
 
-    return x
+    return result
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:

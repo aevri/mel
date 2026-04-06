@@ -80,7 +80,7 @@ def process_contours(
 
     ellipse = None
 
-    if mole_contour is not None and len(mole_contour) > 5:
+    if mole_contour is not None and mole_area is not None and len(mole_contour) > 5:
         ellipse = cv2.fitEllipse(mole_contour)
 
         blue = (255, 0, 0)

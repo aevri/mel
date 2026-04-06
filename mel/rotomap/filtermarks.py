@@ -89,8 +89,10 @@ def images_to_features(images, batch_size) -> torch.Tensor:
         # pylint: enable=not-callable
 
     model, num_features, transform = make_model_and_transform()
+    # DataLoader stub requires Dataset, but list works at runtime
     batcher = torch.utils.data.DataLoader(
-        [transform(i) for i in images], batch_size=batch_size
+        [transform(i) for i in images],  # ty: ignore[invalid-argument-type]
+        batch_size=batch_size,
     )
 
     with (
@@ -213,9 +215,9 @@ class Evaluator:
         import torch
 
         self.threshold = threshold
-        self.num_moles = 0
-        self.num_predicted_moles = 0
-        self.num_moles_correct = 0
+        self.num_moles = torch.tensor(0)
+        self.num_predicted_moles = torch.tensor(0)
+        self.num_moles_correct = torch.tensor(0)
 
         self.softmax = torch.nn.Softmax(dim=1)
 
@@ -530,7 +532,8 @@ def make_is_mole_func(
     softmax = torch.nn.Softmax(dim=1)
 
     def is_mole(image) -> bool:
-        batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)
+        # DataLoader stub requires Dataset, but list works at runtime
+        batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)  # ty: ignore[invalid-argument-type]
 
         with torch.no_grad():
             (batch,) = batcher

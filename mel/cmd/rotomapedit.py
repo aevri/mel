@@ -206,7 +206,7 @@ class MoleEditController:
             if key_mods & pygame.KMOD_SHIFT:
                 self.mole_uuid_list[0] = editor.get_mole_uuid(mouse_x, mouse_y)
                 print(self.mole_uuid_list[0])
-                if self.copy_to_clipboard:
+                if self.copy_to_clipboard and self.mole_uuid_list[0] is not None:
                     mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
             else:
                 editor.set_mole_uuid(mouse_x, mouse_y, self.mole_uuid_list[0])
@@ -239,7 +239,8 @@ class MoleEditController:
     def pre_key(self, editor, key) -> None:
         if self.sub_controller:
             with contextlib.suppress(AttributeError):
-                self.sub_controller.pre_key(editor, key)
+                # Intentional duck typing, suppress handles missing attr
+                self.sub_controller.pre_key(editor, key)  # ty: ignore[unresolved-attribute]
 
     def on_key(self, editor, key) -> None:
         # Import pygame as late as possible, to avoid displaying its
@@ -270,7 +271,7 @@ class MoleEditController:
         elif key == pygame.K_PLUS:
             self.mole_uuid_list[0] = editor.get_mole_uuid(self.mouse_x, self.mouse_y)
             print(self.mole_uuid_list[0])
-            if self.copy_to_clipboard:
+            if self.copy_to_clipboard and self.mole_uuid_list[0] is not None:
                 mel.lib.ui.set_clipboard_contents(self.mole_uuid_list[0])
         elif key == pygame.K_i:
             # Auto-identify

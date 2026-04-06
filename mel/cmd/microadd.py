@@ -143,7 +143,7 @@ def pick_comparison_path(
         appropriate_date = datetime.datetime.now(tz=datetime.UTC) - delta
 
         for candidate_path, dt in path_dt_list:
-            if dt <= appropriate_date:
+            if dt is not None and dt <= appropriate_date:
                 return candidate_path
 
     return path_dt_list[-1][0] if path_dt_list else None

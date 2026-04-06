@@ -164,6 +164,7 @@ class MoleMarkerOverlay:
         if not self._is_showing_markers:
             return image
 
+        assert self.moles is not None
         highlight_mole = None
         if self._highlight_uuid is not None:
             for m in self.moles:
@@ -174,6 +175,7 @@ class MoleMarkerOverlay:
         marker_image = image
         if self._is_faded_markers:
             marker_image = image.copy()
+        assert self._uuid_to_tricolour is not None
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
             if mole is highlight_mole:
@@ -217,6 +219,7 @@ class MarkedMoleOverlay:
         image = image.copy() // 2
         mask = np.zeros((*image.shape[:2], 1), np.uint8)
 
+        assert self.moles is not None
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
             cv2.circle(mask, (x, y), mask_radius, 255, -1)
@@ -224,6 +227,7 @@ class MarkedMoleOverlay:
         masked_faded = cv2.bitwise_and(image, image, mask=mask)
         image = cv2.add(masked_faded, image)
 
+        assert self.moles is not None
         highlight_mole = None
         if self._highlight_uuid is not None:
             for m in self.moles:
@@ -274,6 +278,7 @@ class MarkedMoleOverlay:
         # haven't been marked, without worrying about the ones that
         # have been marked.
 
+        assert self.moles is not None
         for mole in self.moles:
             x, y = transform.imagexy_to_transformedxy(mole["x"], mole["y"])
             draw_mole(image, x, y, [[255, 0, 0], [255, 128, 128], [255, 0, 0]])
@@ -295,8 +300,8 @@ class BoundingAreaOverlay:
             space = mel.lib.ellipsespace.Transform(self.bounding_box)
 
             def toimage(point: tuple) -> np.ndarray:
-                point = space.from_space(point)
-                return transform.imagexy_to_transformedxy(*point)
+                image_point = space.from_space(point)
+                return transform.imagexy_to_transformedxy(*image_point)
 
             border = [
                 toimage((-1, -1)),
@@ -451,6 +456,7 @@ class Editor:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         value = 255 if enable else 0
         radius = self.masker_radius
+        assert self.moledata.mask is not None
         cv2.circle(self.moledata.mask, (image_x, image_y), radius, value, -1)
         self.moledata.save_mask()
         self.show_current()
@@ -537,14 +543,16 @@ class Editor:
         if self.display.is_zoomed() and "ellipse" in self.moledata.metadata:
             pos = self.display.get_zoom_pos()
             ellipse = self.moledata.metadata["ellipse"]
-            pos = mel.lib.ellipsespace.Transform(ellipse).to_space(pos)
+            # Ellipse from JSON metadata dict, typed as object not tuple
+            pos = mel.lib.ellipsespace.Transform(ellipse).to_space(pos)  # ty: ignore[invalid-argument-type]
 
             transition_func()
             self.moledata.ensure_loaded()
 
             if "ellipse" in self.moledata.metadata:
                 ellipse = self.moledata.metadata["ellipse"]
-                pos = mel.lib.ellipsespace.Transform(ellipse).from_space(pos)
+                # Ellipse from JSON metadata dict, typed as object
+                pos = mel.lib.ellipsespace.Transform(ellipse).from_space(pos)  # ty: ignore[invalid-argument-type]
                 self.display.set_zoomed(pos[0], pos[1])
         else:
             transition_func()
@@ -590,7 +598,7 @@ class Editor:
     ) -> None:
         image_x, image_y = self.display.windowxy_to_imagexy(mouse_x, mouse_y)
         mel.rotomap.moles.set_nearest_mole_uuid(
-            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical
+            self.moledata.moles, image_x, image_y, mole_uuid, is_canonical=is_canonical
         )
         self.moledata.save_moles()
         self.show_current()
@@ -668,6 +676,7 @@ class MoleData:
 
     def get_image(self) -> np.ndarray:
         self.ensure_loaded()
+        assert self.image is not None
         return self.image
 
     def reload(self) -> None:

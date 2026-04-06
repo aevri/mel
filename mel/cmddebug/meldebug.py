@@ -60,6 +60,7 @@ def _setup_parser_for_module(
     subparsers: argparse._SubParsersAction, module: types.ModuleType, name: str
 ) -> None:
     doc = module.__doc__
+    assert doc is not None
     doc_subject = doc.splitlines()[0]
     doc_epilog = "\n".join(doc.splitlines()[1:])
     parser = subparsers.add_parser(

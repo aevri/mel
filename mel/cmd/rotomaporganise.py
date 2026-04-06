@@ -76,6 +76,7 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
         self._logger = logger
 
     def reset_logger(self) -> None:
+        assert self.image_path is not None
         self._logger.reset(
             mode="view",
             path=os.path.relpath(

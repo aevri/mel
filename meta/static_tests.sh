@@ -17,6 +17,9 @@ uv run python -m vulture \
     --exclude '*__t.py,mel/rotomap/detectmoles.py,mel/rotomap/identifynn.py' \
     mel/
 
+printf '.'
+uv run ty check
+
 echo OK
 trap - EXIT
 

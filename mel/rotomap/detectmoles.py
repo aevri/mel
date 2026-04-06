@@ -66,7 +66,8 @@ def _keypoints(original_image: np.ndarray, mask: np.ndarray | None) -> tuple:
     # Note that the static analysis tool 'vulture' doesn't seem to be happy
     # with using attributes on 'params'. The only workaround appears to be
     # ignoring the whole file.
-    params = cv2.SimpleBlobDetector_Params()
+    # cv2 dynamically generates these attrs, not in type stubs
+    params = cv2.SimpleBlobDetector_Params()  # ty: ignore[unresolved-attribute]
     params.filterByCircularity = False
     params.filterByConvexity = False
     params.filterByInertia = False
@@ -81,7 +82,8 @@ def _keypoints(original_image: np.ndarray, mask: np.ndarray | None) -> tuple:
     params.filterByInertia = True
     params.minInertiaRatio = 0.1
 
-    detector = cv2.SimpleBlobDetector_create(params)
+    # cv2 dynamically generates these attrs, not in type stubs
+    detector = cv2.SimpleBlobDetector_create(params)  # ty: ignore[unresolved-attribute]
     keypoints_ = detector.detect(image)
 
     return keypoints_, image

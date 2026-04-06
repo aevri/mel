@@ -36,7 +36,7 @@ class MoleDetector:
             ]
         )
 
-    def get_moles(self, frame: object) -> list[dict]:
+    def get_moles(self, frame: mel.rotomap.moles.RotomapFrame) -> list[dict]:
         image = load_image(frame.path)
         image = self.image_transform(image)
 
@@ -50,7 +50,9 @@ class MoleDetector:
         return moles
 
 
-def make_model(model_path: pathlib.Path | None = None) -> torch.nn.Module:
+def make_model(
+    model_path: pathlib.Path | None = None,
+) -> torchvision.models.detection.FasterRCNN:
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -231,7 +233,7 @@ def list_train_valid_images(
         "Trunk/Back",
     ]
     session_images = mel.lib.fs.list_rotomap_images_by_session(
-        parts_path, exclude_parts=exclude_parts
+        parts_path, exclude_parts=set(exclude_parts)
     )
     sessions = sorted(session_images.keys())
     if min_session:

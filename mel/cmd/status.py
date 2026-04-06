@@ -37,10 +37,10 @@ class Notification:
     def __init__(self, path) -> None:
         self.path = path
 
-    def format(self, _detail_level) -> str:
+    def format(self, detail_level) -> str:  # noqa: ARG002 - subclasses use it
         return str(self.path)
 
-    def hint(self) -> None:
+    def hint(self) -> str | None:
         return None
 
 
@@ -173,7 +173,7 @@ class MicroMissingIdInfo(InfoNotification):
     def __init__(self, path) -> None:
         super().__init__(path)
 
-    def format(self, _detail_level) -> str:
+    def format(self, detail_level) -> str:  # noqa: ARG002 - base class interface
         return f"{self.path}"
 
     def hint(self) -> str:
