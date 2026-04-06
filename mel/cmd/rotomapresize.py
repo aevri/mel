@@ -1,5 +1,6 @@
 """Resize images and their associated mole files, masks, and ellipses."""
 
+import argparse
 import json
 import pathlib
 
@@ -10,7 +11,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--width",
         type=int,
@@ -30,7 +31,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     target_width = args.width
     target_height = args.height
 
@@ -71,7 +72,7 @@ def process_args(args) -> None:
         _resize_ellipse_metadata(image_path, scale_x, scale_y)
 
 
-def _resize_mole_files(image_path, scale_x, scale_y) -> None:
+def _resize_mole_files(image_path: str, scale_x: float, scale_y: float) -> None:
     """Resize mole coordinates in .json files."""
     mole_file_path = pathlib.Path(image_path + ".json")
     if mole_file_path.exists():
@@ -85,7 +86,7 @@ def _resize_mole_files(image_path, scale_x, scale_y) -> None:
         mel.rotomap.moles.save_json(mole_file_path, moles)
 
 
-def _resize_mask_file(image_path, target_width, target_height) -> None:
+def _resize_mask_file(image_path: str, target_width: int, target_height: int) -> None:
     """Resize mask file if it exists."""
     mask_path = mel.rotomap.mask.path(image_path)
     if pathlib.Path(mask_path).exists():
@@ -99,7 +100,7 @@ def _resize_mask_file(image_path, target_width, target_height) -> None:
             mel.lib.image.save_image(resized_mask, mask_path)
 
 
-def _resize_ellipse_metadata(image_path, scale_x, scale_y) -> None:
+def _resize_ellipse_metadata(image_path: str, scale_x: float, scale_y: float) -> None:
     """Resize ellipse coordinates in .meta.json file."""
     meta_path = pathlib.Path(image_path + ".meta.json")
     if meta_path.exists():

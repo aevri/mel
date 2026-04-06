@@ -11,7 +11,7 @@ import mel.rotomap.moles
 _MASK_EXCLUSION_SQUARE_SIZE = 5
 
 
-def draw_debug(image, mask) -> np.ndarray:
+def draw_debug(image: np.ndarray, mask: np.ndarray | None) -> np.ndarray:
     keypoints_, image = _keypoints(image, mask)
     return cv2.drawKeypoints(
         image,
@@ -22,7 +22,7 @@ def draw_debug(image, mask) -> np.ndarray:
     )
 
 
-def moles(image, mask) -> list:
+def moles(image: np.ndarray, mask: np.ndarray | None) -> list:
     moles_ = []
     for point in keypoints(image, mask):
         xy = point.pt
@@ -38,7 +38,7 @@ def moles(image, mask) -> list:
     return moles_
 
 
-def _is_mask_region_all_set(mask, point, region_size) -> bool:
+def _is_mask_region_all_set(mask: np.ndarray, point: tuple, region_size: int) -> bool:
     x, y = (int(i) for i in point)
     x_slice = slice(x - region_size, x + region_size)
     y_slice = slice(y - region_size, y + region_size)
@@ -52,11 +52,11 @@ def _is_mask_region_all_set(mask, point, region_size) -> bool:
     return has_values and mask[mask_slice].mean() == 255
 
 
-def keypoints(image, mask) -> tuple:
+def keypoints(image: np.ndarray, mask: np.ndarray | None) -> tuple:
     return _keypoints(image, mask)[0]
 
 
-def _keypoints(original_image, mask) -> tuple:
+def _keypoints(original_image: np.ndarray, mask: np.ndarray | None) -> tuple:
     image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
     image = image[:, :, 1]
 

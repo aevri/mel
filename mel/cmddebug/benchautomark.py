@@ -1,5 +1,6 @@
 """Benchmark the accuracy of a set of rotomaps vs a reference."""
 
+import argparse
 import collections.abc
 
 import numpy as np
@@ -12,7 +13,7 @@ import mel.rotomap.mask
 import mel.rotomap.moles
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "FROM_FRAMES",
         type=mel.rotomap.moles.make_argparse_image_moles_tree,
@@ -32,7 +33,7 @@ def setup_parser(parser) -> None:
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     from_to_pairs = _pair_off_inputs(args.FROM_FRAMES, args.TO_FRAMES)
     num_matches = 0
     num_missing = 0
@@ -61,7 +62,9 @@ def process_args(args) -> None:
     print(f"{recall * 100:0.1f}% recall")
 
 
-def _pair_off_inputs(from_, to) -> collections.abc.Generator:
+def _pair_off_inputs(
+    from_: collections.abc.Iterable, to: collections.abc.Iterable
+) -> collections.abc.Generator:
     for from_frame, to_frame in _zip_samelen(from_, to):
         from_image_path, from_moles = from_frame
         to_image_path, to_moles = to_frame
@@ -69,7 +72,7 @@ def _pair_off_inputs(from_, to) -> collections.abc.Generator:
         yield common_path, from_moles, to_moles
 
 
-def _common_path(from_path, to_path) -> str:
+def _common_path(from_path: str, to_path: str) -> str:
     common = []
     for char_from, char_to in zip(
         reversed(str(from_path)), reversed(str(to_path)), strict=False
@@ -100,12 +103,14 @@ def _zip_samelen(*args: collections.abc.Iterable) -> collections.abc.Generator:
         yield tuple(values)
 
 
-def print_items(common_path, items, label) -> None:
+def print_items(common_path: str, items: list, label: str) -> None:
     for i in items:
         print(f"{label}: {common_path}: {i}")
 
 
-def match_moles(from_moles, to_moles, error_distance) -> tuple[list, list, list]:
+def match_moles(
+    from_moles: list, to_moles: list, error_distance: int
+) -> tuple[list, list, list]:
     if from_moles and not to_moles:
         return [], [m["uuid"] for m in from_moles], []
     if not from_moles and to_moles:
@@ -131,7 +136,7 @@ def match_moles(from_moles, to_moles, error_distance) -> tuple[list, list, list]
 
 
 def _match_pos_vecs(
-    from_pos_vec, to_pos_vec, error_distance
+    from_pos_vec: np.ndarray, to_pos_vec: np.ndarray, error_distance: int
 ) -> tuple[list, list, list]:
     max_sqdist = error_distance**2
 
@@ -173,7 +178,7 @@ def _match_pos_vecs(
     return matches, missing, added
 
 
-def _array_nonempty(numpy_array) -> bool:
+def _array_nonempty(numpy_array: np.ndarray) -> bool:
     return all(numpy_array.shape)
 
 

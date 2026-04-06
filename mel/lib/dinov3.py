@@ -14,7 +14,7 @@ PATCH_SIZE = 16
 
 
 def load_dinov3_model(
-    dino_size="base", *, local_files_only=False, pretrained=True
+    dino_size: str = "base", *, local_files_only: bool = False, pretrained: bool = True
 ) -> tuple[Dinov3Model, int]:
     """Load the DINOv3 model for semantic feature extraction.
 
@@ -92,13 +92,15 @@ class Dinov3Model:
     MEAN = (0.485, 0.456, 0.406)
     STD = (0.229, 0.224, 0.225)
 
-    def __init__(self, model, feature_dim, device) -> None:
+    def __init__(
+        self, model: torch.nn.Module, feature_dim: int, device: torch.device
+    ) -> None:
         self.model = model
         self.feature_dim = feature_dim
         self.device = device
         self.num_prefix_tokens = model.num_prefix_tokens
 
-    def extract_patch_features(self, image_rgb) -> torch.Tensor:
+    def extract_patch_features(self, image_rgb: np.ndarray) -> torch.Tensor:
         """Extract patch features from a numpy image.
 
         Args:
@@ -142,7 +144,9 @@ class Dinov3Model:
             raise RuntimeError(msg)
 
 
-def scale_image_to_fit(image_rgb, image_size) -> tuple[np.ndarray, tuple[float, float]]:
+def scale_image_to_fit(
+    image_rgb: np.ndarray, image_size: int
+) -> tuple[np.ndarray, tuple[float, float]]:
     """Scale image to fit within image_size, preserving aspect ratio.
 
     Args:
@@ -176,7 +180,9 @@ def scale_image_to_fit(image_rgb, image_size) -> tuple[np.ndarray, tuple[float, 
     return scaled, (scale_x, scale_y)
 
 
-def extract_all_patch_features(scaled_image, model) -> torch.Tensor:
+def extract_all_patch_features(
+    scaled_image: np.ndarray, model: Dinov3Model
+) -> torch.Tensor:
     """Extract features for all patches in the scaled image.
 
     Args:
@@ -190,7 +196,7 @@ def extract_all_patch_features(scaled_image, model) -> torch.Tensor:
     return model.extract_patch_features(scaled_image)
 
 
-def apply_mask(image_rgb, mask) -> np.ndarray:
+def apply_mask(image_rgb: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """Apply mask to image, setting masked-out pixels to ImageNet mean.
 
     Args:

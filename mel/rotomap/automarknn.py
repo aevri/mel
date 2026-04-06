@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import cv2
 import numpy as np
 import pytorch_lightning as pl
@@ -14,6 +16,9 @@ import mel.rotomap.automark
 import mel.rotomap.mask
 import mel.rotomap.moles
 
+if TYPE_CHECKING:
+    import pathlib
+
 
 def make_detector() -> MoleDetector:
     melroot = mel.lib.fs.find_melroot()
@@ -23,7 +28,7 @@ def make_detector() -> MoleDetector:
 
 
 class MoleDetector:
-    def __init__(self, model_path) -> None:
+    def __init__(self, model_path: pathlib.Path) -> None:
         self.model = make_model(model_path)
         self.image_transform = torchvision.transforms.Compose(
             [
@@ -31,7 +36,7 @@ class MoleDetector:
             ]
         )
 
-    def get_moles(self, frame) -> list[dict]:
+    def get_moles(self, frame: object) -> list[dict]:
         image = load_image(frame.path)
         image = self.image_transform(image)
 
@@ -45,7 +50,7 @@ class MoleDetector:
         return moles
 
 
-def make_model(model_path=None) -> torch.nn.Module:
+def make_model(model_path: pathlib.Path | None = None) -> torch.nn.Module:
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
     num_classes = 2  # 1 class + background
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -60,7 +65,7 @@ def make_model(model_path=None) -> torch.nn.Module:
     return model
 
 
-def load_image(image_path) -> np.ndarray:
+def load_image(image_path: str | pathlib.Path) -> np.ndarray:
     flags = cv2.IMREAD_COLOR
     try:
         original_image = cv2.imread(str(image_path), flags)
@@ -85,7 +90,7 @@ def load_image(image_path) -> np.ndarray:
     return cv2.bitwise_or(image, green)
 
 
-def boxes_to_poslist(boxes) -> np.ndarray:
+def boxes_to_poslist(boxes: torch.Tensor) -> np.ndarray:
     poslist = [
         [int(0.5 * (xmin + xmax)), int(0.5 * (ymin + ymax))]
         for xmin, ymin, xmax, ymax in boxes
@@ -94,7 +99,7 @@ def boxes_to_poslist(boxes) -> np.ndarray:
 
 
 def calc_precision_recall(
-    target_poslist, poslist, error_distance=5
+    target_poslist: np.ndarray, poslist: np.ndarray, error_distance: int = 5
 ) -> tuple[float, float]:
     if not len(poslist):
         return 0, 0
@@ -107,7 +112,7 @@ def calc_precision_recall(
 
 
 class PlModule(pl.LightningModule):
-    def __init__(self, model_path=None) -> None:
+    def __init__(self, model_path: pathlib.Path | None = None) -> None:
         super().__init__()
         # self.lr = 0.0000229  # As determined by pl auto_lr_find. Not good.
         # self.lr = 0.01  # Too high.
@@ -115,7 +120,7 @@ class PlModule(pl.LightningModule):
         self.lr = 0.001
         self.model = make_model(model_path)
 
-    def training_step(self, batch, _batch_idx) -> torch.Tensor:
+    def training_step(self, batch: tuple, _batch_idx: int) -> torch.Tensor:
         x, y = batch
         self.model.train()  # Oddly this seemst to be necessary.
         assert self.model.training
@@ -127,7 +132,7 @@ class PlModule(pl.LightningModule):
         self.log("train_loss", losses.detach())
         return losses
 
-    def validation_step(self, batch, _batch_idx) -> None:
+    def validation_step(self, batch: tuple, _batch_idx: int) -> None:
         x, y = batch
         result = self.model(x, y)
         precision_list = []
@@ -147,7 +152,7 @@ class PlModule(pl.LightningModule):
         self.log("val_prec", precision, prog_bar=True)
         self.log("val_reca", recall, prog_bar=True)
 
-    def forward(self, x) -> list[dict[str, torch.Tensor]]:
+    def forward(self, x: torch.Tensor) -> list[dict[str, torch.Tensor]]:
         return self.model(x)
 
     def configure_optimizers(self) -> torch.optim.AdamW:
@@ -171,7 +176,7 @@ class PlModule(pl.LightningModule):
 
 
 class MoleImageBoxesDataset(torch.utils.data.Dataset):
-    def __init__(self, image_paths) -> None:
+    def __init__(self, image_paths: list) -> None:
         self.image_paths = image_paths
         self.image_transform = torchvision.transforms.Compose(
             [
@@ -183,7 +188,7 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
         """Return the number of images in the dataset."""
         return len(self.image_paths)
 
-    def __getitem__(self, index) -> tuple:
+    def __getitem__(self, index: int) -> tuple:
         """Return transformed image and target for the given index."""
         path = self.image_paths[index]
 
@@ -212,7 +217,9 @@ class MoleImageBoxesDataset(torch.utils.data.Dataset):
 #     return image
 
 
-def list_train_valid_images(min_session=None) -> tuple[list, list, list, list]:
+def list_train_valid_images(
+    min_session: str | None = None,
+) -> tuple[list, list, list, list]:
     melroot = mel.lib.fs.find_melroot()
     parts_path = melroot / mel.lib.fs.ROTOMAPS_PATH / "parts"
     exclude_parts = [
@@ -236,12 +243,12 @@ def list_train_valid_images(min_session=None) -> tuple[list, list, list, list]:
     return train_images, valid_images, train_sessions, valid_sessions
 
 
-def drop_paths_without_moles(path_list) -> list:
+def drop_paths_without_moles(path_list: list) -> list:
     return [path for path in path_list if mel.rotomap.moles.load_image_moles(path)]
 
 
 # See https://github.com/pytorch/vision/blob/59ec1dfd550652a493cb99d5704dcddae832a204/references/detection/utils.py#L203
-def collate_fn(batch) -> tuple:
+def collate_fn(batch: list) -> tuple:
     return tuple(zip(*batch, strict=False))
 
 

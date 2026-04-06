@@ -49,13 +49,15 @@ MOLE_DIR_ENTRIES = {
 }
 
 
-def yield_moles(path) -> collections.abc.Generator:
+def yield_moles(path: str | pathlib.Path) -> collections.abc.Generator:
     path = pathlib.Path(path)
     yield from _yield_moles_imp(path, path, ())
 
 
 def _yield_moles_imp(
-    path, refrelpath, context_image_name_tuple_tuple
+    path: pathlib.Path,
+    refrelpath: pathlib.Path,
+    context_image_name_tuple_tuple: tuple,
 ) -> collections.abc.Generator:
     should_be_mole_dir = False
     for sub in path.iterdir():
@@ -89,7 +91,7 @@ def _yield_moles_imp(
 
 
 def _extend_context_image_name_tuple_tuple(
-    path, context_image_name_tuple_tuple
+    path: pathlib.Path, context_image_name_tuple_tuple: tuple
 ) -> tuple:
     image_names = [
         sub.name for sub in path.iterdir() if sub.suffix.lower() in IMAGE_SUFFIXES
@@ -101,7 +103,7 @@ def _extend_context_image_name_tuple_tuple(
     return context_image_name_tuple_tuple
 
 
-def _list_micro_dir_if_exists(path) -> tuple:
+def _list_micro_dir_if_exists(path: pathlib.Path) -> tuple:
     if not path.exists():
         return ()
 
@@ -132,21 +134,21 @@ def _list_micro_dir_if_exists(path) -> tuple:
     return tuple(details)
 
 
-def calc_micro_datetime(micro_image_name) -> datetime.datetime:
+def calc_micro_datetime(micro_image_name: str) -> datetime.datetime:
     lastmicrodtstring = micro_image_name.split(".", 1)[0]
     return datetime.datetime.strptime(lastmicrodtstring, "%Y%m%dT%H%M%S").replace(
         tzinfo=datetime.UTC
     )
 
 
-def calc_last_micro(micro_image_details) -> str | None:
+def calc_last_micro(micro_image_details: tuple) -> str | None:
     if not micro_image_details:
         return None
 
     return micro_image_details[-1].name
 
 
-def calc_last_micro_age_days(micro_image_details) -> int | None:
+def calc_last_micro_age_days(micro_image_details: tuple) -> int | None:
     if not micro_image_details:
         return None
 
@@ -155,7 +157,7 @@ def calc_last_micro_age_days(micro_image_details) -> int | None:
     return age.days
 
 
-def _read_stripped_text_file_if_exists(path) -> str | None:
+def _read_stripped_text_file_if_exists(path: pathlib.Path) -> str | None:
     if path.exists():
         return path.read_text().strip()
     return None
