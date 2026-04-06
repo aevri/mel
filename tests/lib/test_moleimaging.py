@@ -273,15 +273,10 @@ def test_find_mole_ellipse_parameter_types() -> None:
     result = mel.lib.moleimaging.find_mole_ellipse(image, centre_array, 10)
     assert result is None or isinstance(result, tuple)
 
-    # Test with tuple centre (might be passed incorrectly)
-    centre_tuple = (25, 25)
-    try:
-        result = mel.lib.moleimaging.find_mole_ellipse(image, centre_tuple, 10)
-        # Should handle gracefully
-        assert result is None or isinstance(result, tuple)
-    except (TypeError, ValueError):
-        # If it fails with tuple input, that's also acceptable
-        pass
+    # Test with tuple centre converted to array
+    centre_from_tuple = np.array([25, 25], dtype=int)
+    result = mel.lib.moleimaging.find_mole_ellipse(image, centre_from_tuple, 10)
+    assert result is None or isinstance(result, tuple)
 
 
 # -----------------------------------------------------------------------------
