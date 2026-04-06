@@ -22,7 +22,9 @@ from mel.rotomap import moles
 # ---------------------------------------------------------------------------
 
 
-def _make_mole(x, y, uuid_=None, *, is_confirmed=True) -> dict:
+def _make_mole(
+    x: int, y: int, uuid_: str | None = None, *, is_confirmed: bool = True
+) -> dict:
     """Create a mole dict with required fields."""
     return {
         "x": x,
@@ -32,13 +34,13 @@ def _make_mole(x, y, uuid_=None, *, is_confirmed=True) -> dict:
     }
 
 
-def _write_json(path, data) -> None:
+def _write_json(path: pathlib.Path, data: list | dict) -> None:
     with pathlib.Path(path).open("w") as f:
         json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
         print(file=f)
 
 
-def _create_jpeg_stub(path) -> None:
+def _create_jpeg_stub(path: pathlib.Path) -> None:
     """Create a minimal file that qualifies as a JPEG by name."""
     pathlib.Path(path).write_bytes(b"\xff\xd8\xff")
 
@@ -49,30 +51,30 @@ def _create_jpeg_stub(path) -> None:
 
 
 class TestJsonRoundTrip:
-    def test_round_trip_list(self, tmp_path) -> None:
+    def test_round_trip_list(self, tmp_path: pathlib.Path) -> None:
         data = [{"a": 1, "b": 2}, {"c": 3}]
         p = tmp_path / "data.json"
         moles.save_json(p, data)
         assert moles.load_json(p) == data
 
-    def test_round_trip_dict(self, tmp_path) -> None:
+    def test_round_trip_dict(self, tmp_path: pathlib.Path) -> None:
         data = {"key": "value", "nested": {"x": 10}}
         p = tmp_path / "data.json"
         moles.save_json(p, data)
         assert moles.load_json(p) == data
 
-    def test_round_trip_empty_list(self, tmp_path) -> None:
+    def test_round_trip_empty_list(self, tmp_path: pathlib.Path) -> None:
         p = tmp_path / "empty.json"
         moles.save_json(p, [])
         assert moles.load_json(p) == []
 
-    def test_save_json_trailing_newline(self, tmp_path) -> None:
+    def test_save_json_trailing_newline(self, tmp_path: pathlib.Path) -> None:
         p = tmp_path / "nl.json"
         moles.save_json(p, {"a": 1})
         text = p.read_text()
         assert text.endswith("\n")
 
-    def test_save_json_sorted_keys(self, tmp_path) -> None:
+    def test_save_json_sorted_keys(self, tmp_path: pathlib.Path) -> None:
         p = tmp_path / "sorted.json"
         moles.save_json(p, {"z": 1, "a": 2})
         text = p.read_text()
@@ -85,7 +87,7 @@ class TestJsonRoundTrip:
 
 
 class TestImageMolesRoundTrip:
-    def test_round_trip(self, tmp_path) -> None:
+    def test_round_trip(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "photo.jpg"
         _create_jpeg_stub(img)
 
@@ -96,7 +98,7 @@ class TestImageMolesRoundTrip:
         assert loaded[0]["uuid"] == "aaa"
         assert loaded[1]["x"] == 30
 
-    def test_round_trip_extra_stem(self, tmp_path) -> None:
+    def test_round_trip_extra_stem(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "photo.jpg"
         _create_jpeg_stub(img)
 
@@ -108,16 +110,16 @@ class TestImageMolesRoundTrip:
         # Default stem should return empty (no file)
         assert moles.load_image_moles(img) == []
 
-    def test_load_missing_image_raises(self, tmp_path) -> None:
+    def test_load_missing_image_raises(self, tmp_path: pathlib.Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             moles.load_image_moles(tmp_path / "nope.jpg")
 
-    def test_load_no_mole_file_returns_empty(self, tmp_path) -> None:
+    def test_load_no_mole_file_returns_empty(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "empty.jpg"
         _create_jpeg_stub(img)
         assert moles.load_image_moles(img) == []
 
-    def test_load_coerces_xy_to_int(self, tmp_path) -> None:
+    def test_load_coerces_xy_to_int(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "coerce.jpg"
         _create_jpeg_stub(img)
         data = [
@@ -134,7 +136,7 @@ class TestImageMolesRoundTrip:
         assert loaded[0]["y"] == 2
         assert isinstance(loaded[0]["x"], int)
 
-    def test_load_raises_when_missing_confirmed_key(self, tmp_path) -> None:
+    def test_load_raises_when_missing_confirmed_key(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "bad.jpg"
         _create_jpeg_stub(img)
         data = [{"x": 0, "y": 0, "uuid": "u1"}]
@@ -142,7 +144,7 @@ class TestImageMolesRoundTrip:
         with pytest.raises(Exception, match=moles.KEY_IS_CONFIRMED):
             moles.load_image_moles(img)
 
-    def test_load_raises_when_uuid_is_none(self, tmp_path) -> None:
+    def test_load_raises_when_uuid_is_none(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "null_uuid.jpg"
         _create_jpeg_stub(img)
         data = [
@@ -164,7 +166,7 @@ class TestImageMolesRoundTrip:
 
 
 class TestImageMetadata:
-    def test_round_trip(self, tmp_path) -> None:
+    def test_round_trip(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "meta.jpg"
         _create_jpeg_stub(img)
         meta = {"ellipse": ((100, 100), (200, 300), 0)}
@@ -172,12 +174,12 @@ class TestImageMetadata:
         loaded = moles.load_image_metadata(img)
         assert loaded["ellipse"] == [[100, 100], [200, 300], 0]
 
-    def test_load_no_metadata_returns_empty_dict(self, tmp_path) -> None:
+    def test_load_no_metadata_returns_empty_dict(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "no_meta.jpg"
         _create_jpeg_stub(img)
         assert moles.load_image_metadata(img) == {}
 
-    def test_load_invalid_ellipse_raises(self, tmp_path) -> None:
+    def test_load_invalid_ellipse_raises(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "bad_meta.jpg"
         _create_jpeg_stub(img)
         meta = {"ellipse": [[0, 0], [0, 0], 0]}
@@ -498,19 +500,19 @@ class TestValidateEllipseMask:
 
 
 class TestLoadPotentialSetFile:
-    def test_loads_lines(self, tmp_path) -> None:
+    def test_loads_lines(self, tmp_path: pathlib.Path) -> None:
         f = tmp_path / "ignore"
         f.write_text("aaa\nbbb\n")
         result = moles.load_potential_set_file(tmp_path, "ignore")
         assert result == {"aaa", "bbb"}
 
-    def test_ignores_comments_and_blanks(self, tmp_path) -> None:
+    def test_ignores_comments_and_blanks(self, tmp_path: pathlib.Path) -> None:
         f = tmp_path / "ignore"
         f.write_text("# comment\n\n  \nvalid\n")
         result = moles.load_potential_set_file(tmp_path, "ignore")
         assert result == {"valid"}
 
-    def test_missing_file_returns_empty(self, tmp_path) -> None:
+    def test_missing_file_returns_empty(self, tmp_path: pathlib.Path) -> None:
         result = moles.load_potential_set_file(tmp_path, "nonexistent")
         assert result == set()
 
@@ -521,7 +523,7 @@ class TestLoadPotentialSetFile:
 
 
 class TestRotomapDirectory:
-    def _make_rotomap(self, tmp_path, image_names=("a.jpg",)) -> pathlib.Path:
+    def _make_rotomap(self, tmp_path: pathlib.Path, image_names: tuple[str, ...] = ("a.jpg",)) -> pathlib.Path:
         for name in image_names:
             img = tmp_path / name
             _create_jpeg_stub(img)
@@ -531,54 +533,54 @@ class TestRotomapDirectory:
             )
         return tmp_path
 
-    def test_construction(self, tmp_path) -> None:
+    def test_construction(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path)
         rd = moles.RotomapDirectory(tmp_path)
         assert len(rd.image_paths) == 1
 
-    def test_sorted_image_paths(self, tmp_path) -> None:
+    def test_sorted_image_paths(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path, ("c.jpg", "a.jpg", "b.jpg"))
         rd = moles.RotomapDirectory(tmp_path)
         basenames = [pathlib.Path(p).name for p in rd.image_paths]
         assert basenames == ["a.jpg", "b.jpg", "c.jpg"]
 
-    def test_yield_mole_lists(self, tmp_path) -> None:
+    def test_yield_mole_lists(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path, ("x.jpg",))
         rd = moles.RotomapDirectory(tmp_path)
         pairs = list(rd.yield_mole_lists())
         assert len(pairs) == 1
         assert len(pairs[0][1]) == 1
 
-    def test_yield_frames(self, tmp_path) -> None:
+    def test_yield_frames(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path)
         rd = moles.RotomapDirectory(tmp_path)
         frames = list(rd.yield_frames())
         assert len(frames) == 1
         assert isinstance(frames[0], moles.RotomapFrame)
 
-    def test_calc_uuids(self, tmp_path) -> None:
+    def test_calc_uuids(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path, ("a.jpg", "b.jpg"))
         rd = moles.RotomapDirectory(tmp_path)
         uuids = rd.calc_uuids()
         assert "a.jpg" in uuids
         assert "b.jpg" in uuids
 
-    def test_not_a_directory(self, tmp_path) -> None:
+    def test_not_a_directory(self, tmp_path: pathlib.Path) -> None:
         f = tmp_path / "file.txt"
         f.write_text("x")
         with pytest.raises(ValueError, match="not a directory"):
             moles.RotomapDirectory(f)
 
-    def test_no_images(self, tmp_path) -> None:
+    def test_no_images(self, tmp_path: pathlib.Path) -> None:
         with pytest.raises(ValueError, match="no images"):
             moles.RotomapDirectory(tmp_path)
 
-    def test_repr(self, tmp_path) -> None:
+    def test_repr(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path)
         rd = moles.RotomapDirectory(tmp_path)
         assert "RotomapDirectory" in repr(rd)
 
-    def test_lesions_loaded_empty(self, tmp_path) -> None:
+    def test_lesions_loaded_empty(self, tmp_path: pathlib.Path) -> None:
         self._make_rotomap(tmp_path)
         rd = moles.RotomapDirectory(tmp_path)
         assert rd.lesions == []
@@ -590,20 +592,20 @@ class TestRotomapDirectory:
 
 
 class TestRotomapFrame:
-    def test_construction(self, tmp_path) -> None:
+    def test_construction(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "frame.jpg"
         _create_jpeg_stub(img)
         rf = moles.RotomapFrame(img)
         assert rf.moles == []
         assert isinstance(rf.moledata, moles.MoleData)
 
-    def test_has_mole_file_false(self, tmp_path) -> None:
+    def test_has_mole_file_false(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "frame.jpg"
         _create_jpeg_stub(img)
         rf = moles.RotomapFrame(img)
         assert rf.has_mole_file() is False
 
-    def test_has_mole_file_true(self, tmp_path) -> None:
+    def test_has_mole_file_true(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "frame.jpg"
         _create_jpeg_stub(img)
         _write_json(
@@ -613,7 +615,7 @@ class TestRotomapFrame:
         rf = moles.RotomapFrame(img)
         assert rf.has_mole_file() is True
 
-    def test_has_mole_file_extra_stem(self, tmp_path) -> None:
+    def test_has_mole_file_extra_stem(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "frame.jpg"
         _create_jpeg_stub(img)
         _write_json(
@@ -623,21 +625,21 @@ class TestRotomapFrame:
         rf = moles.RotomapFrame(img, extra_stem="extra")
         assert rf.has_mole_file() is True
 
-    def test_directory_raises(self, tmp_path) -> None:
+    def test_directory_raises(self, tmp_path: pathlib.Path) -> None:
         with pytest.raises(ValueError, match="not directory"):
             moles.RotomapFrame(tmp_path)
 
-    def test_nonexistent_raises(self, tmp_path) -> None:
+    def test_nonexistent_raises(self, tmp_path: pathlib.Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             moles.RotomapFrame(tmp_path / "nope.jpg")
 
-    def test_non_jpeg_raises(self, tmp_path) -> None:
+    def test_non_jpeg_raises(self, tmp_path: pathlib.Path) -> None:
         f = tmp_path / "file.png"
         f.write_bytes(b"x")
         with pytest.raises(ValueError, match="Unrecognised suffix"):
             moles.RotomapFrame(f)
 
-    def test_repr(self, tmp_path) -> None:
+    def test_repr(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "r.jpg"
         _create_jpeg_stub(img)
         rf = moles.RotomapFrame(img)
@@ -650,7 +652,7 @@ class TestRotomapFrame:
 
 
 class TestLesionsFile:
-    def test_round_trip(self, tmp_path) -> None:
+    def test_round_trip(self, tmp_path: pathlib.Path) -> None:
         lesions = [
             {"uuid": "l1", moles.KEY_IS_UNCHANGED: True},
             {"uuid": "l2", moles.KEY_IS_UNCHANGED: False},
@@ -660,14 +662,14 @@ class TestLesionsFile:
         assert len(loaded) == 2
         assert loaded[0]["uuid"] == "l1"
 
-    def test_empty_lesions(self, tmp_path) -> None:
+    def test_empty_lesions(self, tmp_path: pathlib.Path) -> None:
         assert moles.load_rotomap_dir_lesions_file(tmp_path) == []
 
-    def test_missing_dir_raises(self, tmp_path) -> None:
+    def test_missing_dir_raises(self, tmp_path: pathlib.Path) -> None:
         with pytest.raises(ValueError, match="does not exist"):
             moles.load_rotomap_dir_lesions_file(tmp_path / "nope")
 
-    def test_missing_is_unchanged_raises(self, tmp_path) -> None:
+    def test_missing_is_unchanged_raises(self, tmp_path: pathlib.Path) -> None:
         _write_json(
             tmp_path / moles.ROTOMAP_DIR_LESIONS_FILENAME,
             [{"uuid": "l1"}],
@@ -675,7 +677,7 @@ class TestLesionsFile:
         with pytest.raises(Exception, match=moles.KEY_IS_UNCHANGED):
             moles.load_rotomap_dir_lesions_file(tmp_path)
 
-    def test_none_uuid_raises(self, tmp_path) -> None:
+    def test_none_uuid_raises(self, tmp_path: pathlib.Path) -> None:
         _write_json(
             tmp_path / moles.ROTOMAP_DIR_LESIONS_FILENAME,
             [{"uuid": None, moles.KEY_IS_UNCHANGED: True}],
@@ -690,13 +692,13 @@ class TestLesionsFile:
 
 
 class TestMakeArgparseRotomapDirectory:
-    def test_valid(self, tmp_path) -> None:
+    def test_valid(self, tmp_path: pathlib.Path) -> None:
         img = tmp_path / "img.jpg"
         _create_jpeg_stub(img)
         rd = moles.make_argparse_rotomap_directory(str(tmp_path))
         assert isinstance(rd, moles.RotomapDirectory)
 
-    def test_invalid_raises_argtype(self, tmp_path) -> None:
+    def test_invalid_raises_argtype(self, tmp_path: pathlib.Path) -> None:
         import argparse
 
         with pytest.raises(argparse.ArgumentTypeError):
