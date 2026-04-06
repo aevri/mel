@@ -37,7 +37,7 @@ class MoleDetector:
         )
 
     def get_moles(self, frame: object) -> list[dict]:
-        image = load_image(frame.path)
+        image = load_image(frame.path)  # ty: ignore[unresolved-attribute]
         image = self.image_transform(image)
 
         self.model.eval()
@@ -159,15 +159,15 @@ class PlModule(pl.LightningModule):
         return torch.optim.AdamW(
             [
                 {
-                    "params": self.model.backbone.parameters(),
+                    "params": self.model.backbone.parameters(),  # ty: ignore[unresolved-attribute]
                     "lr": self.lr * 0.01,
                 },
                 {
-                    "params": self.model.rpn.parameters(),
+                    "params": self.model.rpn.parameters(),  # ty: ignore[unresolved-attribute]
                     "lr": self.lr * 1.0,
                 },
                 {
-                    "params": self.model.roi_heads.parameters(),
+                    "params": self.model.roi_heads.parameters(),  # ty: ignore[unresolved-attribute]
                     "lr": self.lr * 1.0,
                 },
             ],
@@ -231,7 +231,7 @@ def list_train_valid_images(
         "Trunk/Back",
     ]
     session_images = mel.lib.fs.list_rotomap_images_by_session(
-        parts_path, exclude_parts=exclude_parts
+        parts_path, exclude_parts=set(exclude_parts)
     )
     sessions = sorted(session_images.keys())
     if min_session:

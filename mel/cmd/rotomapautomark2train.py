@@ -164,7 +164,7 @@ def process_args(args: argparse.Namespace) -> int | None:
         }
 
     if not args.just_validate:
-        trainer = pl.Trainer(**trainer_kwargs)
+        trainer = pl.Trainer(**trainer_kwargs)  # ty: ignore[invalid-argument-type]
 
         print(f"Learning rate: {model.lr:0.8f}")
 

@@ -79,7 +79,7 @@ class OrganiserDisplay(mel.lib.fullscreenui.LeftRightDisplay):
         self._logger.reset(
             mode="view",
             path=os.path.relpath(
-                str(pathlib.Path(self.image_path).resolve()),
+                str(pathlib.Path(self.image_path).resolve()),  # ty: ignore[invalid-argument-type]
                 start=self._melroot,
             ),
         )

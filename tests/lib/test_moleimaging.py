@@ -204,6 +204,7 @@ def test_find_mole_contour_large_overrides_distance() -> None:
 
     contour, area = mel.lib.moleimaging.find_mole_contour(contours, (300, 300))
     assert contour is not None
+    assert area is not None
     # The large contour should have area >> the small one. The logic selects the
     # large one when area > 10 * mole_area, but order matters. If the center one
     # is found first, the far one needs 10x area to override. The far circle

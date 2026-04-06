@@ -34,16 +34,16 @@ import warnings
 
 def proportion_arg(x: str) -> float:
     try:
-        x = float(x)
+        result = float(x)
     except ValueError as e:
         msg = f"'{x}' is not a float"
         raise argparse.ArgumentTypeError(msg) from e
 
-    if not (x > 0.0 and x <= 1.0) and x != -1:
+    if not (result > 0.0 and result <= 1.0) and result != -1:
         msg = f"'{x}' is not in range 0.0 > x <= 1.0, or -1."
         raise argparse.ArgumentTypeError(msg)
 
-    return x
+    return result
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:
@@ -241,7 +241,7 @@ def process_args(args: argparse.Namespace) -> int | None:
         ),
     )
 
-    trainer = pl.Trainer(**trainer_kwargs)
+    trainer = pl.Trainer(**trainer_kwargs)  # ty: ignore[invalid-argument-type]
     if not valid_dataloader:
         valid_dataloader = None
 
@@ -280,7 +280,7 @@ def _fixup_old_model(old_metadata: dict, new_metadata: dict, model: object) -> N
     ):
         # TODO: support copying over embeddings and other bits that are the
         # same, and don't need to be re-learned.
-        model.reset_num_parts_classes(
+        model.reset_num_parts_classes(  # ty: ignore[unresolved-attribute]
             new_num_parts=new_model_args["num_parts"],
             new_num_classes=new_model_args["num_classes"],
         )

@@ -34,7 +34,7 @@ class RotomapDirectory:
             raise ValueError(msg)
 
         self.image_paths = [
-            str(f) for f in self.path.iterdir() if mel.lib.fs.is_jpeg_name(f)
+            str(f) for f in self.path.iterdir() if mel.lib.fs.is_jpeg_name(str(f))
         ]
         self.image_paths.sort()
 
@@ -77,7 +77,7 @@ class RotomapFrame:
         if not self.path.exists():
             msg = f"Path does not exist: {path}"
             raise ValueError(msg)
-        if not mel.lib.fs.is_jpeg_name(self.path):
+        if not mel.lib.fs.is_jpeg_name(str(self.path)):
             msg = f"Unrecognised suffix for rotomap frame: {path}"
             raise ValueError(msg)
 
@@ -141,7 +141,7 @@ def make_argparse_image_moles(
         if path.is_file():
             yield path, load_image_moles(path)
         else:
-            yield from RotomapDirectory(path).yield_mole_lists()
+            yield from RotomapDirectory(path).yield_mole_lists()  # ty: ignore[invalid-yield]
     except ValueError as e:
         raise argparse.ArgumentTypeError(str(e)) from e
 
@@ -155,7 +155,7 @@ def make_argparse_image_moles_tree(
         for item in sorted(path.iterdir()):
             if item.is_dir():
                 yield from make_argparse_image_moles_tree(item)
-            elif mel.lib.fs.is_jpeg_name(item):
+            elif mel.lib.fs.is_jpeg_name(str(item)):
                 yield from make_argparse_image_moles(item)
     else:
         yield from make_argparse_image_moles(path)
@@ -215,9 +215,9 @@ def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000) -> None:
 def load_image_metadata(image_path) -> dict:
     metadata_path = pathlib.Path(str(image_path) + ".meta.json")
 
-    metadata = {}
+    metadata: dict = {}
     if metadata_path.exists():
-        metadata = load_json(metadata_path)
+        metadata = dict(load_json(metadata_path))
         if "ellipse" in metadata:
             try:
                 validate_ellipse_mask(metadata["ellipse"])
@@ -236,9 +236,9 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path) -> list:
 
     lesions_path = rotomap_dir_path / ROTOMAP_DIR_LESIONS_FILENAME
 
-    lesions = []
+    lesions: list = []
     if lesions_path.exists():
-        lesions = load_json(lesions_path)
+        lesions = list(load_json(lesions_path))
 
     for m in lesions:
         if KEY_IS_UNCHANGED not in m:
@@ -273,9 +273,9 @@ def load_image_moles(image_path, *, extra_stem=None) -> list:
         suffix = f".{extra_stem}.json"
     moles_path = pathlib.Path(str(image_path) + suffix)
 
-    moles = []
+    moles: list = []
     if moles_path.exists():
-        moles = load_json(moles_path)
+        moles = list(load_json(moles_path))
 
     for m in moles:
         if KEY_IS_CONFIRMED not in m:

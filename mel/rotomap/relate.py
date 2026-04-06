@@ -113,6 +113,7 @@ def best_theory(from_moles: list, to_moles: list, *, iterate: bool) -> list:
         if not done:
             theory_to_original.update(apply_theory(theory, to_moles))
 
+    assert theory is not None
     return theory
 
 
@@ -127,6 +128,7 @@ def best_offset_theory(from_moles: list, to_moles: list) -> list:
     theory = best_offset_field_theory(from_moles, to_moles)
     if theory is None:
         theory = best_baseless_offset_theory(from_moles, to_moles)
+    assert theory is not None
     return theory
 
 
@@ -269,7 +271,7 @@ def nearest_uuid_point(point: np.ndarray, uuid_points: dict) -> tuple:
         if nearest_sqdist is None or sqdist < nearest_sqdist:
             nearest_sqdist = sqdist
             nearest_uuid = uuid_
-    return nearest_uuid, np.sqrt(nearest_sqdist)
+    return nearest_uuid, np.sqrt(nearest_sqdist)  # ty: ignore[no-matching-overload]
 
 
 def pick_value_from_field(point: np.ndarray, point_values: list) -> tuple:
@@ -341,9 +343,17 @@ def best_baseless_offset_theory(from_moles: list, to_moles: list) -> list | None
             )
 
             new_best = best_theory is None
-            if not new_best and len(theory) < len(best_theory):
+            if (
+                not new_best
+                and best_theory is not None
+                and len(theory) < len(best_theory)
+            ):
                 new_best = True
-            if not new_best and len(theory) == len(best_theory):
+            if (
+                not new_best
+                and best_theory is not None
+                and len(theory) == len(best_theory)
+            ):
                 if dist_sq < best_theory_dist_sq:
                     new_best = True
                 if (
@@ -377,7 +387,7 @@ def make_offset_theory(
     from_moles: list, to_moles_in: list, offset: tuple, cutoff_sq: float
 ) -> tuple:
     to_moles = list(to_moles_in)
-    offset = np.array(offset)
+    offset_arr = np.array(offset)
 
     theory = []
 
@@ -385,11 +395,11 @@ def make_offset_theory(
 
     for i, a in enumerate(from_moles):
         point = mel.rotomap.moles.mole_to_point(a)
-        point += offset
+        point += offset_arr
         best_index, best_dist_sq = _nearest_mole_index_to_point(point, to_moles)
         if best_index is not None and best_dist_sq <= cutoff_sq:
             r_point = mel.rotomap.moles.mole_to_point(to_moles[best_index])
-            r_point -= offset
+            r_point -= offset_arr
             r_index, _ = _nearest_mole_index_to_point(r_point, from_moles)
             if i == r_index:
                 theory.append((a["uuid"], to_moles[best_index]["uuid"]))
@@ -410,9 +420,9 @@ def _nearest_mole_index_to_point(point: np.ndarray, mole_list: list) -> tuple:
     best_dist_sq = None
     for i, mole in enumerate(mole_list):
         dist_sq = mel.lib.math.distance_sq_2d(
-            point, mel.rotomap.moles.mole_to_point(mole)
+            tuple(point), tuple(mel.rotomap.moles.mole_to_point(mole))
         )
-        if best_index is None or dist_sq < best_dist_sq:
+        if best_index is None or dist_sq < best_dist_sq:  # ty: ignore[unsupported-operator]
             best_index = i
             best_dist_sq = dist_sq
     return best_index, best_dist_sq
@@ -420,8 +430,8 @@ def _nearest_mole_index_to_point(point: np.ndarray, mole_list: list) -> tuple:
 
 def _mole_distance_sq(from_mole: dict, to_mole: dict) -> float:
     return mel.lib.math.distance_sq_2d(
-        mel.rotomap.moles.mole_to_point(from_mole),
-        mel.rotomap.moles.mole_to_point(to_mole),
+        tuple(mel.rotomap.moles.mole_to_point(from_mole)),
+        tuple(mel.rotomap.moles.mole_to_point(to_mole)),
     )
 
 

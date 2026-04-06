@@ -550,7 +550,7 @@ def process_args(args: argparse.Namespace) -> int:
 
             # Find patch with highest probability for this mole class
             class_probs = probs[:, class_idx]
-            best_patch_idx = class_probs.argmax().item()
+            best_patch_idx = int(class_probs.argmax().item())
             confidence = class_probs[best_patch_idx].item()
 
             if verbose >= 2:

@@ -48,7 +48,7 @@ def _merge(from_moles: list[dict], to_moles: list[dict], error_distance: int) ->
         match_uuids,
         _missing_uuids,
         _added_uuids,
-    ) = mel.rotomap.automark.match_moles_by_pos(from_moles, to_moles, error_distance)
+    ) = mel.rotomap.automark.match_moles_by_pos(from_moles, to_moles, error_distance)  # ty: ignore[invalid-argument-type]
 
     old_to_new_uuids = {to_uuid: from_uuid for from_uuid, to_uuid in match_uuids}
 

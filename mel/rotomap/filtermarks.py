@@ -90,7 +90,8 @@ def images_to_features(images, batch_size) -> torch.Tensor:
 
     model, num_features, transform = make_model_and_transform()
     batcher = torch.utils.data.DataLoader(
-        [transform(i) for i in images], batch_size=batch_size
+        [transform(i) for i in images],  # ty: ignore[invalid-argument-type]
+        batch_size=batch_size,
     )
 
     with (
@@ -229,13 +230,13 @@ class Evaluator:
         if not self.num_predicted_moles:
             msg = "No predicted moles."
             raise ValueError(msg)
-        return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()
+        return 100 * self.num_moles_correct.item() / self.num_predicted_moles.item()  # ty: ignore[unresolved-attribute]
 
     def recall(self) -> float:
         if not self.num_moles:
             msg = "No moles."
             raise ValueError(msg)
-        return 100 * self.num_moles_correct.item() / self.num_moles.item()
+        return 100 * self.num_moles_correct.item() / self.num_moles.item()  # ty: ignore[unresolved-attribute]
 
 
 def make_model(num_features) -> torch.nn.Linear:
@@ -530,7 +531,7 @@ def make_is_mole_func(
     softmax = torch.nn.Softmax(dim=1)
 
     def is_mole(image) -> bool:
-        batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)
+        batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)  # ty: ignore[invalid-argument-type]
 
         with torch.no_grad():
             (batch,) = batcher

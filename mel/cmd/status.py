@@ -61,7 +61,7 @@ class RotomapNewMoleAlert(AlertNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -76,7 +76,7 @@ class RotomapLesionChangedAlert(AlertNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -91,7 +91,7 @@ class MicroLesionChangedAlert(AlertNotification):
         super().__init__(path)
         self.id_ = id_
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -110,7 +110,7 @@ class RotomapDuplicateUuidError(ErrorNotification):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -135,7 +135,7 @@ class RotomapNotLoadable(ErrorNotification):
         super().__init__(path)
         self.error = error
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
 
         if detail_level > 0 and self.error is not None:
@@ -176,7 +176,7 @@ class MicroMissingIdInfo(InfoNotification):
     def format(self, _detail_level) -> str:
         return f"{self.path}"
 
-    def hint(self) -> str:
+    def hint(self) -> str:  # ty: ignore[invalid-method-override]
         return (
             "Copy the id from the appropriate rotomap, or "
             "use e.g. `uuidgen` to generate a new id."
@@ -188,7 +188,7 @@ class RotomapMissingMoleInfo(InfoNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -203,7 +203,7 @@ class RotomapMissingLesionUnchangedStatus(InfoNotification):
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -218,7 +218,7 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -243,7 +243,7 @@ class RotomapMissingMoleFileInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -258,7 +258,7 @@ class RotomapMissingMaskInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -273,7 +273,7 @@ class RotomapMissingSpaceInfo(InfoNotification):
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level) -> str:  # ty: ignore[invalid-method-override]
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"

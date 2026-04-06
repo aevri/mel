@@ -301,7 +301,7 @@ class ZoomableMixin:
             self._transform = FittedImageTransform(image, window_rect)
 
     def zoomable_transform_render(self) -> np.ndarray:
-        return self._transform.render()
+        return self._transform.render()  # ty: ignore[unresolved-attribute]
 
     def set_fitted(self) -> None:
         self._is_zoomed = False
@@ -324,10 +324,10 @@ class ZoomableMixin:
         if not self.is_zoomed():
             msg = "Not zoomed"
             raise RuntimeError(msg)
-        return self._zoom_pos
+        return self._zoom_pos  # ty: ignore[invalid-return-type]
 
     def windowxy_to_imagexy(self, window_x, window_y) -> np.ndarray:
-        return self._transform.transformedxy_to_imagexy(window_x, window_y)
+        return self._transform.transformedxy_to_imagexy(window_x, window_y)  # ty: ignore[unresolved-attribute]
 
 
 class LeftRightDisplay(ZoomableMixin):

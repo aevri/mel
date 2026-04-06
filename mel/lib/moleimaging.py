@@ -94,11 +94,11 @@ def process_contours(
         hist_surrounding = calc_hist(hsv, 1, None)
 
         cv2.ellipse(final, ellipse, blue, 5)
-        sqrt_area = math.sqrt(mole_area)
+        sqrt_area = math.sqrt(mole_area)  # ty: ignore[invalid-argument-type]
         aspect_ratio = (ellipse[1][0] / ellipse[1][1]) * 100
         ellipse_area = math.pi * ellipse[1][0] * ellipse[1][1] * 0.25
 
-        coverage_percent = (mole_area / ellipse_area) * 100 if ellipse_area else 0
+        coverage_percent = (mole_area / ellipse_area) * 100 if ellipse_area else 0  # ty: ignore[unsupported-operator]
 
         stats = (sqrt_area, aspect_ratio, coverage_percent)
         stats += tuple(hist)

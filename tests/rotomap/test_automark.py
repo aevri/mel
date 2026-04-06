@@ -7,13 +7,13 @@ import pytest
 
 from mel.rotomap import automark
 
-TARGETS = [
+TARGETS: automark.Moles = [
     {"uuid": "1", "x": 0, "y": 0},
     {"uuid": "2", "x": 1, "y": 1},
     {"uuid": "3", "x": 2, "y": 2}
 ]
 
-RADII_SOURCES = [
+RADII_SOURCES: automark.Moles = [
     {"uuid": "4", "radius": 7, "x": 0, "y": 0},
     {"uuid": "5", "radius": 12, "x": 1, "y": 1},
     {"uuid": "6", "radius": 18, "x": 2, "y": 2},

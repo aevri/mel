@@ -148,6 +148,8 @@ def skin_colour_cylinder(
         else:
             dark_param |= curr_dark_param
 
+    if dark_param is None:
+        return light_skin_colour
     return (dark_skin_colour * dark_param) + (light_skin_colour * (1 - dark_param))
 
 

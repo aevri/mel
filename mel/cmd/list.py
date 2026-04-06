@@ -103,7 +103,7 @@ def _yield_mole_dirs(
         def keyfunc(x: mel.micro.fs.Mole) -> str:
             if not x.micro_image_details:
                 return ""
-            return x.micro_image_details[-1].name
+            return x.micro_image_details[-1].name  # ty: ignore[not-subscriptable]
 
         mole_iter = sorted(mole_iter, key=keyfunc)
 
@@ -124,7 +124,7 @@ def _yield_mole_dirs(
         if (
             mole.last_micro_age_days is not None
             and no_recent_days is not None
-            and mole.last_micro_age_days < no_recent_days
+            and mole.last_micro_age_days < no_recent_days  # ty: ignore[unsupported-operator]
         ):
             continue
 

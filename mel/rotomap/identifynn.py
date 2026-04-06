@@ -76,7 +76,7 @@ class MoleIdentifier:
             out_fields=self.out_fields,
         )
 
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)  # ty: ignore[invalid-argument-type]
         assert len(dataloader) == len(frame.moles)
 
         new_moles = list(frame.moles)
@@ -415,14 +415,15 @@ def make_data(repo_path, data_config, channel_cache=None) -> tuple:
         raise ValueError(msg)
 
     train_dataloader = torch.utils.data.DataLoader(
-        train_dataset,
+        train_dataset,  # ty: ignore[invalid-argument-type]
         batch_size=data_config["batch_size"],
         shuffle=True,
         drop_last=True,
     )
 
     valid_dataloader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=data_config["batch_size"]
+        valid_dataset,  # ty: ignore[invalid-argument-type]
+        batch_size=data_config["batch_size"],
     )
 
     return (
@@ -617,6 +618,8 @@ def extend_dataset_by_frame(
         return
 
     framedata = frame_to_framedata(frame, part_to_index)
+    if framedata is None:
+        return
     extend_dataset_by_frame_data(
         dataset,
         *framedata,
@@ -630,7 +633,7 @@ def extend_dataset_by_frame(
     )
 
 
-def frame_to_framedata(frame, part_to_index) -> tuple | None:
+def frame_to_framedata(frame, part_to_index) -> tuple[list, dict, int] | None:
     if "ellipse" not in frame.metadata:
         return None
 
@@ -771,6 +774,7 @@ class Model(torch.nn.Module):
 
     def forward(self, data) -> list:
         part, *rest = data
+        assert self.embedding is not None
         part_embedding = self.embedding(part)
 
         convs_out = []
@@ -781,6 +785,7 @@ class Model(torch.nn.Module):
 
         combined = torch.cat((*convs_out, part_embedding), 1)
 
+        assert self.fc is not None
         return [self.fc(combined)]
 
     def reset_num_parts_classes(self, new_num_parts, new_num_classes) -> None:

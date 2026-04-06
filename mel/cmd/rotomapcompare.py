@@ -47,11 +47,11 @@ import mel.rotomap.moles
 
 
 class _PosInfo(typing.NamedTuple):
-    path: object
-    pos: object
-    ellipse_xpos: object
-    uuid: object
-    uuid_points: object
+    path: typing.Any
+    pos: typing.Any
+    ellipse_xpos: typing.Any
+    uuid: typing.Any
+    uuid_points: typing.Any
 
 
 def setup_parser(parser) -> None:
@@ -244,8 +244,8 @@ class ImageCompareDisplay:
 
     def __init__(self, logger, screen, path_images_tuple, uuid_) -> None:
         self._logger = logger
-        self._image_path = None
-        self._uuid = None
+        self._image_path: typing.Any = None
+        self._uuid: typing.Any = None
         self._draw_moles = False
         self._should_draw_crosshairs = True
         self._display = screen
@@ -277,8 +277,8 @@ class ImageCompareDisplay:
 
         self._uuid = uuid_
         self._rotomaps = path_images_tuple
-        self._zooms = [1 for _ in path_images_tuple]
-        self._rotations = [0 for _ in path_images_tuple]
+        self._zooms: list[float] = [1.0 for _ in path_images_tuple]
+        self._rotations: list[float] = [0.0 for _ in path_images_tuple]
 
         self._rotomap_cursors = [0] * len(self._rotomaps)
         for i, _rotomap in enumerate(self._rotomaps):
@@ -432,7 +432,7 @@ class ImageCompareDisplay:
         images = [
             captioned_mole_image(
                 *self._path_pos_zoom_rotation_moles(i),
-                image_size,
+                image_size,  # ty: ignore[too-many-positional-arguments]
                 self._should_draw_crosshairs,
                 border_colour,
                 draw_moles=self._draw_moles,

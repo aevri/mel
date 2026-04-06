@@ -128,7 +128,7 @@ class Dinov3Model:
 
         with torch.no_grad():
             # Get intermediate features - this returns patch tokens
-            features = self.model.forward_features(image_tensor)
+            features = self.model.forward_features(image_tensor)  # ty: ignore[call-non-callable]
 
             # features shape: [batch, num_tokens, feature_dim]
             # Skip prefix tokens (CLS + register) to get patch features
