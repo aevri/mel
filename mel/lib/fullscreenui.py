@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import collections.abc
+    import pathlib
 
 import cv2
 import numpy as np
@@ -66,7 +67,7 @@ def _parse_debug_keypresses() -> list[int]:
 
 
 class FittedImageTransform:
-    def __init__(self, image, fit_rect) -> None:
+    def __init__(self, image: np.ndarray, fit_rect: np.ndarray) -> None:
         self._fit_rect = fit_rect
         image_rect = mel.lib.image.get_image_rect(image)
 
@@ -80,15 +81,17 @@ class FittedImageTransform:
     def render(self) -> np.ndarray:
         return mel.lib.image.letterbox(self._image, *self._fit_rect)
 
-    def imagexy_to_transformedxy(self, x, y) -> np.ndarray:
+    def imagexy_to_transformedxy(self, x: int, y: int) -> np.ndarray:
         return (np.array((x, y)) / self._scale + self._offset).astype(int)
 
-    def transformedxy_to_imagexy(self, x, y) -> np.ndarray:
+    def transformedxy_to_imagexy(self, x: int, y: int) -> np.ndarray:
         return ((np.array((x, y)) - self._offset) * self._scale).astype(int)
 
 
 class ZoomedImageTransform:
-    def __init__(self, image, pos, rect, scale) -> None:
+    def __init__(
+        self, image: np.ndarray, pos: np.ndarray, rect: np.ndarray, scale: float
+    ) -> None:
         self._pos = tuple(int(v * scale) for v in pos)
         self._rect = rect
         self._offset = mel.lib.image.calc_centering_offset(self._pos, rect)
@@ -99,10 +102,10 @@ class ZoomedImageTransform:
     def render(self) -> np.ndarray:
         return mel.lib.image.centered_at(self._image, self._pos, self._rect)
 
-    def imagexy_to_transformedxy(self, x, y) -> np.ndarray:
+    def imagexy_to_transformedxy(self, x: int, y: int) -> np.ndarray:
         return ((np.array((x, y)) * self._scale) + self._offset).astype(int)
 
-    def transformedxy_to_imagexy(self, x, y) -> np.ndarray:
+    def transformedxy_to_imagexy(self, x: int, y: int) -> np.ndarray:
         return ((np.array((x, y)) - self._offset) / self._scale).astype(int)
 
 
@@ -110,7 +113,7 @@ _PYGAME_HAD_EXCLUSIVE_INIT = False
 
 
 def yield_frames_keys(
-    video_capture, display, error_key
+    video_capture: cv2.VideoCapture, display: Display, error_key: int
 ) -> collections.abc.Generator[tuple[np.ndarray, int | None]]:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -164,7 +167,11 @@ def yield_frames_keys(
 
 
 def yield_events_until_quit(
-    display, *, quit_key=None, quit_func=None, error_key=None
+    display: Display,
+    *,
+    quit_key: int | None = None,
+    quit_func: collections.abc.Callable[[], bool] | None = None,
+    error_key: int | None = None,
 ) -> collections.abc.Generator[pygame.event.Event]:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -233,7 +240,7 @@ def fullscreen_context() -> collections.abc.Generator[Display]:
 class Display:
     """Display an opencv image, centered in a surface."""
 
-    def __init__(self, surface) -> None:
+    def __init__(self, surface: pygame.Surface) -> None:
         # Import pygame as late as possible, to avoid displaying its
         # startup-text where it is not actually used.
         import pygame
@@ -246,12 +253,12 @@ class Display:
         self._title = None
         self.is_dirty = True
 
-    def show_opencv_image(self, image) -> None:
+    def show_opencv_image(self, image: np.ndarray) -> None:
         image = mel.lib.image.letterbox(image, self.width, self.height)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.swapaxes(0, 1)
-        image = self._pygame.surfarray.make_surface(image)
-        self.surface.blit(image, [0, 0])
+        surface = self._pygame.surfarray.make_surface(image)
+        self.surface.blit(surface, [0, 0])
         self.is_dirty = True
 
     def update_screen_if_needed(self) -> None:
@@ -273,7 +280,9 @@ class ZoomableMixin:
         self._is_zoomed = False
         self._zoom_level = 1
 
-    def zoomable_transform_update(self, image, window_rect) -> None:
+    def zoomable_transform_update(
+        self, image: np.ndarray, window_rect: np.ndarray
+    ) -> None:
         if self._is_zoomed:
             if self._zoom_pos is None:
                 msg = "Zoomed, but no zoom position set."
@@ -308,10 +317,11 @@ class ZoomableMixin:
         self._is_zoomed = False
         self._zoom_orig_shape = None
 
-    def set_zoom_level(self, zoom_level=1) -> None:
-        self._zoom_level = zoom_level
+    def set_zoom_level(self, zoom_level: float | None = 1) -> None:
+        if zoom_level is not None:
+            self._zoom_level = zoom_level
 
-    def set_zoomed(self, x, y, zoom_level=None) -> None:
+    def set_zoomed(self, x: int, y: int, zoom_level: float | None = None) -> None:
         self._zoom_pos = np.array((x, y))
         self._zoom_virt_pos = None
         self._is_zoomed = True
@@ -328,7 +338,7 @@ class ZoomableMixin:
         assert self._zoom_pos is not None
         return self._zoom_pos
 
-    def windowxy_to_imagexy(self, window_x, window_y) -> np.ndarray:
+    def windowxy_to_imagexy(self, window_x: int, window_y: int) -> np.ndarray:
         assert self._transform is not None
         return self._transform.transformedxy_to_imagexy(window_x, window_y)
 
@@ -336,7 +346,7 @@ class ZoomableMixin:
 class LeftRightDisplay(ZoomableMixin):
     """Display images in a window, supply controls for navigating."""
 
-    def __init__(self, screen, image_list) -> None:
+    def __init__(self, screen: Display, image_list: list) -> None:
         if not image_list:
             msg = "image_list must be a list with at least one image."
             raise ValueError(msg)
@@ -364,10 +374,12 @@ class LeftRightDisplay(ZoomableMixin):
             self._index = (self._index + num_images - 1) % len(self._image_list)
         self.show()
 
-    def _get_image(self, path) -> np.ndarray:
+    def _get_image(self, path: pathlib.Path) -> np.ndarray:
         return mel.lib.image.load_image(path)
 
-    def show_zoomed(self, mouse_x, mouse_y, zoom_level=None) -> None:
+    def show_zoomed(
+        self, mouse_x: int, mouse_y: int, zoom_level: float | None = None
+    ) -> None:
         image_x, image_y = self.windowxy_to_imagexy(mouse_x, mouse_y)
         self.set_zoomed(image_x, image_y, zoom_level)
         self.show()
@@ -390,7 +402,7 @@ class LeftRightDisplay(ZoomableMixin):
 
 
 class MultiImageDisplay:
-    def __init__(self, display) -> None:
+    def __init__(self, display: Display) -> None:
         self._display = display
 
         self._title = "_"
@@ -411,7 +423,7 @@ class MultiImageDisplay:
         self._border_width = 50
         self._layout = [[]]
 
-    def add_image(self, image, name=None) -> int:
+    def add_image(self, image: np.ndarray, name: str | None = None) -> int:
         self._images_names.append((image, name))
         index = len(self._images_names) - 1
         self._layout[-1].append(index)
@@ -422,12 +434,12 @@ class MultiImageDisplay:
         assert self._layout[-1]
         self._layout.append([])
 
-    def update_image(self, image, index) -> None:
+    def update_image(self, image: np.ndarray, index: int) -> None:
         name = self._images_names[index][1]
         self._images_names[index] = (image, name)
         self.refresh()
 
-    def set_title(self, title) -> None:
+    def set_title(self, title: str) -> None:
         self._title = title
 
     def refresh(self) -> None:
