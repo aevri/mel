@@ -25,17 +25,11 @@ Here is a good recipe if you have a GPU:
     mel rotomap identify-train --epochs 200 --batch-size 500 --lr 0.0001
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import os
 import pathlib
 import warnings
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import mel.rotomap.identifynn
 
 
 def proportion_arg(x: str) -> float:
@@ -278,9 +272,7 @@ def process_args(args: argparse.Namespace) -> int | None:
     return None
 
 
-def _fixup_old_model(
-    old_metadata: dict, new_metadata: dict, model: mel.rotomap.identifynn.Model
-) -> None:
+def _fixup_old_model(old_metadata: dict, new_metadata: dict, model: object) -> None:
     old_model_args = old_metadata["model_args"]
     new_model_args = new_metadata["model_args"]
     if (
@@ -289,7 +281,8 @@ def _fixup_old_model(
     ):
         # TODO: support copying over embeddings and other bits that are the
         # same, and don't need to be re-learned.
-        model.reset_num_parts_classes(
+        # Model is identifynn.Model, imported late in process_args
+        model.reset_num_parts_classes(  # ty: ignore[unresolved-attribute]
             new_num_parts=new_model_args["num_parts"],
             new_num_classes=new_model_args["num_classes"],
         )
