@@ -313,7 +313,7 @@ class MaskEditController:
         if event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION):
             is_mouse_button_pressed = pygame.mouse.get_pressed()
             if is_mouse_button_pressed[0]:
-                editor.set_mask(mouse_x, mouse_y, enable)
+                editor.set_mask(mouse_x, mouse_y, enable=enable)
 
     def pre_key(self, editor, key) -> None:
         pass

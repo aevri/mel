@@ -15,7 +15,7 @@ import mel.lib.dinov3
 import mel.rotomap.moles
 
 
-def _existing_file_path(string) -> pathlib.Path:
+def _existing_file_path(string: str) -> pathlib.Path:
     """Argparse type for validating that a file exists."""
     path = pathlib.Path(string)
     if not path.exists():
@@ -27,12 +27,16 @@ def _existing_file_path(string) -> pathlib.Path:
     return path
 
 
-def _get_features_path(image_path, dino_size, image_size) -> pathlib.Path:
+def _get_features_path(
+    image_path: pathlib.Path, dino_size: str, image_size: int
+) -> pathlib.Path:
     """Generate path for cached features file."""
     return pathlib.Path(f"{image_path}.dino3-{dino_size}-{image_size}.pt")
 
 
-def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False) -> dict:
+def _load_precalc_features(
+    image_path: pathlib.Path, dino_size: str, image_size: int, *, verbose: int = 0
+) -> dict:
     """Load pre-computed features, raising an error if not found."""
     features_path = _get_features_path(image_path, dino_size, image_size)
     if not features_path.exists():
@@ -46,12 +50,12 @@ def _load_precalc_features(image_path, dino_size, image_size, *, verbose=False) 
     return torch.load(features_path, weights_only=True)
 
 
-def _tensor_size_mb(tensor) -> float:
+def _tensor_size_mb(tensor: torch.Tensor) -> float:
     """Return size of a tensor in megabytes."""
     return tensor.numel() * tensor.element_size() / (1024 * 1024)
 
 
-def _get_patch_index(img_w, mole_x, mole_y) -> int:
+def _get_patch_index(img_w: int, mole_x: int, mole_y: int) -> int:
     """Convert scaled coordinates to patch index."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -60,7 +64,7 @@ def _get_patch_index(img_w, mole_x, mole_y) -> int:
     return patch_row * patches_per_row + patch_col
 
 
-def _patch_index_to_coords(patch_idx, img_w) -> tuple[int, int]:
+def _patch_index_to_coords(patch_idx: int, img_w: int) -> tuple[int, int]:
     """Convert patch index to patch center coordinates."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -71,7 +75,7 @@ def _patch_index_to_coords(patch_idx, img_w) -> tuple[int, int]:
     return x, y
 
 
-def _get_patch_distance(idx1, idx2, img_w) -> float:
+def _get_patch_distance(idx1: int, idx2: int, img_w: int) -> float:
     """Compute distance between two patches in patch units."""
     patch_size = mel.lib.dinov3.PATCH_SIZE
     patches_per_row = img_w // patch_size
@@ -84,7 +88,11 @@ class MoleClassifier(torch.nn.Module):
     """MLP classifier for mole identification."""
 
     def __init__(
-        self, feature_dim, num_classes, hidden_layers, input_dropout=0.0
+        self,
+        feature_dim: int,
+        num_classes: int,
+        hidden_layers: list[int],
+        input_dropout: float = 0.0,
     ) -> None:
         """Initialize the classifier.
 
@@ -108,17 +116,17 @@ class MoleClassifier(torch.nn.Module):
         layers.append(torch.nn.Linear(prev_dim, num_classes))
         self.layers = torch.nn.Sequential(*layers)
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.layers(x)
 
 
 def _collect_training_data(
-    ref_moles_by_path,
-    ref_data,
-    uuid_to_class,
-    negative_ratio,
-    min_patch_distance,
-    verbose,
+    ref_moles_by_path: dict,
+    ref_data: dict,
+    uuid_to_class: dict,
+    negative_ratio: float,
+    min_patch_distance: float,
+    verbose: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Collect training features and labels from reference images.
 
@@ -212,14 +220,14 @@ def _collect_training_data(
 
 
 def _train_classifier(
-    features,
-    labels,
-    num_classes,
-    hidden_layers,
-    epochs,
-    weight_decay,
-    verbose,
-    input_dropout=0.0,
+    features: torch.Tensor,
+    labels: torch.Tensor,
+    num_classes: int,
+    hidden_layers: list[int],
+    epochs: int,
+    weight_decay: float,
+    verbose: int,
+    input_dropout: float = 0.0,
 ) -> MoleClassifier:
     """Train the mole classifier.
 
@@ -276,7 +284,7 @@ def _train_classifier(
     return model
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--reference",
         "-r",
@@ -375,7 +383,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> int:
+def process_args(args: argparse.Namespace) -> int:
     ref_paths = args.reference
     tgt_paths = args.target
     dino_size = args.dino_size
