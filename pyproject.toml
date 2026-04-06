@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ty==0.0.29",
+    "ty",
     "pytest",
     "ruff",
     "vulture",
