@@ -1,5 +1,6 @@
 """Image processing routines."""
 
+import collections.abc
 import pathlib
 import stat
 
@@ -9,7 +10,7 @@ import numpy as np
 import mel.lib.common
 
 
-def load_image(path) -> np.ndarray:
+def load_image(path: str | pathlib.Path) -> np.ndarray:
     image = cv2.imread(str(path))
     if image is None:
         msg = f'Failed to load image: "{path}"'
@@ -18,7 +19,7 @@ def load_image(path) -> np.ndarray:
     return image
 
 
-def save_image(image, path) -> None:
+def save_image(image: np.ndarray, path: str | pathlib.Path) -> None:
     """Save image to path, respecting file permissions.
 
     Args:
@@ -47,7 +48,9 @@ def save_image(image, path) -> None:
         raise OSError(msg)
 
 
-def calc_letterbox(width, height, fit_width, fit_height) -> tuple[int, int, int, int]:
+def calc_letterbox(
+    width: int, height: int, fit_width: int, fit_height: int
+) -> tuple[int, int, int, int]:
     """Return (x, y, width, height) to fit image into.
 
     Usage example:
@@ -72,7 +75,7 @@ def calc_letterbox(width, height, fit_width, fit_height) -> tuple[int, int, int,
     return (x, y, new_width, new_height)
 
 
-def letterbox(image, width, height) -> np.ndarray:
+def letterbox(image: np.ndarray, width: int, height: int) -> np.ndarray:
     x, y, new_width, new_height = calc_letterbox(
         image.shape[1], image.shape[0], width, height
     )
@@ -82,7 +85,7 @@ def letterbox(image, width, height) -> np.ndarray:
     return letterboxed
 
 
-def calc_montage_horizontal(border_size, *frames: list[int]) -> tuple:
+def calc_montage_horizontal(border_size: int, *frames: list[int]) -> tuple:
     """Return total[], pos1[], pos2[], ... for a horizontal montage.
 
     Usage example:
@@ -106,7 +109,7 @@ def calc_montage_horizontal(border_size, *frames: list[int]) -> tuple:
     return tuple(result)
 
 
-def calc_montage_vertical(border_size, *frames: list[int]) -> tuple:
+def calc_montage_vertical(border_size: int, *frames: list[int]) -> tuple:
     """Return total[], pos1[], pos2[], ... for a vertical montage.
 
     Usage example:
@@ -120,7 +123,9 @@ def calc_montage_vertical(border_size, *frames: list[int]) -> tuple:
     return tuple([g[1], g[0]] for g in geometry)
 
 
-def arrange_images(total_width, total_height, *images_positions: tuple) -> np.ndarray:
+def arrange_images(
+    total_width: int, total_height: int, *images_positions: tuple
+) -> np.ndarray:
     """Return a composited image based on the (image, pos) arguments."""
     result = mel.lib.common.new_image(total_height, total_width)
 
@@ -131,7 +136,7 @@ def arrange_images(total_width, total_height, *images_positions: tuple) -> np.nd
 
 
 def montage_horizontal_inner_border(
-    divider_size, *image_list: np.ndarray
+    divider_size: int, *image_list: np.ndarray
 ) -> np.ndarray:
     """Return a new image, of the supplied images in a row.
 
@@ -177,7 +182,7 @@ def montage_horizontal_inner_border(
     return output
 
 
-def montage_horizontal(border_size, *image_list: np.ndarray) -> np.ndarray:
+def montage_horizontal(border_size: int, *image_list: np.ndarray) -> np.ndarray:
     geometry = calc_montage_horizontal(
         border_size, *[list(reversed(i.shape[:2])) for i in image_list]
     )
@@ -190,7 +195,7 @@ def montage_horizontal(border_size, *image_list: np.ndarray) -> np.ndarray:
     )
 
 
-def montage_vertical(border_size, *image_list: np.ndarray) -> np.ndarray:
+def montage_vertical(border_size: int, *image_list: np.ndarray) -> np.ndarray:
     geometry = calc_montage_vertical(
         border_size, *[list(reversed(i.shape[:2])) for i in image_list]
     )
@@ -204,7 +209,10 @@ def montage_vertical(border_size, *image_list: np.ndarray) -> np.ndarray:
 
 
 def measure_text_height_width(
-    text, font_face=None, font_scale=None, thickness=None
+    text: str,
+    font_face: int | None = None,
+    font_scale: float | None = None,
+    thickness: int | None = None,
 ) -> tuple[int, int]:
     if font_face is None:
         font_face = cv2.FONT_HERSHEY_DUPLEX
@@ -221,7 +229,11 @@ def measure_text_height_width(
 
 
 def render_text_as_image(
-    text, font_face=None, font_scale=None, thickness=None, color=None
+    text: str | pathlib.Path,
+    font_face: int | None = None,
+    font_scale: float | None = None,
+    thickness: int | None = None,
+    color: tuple[int, ...] | None = None,
 ) -> np.ndarray:
     if font_face is None:
         font_face = cv2.FONT_HERSHEY_DUPLEX
@@ -232,33 +244,47 @@ def render_text_as_image(
     if color is None:
         color = (255, 255, 255)
 
-    (width, height), baseline = cv2.getTextSize(text, font_face, font_scale, thickness)
+    text_str = str(text)
+    (width, height), baseline = cv2.getTextSize(
+        text_str, font_face, font_scale, thickness
+    )
 
     baseline += thickness
 
     image = mel.lib.common.new_image(height + baseline, width)
     textpos = (0, height)
-    cv2.putText(image, text, textpos, font_face, font_scale, color)
+    cv2.putText(image, text_str, textpos, font_face, font_scale, color)
     return image
 
 
-def calc_centering_offset(centre_xy, dst_size_xy) -> list:
+def calc_centering_offset(
+    centre_xy: collections.abc.Sequence[int],
+    dst_size_xy: collections.abc.Sequence[int] | np.ndarray,
+) -> list:
     dst_centre = [i // 2 for i in dst_size_xy]
     return [i[1] - i[0] for i in zip(centre_xy, dst_centre, strict=False)]
 
 
-def centered_at(image, src_pos, dst_rect) -> np.ndarray:
+def centered_at(
+    image: np.ndarray,
+    src_pos: np.ndarray | tuple[int, ...],
+    dst_rect: np.ndarray | tuple[int, ...],
+) -> np.ndarray:
+    src_pos_arr = np.asarray(src_pos)
+    dst_rect_arr = np.asarray(dst_rect)
     dst_selection, src_selection = calc_centered_at_selections(
-        get_image_rect(image), src_pos, dst_rect
+        get_image_rect(image), src_pos_arr, dst_rect_arr
     )
 
-    result = mel.lib.common.new_image(*np.flipud(dst_rect))
+    result = mel.lib.common.new_image(*np.flipud(dst_rect_arr))
     result[dst_selection] = image[src_selection]
 
     return result
 
 
-def calc_centered_at_selections(src_rect, src_pos, dst_rect) -> tuple:
+def calc_centered_at_selections(
+    src_rect: np.ndarray, src_pos: np.ndarray, dst_rect: np.ndarray
+) -> tuple:
     """Return (dst, src) selections for centering at src_pos.
 
     :src_rect: A numpy.array of src's (width, height)
@@ -291,7 +317,9 @@ def calc_centered_at_selections(src_rect, src_pos, dst_rect) -> tuple:
     return dst_selection, src_selection
 
 
-def positions_to_selection(top_left_inclusive, bottom_right_exclusive) -> tuple:
+def positions_to_selection(
+    top_left_inclusive: np.ndarray, bottom_right_exclusive: np.ndarray
+) -> tuple:
     """Return a selection object for an image as specified by positions.
 
     Note that the bottom right point will not be included in the selection.
@@ -311,7 +339,9 @@ def positions_to_selection(top_left_inclusive, bottom_right_exclusive) -> tuple:
     )
 
 
-def slice_square_or_none(image, lefttop, rightbottom) -> np.ndarray | None:
+def slice_square_or_none(
+    image: np.ndarray, lefttop: np.ndarray, rightbottom: np.ndarray
+) -> np.ndarray | None:
     """Return a slice of the supplied image or None.
 
     Args:
@@ -346,7 +376,7 @@ def slice_square_or_none(image, lefttop, rightbottom) -> np.ndarray | None:
     ]
 
 
-def recentered_at(image, x, y) -> np.ndarray:
+def recentered_at(image: np.ndarray, x: int, y: int) -> np.ndarray:
     """Return a new image, centered at new position on a black background.
 
     Where new content needs to be shifted into the image, it will appear black.
@@ -363,7 +393,7 @@ def recentered_at(image, x, y) -> np.ndarray:
     return centered_at(image, np.array((x, y)), get_image_rect(image))
 
 
-def get_image_rect(image) -> np.ndarray:
+def get_image_rect(image: np.ndarray) -> np.ndarray:
     """Return the (width, height) of the supplied 'image'.
 
     :image: A numpy.ndarray representing an image.
@@ -372,7 +402,7 @@ def get_image_rect(image) -> np.ndarray:
     return np.flipud(image.shape[:2])
 
 
-def rotated(image, degrees) -> np.ndarray:
+def rotated(image: np.ndarray, degrees: float) -> np.ndarray:
     """Return a new image, rotated by specified amount, on a black background.
 
     Where new content needs to be shifted into the image, it will appear black.
@@ -392,11 +422,11 @@ def rotated(image, degrees) -> np.ndarray:
     return cv2.warpAffine(image, rot, (width, height))
 
 
-def rotated180(image) -> np.ndarray:
+def rotated180(image: np.ndarray) -> np.ndarray:
     return cv2.flip(image, -1)
 
 
-def scale_image(image, scale) -> np.ndarray:
+def scale_image(image: np.ndarray, scale: float) -> np.ndarray:
     height, width = image.shape[:2]
     return cv2.resize(image, (int(width * scale), int(height * scale)))
 

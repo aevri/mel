@@ -23,6 +23,7 @@ Controls:
     'q' to quit.
 """
 
+import argparse
 import collections
 import collections.abc
 import functools
@@ -54,7 +55,7 @@ class _PosInfo(typing.NamedTuple):
     uuid_points: typing.Any
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "ROTOMAP",
         type=mel.rotomap.moles.make_argparse_rotomap_directory,
@@ -66,7 +67,7 @@ def setup_parser(parser) -> None:
     )
 
 
-def process_args(args) -> None:
+def process_args(args: argparse.Namespace) -> None:
     target_rotomap = args.ROTOMAP[-1]
     target_uuids = target_rotomap.calc_uuids()
 
@@ -109,7 +110,7 @@ def process_args(args) -> None:
     # Ensure we're not using a defaultdict, otherwise we might miss a KeyError.
     uuid_to_rotomaps_imagepos_list = dict(uuid_to_rotomaps_imagepos_list)
 
-    def unchanged_status_keyfunc(uuid_) -> int:
+    def unchanged_status_keyfunc(uuid_: str) -> int:
         is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
         if is_unchanged is None:
             return 1
@@ -145,7 +146,10 @@ def process_args(args) -> None:
 
 
 def _make_on_keydown(
-    display, uuid_order, target_rotomap, uuid_to_rotomaps_imagepos_list
+    display: "ImageCompareDisplay",
+    uuid_order: list[str],
+    target_rotomap: mel.rotomap.moles.RotomapDirectory,
+    uuid_to_rotomaps_imagepos_list: dict,
 ) -> collections.abc.Callable:
     # Import pygame as late as possible, to avoid displaying its
     # startup-text where it is not actually used.
@@ -155,9 +159,9 @@ def _make_on_keydown(
     uuid_ = uuid_order[index]
     is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
     if is_unchanged is not None:
-        display.indicate_changed(not is_unchanged)
+        display.indicate_changed(should_indicate_changed=not is_unchanged)
 
-    def on_keydown(event) -> None:
+    def on_keydown(event: pygame.event.Event) -> None:
         key = event.key
         nonlocal index
         if key == pygame.K_RIGHT:
@@ -177,7 +181,7 @@ def _make_on_keydown(
             display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
-                display.indicate_changed(not is_unchanged)
+                display.indicate_changed(should_indicate_changed=not is_unchanged)
         elif key == pygame.K_p:
             num_uuids = len(uuid_to_rotomaps_imagepos_list)
             index -= 1
@@ -187,7 +191,7 @@ def _make_on_keydown(
             display.reset(path_images_tuple, uuid_)
             is_unchanged = is_lesion_unchanged(target_rotomap, uuid_)
             if is_unchanged is not None:
-                display.indicate_changed(not is_unchanged)
+                display.indicate_changed(should_indicate_changed=not is_unchanged)
         elif key == pygame.K_SPACE:
             display.swap_images()
         elif key == pygame.K_a:
@@ -218,7 +222,9 @@ def _make_on_keydown(
     return on_keydown
 
 
-def is_lesion_unchanged(rotomap, uuid_) -> bool | None:
+def is_lesion_unchanged(
+    rotomap: mel.rotomap.moles.RotomapDirectory, uuid_: str
+) -> bool | None:
     """Mark the provided uuid changed status in the lesions datafile."""
     for lesion in rotomap.lesions:
         if lesion["uuid"] == uuid_:
@@ -226,14 +232,16 @@ def is_lesion_unchanged(rotomap, uuid_) -> bool | None:
     return None
 
 
-def mark_lesion(rotomap, uuid_, *, is_unchanged) -> None:
+def mark_lesion(
+    rotomap: mel.rotomap.moles.RotomapDirectory, uuid_: str, *, is_unchanged: bool
+) -> None:
     """Mark the provided uuid changed status in the lesions datafile."""
     target_lesion = None
     for lesion in rotomap.lesions:
         if lesion["uuid"] == uuid_:
             target_lesion = lesion
     if target_lesion is None:
-        target_lesion = {"uuid": uuid_}
+        target_lesion: dict[str, str | bool] = {"uuid": uuid_}
         rotomap.lesions.append(target_lesion)
     target_lesion[mel.rotomap.moles.KEY_IS_UNCHANGED] = is_unchanged
     mel.rotomap.moles.save_rotomap_dir_lesions_file(rotomap.path, rotomap.lesions)
@@ -242,7 +250,13 @@ def mark_lesion(rotomap, uuid_, *, is_unchanged) -> None:
 class ImageCompareDisplay:
     """Display two images in a window, supply controls for comparing a list."""
 
-    def __init__(self, logger, screen, path_images_tuple, uuid_) -> None:
+    def __init__(
+        self,
+        logger: mel.lib.common.TimeLogger,
+        screen: mel.lib.fullscreenui.Display,
+        path_images_tuple: tuple[list[_PosInfo], ...],
+        uuid_: str,
+    ) -> None:
         self._logger = logger
         self._image_path: typing.Any = None
         self._uuid: typing.Any = None
@@ -265,7 +279,7 @@ class ImageCompareDisplay:
             + self._uuid,
         )
 
-    def reset(self, path_images_tuple, uuid_) -> None:
+    def reset(self, path_images_tuple: tuple[list[_PosInfo], ...], uuid_: str) -> None:
         if not path_images_tuple:
             msg = "path_images_tuple must be a tuple with at least one thing."
             raise ValueError(msg)
@@ -333,21 +347,21 @@ class ImageCompareDisplay:
         self._draw_moles = not self._draw_moles
         self._show()
 
-    def indicate_changed(self, *, should_indicate_changed=True) -> None:
+    def indicate_changed(self, *, should_indicate_changed: bool = True) -> None:
         self._should_indicate_changed = should_indicate_changed
         self._show()
 
-    def adjust_zoom(self, zoom_multiplier) -> None:
+    def adjust_zoom(self, zoom_multiplier: float) -> None:
         ix = self._indices[0]
         self._zooms[ix] *= zoom_multiplier
         self._show()
 
-    def adjust_rotation(self, rotation_modifier) -> None:
+    def adjust_rotation(self, rotation_modifier: float) -> None:
         ix = self._indices[0]
         self._rotations[ix] += rotation_modifier
         self._show()
 
-    def _posinfo(self, index) -> _PosInfo:
+    def _posinfo(self, index: int) -> _PosInfo:
         ix = self._indices[index]
         image_index = self._rotomap_cursors[ix]
         return self._rotomaps[ix][image_index]
@@ -411,7 +425,7 @@ class ImageCompareDisplay:
 
         self._show()
 
-    def _path_pos_zoom_rotation_moles(self, index) -> tuple:
+    def _path_pos_zoom_rotation_moles(self, index: int) -> tuple:
         image_index = self._rotomap_cursors[index]
         posinfo = self._rotomaps[index][image_index]
         zoom = self._zooms[index]
@@ -446,16 +460,16 @@ class ImageCompareDisplay:
 
 
 def captioned_mole_image(
-    path,
-    pos,
-    zoom,
-    rotation_degs,
-    uuid_points,
-    size,
-    should_draw_crosshairs,
-    border_colour=None,
+    path: pathlib.Path,
+    pos: np.ndarray,
+    zoom: float,
+    rotation_degs: float,
+    uuid_points: dict[str, typing.Any] | None,
+    size: np.ndarray,
+    should_draw_crosshairs: bool,  # noqa: FBT001
+    border_colour: tuple[int, int, int] | None = None,
     *,
-    draw_moles=False,
+    draw_moles: bool = False,
 ) -> np.ndarray:
     points = None
     if draw_moles and uuid_points is not None:
@@ -480,7 +494,14 @@ def captioned_mole_image(
 
 
 @functools.lru_cache
-def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points) -> tuple:
+def _cached_captioned_mole_image(
+    path: str,
+    pos: tuple[int, ...],
+    zoom: float,
+    size: tuple[int, ...],
+    rotation_degs: float,
+    points: tuple[tuple[int, int], ...] | None,
+) -> tuple:
     image = mel.lib.image.load_image(path)
     image = mel.lib.image.scale_image(image, zoom)
     colors = [[255, 0, 0], [255, 128, 128], [255, 0, 0]]
@@ -490,13 +511,13 @@ def _cached_captioned_mole_image(path, pos, zoom, size, rotation_degs, points) -
             scaled_y = int(y * zoom)
             mel.rotomap.display.draw_mole(image, scaled_x, scaled_y, colors)
     pos = tuple(int(v * zoom) for v in pos)
-    size = np.array(size)
-    max_size = 2 * max(size)
+    size_arr = np.array(size)
+    max_size = 2 * max(size_arr)
     max_size = np.array([max_size, max_size])
     max_size_2 = 2 * max_size
     image = mel.lib.image.centered_at(image, pos, max_size_2)
     image = mel.lib.image.rotated(image, rotation_degs)
-    image = mel.lib.image.centered_at(image, max_size, size)
+    image = mel.lib.image.centered_at(image, max_size, size_arr)
     caption = mel.lib.image.render_text_as_image(str(path))
     return (
         mel.lib.image.montage_vertical(10, image, caption),
