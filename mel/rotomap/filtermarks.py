@@ -30,10 +30,12 @@ _PRETRAINED_SUFFIX = ".jpg.efficientnet_b0.pt"
 
 
 @contextlib.contextmanager
-def record_input_context(module_to_record) -> collections.abc.Generator[list]:
+def record_input_context(
+    module_to_record: torch.nn.Module,
+) -> collections.abc.Generator[list]:
     activations = []
 
-    def record_response(_module, input_) -> None:
+    def record_response(_module: torch.nn.Module, input_: tuple) -> None:
         activations.append(input_)
 
     hook = module_to_record.register_forward_pre_hook(record_response)
@@ -78,7 +80,7 @@ def make_model_and_transform() -> tuple:
     return model, num_features, transform
 
 
-def images_to_features(images, batch_size) -> torch.Tensor:
+def images_to_features(images: list[np.ndarray], batch_size: int) -> torch.Tensor:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch.utils.data
@@ -107,7 +109,11 @@ def images_to_features(images, batch_size) -> torch.Tensor:
     return features
 
 
-def pretrain_image(image_path, moles, batch_size) -> None:
+def pretrain_image(
+    image_path: str | pathlib.Path,
+    moles: list[dict],
+    batch_size: int,
+) -> None:
     image_path = pathlib.Path(image_path)
     image, mask = open_image_for_classifier(image_path)
 
@@ -115,7 +121,7 @@ def pretrain_image(image_path, moles, batch_size) -> None:
     guessed_moles = mel.rotomap.detectmoles.moles(image, mask)
 
     moles_and_marks = mel.rotomap.automark.merge_in_radiuses(
-        loaded_moles,
+        loaded_moles,  # ty: ignore[invalid-argument-type]
         radii_sources=guessed_moles,
         error_distance=10,
         only_merge=False,
@@ -151,7 +157,9 @@ def pretrain_image(image_path, moles, batch_size) -> None:
     )
 
 
-def get_item_image(image, mask, item, size) -> np.ndarray | None:
+def get_item_image(
+    image: np.ndarray, mask: np.ndarray, item: dict, size: int
+) -> np.ndarray | None:
     x = item["x"]
     y = item["y"]
 
@@ -167,14 +175,14 @@ def get_item_image(image, mask, item, size) -> np.ndarray | None:
 
 
 def train(
-    epochs,
-    train_dataloader,
-    valid_dataloader,
-    model,
-    opt,
-    loss_func,
-    scheduler,
-    evaluators,
+    epochs: int,
+    train_dataloader: torch.utils.data.DataLoader,
+    valid_dataloader: torch.utils.data.DataLoader,
+    model: torch.nn.Module,
+    opt: torch.optim.Optimizer,
+    loss_func: torch.nn.Module,
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None,
+    evaluators: list[Evaluator],
 ) -> None:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
@@ -209,7 +217,7 @@ def train(
 
 
 class Evaluator:
-    def __init__(self, threshold) -> None:
+    def __init__(self, threshold: float) -> None:
         # Import this as lazily as possible as it takes a while to import, so
         # that we only pay the import cost when we use it.
         import torch
@@ -221,7 +229,7 @@ class Evaluator:
 
         self.softmax = torch.nn.Softmax(dim=1)
 
-    def update(self, out, data) -> None:
+    def update(self, out: torch.Tensor, data: dict) -> None:
         predictions = self.softmax(out)[:, 1] > self.threshold
         self.num_predicted_moles += predictions.sum()
         self.num_moles_correct += ((data["is_mole"] > 0) & predictions).sum()
@@ -240,7 +248,7 @@ class Evaluator:
         return 100 * self.num_moles_correct.item() / self.num_moles.item()
 
 
-def make_model(num_features) -> torch.nn.Linear:
+def make_model(num_features: int) -> torch.nn.Linear:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
@@ -252,7 +260,7 @@ def make_model(num_features) -> torch.nn.Linear:
     return torch.nn.Linear(num_features, 2)
 
 
-def prepare_data(pretrained_data, sessions) -> list[dict]:
+def prepare_data(pretrained_data: dict, sessions: list) -> list[dict]:
     image_dicts = (data for session in sessions for data in pretrained_data[session])
     return [
         {
@@ -266,7 +274,9 @@ def prepare_data(pretrained_data, sessions) -> list[dict]:
     ]
 
 
-def split_data(pretrained_data, training_split=0.8) -> tuple[list[dict], list[dict]]:
+def split_data(
+    pretrained_data: dict, training_split: float = 0.8
+) -> tuple[list[dict], list[dict]]:
     sessions = list(pretrained_data.keys())
     num_sessions = len(sessions)
     if training_split != 1 and num_sessions < 2:
@@ -281,7 +291,7 @@ def split_data(pretrained_data, training_split=0.8) -> tuple[list[dict], list[di
     return training_data, validation_data
 
 
-def _load_pretrained_file(path) -> dict:
+def _load_pretrained_file(path: pathlib.Path) -> dict:
     import pickle
     import sys
 
@@ -305,7 +315,7 @@ def _load_pretrained_file(path) -> dict:
     return loaded_data
 
 
-def load_pretrained(pretrained_paths) -> dict:
+def load_pretrained(pretrained_paths: dict) -> dict:
 
     work_items = [
         (session, path)
@@ -329,7 +339,7 @@ def load_pretrained(pretrained_paths) -> dict:
     return pretrained_data
 
 
-def find_pretrained(melroot) -> dict:
+def find_pretrained(melroot: pathlib.Path) -> dict:
     parts_path = melroot / "rotomaps" / "parts"
     all_sessions = collections.defaultdict(list)
     for part in parts_path.iterdir():
@@ -342,26 +352,31 @@ def find_pretrained(melroot) -> dict:
 
 
 def make_model_and_fit(
-    training_data,
-    validation_data,
-    evaluators,
-    batch_size,
-    num_epochs,
-    learning_rate,
+    training_data: list[dict],
+    validation_data: list[dict],
+    evaluators: list[Evaluator],
+    batch_size: int,
+    num_epochs: int,
+    learning_rate: float,
 ) -> torch.nn.Linear:
     # Import this as lazily as possible as it takes a while to import, so that
     # we only pay the import cost when we use it.
     import torch
 
+    # DataLoader stub requires Dataset, but list works at runtime
     training_batcher = torch.utils.data.DataLoader(
-        training_data, batch_size=batch_size, shuffle=True
+        training_data,  # ty: ignore[invalid-argument-type]
+        batch_size=batch_size,
+        shuffle=True,
     )
 
     for _batch in training_batcher:
         pass
 
+    # DataLoader stub requires Dataset, but list works at runtime
     validation_batcher = torch.utils.data.DataLoader(
-        validation_data, batch_size=batch_size
+        validation_data,  # ty: ignore[invalid-argument-type]
+        batch_size=batch_size,
     )
 
     assert len(training_data[0]["features"].shape) == 1
@@ -390,7 +405,9 @@ def make_model_and_fit(
     return model
 
 
-def open_image_for_classifier(image_path) -> tuple[np.ndarray, np.ndarray]:
+def open_image_for_classifier(
+    image_path: str | pathlib.Path,
+) -> tuple[np.ndarray, np.ndarray]:
     path = pathlib.Path(image_path)
     if not path.exists():
         msg = f"No such file or directory: {image_path}"
@@ -424,7 +441,7 @@ def open_image_for_classifier(image_path) -> tuple[np.ndarray, np.ndarray]:
     return image, mask
 
 
-def select_moles(moles_and_marks) -> list[dict]:
+def select_moles(moles_and_marks: list[dict]) -> list[dict]:
     moles = []
 
     for item in moles_and_marks:
@@ -443,7 +460,7 @@ def select_moles(moles_and_marks) -> list[dict]:
     return moles
 
 
-def select_marks(moles_and_marks) -> list[dict]:
+def select_marks(moles_and_marks: list[dict]) -> list[dict]:
     marks = []
 
     for item in moles_and_marks:
@@ -466,7 +483,13 @@ def select_marks(moles_and_marks) -> list[dict]:
     return marks
 
 
-def filter_marks(is_mole, image, moles, include_canonical) -> list[dict]:
+def filter_marks(
+    is_mole: collections.abc.Callable,
+    image: np.ndarray,
+    moles: list[dict],
+    *,
+    include_canonical: bool,
+) -> list[dict]:
     """Return a list of moles with the unlikely ones filtered out."""
     filtered_moles = []
     for m in moles:
@@ -495,7 +518,7 @@ def filter_marks(is_mole, image, moles, include_canonical) -> list[dict]:
 
 
 def make_is_mole_func(
-    metadata_dir, model_fname, softmax_threshold
+    metadata_dir: pathlib.Path, model_fname: str, softmax_threshold: float
 ) -> collections.abc.Callable:
     # These imports can be very expensive, so we delay them as late as
     # possible.
@@ -531,7 +554,7 @@ def make_is_mole_func(
 
     softmax = torch.nn.Softmax(dim=1)
 
-    def is_mole(image) -> bool:
+    def is_mole(image: np.ndarray) -> bool:
         # DataLoader stub requires Dataset, but list works at runtime
         batcher = torch.utils.data.DataLoader([transform(image)], batch_size=1)  # ty: ignore[invalid-argument-type]
 

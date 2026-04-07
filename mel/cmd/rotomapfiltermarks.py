@@ -102,7 +102,7 @@ def process_args(args: argparse.Namespace) -> int | None:
         image, _ = mel.rotomap.filtermarks.open_image_for_classifier(image_path)
         try:
             filtered_moles = mel.rotomap.filtermarks.filter_marks(
-                is_mole, image, moles, args.include_canonical
+                is_mole, image, moles, include_canonical=args.include_canonical
             )
         except Exception as e:
             msg = f"Error while processing {image_path}"
