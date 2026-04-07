@@ -725,6 +725,9 @@ class MoleData:
         return self._list_index
 
     def save_mask(self) -> None:
+        if self._mask_path is None or self.mask is None:
+            msg = "Cannot save mask: mask path or mask data not loaded"
+            raise RuntimeError(msg)
         mel.lib.common.write_image(self._mask_path, self.mask)
 
     def save_moles(self) -> None:
