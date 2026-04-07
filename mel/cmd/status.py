@@ -7,6 +7,8 @@ This is meant to be similar in usage to 'git status', or perhaps 'ls'.
 Answers the question 'What's happening here, and what shall I do next?'.
 """
 
+from __future__ import annotations
+
 # There are a few things to vary on in the future:
 #
 #     - Which paths are included
@@ -14,12 +16,12 @@ Answers the question 'What's happening here, and what shall I do next?'.
 #     - Level of detail, e.g. individual moles, rotomaps, parts, etc.
 #
 # Potentially we can also try to fit to a certain amount of screen real-estate.
-
 import collections
 import datetime
 import pathlib
 import sys
 import textwrap
+import typing
 from enum import IntEnum
 
 import colorama
@@ -28,16 +30,19 @@ import mel.lib.fs
 import mel.micro.fs
 import mel.rotomap.moles
 
+if typing.TYPE_CHECKING:
+    import argparse
+
 
 class ImportanceLevel(IntEnum):
     Info = 1
 
 
 class Notification:
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         self.path = path
 
-    def format(self, detail_level) -> str:  # noqa: ARG002 - subclasses use it
+    def format(self, detail_level: int) -> str:  # noqa: ARG002 - subclasses use it
         return str(self.path)
 
     def hint(self) -> str | None:
@@ -57,11 +62,11 @@ class InfoNotification(Notification):
 
 
 class RotomapNewMoleAlert(AlertNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -72,11 +77,11 @@ class RotomapNewMoleAlert(AlertNotification):
 
 
 class RotomapLesionChangedAlert(AlertNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -87,11 +92,11 @@ class RotomapLesionChangedAlert(AlertNotification):
 
 
 class MicroLesionChangedAlert(AlertNotification):
-    def __init__(self, path, id_) -> None:
+    def __init__(self, path: pathlib.Path, id_: str | None) -> None:
         super().__init__(path)
         self.id_ = id_
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -106,11 +111,11 @@ class InvalidDateError(ErrorNotification):
 
 
 class RotomapDuplicateUuidError(ErrorNotification):
-    def __init__(self, rotomap_path) -> None:
+    def __init__(self, rotomap_path: pathlib.Path) -> None:
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -131,11 +136,11 @@ class RotomapDuplicateUuidError(ErrorNotification):
 
 
 class RotomapNotLoadable(ErrorNotification):
-    def __init__(self, path, error=None) -> None:
+    def __init__(self, path: pathlib.Path, error: Exception | None = None) -> None:
         super().__init__(path)
         self.error = error
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
 
         if detail_level > 0 and self.error is not None:
@@ -170,10 +175,10 @@ class UnexpectedDirInfo(InfoNotification):
 
 
 class MicroMissingIdInfo(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
 
-    def format(self, detail_level) -> str:  # noqa: ARG002 - base class interface
+    def format(self, detail_level: int) -> str:  # noqa: ARG002 - base class interface
         return f"{self.path}"
 
     def hint(self) -> str:
@@ -184,11 +189,11 @@ class MicroMissingIdInfo(InfoNotification):
 
 
 class RotomapMissingMoleInfo(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -199,11 +204,11 @@ class RotomapMissingMoleInfo(InfoNotification):
 
 
 class RotomapMissingLesionUnchangedStatus(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.uuid_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -214,11 +219,11 @@ class RotomapMissingLesionUnchangedStatus(InfoNotification):
 
 
 class RotomapUnconfirmedMoleInfo(InfoNotification):
-    def __init__(self, rotomap_path) -> None:
+    def __init__(self, rotomap_path: pathlib.Path) -> None:
         super().__init__(rotomap_path)
         self.frame_to_uuid_list = collections.defaultdict(list)
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             if detail_level == 1:
@@ -239,11 +244,11 @@ class RotomapUnconfirmedMoleInfo(InfoNotification):
 
 
 class RotomapMissingMoleFileInfo(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -254,11 +259,11 @@ class RotomapMissingMoleFileInfo(InfoNotification):
 
 
 class RotomapMissingMaskInfo(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -269,11 +274,11 @@ class RotomapMissingMaskInfo(InfoNotification):
 
 
 class RotomapMissingSpaceInfo(InfoNotification):
-    def __init__(self, path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         super().__init__(path)
         self.frame_list = []
 
-    def format(self, detail_level) -> str:
+    def format(self, detail_level: int) -> str:
         output = f"{self.path}"
         if detail_level > 0:
             output += "\n\n"
@@ -283,13 +288,13 @@ class RotomapMissingSpaceInfo(InfoNotification):
         return output
 
 
-def setup_parser(parser) -> None:
+def setup_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("PATH", nargs="?")
     parser.add_argument("--detail", "-d", action="count", default=0)
     parser.add_argument("--trivia", "-t", action="count", default=0)
 
 
-def process_args(args) -> int | bool:
+def process_args(args: argparse.Namespace) -> int | bool:
     colorama.init()
     try:
         melroot = mel.lib.fs.find_melroot()
@@ -337,10 +342,10 @@ def process_args(args) -> int | bool:
 
     any_notices = bool(alerts_to_notices or errors_to_notices)
 
-    print_klass_to_notices(alerts_to_notices, args.detail, colorama.Fore.RED)
-    print_klass_to_notices(errors_to_notices, args.detail, colorama.Fore.MAGENTA)
+    print_klass_to_notices(alerts_to_notices, args.detail, colorama.Fore.RED)  # ty: ignore[invalid-argument-type]
+    print_klass_to_notices(errors_to_notices, args.detail, colorama.Fore.MAGENTA)  # ty: ignore[invalid-argument-type]
     if args.trivia > 0:
-        print_klass_to_notices(info_to_notices, args.detail, colorama.Fore.BLUE)
+        print_klass_to_notices(info_to_notices, args.detail, colorama.Fore.BLUE)  # ty: ignore[invalid-argument-type]
         if not any_notices and info_to_notices:
             any_notices = True
     if any_notices:
@@ -349,7 +354,9 @@ def process_args(args) -> int | bool:
     return any_notices
 
 
-def print_klass_to_notices(klass_to_notices, detail_level, fore) -> None:
+def print_klass_to_notices(
+    klass_to_notices: dict, detail_level: int, fore: str
+) -> None:
     for klass, notice_list in klass_to_notices.items():
         print()
         print(fore, klass.__name__, colorama.Fore.RESET)
@@ -362,7 +369,7 @@ def print_klass_to_notices(klass_to_notices, detail_level, fore) -> None:
                 print(textwrap.indent(textwrap.fill(hint), "  "))
 
 
-def check_rotomaps(path, notices, importance_level) -> None:
+def check_rotomaps(path: pathlib.Path, notices: list, importance_level: int) -> None:
     parts_path = path / "parts"
     if parts_path.exists():
         # So far I've organised parts like so:
@@ -399,7 +406,9 @@ def check_rotomaps(path, notices, importance_level) -> None:
         notices.append(NoBaseDirInfo(parts_path))
 
 
-def check_rotomap_minor_part(path, notices, importance_level) -> None:
+def check_rotomap_minor_part(
+    path: pathlib.Path, notices: list, importance_level: int
+) -> None:
     rotomap_list = make_rotomap_list(path, notices)
     check_rotomap_list(notices, rotomap_list)
 
@@ -410,7 +419,7 @@ def check_rotomap_minor_part(path, notices, importance_level) -> None:
         check_newest_rotomap(notices, rotomap_list[-1])
 
 
-def make_rotomap_list(path, notices) -> list:
+def make_rotomap_list(path: pathlib.Path, notices: list) -> list:
     rotomap_list = []
     for rotomap_path in path.iterdir():
         if rotomap_path.is_dir():
@@ -428,7 +437,7 @@ def make_rotomap_list(path, notices) -> list:
     return rotomap_list
 
 
-def uuids_from_dir(rotomap_dir) -> set:
+def uuids_from_dir(rotomap_dir: mel.rotomap.moles.RotomapDirectory) -> set:
     uuid_set = set()
     for _, moles in rotomap_dir.yield_mole_lists():
         for m in moles:
@@ -437,7 +446,9 @@ def uuids_from_dir(rotomap_dir) -> set:
     return uuid_set
 
 
-def check_rotomap_list(notices, rotomap_list) -> None:
+def check_rotomap_list(
+    notices: list, rotomap_list: list[mel.rotomap.moles.RotomapDirectory]
+) -> None:
     if len(rotomap_list) < 2:
         return
 
@@ -480,7 +491,9 @@ def check_rotomap_list(notices, rotomap_list) -> None:
         notices.append(missing_notification)
 
 
-def check_rotomap(notices, rotomap, importance_level) -> None:
+def check_rotomap(
+    notices: list, rotomap: mel.rotomap.moles.RotomapDirectory, importance_level: int
+) -> None:
     unconfirmed = RotomapUnconfirmedMoleInfo(rotomap.path)
     duplicates = RotomapDuplicateUuidError(rotomap.path)
 
@@ -517,9 +530,9 @@ def check_rotomap(notices, rotomap, importance_level) -> None:
         except (ValueError, OSError) as e:
             notices.append(RotomapNotLoadable(rotomap.path, e))
 
-        for i in rotomap.path.iterdir():
-            if i.is_dir():
-                notices.append(UnexpectedDirInfo(i))
+        notices.extend(
+            UnexpectedDirInfo(i) for i in rotomap.path.iterdir() if i.is_dir()
+        )
 
         if missing_mole_file_info.frame_list:
             notices.append(missing_mole_file_info)
@@ -529,7 +542,9 @@ def check_rotomap(notices, rotomap, importance_level) -> None:
             notices.append(missing_space_info)
 
 
-def check_newest_rotomap(notices, rotomap) -> None:
+def check_newest_rotomap(
+    notices: list, rotomap: mel.rotomap.moles.RotomapDirectory
+) -> None:
     missing_unchanged_status = RotomapMissingLesionUnchangedStatus(rotomap.path)
 
     changed = RotomapLesionChangedAlert(rotomap.path)
@@ -571,7 +586,7 @@ def check_newest_rotomap(notices, rotomap) -> None:
         notices.append(changed)
 
 
-def check_micro(path, notices) -> None:
+def check_micro(path: pathlib.Path, notices: list) -> None:
     parts_path = path / "data"
     if parts_path.exists():
         # So far I've organised parts like so:
@@ -615,7 +630,7 @@ def check_micro(path, notices) -> None:
         notices.append(NoBaseDirInfo(parts_path))
 
 
-def _validate_mole_dir(path, notices) -> None:
+def _validate_mole_dir(path: pathlib.Path, notices: list) -> None:
     for sub in path.iterdir():
         if sub.name.lower() not in mel.micro.fs.MOLE_DIR_ENTRIES:
             if sub.suffix.lower() in mel.micro.fs.IMAGE_SUFFIXES:
