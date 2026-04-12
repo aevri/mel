@@ -146,6 +146,8 @@ def test_smoke() -> None:
             str(target_image_files[0])
         )
 
+        expect_ok("mel", "rotomap", "composite", str(target_image_files[0]))
+
         expect_ok("mel", "status", "-ttdd")
 
         # Create empty timelog for timelog command test
