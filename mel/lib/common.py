@@ -1,6 +1,7 @@
 """A big ball of mud to hold common functionality pending a re-org."""
 
-import collections.abc
+from __future__ import annotations
+
 import contextlib
 import csv
 import datetime
@@ -13,6 +14,11 @@ import numpy as np
 import mel.lib.datetime
 import mel.lib.fs
 import mel.lib.image
+
+if typing.TYPE_CHECKING:
+    import _csv
+    import argparse
+    import collections.abc
 
 
 def determine_filename_for_ident(*source_filenames: str) -> str:
@@ -28,7 +34,9 @@ def determine_filename_for_ident(*source_filenames: str) -> str:
     return "ident.jpg"
 
 
-def overwrite_image(directory, filename, image) -> None:
+def overwrite_image(
+    directory: str | pathlib.Path, filename: str, image: np.ndarray
+) -> None:
     dir_path = pathlib.Path(directory)
     dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -39,12 +47,15 @@ def overwrite_image(directory, filename, image) -> None:
     write_image(str(path), image)
 
 
-def write_image(path, image) -> None:
+def write_image(path: str | pathlib.Path, image: np.ndarray) -> None:
     mel.lib.image.save_image(image, path)
 
 
 def user_mark_moles(
-    window_name, context_image, detail_image, num_moles
+    window_name: str,
+    context_image: np.ndarray,
+    detail_image: np.ndarray,
+    num_moles: int,
 ) -> tuple[list, list]:
     display_image = np.copy(context_image)
     cv2.imshow(window_name, display_image)
@@ -102,9 +113,9 @@ def user_mark_moles(
 
 
 def make_mole_capture_callback(
-    window_name, image, radius, mole_positions
+    window_name: str, image: np.ndarray, radius: int, mole_positions: list
 ) -> typing.Callable:
-    def draw_circle(event, x, y, _flags, _param) -> None:
+    def draw_circle(event: int, x: int, y: int, _flags: int, _param: object) -> None:
         del _flags, _param
         if event == cv2.EVENT_LBUTTONDOWN:
             cv2.circle(image, (x, y), radius, (255, 0, 0), -1)
@@ -115,13 +126,15 @@ def make_mole_capture_callback(
 
 
 def make_null_mouse_callback() -> typing.Callable:
-    def null_callback(_event, _x, _y, _flags, _param) -> None:
+    def null_callback(
+        _event: int, _x: int, _y: int, _flags: int, _param: object
+    ) -> None:
         del _event, _x, _y, _flags, _param
 
     return null_callback
 
 
-def box_moles(image, mole_positions, thickness) -> None:
+def box_moles(image: np.ndarray, mole_positions: list, thickness: int) -> None:
     left = min(m[0] - m[2] for m in mole_positions)
     top = min(m[1] - m[2] for m in mole_positions)
     right = max(m[0] + m[2] for m in mole_positions)
@@ -139,7 +152,7 @@ def box_moles(image, mole_positions, thickness) -> None:
     cv2.rectangle(image, left_top, right_bottom, blue, thickness)
 
 
-def connect_moles(image, mole_positions) -> None:
+def connect_moles(image: np.ndarray, mole_positions: list) -> None:
     for mole_a, mole_b in yield_neighbors(mole_positions):
         if mole_a is None or mole_b is None:
             continue
@@ -161,7 +174,7 @@ def connect_moles(image, mole_positions) -> None:
         cv2.line(image, a, b, blue, thickness)
 
 
-def yield_neighbors(node_list) -> collections.abc.Generator:
+def yield_neighbors(node_list: list) -> collections.abc.Generator:
     is_first = True
     prev_node = None
     for node in node_list:
@@ -172,16 +185,16 @@ def yield_neighbors(node_list) -> collections.abc.Generator:
         prev_node = node
 
 
-def new_image(height, width) -> np.ndarray:
+def new_image(height: int, width: int) -> np.ndarray:
     return np.zeros((height, width, 3), np.uint8)
 
 
-def copy_image_into_image(source, dest, y, x) -> None:
+def copy_image_into_image(source: np.ndarray, dest: np.ndarray, y: int, x: int) -> None:
     shape = source.shape
     dest[y : (y + shape[0]), x : (x + shape[1])] = source
 
 
-def shrink_to_max_dimension(image, max_dimension) -> np.ndarray:
+def shrink_to_max_dimension(image: np.ndarray, max_dimension: int) -> np.ndarray:
     """May or may not return the original image."""
     shape = image.shape
     height = shape[0]
@@ -195,7 +208,7 @@ def shrink_to_max_dimension(image, max_dimension) -> np.ndarray:
     return cv2.resize(image, (new_width, new_height))
 
 
-def indicate_mole(image, mole) -> None:
+def indicate_mole(image: np.ndarray, mole: collections.abc.Sequence) -> None:
     pos = mole[:2]
     radius = mole[2]
 
@@ -206,22 +219,27 @@ def indicate_mole(image, mole) -> None:
 
 
 def draw_radial_line(
-    image, origin, inner_radius, outer_radius, direction, thickness
+    image: np.ndarray,
+    origin: collections.abc.Sequence[int],
+    inner_radius: int,
+    outer_radius: int,
+    direction: collections.abc.Sequence[int],
+    thickness: int,
 ) -> None:
-    origin = np.array(origin)
-    direction = np.array(direction)
-    line_start = origin + direction * inner_radius
-    line_end = origin + direction * outer_radius
+    origin_arr = np.array(origin)
+    direction_arr = np.array(direction)
+    line_start = origin_arr + direction_arr * inner_radius
+    line_end = origin_arr + direction_arr * outer_radius
 
     blue = (255, 0, 0)
 
-    line_start = tuple(line_start.tolist())
-    line_end = tuple(line_end.tolist())
+    line_start_t = tuple(line_start.tolist())
+    line_end_t = tuple(line_end.tolist())
 
-    cv2.line(image, line_start, line_end, blue, thickness)
+    cv2.line(image, line_start_t, line_end_t, blue, thickness)
 
 
-def user_review_image(window_name, image) -> None:
+def user_review_image(window_name: str, image: np.ndarray) -> None:
     cv2.imshow(window_name, image)
     print("Press 'q' quit, any other key to continue.")
     key = cv2.waitKey()
@@ -230,14 +248,14 @@ def user_review_image(window_name, image) -> None:
         raise RuntimeError(msg)
 
 
-def rotated90(image, times) -> np.ndarray:
+def rotated90(image: np.ndarray, times: int) -> np.ndarray:
     for _ in range(times % 4):
         image = cv2.transpose(image)
         image = cv2.flip(image, 1)
     return image
 
 
-def add_context_detail_arguments(parser) -> None:
+def add_context_detail_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "context",
         type=str,
@@ -292,7 +310,9 @@ def add_context_detail_arguments(parser) -> None:
     )
 
 
-def process_context_detail_args(args) -> tuple[np.ndarray, np.ndarray]:
+def process_context_detail_args(
+    args: argparse.Namespace,
+) -> tuple[np.ndarray, np.ndarray]:
     # TODO: validate destination path up-front
     # TODO: validate mole names up-front
 
@@ -323,7 +343,7 @@ def process_context_detail_args(args) -> tuple[np.ndarray, np.ndarray]:
 
 
 class TimeLogger:
-    def __init__(self, csv_writer, command) -> None:
+    def __init__(self, csv_writer: _csv._writer, command: str) -> None:
         self._writer = csv_writer
         self._command = command
         self._mode = ""
@@ -333,7 +353,13 @@ class TimeLogger:
     def _now(self) -> datetime.datetime:
         return datetime.datetime.now(datetime.UTC)
 
-    def reset(self, *, command=None, mode=None, path=None) -> None:
+    def reset(
+        self,
+        *,
+        command: str | None = None,
+        mode: str | None = None,
+        path: str | None = None,
+    ) -> None:
         now = self._now()
         elapsed = (now - self._start).total_seconds()
         self._writer.writerow(
@@ -352,7 +378,7 @@ class TimeLogger:
 
 
 @contextlib.contextmanager
-def timelogger_context(command) -> collections.abc.Generator[TimeLogger]:
+def timelogger_context(command: str) -> collections.abc.Generator[TimeLogger]:
     path = mel.lib.fs.find_melroot() / mel.lib.fs.TIMELOG_NAME
     if not path.exists():
         path.write_text("command,mode,path,start,elapsed_secs\n")

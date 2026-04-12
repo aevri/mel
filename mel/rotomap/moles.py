@@ -1,11 +1,16 @@
 """Work with a collection of moles."""
 
+from __future__ import annotations
+
 import argparse
-import collections.abc
 import json
 import math
 import pathlib
+import typing
 import uuid
+
+if typing.TYPE_CHECKING:
+    import collections.abc
 
 import numpy as np
 
@@ -27,7 +32,7 @@ ROTOMAP_DIR_LESIONS_FILENAME = "lesions.json"
 class RotomapDirectory:
     """RotomapFrame-s for all images in a single rotomap dir."""
 
-    def __init__(self, path) -> None:
+    def __init__(self, path: str | pathlib.Path) -> None:
         self.path = pathlib.Path(path)
         if not self.path.is_dir():
             msg = f'"{self.path}" is not a directory, so not a rotomap.'
@@ -50,8 +55,8 @@ class RotomapDirectory:
             yield imagepath, load_image_moles(imagepath)
 
     def yield_frames(
-        self, *, extra_stem=None
-    ) -> collections.abc.Generator["RotomapFrame"]:
+        self, *, extra_stem: str | None = None
+    ) -> collections.abc.Generator[RotomapFrame]:
         for imagepath in self.image_paths:
             yield RotomapFrame(imagepath, extra_stem=extra_stem)
 
@@ -68,7 +73,9 @@ class RotomapDirectory:
 class RotomapFrame:
     """Image and mole data for a single image in a rotomap."""
 
-    def __init__(self, path, *, extra_stem=None) -> None:
+    def __init__(
+        self, path: str | pathlib.Path, *, extra_stem: str | None = None
+    ) -> None:
         self.path = pathlib.Path(path)
         self.extra_stem = extra_stem
         if self.path.is_dir():
@@ -104,7 +111,7 @@ class RotomapFrame:
 class MoleData:
     """Iterables of UUIDs, locations, and other data on moles in an image."""
 
-    def __init__(self, mole_iter) -> None:
+    def __init__(self, mole_iter: collections.abc.Iterable[dict]) -> None:
         self.moles = tuple(mole_iter)
         self.uuids = frozenset(m["uuid"] for m in self.moles)
         self.uuid_points = to_uuid_points(self.moles)
@@ -117,7 +124,7 @@ class MoleData:
         # pylint: enable=pointless-statement
 
 
-def make_argparse_rotomap_directory(path) -> RotomapDirectory:
+def make_argparse_rotomap_directory(path: str) -> RotomapDirectory:
     """Use in the 'type=' parameter to add_argument()."""
     try:
         return RotomapDirectory(path)
@@ -126,7 +133,7 @@ def make_argparse_rotomap_directory(path) -> RotomapDirectory:
 
 
 def make_argparse_image_moles(
-    path,
+    path: str | pathlib.Path,
 ) -> collections.abc.Generator[tuple[pathlib.Path, list]]:
     """Use in the 'type=' parameter to add_argument()."""
     try:
@@ -148,7 +155,7 @@ def make_argparse_image_moles(
 
 
 def make_argparse_image_moles_tree(
-    path,
+    path: str | pathlib.Path,
 ) -> collections.abc.Generator[tuple[pathlib.Path, list]]:
     """Use in the 'type=' parameter to add_argument()."""
     path = pathlib.Path(path)
@@ -163,12 +170,18 @@ def make_argparse_image_moles_tree(
 
 
 class MoleListDiff:
-    def __init__(self, old_uuids, new_uuids, ignore_new, ignore_missing) -> None:
+    def __init__(
+        self,
+        old_uuids: set[str],
+        new_uuids: set[str],
+        ignore_new: set[str],
+        ignore_missing: set[str],
+    ) -> None:
         self.new = (new_uuids - old_uuids) - ignore_new
         self.missing = (old_uuids - new_uuids) - ignore_missing
 
 
-def normalised_ellipse_mask(ellipse) -> tuple:
+def normalised_ellipse_mask(ellipse: tuple) -> tuple:
     """Return a normalized copy of the supplied ellipse.
 
     Here 'normalised' means that the rotation is as close to zero as possible.
@@ -196,7 +209,9 @@ def normalised_ellipse_mask(ellipse) -> tuple:
     return tuple(centre), tuple(extents), rotation
 
 
-def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000) -> None:
+def validate_ellipse_mask(
+    ellipse: tuple, max_x: int = 10000, max_y: int = 10000
+) -> None:
     max_length = max(max_x, max_y) * 2
 
     if ellipse[1][0] < 1 or ellipse[1][1] < 1:
@@ -213,7 +228,7 @@ def validate_ellipse_mask(ellipse, max_x=10000, max_y=10000) -> None:
         raise ValueError(msg)
 
 
-def load_image_metadata(image_path) -> dict:
+def load_image_metadata(image_path: str | pathlib.Path) -> dict:
     metadata_path = pathlib.Path(str(image_path) + ".meta.json")
 
     metadata: dict = {}
@@ -229,7 +244,7 @@ def load_image_metadata(image_path) -> dict:
     return metadata
 
 
-def load_rotomap_dir_lesions_file(rotomap_dir_path) -> list:
+def load_rotomap_dir_lesions_file(rotomap_dir_path: str | pathlib.Path) -> list:
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
         msg = f"Rotomap directory does not exist: '{rotomap_dir_path}'."
@@ -254,7 +269,9 @@ def load_rotomap_dir_lesions_file(rotomap_dir_path) -> list:
     return lesions
 
 
-def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions) -> None:
+def save_rotomap_dir_lesions_file(
+    rotomap_dir_path: str | pathlib.Path, lesions: list
+) -> None:
     rotomap_dir_path = pathlib.Path(rotomap_dir_path)
     if not rotomap_dir_path.exists():
         msg = f"Rotomap directory does not exist: '{rotomap_dir_path}'."
@@ -264,7 +281,9 @@ def save_rotomap_dir_lesions_file(rotomap_dir_path, lesions) -> None:
     save_json(lesions_path, lesions)
 
 
-def load_image_moles(image_path, *, extra_stem=None) -> list:
+def load_image_moles(
+    image_path: str | pathlib.Path, *, extra_stem: str | None = None
+) -> list:
     if not pathlib.Path(image_path).exists():
         msg = f"Mole image does not exist: '{image_path}'."
         raise ValueError(msg)
@@ -295,18 +314,20 @@ def load_image_moles(image_path, *, extra_stem=None) -> list:
     return moles
 
 
-def normalise_moles(moles) -> None:
+def normalise_moles(moles: list) -> None:
     for m in moles:
         m["x"] = int(m["x"])
         m["y"] = int(m["y"])
 
 
-def save_image_metadata(metadata, image_path) -> None:
+def save_image_metadata(metadata: dict, image_path: str) -> None:
     meta_path = image_path + ".meta.json"
     save_json(meta_path, metadata)
 
 
-def save_image_moles(moles, image_path, *, extra_stem=None) -> None:
+def save_image_moles(
+    moles: list, image_path: str | pathlib.Path, *, extra_stem: str | None = None
+) -> None:
     # Explicitly convert 'image_path' to str. It might be a pathlib.Path, which
     # doesn't support addition in this way.
     moles_path = str(image_path)
@@ -316,12 +337,12 @@ def save_image_moles(moles, image_path, *, extra_stem=None) -> None:
     save_json(moles_path, moles)
 
 
-def load_json(path) -> list | dict:
+def load_json(path: str | pathlib.Path) -> list | dict:
     with pathlib.Path(path).open() as f:
         return json.load(f)
 
 
-def save_json(path, data) -> None:
+def save_json(path: str | pathlib.Path, data: list | dict) -> None:
     with pathlib.Path(path).open("w") as f:
         json.dump(data, f, indent=4, separators=(",", ": "), sort_keys=True)
 
@@ -333,7 +354,7 @@ def make_new_uuid() -> str:
     return uuid.uuid4().hex
 
 
-def add_mole(moles, x, y, mole_uuid=None) -> None:
+def add_mole(moles: list, x: int, y: int, mole_uuid: str | None = None) -> None:
     is_uuid_canonical = True
     if mole_uuid is None:
         mole_uuid = make_new_uuid()
@@ -349,11 +370,13 @@ def add_mole(moles, x, y, mole_uuid=None) -> None:
     )
 
 
-def nearest_mole_index(moles, x, y) -> int | None:
+def nearest_mole_index(moles: list, x: int, y: int) -> int | None:
     return nearest_mole_index_distance(moles, x, y)[0]
 
 
-def nearest_mole_index_distance(moles, x, y) -> tuple[int | None, float | None]:
+def nearest_mole_index_distance(
+    moles: list, x: int, y: int
+) -> tuple[int | None, float | None]:
     nearest_index = None
     nearest_distance = None
     for i, mole in enumerate(moles):
@@ -367,7 +390,7 @@ def nearest_mole_index_distance(moles, x, y) -> tuple[int | None, float | None]:
     return nearest_index, nearest_distance
 
 
-def uuid_mole_index(moles, mole_uuid) -> int | None:
+def uuid_mole_index(moles: list, mole_uuid: str) -> int | None:
     """Return the index of the first mole with the specified uuid."""
     for i, mole in enumerate(moles):
         if mole["uuid"] == mole_uuid:
@@ -375,14 +398,16 @@ def uuid_mole_index(moles, mole_uuid) -> int | None:
     return None
 
 
-def set_nearest_mole_uuid(moles, x, y, mole_uuid, *, is_canonical=True) -> None:
+def set_nearest_mole_uuid(
+    moles: list, x: int, y: int, mole_uuid: str | None, *, is_canonical: bool = True
+) -> None:
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         moles[nearest_index]["uuid"] = mole_uuid
         moles[nearest_index][KEY_IS_CONFIRMED] = is_canonical
 
 
-def get_nearest_mole_uuid(moles, x, y) -> str | None:
+def get_nearest_mole_uuid(moles: list, x: int, y: int) -> str | None:
     nearest_index = nearest_mole_index(moles, x, y)
     if nearest_index is not None:
         return moles[nearest_index]["uuid"]
@@ -390,7 +415,7 @@ def get_nearest_mole_uuid(moles, x, y) -> str | None:
     return None
 
 
-def move_nearest_mole(moles, x, y) -> None:
+def move_nearest_mole(moles: list, x: int, y: int) -> None:
     nearest_index = nearest_mole_index(moles, x, y)
 
     if nearest_index is not None:
@@ -398,31 +423,31 @@ def move_nearest_mole(moles, x, y) -> None:
         moles[nearest_index]["y"] = y
 
 
-def remove_nearest_mole(moles, x, y) -> None:
+def remove_nearest_mole(moles: list, x: int, y: int) -> None:
     nearest_index = nearest_mole_index(moles, x, y)
 
     if nearest_index is not None:
         del moles[nearest_index]
 
 
-def mole_list_to_pointvec(mole_list) -> np.ndarray:
+def mole_list_to_pointvec(mole_list: list) -> np.ndarray:
     return np.array(tuple((m["x"], m["y"]) for m in mole_list))
 
 
-def mole_to_point(mole) -> np.ndarray:
+def mole_to_point(mole: dict) -> np.ndarray:
     pos = np.array((mole["x"], mole["y"]))
     mel.lib.math.raise_if_not_int_vector2(pos)
     return pos
 
 
-def to_uuid_points(moles) -> dict:
+def to_uuid_points(moles: list | tuple) -> dict:
     uuid_points = {}
     for m in moles:
         uuid_points[m["uuid"]] = mole_to_point(m)
     return uuid_points
 
 
-def load_potential_set_file(path, filename) -> set[str]:
+def load_potential_set_file(path: pathlib.Path, filename: str) -> set[str]:
     ignore_set = set()
     file_path = path / filename
     if file_path.is_file():
