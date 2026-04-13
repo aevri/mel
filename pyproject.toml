@@ -18,7 +18,7 @@ dependencies = [
     "pandas",
     "pygame",
     "pytorch-lightning",
-    "timm>=1.0.20",
+    "timm>=1.0.26",
     "torch",
     "torchvision",
     "tqdm",
